@@ -1,22 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Kerangka } from "@/components/kerangka";
+import { Plus } from "lucide-react";
+import { Kerangka, Daftar } from "@/components/kerangka";
+import { LencanaTeks } from "@/components/status-kamar";
 import { karyawan } from "@/lib/data-contoh";
+import { meta } from "@/lib/meta";
 
 export const Route = createFileRoute("/karyawan")({
-  head: () => ({
-    meta: [
-      { title: "Karyawan — Baturaden 25 Homestay" },
-      {
-        name: "description",
-        content: "Pengelolaan data karyawan Baturaden 25 Homestay beserta posisi dan statusnya.",
-      },
-      { property: "og:title", content: "Karyawan — Baturaden 25 Homestay" },
-      {
-        property: "og:description",
-        content: "Pengelolaan data karyawan Baturaden 25 Homestay beserta posisi dan statusnya.",
-      },
-    ],
-  }),
+  head: () => meta("Karyawan", "Daftar karyawan Baturaden 25 Homestay: receptionist dan housekeeping."),
   component: HalamanKaryawan,
 });
 
@@ -24,37 +14,25 @@ function HalamanKaryawan() {
   return (
     <Kerangka
       judul="Karyawan"
-      keterangan="Data akun karyawan"
+      keterangan={`${karyawan.length} karyawan`}
       aksi={
-        <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-          Tambah Karyawan
+        <button className="flex h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-lembut">
+          <Plus className="h-4 w-4" /> Tambah
         </button>
       }
     >
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[600px] text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-xs text-muted-foreground">
-              <th className="px-4 py-3 font-medium">Nama</th>
-              <th className="px-4 py-3 font-medium">ID</th>
-              <th className="px-4 py-3 font-medium">PIN</th>
-              <th className="px-4 py-3 font-medium">Posisi</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {karyawan.map((k) => (
-              <tr key={k.id}>
-                <td className="px-4 py-3 font-medium">{k.nama}</td>
-                <td className="px-4 py-3 text-muted-foreground">{k.id}</td>
-                <td className="px-4 py-3 text-muted-foreground">{k.pin}</td>
-                <td className="px-4 py-3">{k.posisi}</td>
-                <td className="px-4 py-3">{k.aktif ? "Aktif" : "Nonaktif"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Daftar>
+        {karyawan.map((k) => (
+          <li key={k.id} className="flex items-center gap-3 px-4 py-3.5">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-bold text-primary">{k.nama[0]}</span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{k.nama}</p>
+              <p className="text-xs text-muted-foreground">{k.id} · {k.posisi}</p>
+            </div>
+            <LencanaTeks status={k.aktif ? "Aktif" : "Tidak Aktif"} />
+          </li>
+        ))}
+      </Daftar>
     </Kerangka>
   );
 }
