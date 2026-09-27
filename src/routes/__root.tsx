@@ -77,11 +77,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Baturaden 25 Homestay" },
+      {
+        name: "description",
+        content: "Aplikasi manajemen operasional Baturaden 25 Homestay.",
+      },
+      { name: "author", content: "Baturaden 25 Homestay" },
+      { property: "og:title", content: "Baturaden 25 Homestay" },
+      {
+        property: "og:description",
+        content: "Aplikasi manajemen operasional Baturaden 25 Homestay.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
