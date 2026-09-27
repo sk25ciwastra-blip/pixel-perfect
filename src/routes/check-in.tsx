@@ -43,6 +43,7 @@ function HalamanCheckIn() {
   const [paket, setPaket] = useState(1);
   const [bayar, setBayar] = useState("QRIS");
   const siap = kamar.filter((k) => k.status === "siap");
+  const paketTerpilih = paketContoh[paket];
 
   return (
     <Kerangka judul="Check-in" keterangan={`Langkah ${aktif + 1} dari ${langkah.length}`}>
@@ -105,13 +106,13 @@ function HalamanCheckIn() {
             ))}
           </div>
         )}
-        {aktif === 4 && (
+        {aktif === 4 && paketTerpilih && (
           <dl className="divide-y divide-border rounded-2xl border border-border bg-card text-sm shadow-lembut">
             {[
               ["Kamar", `Kamar ${pilihKamar}`],
-              ["Paket", paketContoh[paket].nama],
+              ["Paket", paketTerpilih.nama],
               ["Pembayaran", bayar],
-              ["Total", rupiah(paketContoh[paket].harga)],
+              ["Total", rupiah(paketTerpilih.harga)],
             ].map(([a, b]) => (
               <div key={a} className="flex justify-between px-4 py-3.5">
                 <dt className="text-muted-foreground">{a}</dt>
