@@ -59,12 +59,29 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-siap: var(--siap);
+  --color-siap-foreground: var(--siap-foreground);
+  --color-terisi: var(--terisi);
+  --color-terisi-foreground: var(--terisi-foreground);
+  --color-perlu: var(--perlu);
+  --color-perlu-foreground: var(--perlu-foreground);
+  --color-sedang: var(--sedang);
+  --color-sedang-foreground: var(--sedang-foreground);
 }
 
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.21 0.01 250);
+  --siap: oklch(0.96 0.03 160);
+  --siap-foreground: oklch(0.45 0.09 160);
+  --terisi: oklch(0.96 0.02 250);
+  --terisi-foreground: oklch(0.45 0.08 250);
+  --perlu: oklch(0.96 0.04 70);
+  --perlu-foreground: oklch(0.5 0.1 60);
+  --sedang: oklch(0.96 0.01 250);
+  --sedang-foreground: oklch(0.5 0.02 250);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
