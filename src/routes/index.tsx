@@ -29,7 +29,7 @@ function Ringkasan() {
     <Kerangka judul="Ringkasan" tanpaJudul>
       <div className="mb-6">
         <p className="text-sm text-muted-foreground">Minggu, 27 September 2026</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">Halo, {nama.split(" ")[0]} 👋</h1>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight">Halo, {nama.split(" ")[0]}</h1>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
