@@ -11,7 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookingRouteImport } from './routes/booking'
+import { Route as HousekeepingRouteImport } from './routes/housekeeping'
 import { Route as KamarRouteImport } from './routes/kamar'
+import { Route as KaryawanRouteImport } from './routes/karyawan'
+import { Route as KeuanganRouteImport } from './routes/keuangan'
+import { Route as PengaturanRouteImport } from './routes/pengaturan'
+import { Route as TamuRouteImport } from './routes/tamu'
 import { Route as TransaksiRouteImport } from './routes/transaksi'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,9 +29,34 @@ const BookingRoute = BookingRouteImport.update({
   path: '/booking',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HousekeepingRoute = HousekeepingRouteImport.update({
+  id: '/housekeeping',
+  path: '/housekeeping',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KamarRoute = KamarRouteImport.update({
   id: '/kamar',
   path: '/kamar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KaryawanRoute = KaryawanRouteImport.update({
+  id: '/karyawan',
+  path: '/karyawan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KeuanganRoute = KeuanganRouteImport.update({
+  id: '/keuangan',
+  path: '/keuangan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PengaturanRoute = PengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TamuRoute = TamuRouteImport.update({
+  id: '/tamu',
+  path: '/tamu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TransaksiRoute = TransaksiRouteImport.update({
@@ -38,34 +68,82 @@ const TransaksiRoute = TransaksiRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/booking': typeof BookingRoute
+  '/housekeeping': typeof HousekeepingRoute
   '/kamar': typeof KamarRoute
+  '/karyawan': typeof KaryawanRoute
+  '/keuangan': typeof KeuanganRoute
+  '/pengaturan': typeof PengaturanRoute
+  '/tamu': typeof TamuRoute
   '/transaksi': typeof TransaksiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/booking': typeof BookingRoute
+  '/housekeeping': typeof HousekeepingRoute
   '/kamar': typeof KamarRoute
+  '/karyawan': typeof KaryawanRoute
+  '/keuangan': typeof KeuanganRoute
+  '/pengaturan': typeof PengaturanRoute
+  '/tamu': typeof TamuRoute
   '/transaksi': typeof TransaksiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/booking': typeof BookingRoute
+  '/housekeeping': typeof HousekeepingRoute
   '/kamar': typeof KamarRoute
+  '/karyawan': typeof KaryawanRoute
+  '/keuangan': typeof KeuanganRoute
+  '/pengaturan': typeof PengaturanRoute
+  '/tamu': typeof TamuRoute
   '/transaksi': typeof TransaksiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/booking' | '/kamar' | '/transaksi'
+  fullPaths:
+    | '/'
+    | '/booking'
+    | '/housekeeping'
+    | '/kamar'
+    | '/karyawan'
+    | '/keuangan'
+    | '/pengaturan'
+    | '/tamu'
+    | '/transaksi'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/booking' | '/kamar' | '/transaksi'
-  id: '__root__' | '/' | '/booking' | '/kamar' | '/transaksi'
+  to:
+    | '/'
+    | '/booking'
+    | '/housekeeping'
+    | '/kamar'
+    | '/karyawan'
+    | '/keuangan'
+    | '/pengaturan'
+    | '/tamu'
+    | '/transaksi'
+  id:
+    | '__root__'
+    | '/'
+    | '/booking'
+    | '/housekeeping'
+    | '/kamar'
+    | '/karyawan'
+    | '/keuangan'
+    | '/pengaturan'
+    | '/tamu'
+    | '/transaksi'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BookingRoute: typeof BookingRoute
+  HousekeepingRoute: typeof HousekeepingRoute
   KamarRoute: typeof KamarRoute
+  KaryawanRoute: typeof KaryawanRoute
+  KeuanganRoute: typeof KeuanganRoute
+  PengaturanRoute: typeof PengaturanRoute
+  TamuRoute: typeof TamuRoute
   TransaksiRoute: typeof TransaksiRoute
 }
 
@@ -85,11 +163,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/housekeeping': {
+      id: '/housekeeping'
+      path: '/housekeeping'
+      fullPath: '/housekeeping'
+      preLoaderRoute: typeof HousekeepingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kamar': {
       id: '/kamar'
       path: '/kamar'
       fullPath: '/kamar'
       preLoaderRoute: typeof KamarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/karyawan': {
+      id: '/karyawan'
+      path: '/karyawan'
+      fullPath: '/karyawan'
+      preLoaderRoute: typeof KaryawanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/keuangan': {
+      id: '/keuangan'
+      path: '/keuangan'
+      fullPath: '/keuangan'
+      preLoaderRoute: typeof KeuanganRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pengaturan': {
+      id: '/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/pengaturan'
+      preLoaderRoute: typeof PengaturanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tamu': {
+      id: '/tamu'
+      path: '/tamu'
+      fullPath: '/tamu'
+      preLoaderRoute: typeof TamuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/transaksi': {
@@ -105,7 +218,12 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BookingRoute: BookingRoute,
+  HousekeepingRoute: HousekeepingRoute,
   KamarRoute: KamarRoute,
+  KaryawanRoute: KaryawanRoute,
+  KeuanganRoute: KeuanganRoute,
+  PengaturanRoute: PengaturanRoute,
+  TamuRoute: TamuRoute,
   TransaksiRoute: TransaksiRoute,
 }
 export const routeTree = rootRouteImport
