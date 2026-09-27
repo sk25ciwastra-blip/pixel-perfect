@@ -1,146 +1,87 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Kerangka, Panel, Angka } from "@/components/kerangka";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { LogIn, CalendarPlus, Sparkles, ChevronRight } from "lucide-react";
+import { Kerangka, Judul, Daftar } from "@/components/kerangka";
+import { LencanaTeks } from "@/components/status-kamar";
 import { usePeran } from "@/lib/peran";
 import { kamar, booking, transaksi, rupiah } from "@/lib/data-contoh";
+import { meta } from "@/lib/meta";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Ringkasan — Baturaden 25 Homestay" },
-      {
-        name: "description",
-        content:
-          "Ringkasan harian operasional Baturaden 25 Homestay: pendapatan, kamar, booking, dan housekeeping.",
-      },
-      { property: "og:title", content: "Ringkasan — Baturaden 25 Homestay" },
-      {
-        property: "og:description",
-        content:
-          "Ringkasan harian operasional Baturaden 25 Homestay: pendapatan, kamar, booking, dan housekeeping.",
-      },
-    ],
-  }),
+  head: () => meta("Ringkasan", "Ringkasan harian Baturaden 25 Homestay: pendapatan, kamar, booking, dan housekeeping."),
   component: Ringkasan,
 });
 
 function Ringkasan() {
-  const { peran } = usePeran();
-  return peran === "owner" ? <RingkasanOwner /> : <RingkasanKaryawan />;
-}
+  const { peran, nama } = usePeran();
+  const hitung = (s: string) => kamar.filter((k) => k.status === s).length;
+  const hariIni = booking.filter((b) => b.tanggal === "27 Sep 2026");
+  const menunggu = transaksi.filter((t) => t.status === "Menunggu Persetujuan");
 
-function RingkasanOwner() {
-  const siap = kamar.filter((k) => k.status === "siap").length;
-  const terisi = kamar.filter((k) => k.status === "terisi").length;
-  const perlu = kamar.filter((k) => k.status === "perlu").length;
-  const menunggu = transaksi.filter(
-    (t) => t.status === "Menunggu Persetujuan",
-  );
+  const statistik = [
+    ...(peran === "owner" ? [{ label: "Pendapatan hari ini", nilai: rupiah(690000), kelas: "text-primary", lebar: true }] : []),
+    { label: "Booking hari ini", nilai: String(hariIni.length), kelas: "text-foreground" },
+    { label: "Kamar tersedia", nilai: String(hitung("siap")), kelas: "text-siap-foreground" },
+    { label: "Kamar terisi", nilai: String(hitung("terisi")), kelas: "text-terisi-foreground" },
+    { label: "Perlu dibersihkan", nilai: String(hitung("perlu")), kelas: "text-perlu-foreground" },
+  ];
 
   return (
-    <Kerangka judul="Ringkasan" keterangan="Minggu, 27 September 2026">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Panel judul="Pendapatan">
-          <div className="grid grid-cols-2 gap-4">
-            <Angka label="Hari ini" nilai={rupiah(970000)} />
-            <Angka label="Bulan ini" nilai={rupiah(18450000)} />
-          </div>
-        </Panel>
-
-        <Panel judul="Kamar">
-          <div className="grid grid-cols-3 gap-4">
-            <Angka label="Siap" nilai={String(siap)} />
-            <Angka label="Terisi" nilai={String(terisi)} />
-            <Angka label="Perlu dibersihkan" nilai={String(perlu)} />
-          </div>
-        </Panel>
-
-        <Panel judul="Booking">
-          <div className="grid grid-cols-2 gap-4">
-            <Angka label="Hari ini" nilai="2" />
-            <Angka label="Akan datang" nilai="2" />
-          </div>
-        </Panel>
-
-        <Panel judul="Housekeeping">
-          <div className="grid grid-cols-2 gap-4">
-            <Angka label="Perlu dibersihkan" nilai={String(perlu)} />
-            <Angka label="Sedang dibersihkan" nilai="1" />
-          </div>
-        </Panel>
-
-        <div className="sm:col-span-2">
-          <Panel judul="Persetujuan Cash">
-            {menunggu.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Tidak ada pembayaran cash yang menunggu persetujuan.
-              </p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {menunggu.map((t) => (
-                  <li
-                    key={t.kode}
-                    className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">{t.tamu}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t.kode} · {rupiah(t.jumlah)}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
-                        Setujui
-                      </button>
-                      <button className="rounded-md border border-border px-3 py-1.5 text-xs font-medium">
-                        Tolak
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        </div>
+    <Kerangka judul="Ringkasan" tanpaJudul>
+      <div className="mb-6">
+        <p className="text-sm text-muted-foreground">Minggu, 27 September 2026</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight">Halo, {nama.split(" ")[0]} 👋</h1>
       </div>
-    </Kerangka>
-  );
-}
 
-function RingkasanKaryawan() {
-  const siap = kamar.filter((k) => k.status === "siap").length;
-  const terisi = kamar.filter((k) => k.status === "terisi").length;
-  const perlu = kamar.filter((k) => k.status === "perlu").length;
-  const hariIni = booking.filter((b) => b.tanggal === "27 Sep 2026").length;
-
-  return (
-    <Kerangka judul="Ringkasan" keterangan="Minggu, 27 September 2026">
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-4">
-        {[
-          { label: "Kamar tersedia", nilai: siap },
-          { label: "Kamar terisi", nilai: terisi },
-          { label: "Perlu dibersihkan", nilai: perlu },
-          { label: "Booking hari ini", nilai: hariIni },
-        ].map((item) => (
-          <div key={item.label} className="bg-background p-4">
-            <p className="text-xs text-muted-foreground">{item.label}</p>
-            <p className="mt-1 text-2xl font-semibold tracking-tight">
-              {item.nilai}
-            </p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {statistik.map((s) => (
+          <div key={s.label} className={`rounded-2xl border border-border bg-card p-4 shadow-lembut ${"lebar" in s && s.lebar ? "col-span-2 sm:col-span-1" : ""}`}>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+            <p className={`mt-1.5 text-xl font-bold tracking-tight ${s.kelas}`}>{s.nilai}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <button className="rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground">
-          Check-in
-        </button>
-        <button className="rounded-xl border border-border px-4 py-3 text-sm font-medium">
-          Booking
-        </button>
-        <button className="rounded-xl border border-border px-4 py-3 text-sm font-medium">
-          Housekeeping
-        </button>
-      </div>
+      {peran === "owner" && menunggu.length > 0 && (
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-perlu px-4 py-3 text-perlu-foreground">
+          <p className="text-sm font-medium">{menunggu.length} pembayaran cash menunggu persetujuan</p>
+          <Link to="/transaksi" className="shrink-0 text-sm font-semibold underline-offset-4 hover:underline">Lihat</Link>
+        </div>
+      )}
+
+      <section className="mt-8">
+        <Judul>Aksi Cepat</Judul>
+        <div className="grid grid-cols-3 gap-3">
+          <Link to="/check-in" className="flex flex-col items-center gap-2 rounded-2xl bg-primary px-3 py-5 text-sm font-semibold text-primary-foreground shadow-lembut">
+            <LogIn className="h-6 w-6" /> Check-in
+          </Link>
+          <Link to="/booking" className="flex flex-col items-center gap-2 rounded-2xl bg-primary-soft px-3 py-5 text-sm font-semibold text-primary">
+            <CalendarPlus className="h-6 w-6" /> Booking
+          </Link>
+          <Link to="/housekeeping" className="flex flex-col items-center gap-2 rounded-2xl bg-primary-soft px-3 py-5 text-sm font-semibold text-primary">
+            <Sparkles className="h-6 w-6" /> Housekeeping
+          </Link>
+        </div>
+      </section>
+
+      <section className="mt-8">
+        <Judul aksi={<Link to="/booking" className="flex items-center text-xs font-semibold text-primary">Semua <ChevronRight className="h-4 w-4" /></Link>}>
+          Booking Hari Ini
+        </Judul>
+        <Daftar>
+          {hariIni.map((b) => (
+            <li key={b.kode} className="flex items-center gap-3 px-4 py-3.5">
+              <div className="w-12 shrink-0 text-center">
+                <p className="text-sm font-bold">{b.jam}</p>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{b.tamu}</p>
+                <p className="truncate text-xs text-muted-foreground">{b.kode} · Kamar {b.kamar}</p>
+              </div>
+              <LencanaTeks status={b.status} />
+            </li>
+          ))}
+        </Daftar>
+      </section>
     </Kerangka>
   );
 }

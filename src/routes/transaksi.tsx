@@ -1,47 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Kerangka } from "@/components/kerangka";
+import { Kerangka, Daftar } from "@/components/kerangka";
+import { LencanaTeks } from "@/components/status-kamar";
 import { transaksi, rupiah } from "@/lib/data-contoh";
+import { meta } from "@/lib/meta";
 
 export const Route = createFileRoute("/transaksi")({
-  head: () => ({
-    meta: [
-      { title: "Transaksi — Baturaden 25 Homestay" },
-      {
-        name: "description",
-        content: "Daftar transaksi pembayaran tamu Baturaden 25 Homestay.",
-      },
-      { property: "og:title", content: "Transaksi — Baturaden 25 Homestay" },
-      {
-        property: "og:description",
-        content: "Daftar transaksi pembayaran tamu Baturaden 25 Homestay.",
-      },
-    ],
-  }),
+  head: () => meta("Transaksi", "Daftar transaksi pembayaran tamu Baturaden 25 Homestay."),
   component: HalamanTransaksi,
 });
 
 function HalamanTransaksi() {
   return (
     <Kerangka judul="Transaksi" keterangan="Daftar pembayaran tamu">
-      <ul className="divide-y divide-border rounded-xl border border-border">
+      <Daftar>
         {transaksi.map((t) => (
-          <li
-            key={t.kode}
-            className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-          >
-            <div>
-              <p className="text-sm font-medium">{t.tamu}</p>
-              <p className="text-xs text-muted-foreground">
-                {t.kode} · {t.metode} · {t.tanggal}
-              </p>
+          <li key={t.kode} className="px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-mono text-sm font-bold tracking-tight text-primary">{t.kode}</p>
+              <LencanaTeks status={t.status} />
             </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold">{rupiah(t.jumlah)}</p>
-              <p className="text-xs text-muted-foreground">{t.status}</p>
+            <div className="mt-2 flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{t.tamu}</p>
+                <p className="text-xs text-muted-foreground">Kamar {t.kamar} · {t.tanggal} · {t.metode}</p>
+              </div>
+              <p className="shrink-0 text-base font-bold">{rupiah(t.jumlah)}</p>
             </div>
           </li>
         ))}
-      </ul>
+      </Daftar>
     </Kerangka>
   );
 }
