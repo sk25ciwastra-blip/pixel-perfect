@@ -3,7 +3,8 @@ import { LogIn, CalendarPlus, Sparkles, ChevronRight } from "lucide-react";
 import { Kerangka, Judul, Daftar } from "@/components/kerangka";
 import { LencanaTeks } from "@/components/status-kamar";
 import { usePeran } from "@/lib/peran";
-import { kamar, booking, transaksi, rupiah } from "@/lib/data-contoh";
+import { rupiah } from "@/lib/data-contoh";
+import { useTable } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
 
 export const Route = createFileRoute("/")({
@@ -12,13 +13,15 @@ export const Route = createFileRoute("/")({
 });
 
 function Ringkasan() {
-  const { peran, nama } = usePeran();
-  const hitung = (s: string) => kamar.filter((k) => k.status === s).length;
-  const hariIni = booking.filter((b) => b.tanggal === "27 Sep 2026");
-  const menunggu = transaksi.filter((t) => t.status === "Menunggu Persetujuan");
+  const { peran, nama, posisi } = usePeran();
+  const rooms = useTable("rooms"); const transactions = useTable("transactions"); const guests = useTable("guests");
+  const kamar = rooms.rows; const booking = transactions.rows;
+  const hitung = (s: string) => kamar.filter((k) => k.status === ({ siap: "ready", terisi: "occupied", perlu: "dirty" } as Record<string, string>)[s]).length;
+  const hariIni = booking.filter((b) => new Date(b.created_at).toDateString() === new Date().toDateString());
+
 
   const statistik = [
-    ...(peran === "owner" ? [{ label: "Pendapatan hari ini", nilai: rupiah(690000), kelas: "text-primary", lebar: true }] : []),
+    ...(peran === "owner" ? [{ label: "Pendapatan hari ini", nilai: rupiah(booking.filter(b=>new Date(b.created_at).toDateString()===new Date().toDateString()).reduce((sum,b)=>sum+Number(b.price_snapshot??0),0)), kelas: "text-primary", lebar: true }] : []),
     { label: "Booking hari ini", nilai: String(hariIni.length), kelas: "text-foreground" },
     { label: "Kamar tersedia", nilai: String(hitung("siap")), kelas: "text-siap-foreground" },
     { label: "Kamar terisi", nilai: String(hitung("terisi")), kelas: "text-terisi-foreground" },
@@ -28,7 +31,7 @@ function Ringkasan() {
   return (
     <Kerangka judul="Ringkasan" tanpaJudul>
       <div className="mb-6">
-        <p className="text-sm text-muted-foreground">Minggu, 27 September 2026</p>
+        <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight">Halo, {nama.split(" ")[0]}</h1>
       </div>
 
@@ -41,22 +44,15 @@ function Ringkasan() {
         ))}
       </div>
 
-      {peran === "owner" && menunggu.length > 0 && (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-perlu px-4 py-3 text-perlu-foreground">
-          <p className="text-sm font-medium">{menunggu.length} pembayaran cash menunggu persetujuan</p>
-          <Link to="/transaksi" className="shrink-0 text-sm font-semibold underline-offset-4 hover:underline">Lihat</Link>
-        </div>
-      )}
-
       <section className="mt-8">
         <Judul>Aksi Cepat</Judul>
         <div className="grid grid-cols-3 gap-3">
-          <Link to="/check-in" className="flex flex-col items-center gap-2 rounded-2xl bg-primary px-3 py-5 text-sm font-semibold text-primary-foreground shadow-lembut">
+          {posisi !== "Petugas Kebersihan" && <Link to="/check-in" className="flex flex-col items-center gap-2 rounded-2xl bg-primary px-3 py-5 text-sm font-semibold text-primary-foreground shadow-lembut">
             <LogIn className="h-6 w-6" /> Check-in
-          </Link>
-          <Link to="/booking" className="flex flex-col items-center gap-2 rounded-2xl bg-primary-soft px-3 py-5 text-sm font-semibold text-primary">
+          </Link>}
+          {posisi !== "Petugas Kebersihan" && <Link to="/booking" className="flex flex-col items-center gap-2 rounded-2xl bg-primary-soft px-3 py-5 text-sm font-semibold text-primary">
             <CalendarPlus className="h-6 w-6" /> Booking
-          </Link>
+          </Link>}
           <Link to="/housekeeping" className="flex flex-col items-center gap-2 rounded-2xl bg-primary-soft px-3 py-5 text-sm font-semibold text-primary">
             <Sparkles className="h-6 w-6" /> Housekeeping
           </Link>
@@ -64,20 +60,20 @@ function Ringkasan() {
       </section>
 
       <section className="mt-8">
-        <Judul aksi={<Link to="/booking" className="flex items-center text-xs font-semibold text-primary">Semua <ChevronRight className="h-4 w-4" /></Link>}>
+        <Judul aksi={posisi !== "Petugas Kebersihan" && <Link to="/booking" className="flex items-center text-xs font-semibold text-primary">Semua <ChevronRight className="h-4 w-4" /></Link>}>
           Booking Hari Ini
         </Judul>
         <Daftar>
           {hariIni.map((b) => (
-            <li key={b.kode} className="flex items-center gap-3 px-4 py-3.5">
+            <li key={b.id} className="flex items-center gap-3 px-4 py-3.5">
               <div className="w-12 shrink-0 text-center">
-                <p className="text-sm font-bold">{b.jam}</p>
+                <p className="text-sm font-bold">{new Date(b.created_at).toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"})}</p>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{b.tamu}</p>
-                <p className="truncate text-xs text-muted-foreground">{b.kode} · Kamar {b.kamar}</p>
+                <p className="truncate text-sm font-semibold">{guests.rows.find(g=>g.id===b.guest_id)?.full_name}</p>
+                <p className="truncate text-xs text-muted-foreground">{b.transaction_number}</p>
               </div>
-              <LencanaTeks status={b.status} />
+              <LencanaTeks status={b.status === "booking" ? "Booking" : b.status === "check_in" ? "Check-in" : b.status === "check_out" ? "Check-out" : "Dibatalkan"} />
             </li>
           ))}
         </Daftar>

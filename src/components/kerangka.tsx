@@ -41,33 +41,14 @@ function Logo() {
   );
 }
 
-function PilihPeran() {
-  const { peran, setPeran } = usePeran();
-  return (
-    <div className="flex rounded-full bg-secondary p-1 text-xs font-medium">
-      {(["owner", "karyawan"] as const).map((p) => (
-        <button
-          key={p}
-          onClick={() => setPeran(p)}
-          className={`flex-1 rounded-full px-3 py-1.5 transition-colors ${
-            peran === p ? "bg-background text-primary shadow-lembut" : "text-muted-foreground"
-          }`}
-        >
-          {p === "owner" ? "Owner" : "Karyawan"}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export function Kerangka({
   judul, keterangan, aksi, children, tanpaJudul,
 }: {
   judul: string; keterangan?: string; aksi?: ReactNode; children: ReactNode; tanpaJudul?: boolean;
 }) {
-  const { peran, nama, posisi } = usePeran();
+  const { peran, nama, posisi, keluar } = usePeran();
   const [lainnya, setLainnya] = useState(false);
-  const menu = semuaMenu.filter((m) => peran === "owner" || !m.ownerSaja);
+  const menu = semuaMenu.filter((m) => (peran === "owner" || !m.ownerSaja) && (posisi !== "Petugas Kebersihan" || ["/", "/kamar", "/housekeeping"].includes(m.ke)));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
 
   return (
@@ -95,14 +76,14 @@ export function Kerangka({
             <p className="text-sm font-semibold">{nama}</p>
             <p className="text-xs text-muted-foreground">{posisi}</p>
           </div>
-          <PilihPeran />
+          <button onClick={() => void keluar()} className="w-full rounded-xl bg-secondary px-3 py-2 text-left text-sm text-foreground">Keluar</button>
         </div>
       </aside>
 
       {/* Header HP */}
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
         <Logo />
-        <div className="w-40 shrink-0"><PilihPeran /></div>
+        <button onClick={() => void keluar()} className="text-sm font-semibold text-primary">Keluar</button>
       </header>
 
       <main className="px-4 pb-28 pt-6 lg:ml-60 lg:px-10 lg:pb-12 lg:pt-10">
@@ -123,7 +104,7 @@ export function Kerangka({
       {/* Navigasi bawah HP */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         <ul className="grid grid-cols-5">
-          {bawah.map((m) => (
+          {bawah.filter((m) => posisi !== "Petugas Kebersihan" || ["/", "/kamar"].includes(m.ke)).map((m) => (
             <li key={m.ke}>
               <Link
                 to={m.ke}

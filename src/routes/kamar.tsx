@@ -1,80 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Clock } from "lucide-react";
-import { Kerangka, KotakCari } from "@/components/kerangka";
-import { kamar, labelStatusKamar, type StatusKamar } from "@/lib/data-contoh";
-import { meta } from "@/lib/meta";
-
-export const Route = createFileRoute("/kamar")({
-  head: () => meta("Kamar", "Status kamar Baturaden 25 Homestay: siap, terisi, perlu dan sedang dibersihkan."),
-  component: HalamanKamar,
-});
-
-const latar: Record<StatusKamar, string> = {
-  siap: "bg-siap/60 border-siap-foreground/15",
-  terisi: "bg-terisi/60 border-terisi-foreground/15",
-  perlu: "bg-perlu/60 border-perlu-foreground/15",
-  sedang: "bg-sedang/60 border-sedang-foreground/15",
-};
-const teks: Record<StatusKamar, string> = {
-  siap: "text-siap-foreground", terisi: "text-terisi-foreground",
-  perlu: "text-perlu-foreground", sedang: "text-sedang-foreground",
-};
-
+import { createFileRoute } from '@tanstack/react-router';
+import { useState } from 'react';
+import { Kerangka, KotakCari } from '@/components/kerangka';
+import { Button } from '@/components/ui/button';
+import { labelStatusKamar, rupiah, type StatusKamar } from '@/lib/data-contoh';
+import { useTable, type Room } from '@/lib/data-live';
+import { supabase } from '@/integrations/supabase/client';
+import { usePeran } from '@/lib/peran';
+import { meta } from '@/lib/meta';
+export const Route = createFileRoute('/kamar')({ head: () => meta('Kamar', 'Status dan pengelolaan kamar Baturaden 25 Homestay.'), component: HalamanKamar });
+const statusMap: Record<Room['status'], StatusKamar> = { ready: 'siap', occupied: 'terisi', dirty: 'perlu', cleaning: 'sedang' };
+const latar: Record<StatusKamar, string> = { siap: 'bg-siap/60 border-siap-foreground/15', terisi: 'bg-terisi/60 border-terisi-foreground/15', perlu: 'bg-perlu/60 border-perlu-foreground/15', sedang: 'bg-sedang/60 border-sedang-foreground/15' };
+const teks: Record<StatusKamar, string> = { siap: 'text-siap-foreground', terisi: 'text-terisi-foreground', perlu: 'text-perlu-foreground', sedang: 'text-sedang-foreground' };
 function HalamanKamar() {
-  const [filter, setFilter] = useState<"semua" | StatusKamar>("semua");
-  const [cari, setCari] = useState("");
-  const urutan: Record<StatusKamar, number> = { terisi: 0, perlu: 1, sedang: 2, siap: 3 };
-  const daftar = kamar
-    .filter((k) => (filter === "semua" || k.status === filter) && k.nomor.includes(cari.trim()))
-    .sort((a, b) => urutan[a.status] - urutan[b.status] || (a.sisaMenit ?? 0) - (b.sisaMenit ?? 0));
-
-  const pilihan: ("semua" | StatusKamar)[] = ["semua", "siap", "terisi", "perlu", "sedang"];
-
-  return (
-    <Kerangka judul="Kamar" keterangan={`${kamar.length} kamar`}>
-      <KotakCari value={cari} onChange={setCari} placeholder="Cari nomor kamar" />
-      <div className="-mx-4 mt-3 overflow-x-auto px-4">
-        <div className="flex gap-2 pb-1">
-          {pilihan.map((p) => (
-            <button
-              key={p}
-              onClick={() => setFilter(p)}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
-                filter === p ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              {p === "semua" ? "Semua" : labelStatusKamar[p]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {daftar.map((k) => {
-          const mendesak = k.status === "terisi" && (k.sisaMenit ?? 999) <= 30;
-          return (
-            <div key={k.nomor} className={`flex flex-col rounded-2xl border p-4 ${latar[k.status]} ${mendesak ? "ring-2 ring-bahaya-foreground/40" : ""}`}>
-              <p className="text-xs text-muted-foreground">Kamar</p>
-              <p className="text-2xl font-bold tracking-tight">{k.nomor}</p>
-              <p className={`mt-1 text-[11px] font-bold uppercase tracking-wide ${teks[k.status]}`}>{labelStatusKamar[k.status]}</p>
-
-              {k.status === "terisi" && (
-                <div className="mt-3 rounded-xl bg-background/80 p-3">
-                  <p className="truncate text-sm font-semibold">{k.tamu}</p>
-                  <p className="text-xs text-muted-foreground">{k.paket}</p>
-                  <div className={`mt-2 flex items-center gap-1.5 ${mendesak ? "text-bahaya-foreground" : "text-terisi-foreground"}`}>
-                    <Clock className="h-3.5 w-3.5" />
-                    <span className="font-mono text-base font-bold tabular-nums">{k.sisa}</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">Selesai {k.selesai}</p>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      {daftar.length === 0 && <p className="mt-8 text-center text-sm text-muted-foreground">Kamar tidak ditemukan.</p>}
-    </Kerangka>
-  );
+ const { peran } = usePeran(); const { rows, loading, error, refresh } = useTable('rooms'); const types = useTable('room_types');
+ const [filter,setFilter] = useState<'semua'|StatusKamar>('semua'); const [cari,setCari] = useState(''); const [editing,setEditing] = useState<Room|null>(null); const [open,setOpen] = useState(false); const [nomor,setNomor] = useState(''); const [tipe,setTipe] = useState(''); const [harga,setHarga] = useState('0'); const [catatan,setCatatan] = useState(''); const [active,setActive] = useState(true); const [message,setMessage] = useState('');
+ const daftar = rows.filter(k => (filter === 'semua' || statusMap[k.status] === filter) && k.room_number.includes(cari.trim()));
+ function edit(k?: Room) {setEditing(k??null);setNomor(k?.room_number??'');setTipe(k?.room_type_id??types.rows[0]?.id??'');setHarga(String(k?.base_price??0));setCatatan(k?.notes??'');setActive(k?.active??true);setOpen(true);setMessage('');}
+ async function save(e: React.FormEvent) {e.preventDefault(); const selectedType = tipe || types.rows[0]?.id; if (!nomor.trim() || !selectedType || Number(harga)<0) {setMessage('Periksa nomor, tipe, dan harga kamar.');return;} const payload = {room_number:nomor.trim(),room_type_id:selectedType,base_price:Number(harga),notes:catatan,active}; const result = editing ? await supabase.from('rooms').update(payload).eq('id',editing.id) : await supabase.from('rooms').insert(payload); if(result.error) setMessage(result.error.code==='23505'?'Nomor kamar sudah digunakan.':result.error.message); else {setOpen(false);await refresh();} }
+ return <Kerangka judul="Kamar" keterangan={`${rows.length} kamar`} aksi={peran==='owner' && <Button className="h-11 rounded-xl" onClick={() => edit()}>Tambah</Button>}><KotakCari value={cari} onChange={setCari} placeholder="Cari nomor kamar"/><div className="-mx-4 mt-3 overflow-x-auto px-4"><div className="flex gap-2 pb-1">{(['semua','siap','terisi','perlu','sedang'] as const).map(p => <Button key={p} variant={filter===p?'default':'secondary'} onClick={() => setFilter(p)} className="rounded-full text-xs uppercase">{p==='semua'?'Semua':labelStatusKamar[p]}</Button>)}</div></div>{error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}{loading && <p className="mt-5 text-sm text-muted-foreground">Memuat kamar…</p>}<div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{daftar.map(k => {const s=statusMap[k.status];return <div key={k.id} className={`flex flex-col rounded-2xl border p-4 ${latar[s]}`}><p className="text-xs text-muted-foreground">Kamar</p><p className="text-2xl font-bold">{k.room_number}</p><p className={`mt-1 text-[11px] font-bold uppercase ${teks[s]}`}>{labelStatusKamar[s]}</p><p className="mt-2 text-xs text-muted-foreground">{types.rows.find(t=>t.id===k.room_type_id)?.name} · {rupiah(Number(k.base_price))}</p>{peran==='owner' && <Button variant="outline" size="sm" className="mt-3" onClick={() => edit(k)}>Ubah</Button>}</div>})}</div>{!loading && !daftar.length && <p className="mt-8 text-center text-sm text-muted-foreground">Kamar tidak ditemukan.</p>}{open && <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4"><form onSubmit={save} className="w-full max-w-md space-y-3 rounded-2xl bg-background p-5 shadow-lembut"><h2 className="text-lg font-bold">{editing?'Ubah kamar':'Tambah kamar'}</h2><label className="block text-sm">Nomor kamar<input required value={nomor} onChange={e=>setNomor(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label><label className="block text-sm">Tipe kamar<select required value={tipe} onChange={e=>setTipe(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3">{types.rows.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label><label className="block text-sm">Harga dasar<input required type="number" min="0" value={harga} onChange={e=>setHarga(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label><label className="block text-sm">Catatan<input value={catatan} onChange={e=>setCatatan(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label><label className="flex gap-2 text-sm"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/>Aktif</label>{message && <p role="alert" className="text-sm text-destructive">{message}</p>}<div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOpen(false)}>Batal</Button><Button type="submit">Simpan</Button></div></form></div>}</Kerangka>;
 }

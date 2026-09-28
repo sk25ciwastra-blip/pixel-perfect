@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790567917357,
+      "tag": "0000_operational_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790567949052,
+      "tag": "0001_fix_audit_price_column_scope",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790568063938,
+      "tag": "0002_operational_permissions_and_number_safety",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790568140953,
+      "tag": "0003_package_price_reason_and_inactive_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790568174308,
+      "tag": "0004_checkin_atomic_transaction",
+      "breakpoints": true
+    }
+  ]
+}
