@@ -323,6 +323,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_room_cleaning: { Args: { _room_id: string }; Returns: undefined }
       can_operate: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {

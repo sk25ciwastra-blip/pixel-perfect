@@ -15,6 +15,13 @@
       "when": 1790567949052,
       "tag": "0001_fix_audit_price_column_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790568063938,
+      "tag": "0002_operational_permissions_and_number_safety",
+      "breakpoints": true
     }
   ]
 }
