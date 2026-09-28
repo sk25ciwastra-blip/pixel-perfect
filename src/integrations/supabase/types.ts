@@ -325,6 +325,10 @@ export type Database = {
     Functions: {
       advance_room_cleaning: { Args: { _room_id: string }; Returns: undefined }
       can_operate: { Args: { _user_id: string }; Returns: boolean }
+      change_package_price: {
+        Args: { _new_price: number; _package_id: string; _reason: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
