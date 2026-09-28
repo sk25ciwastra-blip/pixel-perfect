@@ -12,7 +12,7 @@ export function useTable<T extends keyof Database['public']['Tables']>(table: T)
   const [loading, setLoading] = useState(true);
   const refresh = useCallback(async () => {
     const { data, error: failure } = await supabase.from(table).select('*').order('created_at', { ascending: true });
-    setRows((data ?? []) as Database['public']['Tables'][T]['Row'][]);
+    setRows((data ?? []) as unknown as Database['public']['Tables'][T]['Row'][]);
     setError(failure?.message ?? ''); setLoading(false);
   }, [table]);
   useEffect(() => { void refresh(); }, [refresh]);
