@@ -60,7 +60,7 @@ function Ringkasan() {
       </section>
 
       <section className="mt-8">
-        <Judul aksi={{posisi !== "Petugas Kebersihan" && <Link to="/booking" className="flex items-center text-xs font-semibold text-primary">Semua <ChevronRight className="h-4 w-4" /></Link>}}>
+        <Judul aksi={posisi !== "Petugas Kebersihan" && <Link to="/booking" className="flex items-center text-xs font-semibold text-primary">Semua <ChevronRight className="h-4 w-4" /></Link>}}>
           Booking Hari Ini
         </Judul>
         <Daftar>
