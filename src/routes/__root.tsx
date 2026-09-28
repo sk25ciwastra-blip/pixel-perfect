@@ -8,6 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { usePeran } from "../lib/peran";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -138,8 +140,25 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <PeranProvider>
-        <Outlet />
+        <AccessGate><Outlet /></AccessGate>
       </PeranProvider>
     </QueryClientProvider>
   );
+}
+
+function AccessGate({ children }: { children: ReactNode }) {
+  const { siap, masuk, peran, posisi } = usePeran();
+  const location = useLocation(); const navigate = useNavigate();
+  const publicPage = location.pathname === '/auth' || location.pathname === '/reset-password';
+  const restricted = ['/karyawan', '/keuangan', '/pengaturan'];
+  const housekeepingOnly = ['/', '/kamar', '/housekeeping'];
+  useEffect(() => {
+    if (!siap) return;
+    if (!masuk && !publicPage) void navigate({ to: '/auth', replace: true });
+    else if (masuk && publicPage) void navigate({ to: '/', replace: true });
+    else if (masuk && ((peran !== 'owner' && restricted.includes(location.pathname)) || (posisi === 'Petugas Kebersihan' && !housekeepingOnly.includes(location.pathname)))) void navigate({ to: '/', replace: true });
+  }, [siap, masuk, publicPage, peran, posisi, location.pathname, navigate]);
+  if (!siap) return <div className="min-h-screen bg-background" />;
+  if ((!masuk && !publicPage) || (masuk && publicPage) || (masuk && ((peran !== 'owner' && restricted.includes(location.pathname)) || (posisi === 'Petugas Kebersihan' && !housekeepingOnly.includes(location.pathname))))) return null;
+  return children;
 }
