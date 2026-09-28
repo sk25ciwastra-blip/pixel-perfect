@@ -17,9 +17,11 @@ import { Route as HousekeepingRouteImport } from './routes/housekeeping'
 import { Route as KamarRouteImport } from './routes/kamar'
 import { Route as KaryawanRouteImport } from './routes/karyawan'
 import { Route as KeuanganRouteImport } from './routes/keuangan'
+import { Route as PaketRouteImport } from './routes/paket'
 import { Route as PengaturanRouteImport } from './routes/pengaturan'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TamuRouteImport } from './routes/tamu'
+import { Route as TipeKamarRouteImport } from './routes/tipe-kamar'
 import { Route as TransaksiRouteImport } from './routes/transaksi'
 
 const IndexRoute = IndexRouteImport.update({
@@ -62,6 +64,11 @@ const KeuanganRoute = KeuanganRouteImport.update({
   path: '/keuangan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaketRoute = PaketRouteImport.update({
+  id: '/paket',
+  path: '/paket',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PengaturanRoute = PengaturanRouteImport.update({
   id: '/pengaturan',
   path: '/pengaturan',
@@ -75,6 +82,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const TamuRoute = TamuRouteImport.update({
   id: '/tamu',
   path: '/tamu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TipeKamarRoute = TipeKamarRouteImport.update({
+  id: '/tipe-kamar',
+  path: '/tipe-kamar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TransaksiRoute = TransaksiRouteImport.update({
@@ -92,9 +104,11 @@ export interface FileRoutesByFullPath {
   '/kamar': typeof KamarRoute
   '/karyawan': typeof KaryawanRoute
   '/keuangan': typeof KeuanganRoute
+  '/paket': typeof PaketRoute
   '/pengaturan': typeof PengaturanRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tamu': typeof TamuRoute
+  '/tipe-kamar': typeof TipeKamarRoute
   '/transaksi': typeof TransaksiRoute
 }
 export interface FileRoutesByTo {
@@ -106,9 +120,11 @@ export interface FileRoutesByTo {
   '/kamar': typeof KamarRoute
   '/karyawan': typeof KaryawanRoute
   '/keuangan': typeof KeuanganRoute
+  '/paket': typeof PaketRoute
   '/pengaturan': typeof PengaturanRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tamu': typeof TamuRoute
+  '/tipe-kamar': typeof TipeKamarRoute
   '/transaksi': typeof TransaksiRoute
 }
 export interface FileRoutesById {
@@ -121,9 +137,11 @@ export interface FileRoutesById {
   '/kamar': typeof KamarRoute
   '/karyawan': typeof KaryawanRoute
   '/keuangan': typeof KeuanganRoute
+  '/paket': typeof PaketRoute
   '/pengaturan': typeof PengaturanRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tamu': typeof TamuRoute
+  '/tipe-kamar': typeof TipeKamarRoute
   '/transaksi': typeof TransaksiRoute
 }
 export interface FileRouteTypes {
@@ -137,9 +155,11 @@ export interface FileRouteTypes {
     | '/kamar'
     | '/karyawan'
     | '/keuangan'
+    | '/paket'
     | '/pengaturan'
     | '/reset-password'
     | '/tamu'
+    | '/tipe-kamar'
     | '/transaksi'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -151,9 +171,11 @@ export interface FileRouteTypes {
     | '/kamar'
     | '/karyawan'
     | '/keuangan'
+    | '/paket'
     | '/pengaturan'
     | '/reset-password'
     | '/tamu'
+    | '/tipe-kamar'
     | '/transaksi'
   id:
     | '__root__'
@@ -165,9 +187,11 @@ export interface FileRouteTypes {
     | '/kamar'
     | '/karyawan'
     | '/keuangan'
+    | '/paket'
     | '/pengaturan'
     | '/reset-password'
     | '/tamu'
+    | '/tipe-kamar'
     | '/transaksi'
   fileRoutesById: FileRoutesById
 }
@@ -180,9 +204,11 @@ export interface RootRouteChildren {
   KamarRoute: typeof KamarRoute
   KaryawanRoute: typeof KaryawanRoute
   KeuanganRoute: typeof KeuanganRoute
+  PaketRoute: typeof PaketRoute
   PengaturanRoute: typeof PengaturanRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TamuRoute: typeof TamuRoute
+  TipeKamarRoute: typeof TipeKamarRoute
   TransaksiRoute: typeof TransaksiRoute
 }
 
@@ -244,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KeuanganRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/paket': {
+      id: '/paket'
+      path: '/paket'
+      fullPath: '/paket'
+      preLoaderRoute: typeof PaketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pengaturan': {
       id: '/pengaturan'
       path: '/pengaturan'
@@ -265,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TamuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tipe-kamar': {
+      id: '/tipe-kamar'
+      path: '/tipe-kamar'
+      fullPath: '/tipe-kamar'
+      preLoaderRoute: typeof TipeKamarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/transaksi': {
       id: '/transaksi'
       path: '/transaksi'
@@ -284,9 +324,11 @@ const rootRouteChildren: RootRouteChildren = {
   KamarRoute: KamarRoute,
   KaryawanRoute: KaryawanRoute,
   KeuanganRoute: KeuanganRoute,
+  PaketRoute: PaketRoute,
   PengaturanRoute: PengaturanRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TamuRoute: TamuRoute,
+  TipeKamarRoute: TipeKamarRoute,
   TransaksiRoute: TransaksiRoute,
 }
 export const routeTree = rootRouteImport
