@@ -329,6 +329,10 @@ export type Database = {
         Args: { _new_price: number; _package_id: string; _reason: string }
         Returns: undefined
       }
+      create_checkin: {
+        Args: { _guest_id: string; _package_id: string; _room_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
