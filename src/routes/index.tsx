@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Ringkasan() {
-  const { peran, nama } = usePeran();
+  const { peran, nama, posisi } = usePeran();
   const rooms = useTable("rooms"); const transactions = useTable("transactions"); const guests = useTable("guests");
   const kamar = rooms.rows; const booking = transactions.rows;
   const hitung = (s: string) => kamar.filter((k) => k.status === ({ siap: "ready", terisi: "occupied", perlu: "dirty" } as Record<string, string>)[s]).length;
@@ -47,12 +47,12 @@ function Ringkasan() {
       <section className="mt-8">
         <Judul>Aksi Cepat</Judul>
         <div className="grid grid-cols-3 gap-3">
-          <Link to="/check-in" className="flex flex-col items-center gap-2 rounded-2xl bg-primary px-3 py-5 text-sm font-semibold text-primary-foreground shadow-lembut">
+          {posisi !== "Petugas Kebersihan" && <Link to="/check-in" className="flex flex-col items-center gap-2 rounded-2xl bg-primary px-3 py-5 text-sm font-semibold text-primary-foreground shadow-lembut">
             <LogIn className="h-6 w-6" /> Check-in
-          </Link>
-          <Link to="/booking" className="flex flex-col items-center gap-2 rounded-2xl bg-primary-soft px-3 py-5 text-sm font-semibold text-primary">
+          </Link>}
+          {posisi !== "Petugas Kebersihan" && <Link to="/booking" className="flex flex-col items-center gap-2 rounded-2xl bg-primary-soft px-3 py-5 text-sm font-semibold text-primary">
             <CalendarPlus className="h-6 w-6" /> Booking
-          </Link>
+          </Link>}
           <Link to="/housekeeping" className="flex flex-col items-center gap-2 rounded-2xl bg-primary-soft px-3 py-5 text-sm font-semibold text-primary">
             <Sparkles className="h-6 w-6" /> Housekeeping
           </Link>
@@ -60,7 +60,7 @@ function Ringkasan() {
       </section>
 
       <section className="mt-8">
-        <Judul aksi={<Link to="/booking" className="flex items-center text-xs font-semibold text-primary">Semua <ChevronRight className="h-4 w-4" /></Link>}>
+        <Judul aksi={{posisi !== "Petugas Kebersihan" && <Link to="/booking" className="flex items-center text-xs font-semibold text-primary">Semua <ChevronRight className="h-4 w-4" /></Link>}}>
           Booking Hari Ini
         </Judul>
         <Daftar>
