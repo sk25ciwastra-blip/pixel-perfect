@@ -36,6 +36,20 @@
       "when": 1790568174308,
       "tag": "0004_checkin_atomic_transaction",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790650000000,
+      "tag": "0005_seed_rooms_and_packages",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790650001000,
+      "tag": "0006_transaction_payments",
+      "breakpoints": true
     }
   ]
 }

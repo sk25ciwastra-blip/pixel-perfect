@@ -17,6 +17,11 @@ export function PeranProvider({ children }: { children: ReactNode }) {
       if (role?.role === 'owner') { setState({ peran: 'owner', nama: 'Pemilik', posisi: 'Owner', siap: true, masuk: true }); return; }
       const { data: employee } = await supabase.from('employees').select('name, position, active').eq('user_id', user.id).maybeSingle();
       if (!alive) return;
+      if (role?.role === 'employee' && employee && !employee.active) {
+        await supabase.auth.signOut();
+        setState({ peran: 'karyawan', nama: '', posisi: '', siap: true, masuk: false });
+        return;
+      }
       setState({ peran: 'karyawan', nama: employee?.name ?? '', posisi: employee?.position === 'receptionist' ? 'Resepsionis' : 'Petugas Kebersihan', siap: true, masuk: role?.role === 'employee' && !!employee?.active });
     }
     void refresh();
