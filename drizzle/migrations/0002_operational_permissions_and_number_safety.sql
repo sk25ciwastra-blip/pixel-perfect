@@ -1,0 +1,10 @@
+GRANT INSERT, UPDATE ON public.employees TO authenticated;
+CREATE POLICY employees_owner_insert ON public.employees FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'owner'));
+CREATE POLICY employees_owner_update ON public.employees FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'owner')) WITH CHECK (public.has_role(auth.uid(), 'owner'));
+GRANT INSERT ON public.transactions TO authenticated;
+CREATE POLICY transactions_insert ON public.transactions FOR INSERT TO authenticated WITH CHECK ((public.has_role(auth.uid(), 'owner') OR public.is_receptionist(auth.uid())) AND created_by = auth.uid());
+CREATE OR REPLACE FUNCTION public.advance_room_cleaning(_room_id uuid) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$ BEGIN IF NOT public.can_operate(auth.uid()) THEN RAISE EXCEPTION 'Akses ditolak'; END IF; UPDATE public.rooms SET status = CASE WHEN status = 'dirty' THEN 'cleaning'::public.room_status ELSE 'ready'::public.room_status END WHERE id = _room_id AND status IN ('dirty', 'cleaning'); IF NOT FOUND THEN RAISE EXCEPTION 'Status kamar tidak dapat diubah'; END IF; END $$;
+REVOKE ALL ON FUNCTION public.advance_room_cleaning(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.advance_room_cleaning(uuid) TO authenticated;
+CREATE OR REPLACE FUNCTION public.enforce_transaction_identity() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$ BEGIN IF auth.uid() IS NOT NULL THEN NEW.created_by := auth.uid(); NEW.transaction_number := 'BTRD25-' || lpad(nextval('public.transaction_number_seq')::text, 6, '0'); END IF; RETURN NEW; END $$;
+CREATE TRIGGER transaction_identity_insert BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.enforce_transaction_identity();
