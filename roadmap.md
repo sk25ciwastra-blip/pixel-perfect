@@ -11,3 +11,9 @@
 - [ ] Buat struktur data kamar, tipe, paket, tamu, transaksi dan aktivitas dengan aturan akses.
 - [ ] Hubungkan halaman yang ada ke data tersimpan serta tindakan pengelolaan dasar.
 - [ ] Uji penyimpanan, validasi, izin, dan tampilan tanpa mengubah desain.
+# Tahap 2 — Tindakan pemesanan dan check-in
+
+- [ ] Baca INTRUKSI-TAHAP2.md dari repositori dan cocokkan dengan data tersimpan.
+- [ ] Tambahkan tombol + Buat Booking Baru pada /booking beserta formulirnya.
+- [ ] Tambahkan tombol + Check-in Langsung pada /transaksi beserta formulirnya.
+- [ ] Uji kedua alur tanpa mengubah desain yang ada.

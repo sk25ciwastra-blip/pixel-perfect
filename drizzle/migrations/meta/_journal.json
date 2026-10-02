@@ -40,15 +40,8 @@
     {
       "idx": 5,
       "version": "7",
-      "when": 1790650000000,
-      "tag": "0005_seed_rooms_and_packages",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1790650001000,
-      "tag": "0006_transaction_payments",
+      "when": 1790899725065,
+      "tag": "0005_booking_checkin_payments_and_duration",
       "breakpoints": true
     }
   ]
