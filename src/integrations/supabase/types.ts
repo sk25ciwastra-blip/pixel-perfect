@@ -145,92 +145,6 @@ export type Database = {
           },
         ]
       }
-      payments: {
-        Row: {
-          amount: number
-          created_at: string
-          created_by: string
-          id: string
-          kind: Database["public"]["Enums"]["payment_kind"]
-          method: Database["public"]["Enums"]["payment_method"]
-          note: string
-          transaction_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          created_by?: string
-          id?: string
-          kind?: Database["public"]["Enums"]["payment_kind"]
-          method: Database["public"]["Enums"]["payment_method"]
-          note?: string
-          transaction_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          created_by?: string
-          id?: string
-          kind?: Database["public"]["Enums"]["payment_kind"]
-          method?: Database["public"]["Enums"]["payment_method"]
-          note?: string
-          transaction_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "transactions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      refunds: {
-        Row: {
-          amount: number
-          created_at: string
-          created_by: string
-          id: string
-          payment_id: string | null
-          reason: string
-          transaction_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          created_by?: string
-          id?: string
-          payment_id?: string | null
-          reason: string
-          transaction_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          created_by?: string
-          id?: string
-          payment_id?: string | null
-          reason?: string
-          transaction_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "refunds_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "refunds_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "transactions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       packages: {
         Row: {
           active: boolean
@@ -263,6 +177,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          method: string
+          recorded_by: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          kind: string
+          method: string
+          recorded_by?: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          method?: string
+          recorded_by?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       room_types: {
         Row: {
@@ -337,46 +289,43 @@ export type Database = {
       }
       transactions: {
         Row: {
-          checked_in_at: string | null
-          checked_out_at: string | null
           created_at: string
           created_by: string
+          ends_at: string | null
           guest_id: string
           id: string
           package_id: string | null
           price_snapshot: number | null
           room_id: string
-          scheduled_end_at: string | null
+          started_at: string | null
           status: Database["public"]["Enums"]["transaction_status"]
           transaction_number: string
           updated_at: string
         }
         Insert: {
-          checked_in_at?: string | null
-          checked_out_at?: string | null
           created_at?: string
           created_by?: string
+          ends_at?: string | null
           guest_id: string
           id?: string
           package_id?: string | null
           price_snapshot?: number | null
           room_id: string
-          scheduled_end_at?: string | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           transaction_number?: string
           updated_at?: string
         }
         Update: {
-          checked_in_at?: string | null
-          checked_out_at?: string | null
           created_at?: string
           created_by?: string
+          ends_at?: string | null
           guest_id?: string
           id?: string
           package_id?: string | null
           price_snapshot?: number | null
           room_id?: string
-          scheduled_end_at?: string | null
+          started_at?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           transaction_number?: string
           updated_at?: string
@@ -435,17 +384,21 @@ export type Database = {
         Returns: undefined
       }
       create_checkin: {
+        Args: { _guest_id: string; _package_id: string; _room_id: string }
+        Returns: string
+      }
+      create_reservation: {
         Args: {
-          _guest_id: string
+          _address: string
+          _amount: number
+          _method: string
+          _mode: string
+          _name: string
           _package_id: string
-          _payment_method: Database["public"]["Enums"]["payment_method"]
+          _phone: string
           _room_id: string
         }
         Returns: string
-      }
-      record_refund: {
-        Args: { _amount: number; _reason: string; _transaction_id: string }
-        Returns: undefined
       }
       has_role: {
         Args: {
@@ -459,8 +412,6 @@ export type Database = {
     Enums: {
       app_role: "owner" | "employee"
       employee_position: "receptionist" | "housekeeping"
-      payment_kind: "dp" | "pelunasan" | "extend" | "overtime" | "lainnya"
-      payment_method: "cash" | "qris" | "transfer"
       room_status: "ready" | "occupied" | "dirty" | "cleaning"
       transaction_status: "booking" | "check_in" | "check_out" | "cancelled"
     }
@@ -592,8 +543,6 @@ export const Constants = {
     Enums: {
       app_role: ["owner", "employee"],
       employee_position: ["receptionist", "housekeeping"],
-      payment_kind: ["dp", "pelunasan", "extend", "overtime", "lainnya"],
-      payment_method: ["cash", "qris", "transfer"],
       room_status: ["ready", "occupied", "dirty", "cleaning"],
       transaction_status: ["booking", "check_in", "check_out", "cancelled"],
     },
