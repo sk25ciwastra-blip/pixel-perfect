@@ -72,6 +72,12 @@ function Ringkasan() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{guests.rows.find(g=>g.id===b.guest_id)?.full_name}</p>
                 <p className="truncate text-xs text-muted-foreground">{b.transaction_number}</p>
+                {b.status === 'CHECK_IN' && (
+  <p className="truncate text-xs text-amber-600 font-medium mt-0.5">
+    Sisa waktu: {b.remaining_time || "02:00:00"}
+  </p>
+)}
+
               </div>
               <LencanaTeks status={b.status === "booking" ? "Booking" : b.status === "check_in" ? "Check-in" : b.status === "check_out" ? "Check-out" : "Dibatalkan"} />
             </li>
