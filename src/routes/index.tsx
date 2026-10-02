@@ -74,7 +74,7 @@ function Ringkasan() {
                 <p className="truncate text-xs text-muted-foreground">{b.transaction_number}</p>
                 {b.status === 'CHECK_IN' && (
   <p className="truncate text-xs text-amber-600 font-medium mt-0.5">
-    Sisa waktu: {b.remaining_time || "02:00:00"}
+    Sisa waktu: {b.checkout_time ? new Date(new Date(b.checkout_time).getTime() - new Date().getTime()).toISOString().substr(11, 8) : "00:00:00"}
   </p>
 )}
 
