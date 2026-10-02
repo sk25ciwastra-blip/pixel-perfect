@@ -178,6 +178,44 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          method: string
+          recorded_by: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          kind: string
+          method: string
+          recorded_by?: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          method?: string
+          recorded_by?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_types: {
         Row: {
           active: boolean
@@ -253,10 +291,13 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          ends_at: string | null
           guest_id: string
           id: string
+          package_id: string | null
           price_snapshot: number | null
           room_id: string
+          started_at: string | null
           status: Database["public"]["Enums"]["transaction_status"]
           transaction_number: string
           updated_at: string
@@ -264,10 +305,13 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string
+          ends_at?: string | null
           guest_id: string
           id?: string
+          package_id?: string | null
           price_snapshot?: number | null
           room_id: string
+          started_at?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           transaction_number?: string
           updated_at?: string
@@ -275,10 +319,13 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          ends_at?: string | null
           guest_id?: string
           id?: string
+          package_id?: string | null
           price_snapshot?: number | null
           room_id?: string
+          started_at?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           transaction_number?: string
           updated_at?: string
@@ -289,6 +336,13 @@ export type Database = {
             columns: ["guest_id"]
             isOneToOne: false
             referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
             referencedColumns: ["id"]
           },
           {
@@ -331,6 +385,19 @@ export type Database = {
       }
       create_checkin: {
         Args: { _guest_id: string; _package_id: string; _room_id: string }
+        Returns: string
+      }
+      create_reservation: {
+        Args: {
+          _address: string
+          _amount: number
+          _method: string
+          _mode: string
+          _name: string
+          _package_id: string
+          _phone: string
+          _room_id: string
+        }
         Returns: string
       }
       has_role: {

@@ -36,6 +36,13 @@
       "when": 1790568174308,
       "tag": "0004_checkin_atomic_transaction",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790899725065,
+      "tag": "0005_booking_checkin_payments_and_duration",
+      "breakpoints": true
     }
   ]
 }
