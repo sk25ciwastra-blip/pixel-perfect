@@ -17,3 +17,5 @@
 - [ ] Tambahkan tombol + Buat Booking Baru pada /booking beserta formulirnya.
 - [ ] Tambahkan tombol + Check-in Langsung pada /transaksi beserta formulirnya.
 - [ ] Uji kedua alur tanpa mengubah desain yang ada.
+
+- [x] Sampaikan nama pengguna akun demo Owner kepada pengguna.
