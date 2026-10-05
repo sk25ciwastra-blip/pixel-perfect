@@ -115,6 +115,7 @@ export type Database = {
           new_price: number
           old_price: number
           package_id: string
+          price_type: string
           reason: string
         }
         Insert: {
@@ -124,6 +125,7 @@ export type Database = {
           new_price: number
           old_price: number
           package_id: string
+          price_type: string
           reason?: string
         }
         Update: {
@@ -133,6 +135,7 @@ export type Database = {
           new_price?: number
           old_price?: number
           package_id?: string
+          price_type?: string
           reason?: string
         }
         Relationships: [
@@ -148,33 +151,54 @@ export type Database = {
       packages: {
         Row: {
           active: boolean
+          checkin_end_time: string | null
+          checkin_start_time: string | null
+          checkout_time: string | null
           created_at: string
           description: string
           duration_minutes: number
           id: string
           name: string
           price: number
+          slot_start_time: string | null
+          time_mode: string | null
           updated_at: string
+          weekday_price: number
+          weekend_price: number
         }
         Insert: {
           active?: boolean
+          checkin_end_time?: string | null
+          checkin_start_time?: string | null
+          checkout_time?: string | null
           created_at?: string
           description?: string
           duration_minutes: number
           id?: string
           name: string
           price: number
+          slot_start_time?: string | null
+          time_mode?: string | null
           updated_at?: string
+          weekday_price: number
+          weekend_price: number
         }
         Update: {
           active?: boolean
+          checkin_end_time?: string | null
+          checkin_start_time?: string | null
+          checkout_time?: string | null
           created_at?: string
           description?: string
           duration_minutes?: number
           id?: string
           name?: string
           price?: number
+          slot_start_time?: string | null
+          time_mode?: string | null
           updated_at?: string
+          weekday_price?: number
+          weekend_price?: number
         }
         Relationships: []
       }
@@ -289,8 +313,10 @@ export type Database = {
       }
       transactions: {
         Row: {
+          checked_out_at: string | null
           created_at: string
           created_by: string
+          day_mode: string | null
           ends_at: string | null
           guest_id: string
           id: string
@@ -303,8 +329,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          checked_out_at?: string | null
           created_at?: string
           created_by?: string
+          day_mode?: string | null
           ends_at?: string | null
           guest_id: string
           id?: string
@@ -317,8 +345,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          checked_out_at?: string | null
           created_at?: string
           created_by?: string
+          day_mode?: string | null
           ends_at?: string | null
           guest_id?: string
           id?: string
@@ -378,19 +408,51 @@ export type Database = {
     }
     Functions: {
       advance_room_cleaning: { Args: { _room_id: string }; Returns: undefined }
-      can_operate: { Args: { _user_id: string }; Returns: boolean }
-      change_package_price: {
-        Args: { _new_price: number; _package_id: string; _reason: string }
+      apply_official_package_timing: {
+        Args: { _package_id: string; _package_name: string }
         Returns: undefined
       }
-      create_checkin: {
-        Args: { _guest_id: string; _package_id: string; _room_id: string }
+      calculate_package_stay_times: {
+        Args: { _package_id: string; _started_at?: string }
+        Returns: {
+          ends_at: string
+          started_at: string
+        }[]
+      }
+      can_frontdesk: { Args: { _user_id: string }; Returns: boolean }
+      can_housekeeping: { Args: { _user_id: string }; Returns: boolean }
+      can_operate: { Args: { _user_id: string }; Returns: boolean }
+      can_view_finance: { Args: { _user_id: string }; Returns: boolean }
+      can_view_operations: { Args: { _user_id: string }; Returns: boolean }
+      change_package_prices: {
+        Args: {
+          _package_id: string
+          _reason: string
+          _weekday_price: number
+          _weekend_price: number
+        }
+        Returns: undefined
+      }
+      check_in_booking: { Args: { _transaction_id: string }; Returns: string }
+      check_out_transaction: {
+        Args: { _transaction_id: string }
+        Returns: string
+      }
+      create_official_package: {
+        Args: {
+          _active: boolean
+          _description: string
+          _name: string
+          _weekday_price: number
+          _weekend_price: number
+        }
         Returns: string
       }
       create_reservation: {
         Args: {
           _address: string
           _amount: number
+          _day_mode: string
           _method: string
           _mode: string
           _name: string
@@ -400,6 +462,13 @@ export type Database = {
         }
         Returns: string
       }
+      has_employee_position: {
+        Args: {
+          _positions: Database["public"]["Enums"]["employee_position"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -408,10 +477,29 @@ export type Database = {
         Returns: boolean
       }
       is_receptionist: { Args: { _user_id: string }; Returns: boolean }
+      override_room_ready: { Args: { _room_id: string }; Returns: undefined }
+      update_package: {
+        Args: {
+          _active: boolean
+          _description: string
+          _duration_minutes: number
+          _name: string
+          _package_id: string
+          _reason: string
+          _weekday_price: number
+          _weekend_price: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "owner" | "employee"
-      employee_position: "receptionist" | "housekeeping"
+      employee_position:
+        | "receptionist"
+        | "housekeeping"
+        | "supervisor"
+        | "inspector"
+        | "investor"
       room_status: "ready" | "occupied" | "dirty" | "cleaning"
       transaction_status: "booking" | "check_in" | "check_out" | "cancelled"
     }
@@ -542,7 +630,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "employee"],
-      employee_position: ["receptionist", "housekeeping"],
+      employee_position: [
+        "receptionist",
+        "housekeeping",
+        "supervisor",
+        "inspector",
+        "investor",
+      ],
       room_status: ["ready", "occupied", "dirty", "cleaning"],
       transaction_status: ["booking", "check_in", "check_out", "cancelled"],
     },
