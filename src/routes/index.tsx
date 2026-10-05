@@ -72,9 +72,9 @@ function Ringkasan() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{guests.rows.find(g=>g.id===b.guest_id)?.full_name}</p>
                 <p className="truncate text-xs text-muted-foreground">{b.transaction_number}</p>
-                {b.status === 'CHECK_IN' && (
+                {b.status === 'check_in' && (
   <p className="truncate text-xs text-amber-600 font-medium mt-0.5">
-    Sisa waktu: {b.checkout_time ? new Date(new Date(b.checkout_time).getTime() - new Date().getTime()).toISOString().substr(11, 8) : "00:00:00"}
+    Sisa waktu: {b.ends_at ? new Date(Math.max(0, new Date(b.ends_at).getTime() - Date.now())).toISOString().slice(11, 19) : "00:00:00"}
   </p>
 )}
 

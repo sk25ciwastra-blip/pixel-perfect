@@ -51,6 +51,7 @@ export function FormulirPemesanan({ mode, onClose, onSaved }: { mode: Mode; onCl
     const { data, error: failure } = await supabase.rpc('create_reservation', {
       _mode: mode, _room_id: roomId, _package_id: packageId, _name: normalizedName,
       _phone: normalizedPhone, _address: normalizedAddress, _amount: payment, _method: method,
+      _day_mode: [0, 6].includes(new Date().getDay()) ? 'weekend' : 'weekday',
     });
     setSaving(false);
     if (failure) { setError(failure.message); return; }
