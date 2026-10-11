@@ -107,6 +107,45 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_calendar: {
+        Row: {
+          calendar_date: string
+          event_type: string | null
+          holiday_name: string | null
+          is_national_holiday: boolean
+          override_reason: string | null
+          owner_override: string | null
+          source_name: string | null
+          source_reference: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          calendar_date: string
+          event_type?: string | null
+          holiday_name?: string | null
+          is_national_holiday?: boolean
+          override_reason?: string | null
+          owner_override?: string | null
+          source_name?: string | null
+          source_reference?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          calendar_date?: string
+          event_type?: string | null
+          holiday_name?: string | null
+          is_national_holiday?: boolean
+          override_reason?: string | null
+          owner_override?: string | null
+          source_name?: string | null
+          source_reference?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       package_price_history: {
         Row: {
           changed_at: string
@@ -141,6 +180,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "package_price_history_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_room_type_prices: {
+        Row: {
+          created_at: string
+          id: string
+          package_id: string
+          pricing_group: string
+          updated_at: string
+          weekday_price: number
+          weekend_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          package_id: string
+          pricing_group: string
+          updated_at?: string
+          weekday_price: number
+          weekend_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          package_id?: string
+          pricing_group?: string
+          updated_at?: string
+          weekday_price?: number
+          weekend_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_room_type_prices_package_id_fkey"
             columns: ["package_id"]
             isOneToOne: false
             referencedRelation: "packages"
@@ -247,6 +324,7 @@ export type Database = {
           description: string
           id: string
           name: string
+          pricing_group: string | null
           updated_at: string
         }
         Insert: {
@@ -255,6 +333,7 @@ export type Database = {
           description?: string
           id?: string
           name: string
+          pricing_group?: string | null
           updated_at?: string
         }
         Update: {
@@ -263,6 +342,7 @@ export type Database = {
           description?: string
           id?: string
           name?: string
+          pricing_group?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -323,6 +403,8 @@ export type Database = {
           package_id: string | null
           price_snapshot: number | null
           room_id: string
+          scheduled_check_in: string | null
+          scheduled_check_out: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["transaction_status"]
           transaction_number: string
@@ -339,6 +421,8 @@ export type Database = {
           package_id?: string | null
           price_snapshot?: number | null
           room_id: string
+          scheduled_check_in?: string | null
+          scheduled_check_out?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           transaction_number?: string
@@ -355,6 +439,8 @@ export type Database = {
           package_id?: string | null
           price_snapshot?: number | null
           room_id?: string
+          scheduled_check_in?: string | null
+          scheduled_check_out?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["transaction_status"]
           transaction_number?: string
@@ -419,6 +505,13 @@ export type Database = {
           started_at: string
         }[]
       }
+      calculate_scheduled_booking_times: {
+        Args: { _package_id: string; _scheduled_check_in: string }
+        Returns: {
+          scheduled_check_in: string
+          scheduled_check_out: string
+        }[]
+      }
       can_frontdesk: { Args: { _user_id: string }; Returns: boolean }
       can_housekeeping: { Args: { _user_id: string }; Returns: boolean }
       can_operate: { Args: { _user_id: string }; Returns: boolean }
@@ -459,7 +552,12 @@ export type Database = {
           _package_id: string
           _phone: string
           _room_id: string
+          _scheduled_check_in?: string
         }
+        Returns: string
+      }
+      get_operational_day_mode: {
+        Args: { _calendar_date: string }
         Returns: string
       }
       has_employee_position: {
@@ -478,6 +576,10 @@ export type Database = {
       }
       is_receptionist: { Args: { _user_id: string }; Returns: boolean }
       override_room_ready: { Args: { _room_id: string }; Returns: undefined }
+      record_transaction_payment: {
+        Args: { _amount: number; _method: string; _transaction_id: string }
+        Returns: string
+      }
       update_package: {
         Args: {
           _active: boolean
