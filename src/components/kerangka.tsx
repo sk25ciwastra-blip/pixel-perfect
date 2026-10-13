@@ -8,9 +8,28 @@ import { usePeran } from "@/lib/peran";
 
 type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean };
 
+function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
+  if (peran === "owner") return true;
+
+  switch (posisiKode) {
+    case "supervisor":
+      return !["/karyawan", "/pengaturan"].includes(ke);
+    case "receptionist":
+      return ["/", "/kamar", "/booking", "/transaksi", "/tamu", "/keuangan"].includes(ke);
+    case "housekeeping":
+      return ["/", "/kamar", "/housekeeping"].includes(ke);
+    case "inspector":
+      return ["/", "/kamar", "/booking", "/transaksi", "/tamu", "/housekeeping"].includes(ke);
+    case "investor":
+      return ["/", "/kamar"].includes(ke);
+    default:
+      return false;
+  }
+}
+
 const semuaMenu: Menu[] = [
-  { ke: "/", label: "Ringkasan", ikon: LayoutGrid },
-  { ke: "/kamar", label: "Kamar", ikon: BedDouble },
+  { ke: "/", label: "Dashboard", ikon: LayoutGrid },
+  { ke: "/kamar", label: "Room", ikon: BedDouble },
   { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/transaksi", label: "Transaksi", ikon: Receipt },
   { ke: "/tamu", label: "Tamu", ikon: Users },
@@ -21,8 +40,8 @@ const semuaMenu: Menu[] = [
 ];
 
 const bawah: Menu[] = [
-  { ke: "/", label: "Beranda", ikon: LayoutGrid },
-  { ke: "/kamar", label: "Kamar", ikon: BedDouble },
+  { ke: "/", label: "Dashboard", ikon: LayoutGrid },
+  { ke: "/kamar", label: "Room", ikon: BedDouble },
   { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/tamu", label: "Tamu", ikon: Users },
 ];
@@ -46,9 +65,9 @@ export function Kerangka({
 }: {
   judul: string; keterangan?: string; aksi?: ReactNode; children: ReactNode; tanpaJudul?: boolean;
 }) {
-  const { peran, nama, posisi, keluar } = usePeran();
+  const { peran, nama, posisi, posisiKode, keluar } = usePeran();
   const [lainnya, setLainnya] = useState(false);
-  const menu = semuaMenu.filter((m) => (peran === "owner" || !m.ownerSaja) && (posisi !== "Petugas Kebersihan" || ["/", "/kamar", "/housekeeping"].includes(m.ke)));
+  const menu = semuaMenu.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
 
   return (
@@ -104,7 +123,7 @@ export function Kerangka({
       {/* Navigasi bawah HP */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         <ul className="grid grid-cols-5">
-          {bawah.filter((m) => posisi !== "Petugas Kebersihan" || ["/", "/kamar"].includes(m.ke)).map((m) => (
+          {bawah.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode)).map((m) => (
             <li key={m.ke}>
               <Link
                 to={m.ke}

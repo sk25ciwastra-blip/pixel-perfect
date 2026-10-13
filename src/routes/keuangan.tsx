@@ -1,7 +1,288 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Kerangka, Judul } from '@/components/kerangka';
+import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Kerangka, Panel, Angka } from '@/components/kerangka';
 import { useTable } from '@/lib/data-live';
+import { usePeran } from '@/lib/peran';
+import { supabase } from '@/integrations/supabase/client';
 import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
-export const Route=createFileRoute('/keuangan')({head:()=>meta('Keuangan','Ringkasan nilai transaksi Baturaden 25 Homestay untuk pemilik.'),component:Halaman});
-function Halaman(){const {rows,error}=useTable('transactions');const total=rows.filter(t=>t.status!=='cancelled').reduce((n,t)=>n+Number(t.price_snapshot??0),0);return <Kerangka judul="Keuangan" keterangan={new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'})}>{error&&<p role="alert">{error}</p>}<div className="rounded-2xl bg-primary p-5 text-primary-foreground shadow-lembut"><p className="text-sm opacity-80">Nilai Transaksi Tercatat</p><p className="mt-1 text-3xl font-bold">{rupiah(total)}</p></div><div className="mt-4 divide-y divide-border rounded-2xl border border-border bg-card shadow-lembut"><div className="flex justify-between px-4 py-3.5 text-sm"><span className="text-muted-foreground">Transaksi tercatat</span><span className="font-semibold">{rows.length}</span></div></div><div className="mt-8"><Judul>Rincian</Judul><p className="text-sm text-muted-foreground">Nilai ini berasal dari harga yang tercatat saat transaksi dibuat. Pembayaran dan pengeluaran belum dicatat pada tahap ini.</p></div></Kerangka>}
+
+export const Route = createFileRoute('/keuangan')({
+  head: () => meta('Keuangan', 'Sesi kas, penerimaan, closing, dan pengawasan keuangan.'),
+  component: HalamanKeuangan,
+});
+
+type Summary = Record<string, number | string | null>;
+
+function angka(value: string) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function HalamanKeuangan() {
+  const { posisiKode } = usePeran();
+  const isOwner = posisiKode === 'owner';
+  const canCloseOthers = isOwner || posisiKode === 'supervisor';
+  const [userId, setUserId] = useState('');
+  const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [summary, setSummary] = useState<Summary>({});
+  const [openingCash, setOpeningCash] = useState('0');
+  const [setorCash, setSetorCash] = useState('0');
+  const [setorTransfer, setSetorTransfer] = useState('0');
+  const [diLaci, setDiLaci] = useState('0');
+  const [dibawa, setDibawa] = useState('0');
+  const [recipientUserId, setRecipientUserId] = useState('');
+  const [closingReason, setClosingReason] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseMethod, setExpenseMethod] = useState('CASH');
+  const [expenseCategory, setExpenseCategory] = useState('');
+  const [expenseNote, setExpenseNote] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositMethod, setDepositMethod] = useState('CASH');
+  const [depositBankId, setDepositBankId] = useState('');
+  const [depositProof, setDepositProof] = useState('');
+  const [minimumDpMode, setMinimumDpMode] = useState('AMOUNT');
+  const [minimumDpValue, setMinimumDpValue] = useState('0');
+  const [commissionMode, setCommissionMode] = useState('PERCENTAGE');
+  const [commissionRate, setCommissionRate] = useState('8');
+  const [perRoomAmount, setPerRoomAmount] = useState('0');
+  const [refundTransactionId, setRefundTransactionId] = useState('');
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [refundMethod, setRefundMethod] = useState('CASH');
+  const [refundSourceType, setRefundSourceType] = useState('OWNER_FUNDS');
+  const [refundSourceSessionId, setRefundSourceSessionId] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [handoffActual, setHandoffActual] = useState('');
+  const [handoffReason, setHandoffReason] = useState('');
+
+  const sessions = useTable('finance_cash_sessions');
+  const deposits = useTable('finance_deposits');
+  const commissionConfigs = useTable('finance_commission_configs', isOwner);
+  const financeSettings = useTable('finance_settings', isOwner);
+  const banks = useTable('finance_bank_accounts');
+  const employees = useTable('employees');
+  const handoffs = useTable('finance_drawer_handoffs');
+  const transactions = useTable('transactions');
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? ''));
+  }, []);
+
+  useEffect(() => {
+    const setting = financeSettings.rows[0];
+    const config = [...commissionConfigs.rows].sort(
+      (a, b) => new Date(b.effective_from).getTime() - new Date(a.effective_from).getTime(),
+    )[0];
+    if (setting) {
+      setMinimumDpMode(setting.minimum_dp_mode);
+      setMinimumDpValue(String(setting.minimum_dp_value));
+    }
+    if (config) {
+      setCommissionMode(config.mode);
+      setCommissionRate(String(config.rate));
+      setPerRoomAmount(String(config.per_room_amount));
+    }
+  }, [commissionConfigs.rows, financeSettings.rows]);
+
+  const activeSession = useMemo(
+    () => sessions.rows.find((session) => session.opened_by === userId && session.status === 'OPEN'),
+    [sessions.rows, userId],
+  );
+
+  const selectedSession = activeSession ?? (canCloseOthers
+    ? sessions.rows.find((session) => session.id === selectedSessionId && session.status === 'OPEN')
+      ?? sessions.rows.find((session) => session.status === 'OPEN')
+    : undefined);
+
+  async function refreshFinance() {
+    await Promise.all([sessions.refresh(), deposits.refresh(), commissionConfigs.refresh(), banks.refresh(), employees.refresh(), handoffs.refresh()]);
+    if (selectedSession) {
+      const { data } = await supabase.rpc('get_finance_session_summary', {
+        _session_id: selectedSession.id,
+      });
+      setSummary((data as Summary | null) ?? {});
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedSession) {
+      setSummary({});
+      return;
+    }
+    void supabase.rpc('get_finance_session_summary', { _session_id: selectedSession.id }).then(({ data }) => {
+      setSummary((data as Summary | null) ?? {});
+    });
+  }, [selectedSession?.id]);
+
+  async function run(action: () => Promise<{ error?: { message: string } | null }>) {
+    setBusy(true);
+    setMessage('');
+    try {
+      const result = await action();
+      if (result.error) setMessage(result.error.message);
+      else await refreshFinance();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openSession() {
+    await run(async () => {
+      const { error } = await supabase.rpc('open_finance_cash_session', { _opening_cash: angka(openingCash) });
+      return { error };
+    });
+  }
+
+  async function closeSession() {
+    if (!selectedSession) return;
+    await run(async () => {
+      const { error } = await supabase.rpc('close_finance_cash_session', {
+        _session_id: selectedSession.id,
+        _allocation: { setor_cash: angka(setorCash), setor_transfer: angka(setorTransfer), di_laci: angka(diLaci), dibawa: angka(dibawa), recipient_user_id: recipientUserId || null },
+        _reason: closingReason,
+      });
+      return { error };
+    });
+  }
+
+  async function recordExpense() {
+    if (!selectedSession || !expenseAmount || !expenseCategory) return;
+    await run(async () => {
+      const { error } = await supabase.rpc('record_finance_expense', {
+        _idempotency_key: crypto.randomUUID(),
+        _session_id: selectedSession.id,
+        _amount: angka(expenseAmount),
+        _method: expenseMethod,
+        _category: expenseCategory,
+        _note: expenseNote,
+      });
+      return { error };
+    });
+  }
+
+  async function submitDeposit() {
+    if (!selectedSession || !depositAmount) return;
+    await run(async () => {
+      const { error } = await supabase.rpc('create_finance_deposit', {
+        _idempotency_key: crypto.randomUUID(),
+        _session_id: selectedSession.id,
+        _method: depositMethod,
+        _amount: angka(depositAmount),
+        _bank_account_id: depositMethod === 'Transfer' ? depositBankId || null : null,
+        _proof_ref: depositProof,
+      });
+      return { error };
+    });
+  }
+
+  async function saveSettings() {
+    await run(async () => {
+      const first = await supabase.rpc('set_finance_settings', { _minimum_dp_mode: minimumDpMode, _minimum_dp_value: angka(minimumDpValue) });
+      if (first.error) return { error: first.error };
+      const second = await supabase.rpc('set_finance_commission_config', { _mode: commissionMode, _rate: angka(commissionRate), _per_room_amount: angka(perRoomAmount) });
+      return { error: second.error };
+    });
+  }
+
+  async function saveBank() {
+    await run(async () => {
+      const { error } = await supabase.rpc('upsert_finance_bank_account', { _id: null, _bank_name: bankName, _account_name: accountName, _account_number: accountNumber, _logo_key: '', _active: true });
+      return { error };
+    });
+  }
+
+  async function refund() {
+    if (!refundTransactionId || !refundAmount || !refundReason) return;
+    await run(async () => {
+      const { error } = await supabase.rpc('create_finance_refund', { _idempotency_key: crypto.randomUUID(), _transaction_id: refundTransactionId, _amount: angka(refundAmount), _refund_method: refundMethod, _source_type: refundSourceType, _source_session_id: refundSourceType === 'OWNER_FUNDS' ? null : refundSourceSessionId || null, _reason: refundReason });
+      return { error };
+    });
+  }
+
+  async function decideDeposit(id: string, status: 'DITERIMA' | 'DITOLAK' | 'BELUM_DITERIMA') {
+    await run(async () => {
+      const { error } = await supabase.rpc('decide_finance_deposit', { _deposit_id: id, _status: status, _reason: status === 'DITERIMA' ? '' : 'Perlu tindak lanjut Owner' });
+      return { error };
+    });
+  }
+
+  async function confirmHandoff(id: string) {
+    if (!handoffActual) return;
+    await run(async () => {
+      const { error } = await supabase.rpc('confirm_finance_drawer_handover', {
+        _handoff_id: id,
+        _actual_amount: angka(handoffActual),
+        _reason: handoffReason,
+      });
+      return { error };
+    });
+  }
+
+  return (
+    <Kerangka judul="Keuangan" keterangan="Penerimaan, sesi kas, closing, dan pengawasan Owner">
+      {message && <p role="alert" className="mb-4 rounded-xl bg-secondary px-3 py-2 text-sm">{message}</p>}
+      {!activeSession && (
+        <Panel judul="Sesi kas">
+          <p className="text-sm text-muted-foreground">Buka sesi kas sebelum menerima pembayaran.</p>
+          <div className="mt-3 flex gap-2"><input value={openingCash} onChange={(e) => setOpeningCash(e.target.value)} type="number" min="0" className="h-10 w-full rounded-xl border border-input px-3" placeholder="Saldo awal" /><Button disabled={busy} onClick={() => void openSession()}>Buka Sesi</Button></div>
+        </Panel>
+      )}
+      {selectedSession && (
+        <Panel judul={`Sesi ${selectedSession.status} · ${selectedSession.operational_date}`}>
+          {canCloseOthers && !activeSession && <select value={selectedSession.id} onChange={(e) => setSelectedSessionId(e.target.value)} className="mb-4 h-10 w-full rounded-xl border border-input px-3">{sessions.rows.filter((session) => session.status === 'OPEN').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {session.opened_by}</option>)}</select>}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <Angka label="Saldo awal" nilai={rupiah(Number(summary['opening_cash'] ?? selectedSession.opening_cash))} />
+            <Angka label="Penerimaan" nilai={rupiah(Number(summary['payments_total'] ?? 0))} />
+            <Angka label="Komisi" nilai={rupiah(Number(summary['commission'] ?? 0))} />
+            <Angka label="Pengeluaran" nilai={rupiah(Number(summary['expenses'] ?? 0))} />
+            <Angka label="Cash" nilai={rupiah(Number(summary['cash'] ?? 0))} />
+            <Angka label="QRIS" nilai={rupiah(Number(summary['qris'] ?? 0))} />
+            <Angka label="Transfer" nilai={rupiah(Number(summary['transfer'] ?? 0))} />
+            <Angka label="Refund" nilai={rupiah(Number(summary['refunds'] ?? 0))} />
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-4"><input value={setorCash} onChange={(e) => setSetorCash(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="SETOR CASH" /><input value={setorTransfer} onChange={(e) => setSetorTransfer(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="SETOR TRANSFER" /><input value={diLaci} onChange={(e) => setDiLaci(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="DI LACI" /><input value={dibawa} onChange={(e) => setDibawa(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="DIBAWA" /></div>
+          {angka(diLaci) > 0 && <select value={recipientUserId} onChange={(e) => setRecipientUserId(e.target.value)} className="mt-3 h-10 w-full rounded-xl border border-input px-3"><option value="">Pilih penerima DI LACI</option>{employees.rows.filter((employee) => employee.active).map((employee) => <option key={employee.user_id} value={employee.user_id}>{employee.name}</option>)}</select>}
+          <input value={closingReason} onChange={(e) => setClosingReason(e.target.value)} className="mt-3 h-10 w-full rounded-xl border border-input px-3" placeholder="Alasan closing khusus bila diperlukan" />
+          <Button className="mt-3" disabled={busy} onClick={() => void closeSession()}>Finalkan Closing</Button>
+        </Panel>
+      )}
+      {isOwner && (
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <Panel judul="Pengaturan minimum DP dan komisi">
+            <div className="grid gap-2 sm:grid-cols-2"><select value={minimumDpMode} onChange={(e) => setMinimumDpMode(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="AMOUNT">Minimum nominal</option><option value="PERCENTAGE">Minimum persentase</option></select><input value={minimumDpValue} onChange={(e) => setMinimumDpValue(e.target.value)} type="number" min="0" step="0.01" className="h-10 rounded-xl border border-input px-3" placeholder="Nilai minimum DP" /><select value={commissionMode} onChange={(e) => setCommissionMode(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="OFF">Komisi OFF</option><option value="PERCENTAGE">Percentage</option><option value="PER_ROOM">Per room</option></select><input value={commissionRate} onChange={(e) => setCommissionRate(e.target.value)} type="number" min="0" step="0.01" className="h-10 rounded-xl border border-input px-3" placeholder="Rate %, mis. 15.5" /><input value={perRoomAmount} onChange={(e) => setPerRoomAmount(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="Nominal per-room" /></div>
+            <Button className="mt-3" disabled={busy} onClick={() => void saveSettings()}>Simpan Konfigurasi</Button>
+          </Panel>
+          <Panel judul="Rekening Owner untuk Transfer">
+            <div className="grid gap-2 sm:grid-cols-3"><input value={bankName} onChange={(e) => setBankName(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Bank" /><input value={accountName} onChange={(e) => setAccountName(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Nama pemilik" /><input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Nomor rekening" /></div>
+            <Button className="mt-3" disabled={busy} onClick={() => void saveBank()}>Tambah Rekening</Button>
+            <ul className="mt-3 space-y-2 text-sm">{banks.rows.filter((bank) => bank.active).map((bank) => <li key={bank.id} className="rounded-xl bg-secondary px-3 py-2">{bank.bank_name} · {bank.account_name} · {bank.account_number}</li>)}</ul>
+          </Panel>
+        </div>
+      )}
+      {selectedSession && <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <Panel judul="Pengeluaran sesi">
+          <div className="grid gap-2 sm:grid-cols-2"><input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} type="number" min="1" className="h-10 rounded-xl border border-input px-3" placeholder="Nominal" /><select value={expenseMethod} onChange={(e) => setExpenseMethod(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select><input value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Kategori" /><input value={expenseNote} onChange={(e) => setExpenseNote(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Catatan" /></div>
+          <Button className="mt-3" disabled={busy} onClick={() => void recordExpense()}>Catat Pengeluaran</Button>
+        </Panel>
+        <Panel judul="Setoran">
+          <div className="grid gap-2 sm:grid-cols-2"><input value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} type="number" min="1" className="h-10 rounded-xl border border-input px-3" placeholder="Nominal" /><select value={depositMethod} onChange={(e) => setDepositMethod(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="CASH">Cash</option><option value="Transfer">Transfer</option></select>{depositMethod === 'Transfer' && <select value={depositBankId} onChange={(e) => setDepositBankId(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="">Rekening Owner</option>{banks.rows.filter((bank) => bank.active).map((bank) => <option key={bank.id} value={bank.id}>{bank.bank_name} · {bank.account_number}</option>)}</select>}<input value={depositProof} onChange={(e) => setDepositProof(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Referensi bukti transfer" /></div>
+          <Button className="mt-3" disabled={busy} onClick={() => void submitDeposit()}>Ajukan Setoran</Button>
+        </Panel>
+      </div>}
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        {isOwner && (
+<Panel judul="Refund Owner"><div className="grid gap-2"><select value={refundTransactionId} onChange={(e) => setRefundTransactionId(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="">Pilih transaksi</option>{transactions.rows.filter((transaction) => transaction.status !== 'cancelled').map((transaction) => <option key={transaction.id} value={transaction.id}>{transaction.transaction_number}</option>)}</select><input value={refundAmount} onChange={(e) => setRefundAmount(e.target.value)} type="number" min="1" className="h-10 rounded-xl border border-input px-3" placeholder="Nominal refund" /><select value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select><select value={refundSourceType} onChange={(e) => setRefundSourceType(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="OWNER_FUNDS">Dana Owner</option><option value="SHIFT_CASH">Kas sesi</option><option value="DRAWER">Laci</option></select>{refundSourceType !== 'OWNER_FUNDS' && <select value={refundSourceSessionId} onChange={(e) => setRefundSourceSessionId(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="">Pilih sesi sumber</option>{sessions.rows.filter((session) => session.status === 'OPEN' || session.status === 'FINAL').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {session.opened_by}</option>)}</select>}<input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Alasan wajib" /></div><Button className="mt-3" disabled={!isOwner || busy} onClick={() => void refund()}>Catat Refund</Button></Panel>
+        )}
+      </div>
+      {isOwner && <Panel judul="Setoran menunggu konfirmasi Owner"><ul className="space-y-2">{deposits.rows.filter((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER').map((deposit) => <li key={deposit.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2 text-sm"><span>{deposit.method} · {rupiah(Number(deposit.amount))}</span><span className="flex gap-2"><Button size="sm" onClick={() => void decideDeposit(deposit.id, 'DITERIMA')}>Terima</Button><Button size="sm" variant="outline" onClick={() => void decideDeposit(deposit.id, 'DITOLAK')}>Tolak</Button><Button size="sm" variant="ghost" onClick={() => void decideDeposit(deposit.id, 'BELUM_DITERIMA')}>Belum diterima</Button></span></li>)}</ul></Panel>}
+      {handoffs.rows.filter((handoff) => handoff.status === 'MENUNGGU_HITUNG').length > 0 && <Panel judul="Serah terima DI LACI"><ul className="space-y-3">{handoffs.rows.filter((handoff) => handoff.status === 'MENUNGGU_HITUNG').map((handoff) => <li key={handoff.id} className="rounded-xl bg-secondary p-3 text-sm"><p>Ekspektasi: {rupiah(Number(handoff.expected_amount))}</p><div className="mt-2 flex gap-2"><input value={handoffActual} onChange={(e) => setHandoffActual(e.target.value)} type="number" min="0" className="h-10 flex-1 rounded-xl border border-input px-3" placeholder="Hitungan aktual" /><input value={handoffReason} onChange={(e) => setHandoffReason(e.target.value)} className="h-10 flex-1 rounded-xl border border-input px-3" placeholder="Alasan selisih bila ada" /><Button disabled={busy} onClick={() => void confirmHandoff(handoff.id)}>Konfirmasi</Button></div></li>)}</ul></Panel>}
+    </Kerangka>
+  );
+}
