@@ -28,7 +28,7 @@ function Auth() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background/60" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/25 via-transparent to-background/25" />
 
-      <div className="relative grid h-svh min-h-[740px] grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] justify-items-center px-5 py-6 sm:px-10">
+      <div className="relative grid min-h-svh grid-rows-[1fr_auto_1fr] justify-items-center px-5 py-8 sm:px-10">
         {/* Logo resmi Baturaden 25 Homestay */}
         <div aria-label="Baturaden 25 Homestay" className="mb-4 w-fit self-end text-center leading-tight">
           <svg viewBox="0 0 64 40" className="mx-auto mb-2 h-10 w-[4.5rem] text-gold drop-shadow-[0_0_12px_color-mix(in_oklch,var(--gold)_50%,transparent)]" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
