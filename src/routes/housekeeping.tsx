@@ -10,8 +10,20 @@ import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
 import { ChecklistHousekeeping } from '@/components/checklist-housekeeping';
 import { PerawatanBerkala } from '@/components/perawatan-berkala';
+import { Link } from '@tanstack/react-router';
+
+type BagianHk = 'status' | 'checklist' | 'perawatan' | 'riwayat';
+const bagianHk: { kode: BagianHk; label: string }[] = [
+  { kode: 'status', label: 'Status Housekeeping' },
+  { kode: 'checklist', label: 'Checklist Housekeeping' },
+  { kode: 'perawatan', label: 'Perawatan Berkala' },
+  { kode: 'riwayat', label: 'Riwayat Housekeeping' },
+];
 
 export const Route = createFileRoute('/housekeeping')({
+  validateSearch: (s: Record<string, unknown>): { bagian?: BagianHk } => ({
+    bagian: bagianHk.some((b) => b.kode === s.bagian) ? (s.bagian as BagianHk) : undefined,
+  }),
   head: () =>
     meta(
       'Kebersihan Kamar',
@@ -29,6 +41,7 @@ type Section = {
 
 function Halaman() {
   const { posisiKode } = usePeran();
+  const { bagian = 'status' } = Route.useSearch();
   const canAdvance =
     posisiKode === 'owner' ||
     posisiKode === 'supervisor' ||
@@ -258,6 +271,33 @@ function Halaman() {
         </p>
       )}
 
+      <div className="mb-6 flex flex-wrap gap-2">
+        {bagianHk.map((b) => (
+          <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }}
+            className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${bagian === b.kode ? 'border-gold/60 bg-gradient-to-r from-gold-light/20 to-gold/5 text-gold-light' : 'border-border bg-card text-muted-foreground hover:text-foreground'}`}>
+            {b.label}
+          </Link>
+        ))}
+      </div>
+
+      {bagian === 'riwayat' && (
+        <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-lembut">
+          {history.rows.length === 0 && <li className="p-4 text-sm text-muted-foreground">Belum ada riwayat housekeeping.</li>}
+          {[...history.rows].sort((x, y) => y.created_at.localeCompare(x.created_at)).slice(0, 100).map((item) => (
+            <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+              <div>
+                <p className="font-semibold">Kamar {rooms.rows.find((r) => r.id === item.room_id)?.room_number ?? '—'} · {item.action === 'start_cleaning' ? 'Mulai dibersihkan' : item.action === 'finish_cleaning' ? 'Selesai dibersihkan' : 'Override menjadi siap'}</p>
+                <p className="text-xs text-muted-foreground">{item.performed_by_name} · <span className="font-mono">{item.job_number ?? 'HK legacy'}</span></p>
+              </div>
+              <span className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {bagian === 'perawatan' && <PerawatanBerkala readOnly={!canAdvance} />}
+
+      {(bagian === 'status' || bagian === 'checklist') && (<>
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           ['READY', activeRooms.filter((room) => room.status === 'ready').length],
@@ -306,7 +346,7 @@ function Halaman() {
       )}
 
       <div className="space-y-8">
-        {sections.map((section) => (
+        {sections.filter((section) => bagian === 'status' || section.key === 'cleaning' || section.key === 'needs_action').map((section) => (
           <section key={section.key}>
             <Judul
               aksi={
@@ -441,7 +481,7 @@ function Halaman() {
         ))}
       </div>
 
-      <PerawatanBerkala readOnly={!canAdvance} />
+      </>)}
 
       {checklistRoom && (
         <ChecklistHousekeeping

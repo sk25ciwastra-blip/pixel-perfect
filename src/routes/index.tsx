@@ -25,7 +25,6 @@ import { FormulirPemesanan } from "@/components/formulir-pemesanan";
 import { LencanaStatus } from "@/components/status-kamar";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
-import { PerawatanBerkala } from "@/components/perawatan-berkala";
 import { usePeran } from "@/lib/peran";
 import { rupiah } from "@/lib/data-contoh";
 import { useTable } from "@/lib/data-live";
@@ -778,9 +777,6 @@ function Ringkasan() {
         </section>
       )}
 
-      <PerawatanBerkala
-        readOnly={posisiKode === "receptionist" || posisiKode === "inspector" || posisiKode === "investor"}
-      />
 
       {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {modal === "booking" && <FormulirPemesanan mode="booking" onClose={() => setModal(null)} onSaved={refreshSemua} />}
