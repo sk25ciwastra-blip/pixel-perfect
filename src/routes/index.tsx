@@ -471,7 +471,7 @@ function Ringkasan() {
         };
       });
     }
-    const [y, m] = bulanWib(sekarang).split("-").map(Number);
+    const [y = 2026, m = 1] = bulanWib(sekarang).split("-").map(Number);
     return Array.from({ length: 6 }, (_, i) => {
       const date = new Date(Date.UTC(y, m - 1 - (5 - i), 15));
       const key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
