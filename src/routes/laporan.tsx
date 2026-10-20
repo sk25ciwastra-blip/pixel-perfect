@@ -15,8 +15,8 @@ const daftarBagian: { kode: Bagian; label: string; ikon: typeof History }[] = [
 ];
 
 export const Route = createFileRoute('/laporan')({
-  validateSearch: (s: Record<string, unknown>): { bagian?: Bagian } => ({
-    bagian: daftarBagian.some((b) => b.kode === s.bagian) ? (s.bagian as Bagian) : undefined,
+  validateSearch: (s: Record<string, unknown>): { bagian?: Bagian | undefined } => ({
+    bagian: daftarBagian.some((b) => b.kode === s['bagian']) ? (s['bagian'] as Bagian) : undefined,
   }),
   head: () => meta('Laporan Operasional', 'Closing shift, riwayat closing, dan rekap operasional Baturaden 25 Homestay.'),
   component: Halaman,

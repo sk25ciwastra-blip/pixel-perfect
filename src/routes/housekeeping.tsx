@@ -21,8 +21,8 @@ const bagianHk: { kode: BagianHk; label: string }[] = [
 ];
 
 export const Route = createFileRoute('/housekeeping')({
-  validateSearch: (s: Record<string, unknown>): { bagian?: BagianHk } => ({
-    bagian: bagianHk.some((b) => b.kode === s.bagian) ? (s.bagian as BagianHk) : undefined,
+  validateSearch: (s: Record<string, unknown>): { bagian?: BagianHk | undefined } => ({
+    bagian: bagianHk.some((b) => b.kode === s['bagian']) ? (s['bagian'] as BagianHk) : undefined,
   }),
   head: () =>
     meta(
