@@ -491,11 +491,12 @@ function Ringkasan() {
     <Kerangka judul="Ringkasan" penuh>
       <div className="relative isolate">
         {/* Panorama kota malam selebar layar, menyatu ke latar */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] overflow-hidden sm:h-[480px]" aria-hidden="true">
-          <img src={skyline} alt="" width={1920} height={640} className="h-full w-full object-cover object-[70%_55%]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-background/5" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[440px] overflow-hidden sm:h-[520px]" aria-hidden="true">
+          <img src={skyline} alt="" width={1920} height={640} className="h-full w-full object-cover object-[65%_60%] saturate-[1.15] brightness-110" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/45 to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_72%_62%,oklch(0.76_0.115_82/0.22),transparent_70%)] mix-blend-screen" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent via-background/70 to-background" />
         </div>
 
         <div className="px-4 pb-10 pt-5 sm:px-6 lg:px-8 2xl:px-10">
@@ -520,8 +521,8 @@ function Ringkasan() {
           </header>
 
           {/* KPI + Aksi Cepat */}
-          <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_320px]">
-            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
+          <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "2xl:grid-cols-4" : "2xl:grid-cols-3"}`}>
               {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
             </div>
 
@@ -832,9 +833,23 @@ function KartuKpi({ item }: { item: Kpi }) {
   const r = 25;
   const keliling = 2 * Math.PI * r;
   return (
-    <article className="panel-mewah group flex min-w-0 flex-col items-start gap-2 p-3 transition hover:border-gold/50 sm:flex-row sm:items-center xl:flex-col xl:items-start xl:justify-center">
-      {item.cincin !== undefined ? (
-        <div className="relative size-10 shrink-0" aria-label={`${item.cincin}% kamar terisi`}>
+    <article className="panel-mewah group relative flex min-w-0 flex-col items-start gap-3 overflow-hidden p-4 sm:flex-row sm:items-center transition hover:-translate-y-0.5 hover:border-gold/50 sm:gap-3">
+      <span className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-gold/[0.07] blur-2xl" aria-hidden="true" />
+      {item.cincin === undefined && (
+        <span className={`ikon-bulat size-11 shrink-0 2xl:size-12 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
+          <Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" />
+        </span>
+      )}
+      {item.cincin !== undefined && (
+        <span className="ikon-bulat size-11 shrink-0 text-gold 2xl:size-12"><Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" /></span>
+      )}
+      <div className="min-w-0 flex-1">
+        <h2 className="line-clamp-2 text-[0.8rem] leading-snug text-muted-foreground">{item.label}</h2>
+        <p className="mt-1 truncate font-serif text-[1.65rem] font-semibold leading-none tabular-nums text-foreground">{item.nilai}</p>
+        <p className={`mt-1.5 line-clamp-2 text-[11px] leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
+      </div>
+      {item.cincin !== undefined && (
+        <div className="relative hidden size-12 shrink-0 sm:block" aria-label={`${item.cincin}% kamar terisi`}>
           <svg viewBox="0 0 60 60" className="size-full -rotate-90 drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.35)]">
             <circle cx="30" cy="30" r={r} fill="oklch(0.16 0.006 80)" stroke="var(--secondary)" strokeWidth="5" />
             {item.cincin > 0 && (
@@ -843,16 +858,7 @@ function KartuKpi({ item }: { item: Kpi }) {
           </svg>
           <span className="absolute inset-0 grid place-items-center text-xs font-bold text-gold-light">{item.cincin}%</span>
         </div>
-      ) : (
-        <span className={`ikon-bulat size-10 shrink-0 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
-          <Ikon className="size-7" strokeWidth={1.5} aria-hidden="true" />
-        </span>
       )}
-      <div className="min-w-0 flex-1">
-        <h2 className="text-[0.8rem] leading-snug text-muted-foreground">{item.label}</h2>
-        <p className="mt-0.5 break-words text-2xl font-bold leading-tight tabular-nums">{item.nilai}</p>
-        <p className={`mt-0.5 text-[11px] leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
-      </div>
     </article>
   );
 }
