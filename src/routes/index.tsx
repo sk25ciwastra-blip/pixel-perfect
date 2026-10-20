@@ -24,7 +24,7 @@ import {
   Flag,
   type LucideIcon,
 } from "lucide-react";
-import { Kerangka } from "@/components/kerangka";
+import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import skyline from "@/assets/skyline-malam.jpg";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
@@ -507,15 +507,7 @@ function Ringkasan() {
               <span className="h-4 w-px bg-gold/30" aria-hidden="true" />
               <span className="font-semibold tabular-nums text-gold-light">{jamSekarang} WIB</span>
             </div>
-            <div className="hidden items-center gap-3 rounded-full border border-gold/25 bg-background/55 py-1.5 pl-1.5 pr-4 backdrop-blur-md sm:flex">
-              <span className="emas-isi grid size-9 place-items-center rounded-full font-serif text-sm font-bold">
-                {(nama || "P").slice(0, 1).toUpperCase()}
-              </span>
-              <div className="leading-tight">
-                <p className="text-sm font-semibold">{nama || "Pengguna"}</p>
-                <p className="text-xs text-gold">{posisi || "Pengguna"}</p>
-              </div>
-            </div>
+            <div className="hidden lg:block"><MenuProfil /></div>
           </div>
 
           {/* Sapaan */}
