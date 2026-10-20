@@ -1,12 +1,12 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import {
   LayoutGrid, BedDouble, CalendarDays, Receipt, Users, Sparkles, Wallet,
-  IdCard, Settings, MoreHorizontal, X, AlertTriangle, type LucideIcon,
+  IdCard, Settings, MoreHorizontal, X, FileBarChart, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
 
-type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean };
+type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean; anak?: { bagian: string; label: string }[] };
 
 function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
   if (peran === "owner") return true;
@@ -15,7 +15,7 @@ function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
     case "supervisor":
       return !["/karyawan", "/pengaturan"].includes(ke);
     case "receptionist":
-      return ["/", "/kamar", "/booking", "/transaksi", "/tamu", "/keuangan"].includes(ke);
+      return ["/", "/kamar", "/booking", "/transaksi", "/tamu", "/keuangan", "/laporan"].includes(ke);
     case "housekeeping":
       return ["/", "/kamar", "/housekeeping"].includes(ke);
     case "inspector":
@@ -33,8 +33,19 @@ const semuaMenu: Menu[] = [
   { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/transaksi", label: "Transaksi", ikon: Receipt },
   { ke: "/tamu", label: "Tamu", ikon: Users },
-  { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles },
+  { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles, anak: [
+    { bagian: "status", label: "Status Housekeeping" },
+    { bagian: "checklist", label: "Checklist Housekeeping" },
+    { bagian: "perawatan", label: "Perawatan Berkala" },
+    { bagian: "riwayat", label: "Riwayat Housekeeping" },
+  ] },
   { ke: "/keuangan", label: "Keuangan", ikon: Wallet, ownerSaja: true },
+  { ke: "/laporan", label: "Laporan Operasional", ikon: FileBarChart, anak: [
+    { bagian: "closing", label: "Closing Shift" },
+    { bagian: "riwayat", label: "Riwayat Closing" },
+    { bagian: "harian", label: "Rekap Harian" },
+    { bagian: "pendapatan", label: "Rekap Pendapatan" },
+  ] },
   { ke: "/karyawan", label: "Karyawan", ikon: IdCard, ownerSaja: true },
   { ke: "/pengaturan", label: "Pengaturan", ikon: Settings, ownerSaja: true },
 ];
@@ -60,48 +71,6 @@ function Logo() {
   );
 }
 
-function EmergencyButton() {
-  const [open, setOpen] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-
-  function confirmEmergency() {
-    setOpen(false);
-    setNotice("Emergency belum terkirim: layanan notifikasi internal belum tersedia di backend.");
-  }
-
-  return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => { setNotice(null); setOpen(true); }}
-        title="Emergency"
-        aria-label="Kirim permintaan Emergency"
-        className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-v0-danger/50 bg-v0-danger/10 text-[11px] font-bold tracking-[0.18em] text-bahaya-foreground transition hover:bg-v0-danger/25 focus:outline-none focus:ring-2 focus:ring-v0-danger/60"
-      >
-        <AlertTriangle className="h-4 w-4" /><span>EMERGENCY</span>
-      </button>
-      {notice && <p role="alert" className="px-1 text-center text-[10px] leading-4 text-bahaya-foreground">{notice}</p>}
-      {open && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4" role="presentation">
-          <div role="dialog" aria-modal="true" aria-labelledby="emergency-dialog-title" className="w-full max-w-md rounded-2xl border border-border bg-popover p-5 text-foreground shadow-lembut">
-            <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-bahaya text-bahaya-foreground"><AlertTriangle className="h-5 w-5" /></span>
-              <div>
-                <h2 id="emergency-dialog-title" className="text-lg font-bold">Konfirmasi Emergency</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Permintaan bantuan akan ditujukan kepada Owner, Supervisor, Inspector, dan Housekeeping sesuai hak akses.</p>
-              </div>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setOpen(false)} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground">Batal</button>
-              <button type="button" onClick={confirmEmergency} className="rounded-xl bg-destructive px-4 py-2 text-sm font-bold text-destructive-foreground">Konfirmasi</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function Kerangka({
   judul, keterangan, aksi, children, tanpaJudul,
 }: {
@@ -109,6 +78,7 @@ export function Kerangka({
 }) {
   const { peran, nama, posisi, posisiKode, keluar } = usePeran();
   const [lainnya, setLainnya] = useState(false);
+  const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname, bagian: (r.location.search as { bagian?: string }).bagian }) });
   const menu = semuaMenu.filter((m) => m.ke !== "/pengaturan" && bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
 
@@ -119,8 +89,8 @@ export function Kerangka({
         <div className="px-2"><Logo /></div>
         <nav className="mt-8 flex-1 space-y-1">
           {menu.map((m) => (
+            <div key={m.ke}>
             <Link
-              key={m.ke}
               to={m.ke}
               activeOptions={{ exact: m.ke === "/" }}
               activeProps={{ className: "bg-gradient-to-r from-gold-light/15 to-gold/5 font-semibold text-gold-light ring-1 ring-inset ring-gold/40" }}
@@ -130,10 +100,24 @@ export function Kerangka({
               <m.ikon className="h-[18px] w-[18px]" strokeWidth={1.6} />
               {m.label}
             </Link>
+            {m.anak && lokasi.path === m.ke && (
+              <div className="ml-6 mt-1 space-y-0.5 border-l border-gold/25 pl-3">
+                {m.anak.map((a, idx) => {
+                  const aktif = (lokasi.bagian ?? m.anak?.[0]?.bagian) === a.bagian;
+                  return (
+                    <Link key={a.bagian} to={m.ke} search={{ bagian: a.bagian } as never}
+                      className={`block rounded-md px-2 py-1.5 text-xs transition ${aktif ? "font-semibold text-gold-light" : "text-muted-foreground hover:text-foreground"}`}
+                      data-idx={idx}>
+                      {a.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+            </div>
           ))}
         </nav>
         <div className="space-y-3 border-t border-border pt-4">
-          <EmergencyButton />
           <div className="px-2">
             <p className="text-sm font-semibold">{nama}</p>
             <p className="text-xs text-muted-foreground">{posisi}</p>
@@ -153,7 +137,9 @@ export function Kerangka({
           {!tanpaJudul && (
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="text-2xl font-bold tracking-tight">{judul}</h1>
+                <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-gold">BATURADEN 25 HOMESTAY</p>
+                <h1 className="mt-1 font-serif text-3xl tracking-tight text-foreground">{judul}</h1>
+                <div className="mt-2 h-px w-16 bg-gradient-to-r from-gold to-transparent" />
                 {keterangan && <p className="mt-1 text-sm text-muted-foreground">{keterangan}</p>}
               </div>
               {aksi}
@@ -239,8 +225,9 @@ export function Judul({ children, aksi }: { children: ReactNode; aksi?: ReactNod
 
 export function Panel({ judul, children }: { judul: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 shadow-lembut sm:p-5">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{judul}</h2>
+    <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-navy-deep p-4 shadow-lembut sm:p-5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+      <h2 className="font-serif text-lg text-gold-light">{judul}</h2>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -257,7 +244,7 @@ export function Angka({ label, nilai, catatan }: { label: string; nilai: string;
 }
 
 export function Daftar({ children }: { children: ReactNode }) {
-  return <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-lembut">{children}</ul>;
+  return <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-navy-deep shadow-lembut">{children}</ul>;
 }
 
 export function KotakCari({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
