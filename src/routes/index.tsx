@@ -709,7 +709,7 @@ function Ringkasan() {
                   </div>
                 </div>
               ) : (
-                <ol className="mt-1 max-h-[360px] overflow-y-auto divide-y divide-gold/10">
+                <ol className="mt-1 max-h-[240px] overflow-y-auto divide-y divide-gold/10">
                   {transaksiTerbaru.map((t) => (
                     <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 py-2.5">
                       <span className={`grid size-8 shrink-0 place-items-center rounded-full border ${t.jenis === "masuk" ? "border-v0-success/40 bg-siap text-siap-foreground" : "border-v0-danger/40 bg-bahaya text-bahaya-foreground"}`}>

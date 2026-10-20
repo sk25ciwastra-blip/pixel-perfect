@@ -21,5 +21,5 @@
 - [x] Sampaikan nama pengguna akun demo Owner kepada pengguna.
 
 # P0 — Penyempurnaan Dashboard saat ini
-- [ ] Rapikan tabel kamar, KPI, tinggi daftar transaksi, dan tiga panel analitik tanpa mengubah aturan.
-- [ ] Periksa Dashboard 1580×900 dan Booking serta halaman operasional dengan data tersedia, tanpa membuat transaksi.
+- [x] Rapikan tabel kamar, KPI, tinggi daftar transaksi, dan tiga panel analitik tanpa mengubah aturan.
+- [x] Periksa Dashboard 1580×900 dan Booking serta halaman operasional dengan data tersedia, tanpa membuat transaksi.
