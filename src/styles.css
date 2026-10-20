@@ -232,6 +232,52 @@
   box-shadow: 0 0 22px -6px oklch(0.76 0.115 82 / 0.45), 0 1px 0 oklch(1 0 0 / 0.08) inset;
 }
 
+/* Lencana status ringkas (dipakai halaman berikutnya). */
+@utility lencana {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid currentColor;
+  border-color: color-mix(in oklab, currentColor 35%, transparent);
+}
+
+/* Garis pemisah emas halus. */
+@utility garis-emas {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, oklch(0.76 0.115 82 / 0.45), transparent);
+}
+
 @layer base {
-  .font-serif { font-variant-numeric: lining-nums; }
+  .font-serif { font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
+  h1, h2, h3 { text-wrap: balance; }
+  .tabular, td, th { font-variant-numeric: tabular-nums; }
+
+  /* Tabel global: kepala kecil berhuruf kapital, baris lembut. */
+  table { border-collapse: separate; border-spacing: 0; }
+  thead th {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  tbody tr { transition: background-color 150ms ease; }
+  tbody tr:hover { background-color: oklch(0.76 0.115 82 / 0.045); }
+
+  /* Isian bawaan selaras tema. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):hover,
+  select:hover, textarea:hover { border-color: oklch(0.76 0.115 82 / 0.5); }
+
+  /* Scrollbar tipis keemasan. */
+  * { scrollbar-width: thin; scrollbar-color: oklch(0.6 0.08 82 / 0.45) transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: oklch(0.6 0.08 82 / 0.4); border-radius: 9999px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  [role="dialog"] { box-shadow: 0 40px 80px -30px oklch(0 0 0 / 0.95); }
 }
