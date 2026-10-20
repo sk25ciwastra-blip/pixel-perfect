@@ -21,8 +21,16 @@ export const Route = createFileRoute('/booking')({
       'Pemesanan',
       'Daftar pemesanan kamar Baturaden 25 Homestay.',
     ),
+  validateSearch: (s: Record<string, unknown>): { bagian?: 'semua' | 'hari-ini' | 'besok' | 'mendatang' | undefined } => ({
+    bagian: ['semua', 'hari-ini', 'besok', 'mendatang'].includes(String(s['bagian'])) ? (s['bagian'] as 'semua') : undefined,
+  }),
   component: Halaman,
 });
+
+function kunciWib(offsetHari: number) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(new Date(Date.now() + offsetHari * 86400000));
+}
 
 type MetodePembayaran = 'Cash' | 'QRIS' | 'Transfer';
 
@@ -43,6 +51,16 @@ function kodePaket(name: string | undefined) {
 }
 
 function Halaman() {
+  const { bagian = 'semua' } = Route.useSearch();
+  const cocokJadwal = (t: { scheduled_check_in: string | null }) => {
+    if (bagian === 'semua') return true;
+    if (!t.scheduled_check_in) return false;
+    const k = kunciWib(0);
+    const d = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(t.scheduled_check_in));
+    if (bagian === 'hari-ini') return d === k;
+    if (bagian === 'besok') return d === kunciWib(1);
+    return d >= kunciWib(2);
+  };
   const { posisiKode } = usePeran();
   const readOnly = posisiKode === 'inspector';
 
@@ -482,7 +500,7 @@ Terima kasih.`;
 
       {baris(
         transactions.rows.filter(
-          (booking) => booking.status === 'booking',
+          (booking) => booking.status === 'booking' && cocokJadwal(booking),
         ),
       )}
 
@@ -492,7 +510,7 @@ Terima kasih.`;
 
       {baris(
         transactions.rows.filter(
-          (booking) => booking.status !== 'booking',
+          (booking) => booking.status !== 'booking' && cocokJadwal(booking),
         ),
       )}
 

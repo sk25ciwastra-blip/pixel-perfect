@@ -12,8 +12,13 @@ import { usePeran } from "@/lib/peran";
 
 export const Route = createFileRoute("/kamar")({
   head: () => meta("Status Kamar", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
+  validateSearch: (s: Record<string, unknown>): { bagian?: "semua" | "tersedia" | "terisi" | "perlu" | undefined } => ({
+    bagian: ["semua", "tersedia", "terisi", "perlu"].includes(String(s["bagian"])) ? (s["bagian"] as "semua") : undefined,
+  }),
   component: HalamanKamar,
 });
+
+const filterBagian: Record<string, Room["status"] | null> = { semua: null, tersedia: "ready", terisi: "occupied", perlu: "dirty" };
 
 const statusMap: Record<Room["status"], StatusKamar> = {
   ready: "siap",
@@ -129,22 +134,25 @@ function HalamanKamar() {
     return map;
   }, [checklistRows]);
 
+  const { bagian = "semua" } = Route.useSearch();
+  const statusFilter = filterBagian[bagian] ?? null;
   const groupedRooms = useMemo(() => {
     const groups: Array<{ label: string; rooms: Room[] }> = kelompokKamar.map((group) => ({
       label: group.label,
       rooms: group.nomor
         .map((roomNumber) => rooms.rows.find((room) => room.room_number === roomNumber))
-        .filter((room): room is Room => Boolean(room)),
+        .filter((room): room is Room => Boolean(room))
+        .filter((room) => !statusFilter || room.status === statusFilter),
     }));
 
-    const otherRooms = rooms.rows.filter((room) => !nomorKamarTerpetakan.has(room.room_number));
+    const otherRooms = rooms.rows.filter((room) => !nomorKamarTerpetakan.has(room.room_number) && (!statusFilter || room.status === statusFilter));
 
     if (otherRooms.length) {
       groups.push({ label: "KAMAR LAINNYA", rooms: otherRooms });
     }
 
     return groups.filter((group) => group.rooms.length > 0);
-  }, [rooms.rows]);
+  }, [rooms.rows, statusFilter]);
 
   function edit(room?: Room) {
     setEditing(room ?? null);
@@ -220,6 +228,7 @@ function HalamanKamar() {
           </p>
         )}
         {rooms.loading && <p className="mt-5 text-sm text-muted-foreground">Memuat kamar…</p>}
+        {!rooms.loading && statusFilter && groupedRooms.length === 0 && <p className="panel-mewah mt-5 px-4 py-8 text-center text-sm text-muted-foreground">Tidak ada kamar dengan status ini saat ini.</p>}
 
         <div className="mt-5 space-y-6">
           {groupedRooms.map((group) => (

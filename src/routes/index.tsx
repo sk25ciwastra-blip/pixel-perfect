@@ -766,26 +766,6 @@ function Ringkasan() {
             )}
           </div>
 
-          {peran === "owner" && (
-            <section className="panel-mewah mt-5 p-5 sm:p-6" aria-labelledby="judul-aktivitas">
-              <JudulModul id="judul-aktivitas" ikon={Clock3} judul="Aktivitas Terbaru" sub="Catatan tindakan tim terakhir" />
-              {activityItems.length === 0 ? (
-                <p className="mt-4 text-sm text-muted-foreground">Belum ada aktivitas tercatat.</p>
-              ) : (
-                <ol className="mt-4 grid gap-x-8 gap-y-3 md:grid-cols-2">
-                  {activityItems.map((activity) => (
-                    <li key={activity.id} className="flex items-start gap-3">
-                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-gold shadow-[0_0_8px_var(--gold)]" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium">{activity.title}</p>
-                        <p className="text-xs text-muted-foreground">{activity.actor} · {jamWib(activity.created_at)}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
-          )}
         </div>
       </div>
 

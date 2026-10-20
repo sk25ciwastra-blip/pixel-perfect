@@ -30,15 +30,30 @@ function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
 
 const semuaMenu: Menu[] = [
   { ke: "/", label: "Dashboard", ikon: LayoutGrid },
-  { ke: "/kamar", label: "Kamar", ikon: BedDouble },
-  { ke: "/booking", label: "Booking", ikon: CalendarDays },
-  { ke: "/transaksi", label: "Transaksi", ikon: Receipt },
+  { ke: "/kamar", label: "Kamar", ikon: BedDouble, anak: [
+    { bagian: "semua", label: "Semua Kamar" },
+    { bagian: "tersedia", label: "Tersedia" },
+    { bagian: "terisi", label: "Terisi" },
+    { bagian: "perlu", label: "Perlu Dibersihkan" },
+  ] },
+  { ke: "/booking", label: "Booking", ikon: CalendarDays, anak: [
+    { bagian: "semua", label: "Semua Booking" },
+    { bagian: "hari-ini", label: "Hari Ini" },
+    { bagian: "besok", label: "Besok" },
+    { bagian: "mendatang", label: "Mendatang (mulai lusa)" },
+  ] },
+  { ke: "/transaksi", label: "Transaksi", ikon: Receipt, anak: [
+    { bagian: "semua", label: "Semua Transaksi" },
+    { bagian: "hari-ini", label: "Hari Ini" },
+    { bagian: "kemarin", label: "Kemarin" },
+    { bagian: "riwayat", label: "Riwayat" },
+  ] },
   { ke: "/tamu", label: "Tamu", ikon: Users },
   { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles, anak: [
-    { bagian: "status", label: "Status Housekeeping" },
-    { bagian: "checklist", label: "Checklist Housekeeping" },
+    { bagian: "status", label: "Status" },
+    { bagian: "checklist", label: "Checklist" },
     { bagian: "perawatan", label: "Perawatan Berkala" },
-    { bagian: "riwayat", label: "Riwayat Housekeeping" },
+    { bagian: "riwayat", label: "Riwayat Pekerjaan" },
   ] },
   { ke: "/keuangan", label: "Keuangan", ikon: Wallet, ownerSaja: true },
   { ke: "/laporan", label: "Laporan Operasional", ikon: FileBarChart, anak: [
@@ -112,6 +127,7 @@ export function Kerangka({
 }) {
   const { peran, nama, posisi, posisiKode } = usePeran();
   const [lainnya, setLainnya] = useState(false);
+  const [tertutup, setTertutup] = useState<Record<string, boolean>>({});
   const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname, bagian: (r.location.search as { bagian?: string }).bagian }) });
   const menu = semuaMenu.filter((m) => m.ke !== "/pengaturan" && bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
@@ -138,9 +154,14 @@ export function Kerangka({
               className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[0.9rem] transition-all"
             >
               <m.ikon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.6} />
-              <span className="truncate">{m.label}</span>
+              <span className="flex-1 truncate">{m.label}</span>
+              {m.anak && lokasi.path === m.ke && (
+                <span role="button" tabIndex={0} aria-label={tertutup[m.ke] ? "Buka submenu" : "Tutup submenu"}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTertutup((t) => ({ ...t, [m.ke]: !t[m.ke] })); }}
+                  className={`text-xs transition-transform ${tertutup[m.ke] ? "" : "rotate-180"}`}>▾</span>
+              )}
             </Link>
-            {m.anak && lokasi.path === m.ke && (
+            {m.anak && lokasi.path === m.ke && !tertutup[m.ke] && (
               <div className="ml-6 mt-1.5 space-y-0.5 border-l border-gold/25 pl-3">
                 {m.anak.map((a, idx) => {
                   const aktif = (lokasi.bagian ?? m.anak?.[0]?.bagian) === a.bagian;
