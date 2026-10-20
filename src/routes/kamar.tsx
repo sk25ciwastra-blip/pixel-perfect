@@ -324,7 +324,7 @@ function HalamanKamar() {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4">
           <form
             onSubmit={save}
             className="w-full max-w-md space-y-3 rounded-2xl bg-background p-5 shadow-lembut"
@@ -398,7 +398,7 @@ function HalamanKamar() {
 
       {detailHousekeeping && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4"
           onClick={() => setDetailHousekeeping(null)}
         >
           <section

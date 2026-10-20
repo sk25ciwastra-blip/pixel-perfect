@@ -314,7 +314,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4"
       onMouseDown={event => {
         if (event.target === event.currentTarget) onClose();
       }}

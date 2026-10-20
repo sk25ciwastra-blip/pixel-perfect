@@ -194,7 +194,7 @@ export function Kerangka({
 
       {lainnya && (
         <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setLainnya(false)}>
-          <div className="absolute inset-0 bg-foreground/30" />
+          <div className="absolute inset-0 bg-navy-deep/75 backdrop-blur-sm" />
           <div
             className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-background px-4 pb-8 pt-4"
             onClick={(e) => e.stopPropagation()}
