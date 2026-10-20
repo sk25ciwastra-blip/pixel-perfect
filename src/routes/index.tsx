@@ -576,7 +576,7 @@ function Ringkasan() {
                 </div>
               ) : (
                 <div className="mx-3 mb-4 max-h-[330px] flex-1 overflow-auto rounded-xl xl:max-h-none border border-gold/15 bg-navy-deep/50">
-                  <table className="w-full min-w-[640px] table-fixed text-left text-xs xl:min-w-0">
+                  <table className="w-full min-w-[700px] table-fixed text-left text-[13px] xl:min-w-0">
                     <colgroup>
                       <col className="w-[58px]" />
                       <col className="w-[84px]" />
@@ -643,7 +643,7 @@ function Ringkasan() {
                               {sisa ? (
                                 <div className="flex items-center gap-2">
                                   <span className={`shrink-0 font-mono font-bold tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
-                                  <span className="h-1 w-full overflow-hidden rounded-full bg-secondary" aria-hidden="true">
+                                  <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary" aria-hidden="true">
                                     <span className={`block h-full rounded-full ${warnaBatang}`} style={{ width: `${sisa.status === "expired" ? 100 : Math.max(4, porsi * 100)}%` }} />
                                   </span>
                                 </div>
