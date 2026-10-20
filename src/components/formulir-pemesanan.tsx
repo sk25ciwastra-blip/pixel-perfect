@@ -1,3 +1,4 @@
+import { rpc } from "@/lib/data-live";
 import { useEffect, useState, type FormEvent } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -141,7 +142,7 @@ const [amount, setAmount] = useState('0');
       }).format(new Date());
     }
 
-    const { data, error: dayModeError } = await supabase.rpc(
+    const { data, error: dayModeError } = await rpc(
       'get_operational_day_mode',
       {
         _calendar_date: operationalDate,
@@ -295,7 +296,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
         : {}),
     };
 
-    const { data, error: failure } = await supabase.rpc(
+    const { data, error: failure } = await rpc(
       isTraining ? 'create_training_reservation' : 'create_reservation',
       reservationArgs,
     );

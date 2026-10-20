@@ -1,3 +1,4 @@
+import { rpc } from "@/lib/data-live";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -205,12 +206,12 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
 
     const results = await Promise.all(
       selectedTasks.map(async (task) => {
-        const { error } = await supabase.rpc("record_housekeeping_maintenance", {
+        const { error } = await rpc("record_housekeeping_maintenance", {
           _maintenance_id: crypto.randomUUID(),
           _work_type: task.workType,
-          _room_id: task.roomId,
+          _room_id: task.roomId as string,
           _location_code: task.locationCode,
-          _performed_by: performedBy || null,
+          _performed_by: performedBy || undefined,
           _note: note,
         });
 

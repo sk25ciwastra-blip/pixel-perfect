@@ -1,3 +1,4 @@
+import { rpc } from "@/lib/data-live";
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -115,7 +116,7 @@ function HalamanKeuangan() {
   async function refreshFinance() {
     await Promise.all([sessions.refresh(), deposits.refresh(), commissionConfigs.refresh(), banks.refresh(), employees.refresh(), handoffs.refresh(), expenses.refresh()]);
     if (selectedSession) {
-      const { data } = await supabase.rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', {
+      const { data } = await rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', {
         _session_id: selectedSession.id,
       });
       setSummary((data as Summary | null) ?? {});
@@ -127,7 +128,7 @@ function HalamanKeuangan() {
       setSummary({});
       return;
     }
-    void supabase.rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', { _session_id: selectedSession.id }).then(({ data }) => {
+    void rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', { _session_id: selectedSession.id }).then(({ data }) => {
       setSummary((data as Summary | null) ?? {});
     });
   }, [isTraining, selectedSession?.id]);
@@ -165,7 +166,7 @@ function HalamanKeuangan() {
 
   async function openSession() {
     await run(async () => {
-      const { error } = await supabase.rpc('open_finance_cash_session', { _opening_cash: angka(openingCash) });
+      const { error } = await rpc('open_finance_cash_session', { _opening_cash: angka(openingCash) });
       return { error };
     });
   }
@@ -173,7 +174,7 @@ function HalamanKeuangan() {
   async function closeSession() {
     if (!selectedSession) return;
     await run(async () => {
-      const { error } = await supabase.rpc('close_finance_cash_session', {
+      const { error } = await rpc('close_finance_cash_session', {
         _session_id: selectedSession.id,
         _allocation: { setor_cash: angka(setorCash), setor_transfer: angka(setorTransfer), di_laci: angka(diLaci), dibawa: angka(dibawa), recipient_user_id: recipientUserId || null },
         _reason: closingReason,
@@ -185,7 +186,7 @@ function HalamanKeuangan() {
   async function recordExpense() {
     if (!selectedSession || !expenseAmount || !expenseCategory) return;
     await run(async () => {
-      const { error } = await supabase.rpc(isTraining ? 'record_training_finance_expense' : 'record_finance_expense', {
+      const { error } = await rpc(isTraining ? 'record_training_finance_expense' : 'record_finance_expense', {
         _idempotency_key: crypto.randomUUID(),
         _session_id: selectedSession.id,
         _amount: angka(expenseAmount),
@@ -200,7 +201,7 @@ function HalamanKeuangan() {
   async function submitDeposit() {
     if (!selectedSession || !depositAmount) return;
     await run(async () => {
-      const { error } = await supabase.rpc(isTraining ? 'create_training_finance_deposit' : 'create_finance_deposit', {
+      const { error } = await rpc(isTraining ? 'create_training_finance_deposit' : 'create_finance_deposit', {
         _idempotency_key: crypto.randomUUID(),
         _session_id: selectedSession.id,
         _method: depositMethod,
@@ -214,16 +215,16 @@ function HalamanKeuangan() {
 
   async function saveSettings() {
     await run(async () => {
-      const first = await supabase.rpc('set_finance_settings', { _minimum_dp_mode: minimumDpMode, _minimum_dp_value: angka(minimumDpValue) });
+      const first = await rpc('set_finance_settings', { _minimum_dp_mode: minimumDpMode, _minimum_dp_value: angka(minimumDpValue) });
       if (first.error) return { error: first.error };
-      const second = await supabase.rpc('set_finance_commission_config', { _mode: commissionMode, _rate: angka(commissionRate), _per_room_amount: angka(perRoomAmount) });
+      const second = await rpc('set_finance_commission_config', { _mode: commissionMode, _rate: angka(commissionRate), _per_room_amount: angka(perRoomAmount) });
       return { error: second.error };
     });
   }
 
   async function saveBank() {
     await run(async () => {
-      const { error } = await supabase.rpc('upsert_finance_bank_account', { _id: null, _bank_name: bankName, _account_name: accountName, _account_number: accountNumber, _logo_key: '', _active: true });
+      const { error } = await rpc('upsert_finance_bank_account', { _id: null, _bank_name: bankName, _account_name: accountName, _account_number: accountNumber, _logo_key: '', _active: true });
       return { error };
     });
   }
@@ -231,14 +232,14 @@ function HalamanKeuangan() {
   async function refund() {
     if (!refundTransactionId || !refundAmount || !refundReason) return;
     await run(async () => {
-      const { error } = await supabase.rpc('create_finance_refund', { _idempotency_key: crypto.randomUUID(), _transaction_id: refundTransactionId, _amount: angka(refundAmount), _refund_method: refundMethod, _source_type: refundSourceType, _source_session_id: refundSourceType === 'OWNER_FUNDS' ? null : refundSourceSessionId || null, _reason: refundReason });
+      const { error } = await rpc('create_finance_refund', { _idempotency_key: crypto.randomUUID(), _transaction_id: refundTransactionId, _amount: angka(refundAmount), _refund_method: refundMethod, _source_type: refundSourceType, _source_session_id: refundSourceType === 'OWNER_FUNDS' ? null : refundSourceSessionId || null, _reason: refundReason });
       return { error };
     });
   }
 
   async function decideDeposit(id: string, status: 'DITERIMA' | 'DITOLAK' | 'BELUM_DITERIMA') {
     await run(async () => {
-      const { error } = await supabase.rpc('decide_finance_deposit', { _deposit_id: id, _status: status, _reason: status === 'DITERIMA' ? '' : 'Perlu tindak lanjut Owner' });
+      const { error } = await rpc('decide_finance_deposit', { _deposit_id: id, _status: status, _reason: status === 'DITERIMA' ? '' : 'Perlu tindak lanjut Owner' });
       return { error };
     });
   }
@@ -246,7 +247,7 @@ function HalamanKeuangan() {
   async function confirmHandoff(id: string) {
     if (!handoffActual) return;
     await run(async () => {
-      const { error } = await supabase.rpc('confirm_finance_drawer_handover', {
+      const { error } = await rpc('confirm_finance_drawer_handover', {
         _handoff_id: id,
         _actual_amount: angka(handoffActual),
         _reason: handoffReason,
