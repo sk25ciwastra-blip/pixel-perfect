@@ -79,6 +79,10 @@ const bawah: Menu[] = [
   { ke: "/tamu", label: "Tamu", ikon: Users },
 ];
 
+function tanggalHariIni() {
+  return new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date());
+}
+
 function LambangTeratai({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 40" className={className} fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
@@ -149,25 +153,27 @@ export function Kerangka({
             <Link
               to={m.ke}
               activeOptions={{ exact: m.ke === "/" }}
-              activeProps={{ className: "emas-isi font-semibold" }}
-              inactiveProps={{ className: "text-muted-foreground hover:bg-gold/[0.07] hover:text-foreground" }}
-              className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[0.9rem] transition-all"
+              activeProps={{ className: "menu-aktif font-semibold text-gold-light" }}
+              inactiveProps={{ className: "text-muted-foreground hover:bg-gold/[0.06] hover:text-foreground" }}
+              className="group relative flex items-center gap-3 rounded-xl px-3 py-2 text-[0.88rem] transition-all"
             >
-              <m.ikon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.6} />
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-transparent transition group-hover:border-gold/20 group-[.menu-aktif]:border-gold/40 group-[.menu-aktif]:bg-gold/15 group-[.menu-aktif]:text-gold-light">
+                <m.ikon className="h-[17px] w-[17px]" strokeWidth={1.6} />
+              </span>
               <span className="flex-1 truncate">{m.label}</span>
               {m.anak && lokasi.path === m.ke && (
                 <span role="button" tabIndex={0} aria-label={tertutup[m.ke] ? "Buka submenu" : "Tutup submenu"}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTertutup((t) => ({ ...t, [m.ke]: !t[m.ke] })); }}
-                  className={`text-xs transition-transform ${tertutup[m.ke] ? "" : "rotate-180"}`}>▾</span>
+                  className={`grid size-6 place-items-center rounded-md text-gold transition-transform hover:bg-gold/10 ${tertutup[m.ke] ? "" : "rotate-180"}`}><ChevronDown className="size-3.5" /></span>
               )}
             </Link>
             {m.anak && lokasi.path === m.ke && !tertutup[m.ke] && (
-              <div className="ml-6 mt-1.5 space-y-0.5 border-l border-gold/25 pl-3">
+              <div className="ml-[1.6rem] mt-1 mb-1.5 space-y-0.5 border-l border-gold/20 pl-3">
                 {m.anak.map((a, idx) => {
                   const aktif = (lokasi.bagian ?? m.anak?.[0]?.bagian) === a.bagian;
                   return (
                     <Link key={a.bagian} to={m.ke} search={{ bagian: a.bagian } as never}
-                      className={`block rounded-md px-2 py-1.5 text-xs transition ${aktif ? "font-semibold text-gold-light" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`relative block rounded-md px-2.5 py-1.5 text-xs transition ${aktif ? "bg-gold/10 font-semibold text-gold-light before:absolute before:-left-[13px] before:top-1/2 before:size-1.5 before:-translate-y-1/2 before:rounded-full before:bg-gold before:shadow-[0_0_8px_var(--gold)]" : "text-muted-foreground hover:text-foreground"}`}
                       data-idx={idx}>
                       {a.label}
                     </Link>
@@ -195,7 +201,11 @@ export function Kerangka({
       <main className={`relative pb-28 lg:ml-[228px] lg:pb-12 ${penuh ? "" : "px-4 pt-6 lg:px-10 lg:pt-0"}`}>
         {penuh ? children : (
         <>
-          <div className="relative z-20 hidden justify-end pt-5 lg:flex"><MenuProfil /></div>
+          <div className="relative z-20 hidden items-center justify-end gap-4 pt-5 lg:flex">
+            <span className="text-xs tracking-wide text-muted-foreground">{tanggalHariIni()}</span>
+            <span className="h-5 w-px bg-gold/25" aria-hidden="true" />
+            <MenuProfil />
+          </div>
           {!tanpaJudul && (
             <div className="relative -mx-4 mb-6 overflow-hidden px-4 lg:-mx-10 lg:px-10 lg:pt-2">
               <img src={skyline} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[center_70%] opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
@@ -217,18 +227,18 @@ export function Kerangka({
       </main>
 
       {/* Navigasi bawah HP */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-gold/20 bg-navy-deep/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_30px_-12px_oklch(0_0_0/0.9)] backdrop-blur lg:hidden">
         <ul className="grid grid-cols-5">
           {bawah.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode)).map((m) => (
             <li key={m.ke}>
               <Link
                 to={m.ke}
                 activeOptions={{ exact: m.ke === "/" }}
-                activeProps={{ className: "text-primary" }}
-                inactiveProps={{ className: "text-muted-foreground" }}
-                className="flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium"
+                activeProps={{ className: "text-gold-light before:opacity-100" }}
+                inactiveProps={{ className: "text-muted-foreground before:opacity-0" }}
+                className="relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition before:absolute before:inset-x-5 before:top-0 before:h-0.5 before:rounded-full before:bg-gold before:shadow-[0_0_10px_var(--gold)] before:transition"
               >
-                <m.ikon className="h-5 w-5" />
+                <m.ikon className="h-5 w-5" strokeWidth={1.7} />
                 {m.label}
               </Link>
             </li>
