@@ -1112,3 +1112,13 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
     </div>
   );
 }
+
+/** Salam sesuai jam Jakarta (format "HH:MM" atau "HH.MM"). */
+function salamWaktu(jam: string) {
+  const j = Number.parseInt(jam, 10);
+  if (Number.isNaN(j)) return "Selamat datang";
+  if (j >= 4 && j < 11) return "Selamat pagi";
+  if (j >= 11 && j < 15) return "Selamat siang";
+  if (j >= 15 && j < 18) return "Selamat sore";
+  return "Selamat malam";
+}
