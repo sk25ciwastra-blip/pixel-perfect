@@ -172,6 +172,7 @@ function AccessGate({ children }: { children: ReactNode }) {
           '/transaksi',
           '/tamu',
           '/keuangan',
+          '/laporan',
         ].includes(pathname);
 
       case 'housekeeping':
