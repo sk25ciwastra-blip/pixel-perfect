@@ -80,8 +80,6 @@ function Auth() {
             </div>
           </div>
         </div>
-
-        <p className="mt-6 max-w-md self-start text-center text-xs leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
       </div>
     </main>
   );
