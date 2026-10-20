@@ -13,6 +13,9 @@ import { usePeran } from "@/lib/peran";
 
 export const Route = createFileRoute("/transaksi")({
   head: () => meta("Transaksi", "Daftar transaksi Baturaden 25 Homestay."),
+  validateSearch: (s: Record<string, unknown>): { bagian?: "semua" | "hari-ini" | "kemarin" | "riwayat" } => ({
+    bagian: ["semua", "hari-ini", "kemarin", "riwayat"].includes(String(s["bagian"])) ? (s["bagian"] as "semua") : undefined,
+  }),
   component: Halaman,
 });
 
@@ -104,10 +107,19 @@ function Halaman() {
   const rooms = useTable("rooms");
   const roomTypes = useTable("room_types");
 
-  const filteredRows = useMemo(
-    () => rows.filter((transaction) => cocokNomorTransaksi(transaction.transaction_number, search)),
-    [rows, search],
-  );
+  const { bagian = "semua" } = Route.useSearch();
+  const filteredRows = useMemo(() => {
+    const hariIni = formatTanggalGroup(new Date().toISOString());
+    const kemarin = formatTanggalGroup(new Date(Date.now() - 86400000).toISOString());
+    return rows.filter((transaction) => {
+      if (!cocokNomorTransaksi(transaction.transaction_number, search)) return false;
+      const tgl = formatTanggalGroup(transaction.created_at);
+      if (bagian === "hari-ini") return tgl === hariIni;
+      if (bagian === "kemarin") return tgl === kemarin;
+      if (bagian === "riwayat") return tgl < kemarin;
+      return true;
+    });
+  }, [rows, search, bagian]);
 
   const groupedTransactions = useMemo(() => {
     const groups = new Map<string, typeof filteredRows>();
