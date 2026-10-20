@@ -1,25 +1,18 @@
--- Task 4: Correct official P4 prices
 -- Baturaden 25 Homestay
+-- Historical P4 correction migration: quarantined as a deliberate no-op.
 --
--- Corrects the P4 official price catalog for all pricing groups.
-
-BEGIN;
-
-UPDATE public.package_room_type_prices pr
-SET
-  weekday_price = CASE pr.pricing_group
-    WHEN 'standard' THEN 90000
-    WHEN 'superior' THEN 100000
-    WHEN 'deluxe' THEN 110000
-  END,
-  weekend_price = CASE pr.pricing_group
-    WHEN 'standard' THEN 100000
-    WHEN 'superior' THEN 110000
-    WHEN 'deluxe' THEN 120000
-  END
-FROM public.packages p
-WHERE p.id = pr.package_id
-  AND p.name = 'Paket 4 Jam'
-  AND pr.pricing_group IN ('standard', 'superior', 'deluxe');
-
-COMMIT;
+-- OWNER RULE PRESERVATION (2026-10-20)
+-- This file previously raised P4 prices by Rp 10.000 for each pricing group.
+-- That conflicted with the canonical business rules in:
+-- DOKUMEN_PROYEK/02_ATURAN_BISNIS.md (AB-PRICE-P4).
+--
+-- Canonical P4 room-type catalog (weekday / weekend):
+--   standard  80000 /  90000
+--   superior  90000 / 100000
+--   deluxe  100000 / 110000
+--
+-- Supabase staging was verified to already contain these canonical values.
+-- Do not silently reintroduce the conflicting UPDATE statement.
+-- The original statement remains recoverable in Git history.
+-- This migration intentionally performs no data or schema changes.
+SELECT 1;
