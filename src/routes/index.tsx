@@ -24,7 +24,7 @@ import {
   Flag,
   type LucideIcon,
 } from "lucide-react";
-import { Kerangka } from "@/components/kerangka";
+import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import skyline from "@/assets/skyline-malam.jpg";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";

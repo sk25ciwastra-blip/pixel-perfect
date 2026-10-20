@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
 import { DetailTransaksi } from '@/components/detail-transaksi';
-export const Route = createFileRoute('/tamu')({head:()=>meta('Tamu','Data tamu dan pencarian nama atau nomor HP Baturaden 25 Homestay.'),component:HalamanTamu});
+export const Route = createFileRoute('/tamu')({head:()=>meta('Daftar Tamu','Data tamu dan pencarian nama atau nomor HP Baturaden 25 Homestay.'),component:HalamanTamu});
 function normalisasiNomor(value:string){const digits=value.replace(/\D/g,'');return digits.startsWith('62')?'0'+digits.slice(2):digits}
 function HalamanTamu(){const {posisiKode}=usePeran(); const readOnly=posisiKode==='inspector'; const {rows,loading,error,refresh}=useTable('guests'); const transactions=useTable('transactions'); const [cari,setCari]=useState('');const [open,setOpen]=useState(false);const [editing,setEditing]=useState<Guest|null>(null);const [nama,setNama]=useState('');const [alamat,setAlamat]=useState('');const [telepon,setTelepon]=useState('');const [catatan,setCatatan]=useState('');const [message,setMessage]=useState('');const [detailTransactionId,setDetailTransactionId]=useState<string|null>(null);const queryText=cari.trim().toLocaleLowerCase('id-ID');const queryDigits=normalisasiNomor(cari);const hasil=rows.filter(t=>t.full_name.toLocaleLowerCase('id-ID').includes(queryText)||(queryDigits.length>0&&normalisasiNomor(t.phone).includes(queryDigits)));
  function edit(t?:Guest){setEditing(t??null);setNama(t?.full_name??'');setAlamat(t?.address??'');setTelepon(t?.phone??'');setCatatan(t?.notes??'');setMessage('');setOpen(true)}
