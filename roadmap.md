@@ -23,3 +23,9 @@
 # P0 — Penyempurnaan Dashboard saat ini
 - [x] Rapikan tabel kamar, KPI, tinggi daftar transaksi, dan tiga panel analitik tanpa mengubah aturan.
 - [x] Periksa Dashboard 1580×900 dan Booking serta halaman operasional dengan data tersedia, tanpa membuat transaksi.
+
+# Redesain "Malam Keemasan Modern"
+- [x] Tahap 1: fondasi tema, sidebar/header/navigasi HP, halaman Masuk, tombol & isian bersama.
+- [ ] Tahap 2: Dashboard (menunggu persetujuan Owner).
+- [ ] Tahap 3: Kamar (hapus 4 kartu ringkasan di Semua Kamar), Booking, Transaksi, Tamu.
+- [ ] Tahap 4: Housekeeping, Keuangan, Laporan, Tim & Akses, detail.
