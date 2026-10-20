@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Kerangka } from "@/components/kerangka";
+import { Button } from "@/components/ui/button";
 import skyline from "@/assets/skyline-malam.jpg";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
@@ -429,7 +430,7 @@ function Ringkasan() {
       : [];
     return [...masuk, ...keluar]
       .sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime())
-      .slice(0, 8);
+      .slice(0, 6);
   }, [payments.rows, transaksi, guests.rows, pengeluaranRows, financeExpenses.error, isFinanceViewer]);
 
   const [modeGrafik, setModeGrafik] = useState<ModeGrafik>("harian");
@@ -527,8 +528,8 @@ function Ringkasan() {
           </header>
 
           {/* KPI + Aksi Cepat */}
-          <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "2xl:grid-cols-4" : "2xl:grid-cols-3"}`}>
+          <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "xl:grid-cols-4" : "xl:grid-cols-3"}`}>
               {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
             </div>
 
@@ -556,17 +557,17 @@ function Ringkasan() {
           </div>
 
           {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
-          <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(340px,1fr)]">
-            <section className="panel-mewah overflow-hidden" aria-labelledby="judul-status-kamar">
-              <div className="flex flex-wrap items-center justify-between gap-3 px-5 pb-3 pt-5 sm:px-6">
-                <div className="flex items-center gap-3">
-                  <span className="ikon-bulat size-11 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
+          <div className="mt-5 grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1.95fr)_minmax(320px,1fr)]">
+            <section className="panel-mewah min-w-0 overflow-hidden" aria-labelledby="judul-status-kamar">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pb-3 pt-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="ikon-bulat size-10 shrink-0 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
                   <div>
-                    <h2 id="judul-status-kamar" className="font-serif text-xl font-semibold">Status Kamar <span className="text-gold-light">(Real-time)</span></h2>
+                    <h2 id="judul-status-kamar" className="font-serif text-lg font-semibold">Status Kamar <span className="text-gold-light">(Real-time)</span></h2>
                     <p className="text-xs text-muted-foreground">Kamar yang saat ini sedang terisi, urut sisa waktu terdekat</p>
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-3.5 py-1.5 text-xs font-semibold">
+                <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-2 py-1.5 text-[11px] font-semibold">
                   <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Total terisi {statusKamarBaris.length} kamar
                 </span>
               </div>
@@ -574,24 +575,32 @@ function Ringkasan() {
                 <p role="status" className="mx-5 mb-3 rounded-xl border border-border bg-secondary px-3 py-2 text-sm sm:mx-6">{dashboardMessage}</p>
               )}
               {statusKamarBaris.length === 0 ? (
-                <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-14 text-center sm:mx-6">
+                <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
                   <BedDouble className="size-8 text-gold/60" strokeWidth={1.4} />
                   <p className="mt-3 font-serif text-lg">Tidak ada kamar sedang terisi</p>
                   <p className="mt-1 text-xs text-muted-foreground">Kamar akan muncul di sini setelah Check-in.</p>
                 </div>
               ) : (
-                <div className="mx-3 mb-4 max-h-[460px] overflow-auto rounded-xl border border-gold/15 bg-navy-deep/50 sm:mx-5">
-                  <table className="w-full min-w-[820px] text-left text-sm">
+                <div className="mx-3 mb-4 max-h-[330px] overflow-auto rounded-xl border border-gold/15 bg-navy-deep/50">
+                  <table className="w-full min-w-[640px] table-fixed text-left text-xs xl:min-w-0">
+                    <colgroup>
+                      <col className="w-[64px]" />
+                      <col />
+                      <col className="w-[62px]" />
+                      <col className="w-[64px]" />
+                      <col className="w-[90px]" />
+                      <col className="w-[70px]" />
+                      <col className="w-[108px]" />
+                    </colgroup>
                     <thead className="sticky top-0 z-10 bg-navy-deep text-xs text-muted-foreground">
                       <tr className="border-b border-gold/20">
-                        <th className="px-4 py-3 font-semibold">Kamar</th>
-                        <th className="px-3 py-3 font-semibold">Tipe</th>
-                        <th className="px-3 py-3 font-semibold">Tamu</th>
-                        <th className="px-3 py-3 font-semibold">Paket</th>
-                        <th className="px-3 py-3 font-semibold">Check-in</th>
-                        <th className="px-3 py-3 font-semibold">Sisa Waktu</th>
-                        <th className="px-3 py-3 font-semibold">Check-out</th>
-                        <th className="px-4 py-3 text-center font-semibold">Aksi</th>
+                        <th className="px-2 py-3 font-semibold">Kamar</th>
+                                                <th className="px-2 py-3 font-semibold">Tamu</th>
+                        <th className="px-2 py-3 font-semibold">Paket</th>
+                        <th className="px-2 py-3 whitespace-nowrap font-semibold">Check-in</th>
+                        <th className="px-2 py-3 font-semibold">Sisa Waktu</th>
+                        <th className="px-2 py-3 whitespace-nowrap font-semibold">Check-out</th>
+                        <th className="px-2 py-3 text-center font-semibold">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/10">
@@ -614,39 +623,42 @@ function Ringkasan() {
                           : sisa?.status === "hampir" ? "bg-v0-warning" : "bg-v0-success";
                         return (
                           <tr key={room.id} className="transition hover:bg-gold/[0.04]">
-                            <td className="px-4 py-3.5 font-serif text-lg font-semibold">{room.room_number}</td>
-                            <td className="px-3 py-3.5 text-foreground/90">{roomType?.name ?? "—"}</td>
-                            <td className="px-3 py-3.5">
+                            <td className="px-2 py-3.5">
+                              <p className="font-serif text-lg font-semibold">{room.room_number}</p>
+                              <p className="break-words text-[10px] leading-snug text-muted-foreground">{roomType?.name ?? "—"}</p>
+                            </td>
+                            <td className="px-2 py-3.5">
                               {guest ? (
                                 <>
-                                  <p className="font-medium">{guest.full_name}</p>
-                                  <p className="text-[11px] text-muted-foreground">WA ••••{guest.phone.replace(/\D/g, "").slice(-4)}</p>
+                                  <p className="break-words font-medium leading-snug" title={guest.full_name}>{guest.full_name}</p>
+                                  <p className="whitespace-nowrap text-[10px] text-muted-foreground">WA ••••{guest.phone.replace(/\D/g, "").slice(-4)}</p>
+                                  <p className="mt-0.5 truncate font-mono text-[10px] text-gold/80" title={item?.transaction_number}>{item?.transaction_number}</p>
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-3 py-3.5">
+                            <td className="px-2 py-3.5">
                               {item ? (
                                 <>
                                   <p className="font-semibold">{kodePaket(packageItem?.name)}</p>
-                                  <p className="font-mono text-[10px] text-muted-foreground">{item.transaction_number}</p>
+                                  
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-3 py-3.5 tabular-nums">{item?.started_at ? jamWib(item.started_at) : "—"}</td>
-                            <td className="px-3 py-3.5">
+                            <td className="px-2 py-3.5 whitespace-nowrap tabular-nums">{item?.started_at ? jamWib(item.started_at) : "—"}</td>
+                            <td className="px-2 py-3.5">
                               {sisa ? (
-                                <div className="flex items-center gap-3">
+                                <div className="flex flex-col items-start gap-1.5">
                                   <span className={`w-[4.6rem] font-mono font-bold tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
-                                  <span className="h-1.5 w-20 overflow-hidden rounded-full bg-secondary" aria-hidden="true">
+                                  <span className="h-1 w-full overflow-hidden rounded-full bg-secondary" aria-hidden="true">
                                     <span className={`block h-full rounded-full ${warnaBatang}`} style={{ width: `${sisa.status === "expired" ? 100 : Math.max(4, porsi * 100)}%` }} />
                                   </span>
                                 </div>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-3 py-3.5 tabular-nums">{item?.ends_at ? jamWib(item.ends_at) : "—"}</td>
-                            <td className="px-4 py-3.5">
+                            <td className="px-2 py-3.5 whitespace-nowrap tabular-nums">{item?.ends_at ? jamWib(item.ends_at) : "—"}</td>
+                            <td className="px-2 py-3.5">
                               {item ? (
-                                <div className="flex justify-center gap-2">
+                                <div className="flex justify-center gap-1">
                                   <IkonAksi label="Detail transaksi" onClick={() => setDetailTransactionId(item.id)}><Eye className="h-4 w-4" /></IkonAksi>
                                   <IkonAksi
                                     label={phoneValid ? "Hubungi tamu via WhatsApp" : "WhatsApp tidak tersedia"}
@@ -676,11 +688,11 @@ function Ringkasan() {
             </section>
 
             {/* Transaksi terbaru */}
-            <section className="panel-mewah flex flex-col p-5 sm:p-6" aria-labelledby="judul-trx-terbaru">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="ikon-bulat size-11 text-gold"><FileText className="size-5" strokeWidth={1.6} /></span>
-                  <h2 id="judul-trx-terbaru" className="font-serif text-xl font-semibold">Transaksi Terbaru</h2>
+            <section className="panel-mewah flex min-w-0 flex-col p-4" aria-labelledby="judul-trx-terbaru">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="ikon-bulat size-10 shrink-0 text-gold"><FileText className="size-5" strokeWidth={1.6} /></span>
+                  <h2 id="judul-trx-terbaru" className="font-serif text-lg font-semibold">Transaksi Terbaru</h2>
                 </div>
                 {bolehAksiTransaksi && (
                   <Link to="/transaksi" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
@@ -697,17 +709,17 @@ function Ringkasan() {
                   </div>
                 </div>
               ) : (
-                <ol className="mt-1 divide-y divide-gold/10">
+                <ol className="mt-1 max-h-[360px] overflow-y-auto divide-y divide-gold/10">
                   {transaksiTerbaru.map((t) => (
-                    <li key={t.id} className="flex items-center gap-3 py-3">
-                      <span className={`grid size-10 shrink-0 place-items-center rounded-full border ${t.jenis === "masuk" ? "border-v0-success/40 bg-siap text-siap-foreground" : "border-v0-danger/40 bg-bahaya text-bahaya-foreground"}`}>
+                    <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 py-2.5">
+                      <span className={`grid size-8 shrink-0 place-items-center rounded-full border ${t.jenis === "masuk" ? "border-v0-success/40 bg-siap text-siap-foreground" : "border-v0-danger/40 bg-bahaya text-bahaya-foreground"}`}>
                         {t.jenis === "masuk" ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold">
                           {t.judul}{t.sub && <span className="ml-1.5 font-normal text-muted-foreground">({t.sub})</span>}
                         </p>
-                        <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{t.nomor}</p>
+                        <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">{t.nomor}</p>
                       </div>
                       <div className="shrink-0 text-right">
                         <p className={`text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
@@ -723,7 +735,7 @@ function Ringkasan() {
           </div>
 
           {/* Tiga modul analitik berjajar */}
-          <div className={`mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "2xl:grid-cols-3" : ""}`}>
+          <div className={`mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "xl:grid-cols-3" : ""}`}>
             <section className="panel-mewah p-5 sm:p-6" aria-labelledby="judul-komposisi">
               <JudulModul id="judul-komposisi" ikon={CircleDollarSign} judul="Pendapatan Hari Ini" sub={`Komposisi QRIS, Transfer Bank, Cash${isFinanceViewer ? " & Pengeluaran" : ""}`} />
               <Donat data={komposisi} totalPemasukan={totalPemasukanHariIni} />
@@ -828,9 +840,9 @@ function KartuKpi({ item }: { item: Kpi }) {
   const r = 25;
   const keliling = 2 * Math.PI * r;
   return (
-    <article className="panel-mewah group flex min-w-0 flex-col items-start gap-3 p-4 transition hover:-translate-y-0.5 hover:border-gold/50 sm:flex-row sm:items-center sm:gap-3.5 sm:p-5 2xl:px-4">
+    <article className="panel-mewah group flex min-w-0 flex-col items-start gap-2 p-3 transition hover:border-gold/50 sm:flex-row sm:items-center xl:flex-col xl:items-start xl:justify-center">
       {item.cincin !== undefined ? (
-        <div className="relative size-14 shrink-0 2xl:size-12" aria-label={`${item.cincin}% kamar terisi`}>
+        <div className="relative size-10 shrink-0" aria-label={`${item.cincin}% kamar terisi`}>
           <svg viewBox="0 0 60 60" className="size-full -rotate-90 drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.35)]">
             <circle cx="30" cy="30" r={r} fill="oklch(0.16 0.006 80)" stroke="var(--secondary)" strokeWidth="5" />
             {item.cincin > 0 && (
@@ -840,14 +852,14 @@ function KartuKpi({ item }: { item: Kpi }) {
           <span className="absolute inset-0 grid place-items-center text-xs font-bold text-gold-light">{item.cincin}%</span>
         </div>
       ) : (
-        <span className={`ikon-bulat size-14 shrink-0 2xl:size-12 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
+        <span className={`ikon-bulat size-10 shrink-0 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
           <Ikon className="size-7" strokeWidth={1.5} aria-hidden="true" />
         </span>
       )}
       <div className="min-w-0 flex-1">
         <h2 className="text-[0.8rem] leading-snug text-muted-foreground">{item.label}</h2>
-        <p className="mt-0.5 break-words text-2xl font-bold leading-tight tracking-tight tabular-nums 2xl:text-[1.7rem]">{item.nilai}</p>
-        <p className={`mt-0.5 line-clamp-2 text-xs leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
+        <p className="mt-0.5 break-words text-2xl font-bold leading-tight tabular-nums">{item.nilai}</p>
+        <p className={`mt-0.5 text-[11px] leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
       </div>
     </article>
   );
@@ -870,29 +882,33 @@ function JudulModul({ id, ikon: Ikon, judul, sub, aksi }: { id: string; ikon: Lu
 
 function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; judul: string; utama?: boolean; onClick: () => void }) {
   return (
-    <button
+    <Button
+      variant="ghost"
       type="button"
       onClick={onClick}
-      className={`flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center text-[0.8rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
+      className={`flex h-auto min-h-[5.5rem] whitespace-normal flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center text-[0.8rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
       <Ikon className={`h-5 w-5 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
       {judul}
-    </button>
+    </Button>
   );
 }
 
 function IkonAksi({ label, disabled, kelas = "text-gold-light", onClick, children }: { label: string; disabled?: boolean; kelas?: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
+    <span title={label} className="inline-flex shrink-0">
+    <Button
+      variant="ghost"
+      size="icon"
       type="button"
-      title={label}
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`grid size-9 place-items-center rounded-full border border-gold/25 bg-secondary/80 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-35 ${kelas}`}
+      className={`grid size-8 shrink-0 place-items-center rounded-full border border-gold/25 bg-secondary/80 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${kelas}`}
     >
       {children}
-    </button>
+    </Button>
+    </span>
   );
 }
 
@@ -902,7 +918,7 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
   const keliling = 2 * Math.PI * r;
   let offset = 0;
   return (
-    <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
+    <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row xl:flex-col min-[1800px]:flex-row">
       <div className="relative size-40 shrink-0">
         <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.25)]">
           <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="18" />
@@ -998,7 +1014,7 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
           <button type="submit" className="emas-isi rounded-xl px-4 text-sm font-bold">Simpan</button>
         </form>
       )}
-      <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
+      <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row xl:flex-col min-[1800px]:flex-row">
         <div className="relative size-40 shrink-0">
           <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.3)]">
             <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="11" />
