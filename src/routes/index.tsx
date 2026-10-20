@@ -513,9 +513,10 @@ function Ringkasan() {
 
           {/* Sapaan */}
           <header className="mt-6 max-w-3xl sm:mt-10">
-            <p className="text-base text-foreground/90 sm:text-lg">Selamat datang, <span className="font-semibold text-gold-light">{nama.split(" ")[0] || "Pengguna"}</span></p>
+            <p className="text-[0.7rem] font-semibold tracking-[0.3em] text-gold">BATURADEN 25 HOMESTAY</p>
+            <p className="mt-2 text-base text-foreground/90 sm:text-lg">{salamWaktu(jamSekarang)}, <span className="font-semibold text-gold-light">{posisi || "Pengguna"}</span></p>
             <h1 className="mt-1 font-serif text-[2.1rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
-              <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">Baturaden 25</span> Homestay
+              <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">{nama || "Pengguna"}</span>
             </h1>
             <p className="mt-3 text-sm text-muted-foreground sm:text-base">Pantau operasional, tingkatkan pelayanan, dan kembangkan bisnis Anda.</p>
           </header>
