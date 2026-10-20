@@ -1,0 +1,24 @@
+export type ModeGrafik = "harian" | "mingguan" | "bulanan";
+
+/** Skala sumbu grafik pendapatan (rupiah) sesuai permintaan Owner. */
+export const skalaGrafik: Record<ModeGrafik, number[]> = {
+  harian: [0, 1_000_000, 3_000_000, 6_000_000],
+  mingguan: [0, 5_000_000, 10_000_000, 20_000_000],
+  bulanan: [0, 40_000_000, 60_000_000, 100_000_000],
+};
+
+/** Posisi 0..1 pada sumbu dengan jarak garis bantu yang sama rata. */
+export function posisiSkala(nilai: number, ticks: number[]): number {
+  if (!(nilai > 0)) return 0;
+  const n = ticks.length - 1;
+  for (let i = 0; i < n; i += 1) {
+    if (nilai <= ticks[i + 1]) {
+      return (i + (nilai - ticks[i]) / (ticks[i + 1] - ticks[i])) / n;
+    }
+  }
+  return 1;
+}
+
+export function labelJuta(nilai: number) {
+  return nilai === 0 ? "0" : `${nilai / 1_000_000}M`;
+}
