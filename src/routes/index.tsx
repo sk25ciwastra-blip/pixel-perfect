@@ -522,7 +522,7 @@ function Ringkasan() {
           </header>
 
           {/* KPI + Aksi Cepat */}
-          <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="mt-7 grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
               {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
             </div>
@@ -561,9 +561,14 @@ function Ringkasan() {
                     <p className="text-xs text-muted-foreground">Kamar yang saat ini sedang terisi.</p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-2 py-1.5 text-[11px] font-semibold">
                   <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Total terisi {statusKamarBaris.length} kamar
                 </span>
+                <Link to="/kamar" search={{ bagian: "terisi" } as never} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
+                  Lihat semua <ChevronRight className="size-3.5" />
+                </Link>
+                </div>
               </div>
               {dashboardMessage && (
                 <p role="status" className="mx-5 mb-3 rounded-xl border border-border bg-secondary px-3 py-2 text-sm sm:mx-6">{dashboardMessage}</p>
@@ -575,7 +580,7 @@ function Ringkasan() {
                   <p className="mt-1 text-xs text-muted-foreground">Kamar akan muncul di sini setelah Check-in.</p>
                 </div>
               ) : (
-                <div className="mx-4 mb-4 max-h-[330px] min-w-0 flex-1 overflow-auto rounded-lg xl:max-h-none border border-gold/15 bg-navy-deep/50">
+                <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg border border-gold/15 bg-navy-deep/50">
                   <table className="w-full min-w-[740px] table-fixed text-left text-xs xl:min-w-0">
                     <colgroup>
                       <col className="w-[58px]" />
@@ -600,7 +605,7 @@ function Ringkasan() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/10">
-                      {statusKamarBaris.map(({ room, roomType, terisi }) => {
+                      {statusKamarBaris.slice(0, 8).map(({ room, roomType, terisi }) => {
                         const item = terisi?.transaksi;
                         const guest = terisi?.guest;
                         const sisa = item ? formatSisaWaktu(item.ends_at, sekarang) : null;
@@ -814,23 +819,23 @@ function KartuKpi({ item }: { item: Kpi }) {
   const r = 25;
   const keliling = 2 * Math.PI * r;
   return (
-    <article className="panel-mewah group relative flex min-w-0 flex-col items-start gap-3 overflow-hidden p-4 sm:flex-row sm:items-center transition hover:-translate-y-0.5 hover:border-gold/50 sm:gap-3">
+    <article className="panel-mewah group relative flex min-w-0 flex-row items-center gap-3 overflow-hidden px-4 py-4 transition hover:-translate-y-0.5 hover:border-gold/50">
       <span className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-gold/[0.07] blur-2xl" aria-hidden="true" />
       {item.cincin === undefined && (
-        <span className={`ikon-bulat size-11 shrink-0 2xl:size-12 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
+        <span className={`grid size-12 shrink-0 place-items-center rounded-xl border border-gold/25 bg-gold/10 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
           <Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" />
         </span>
       )}
       {item.cincin !== undefined && (
-        <span className="ikon-bulat size-11 shrink-0 text-gold 2xl:size-12"><Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" /></span>
+        <span className="grid size-12 shrink-0 place-items-center rounded-xl border border-gold/25 bg-gold/10 text-gold"><Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" /></span>
       )}
       <div className="min-w-0 flex-1">
-        <h2 className="line-clamp-2 text-[0.8rem] leading-snug text-muted-foreground">{item.label}</h2>
-        <p className="mt-1 truncate font-serif text-[1.65rem] font-semibold leading-none tabular-nums text-foreground">{item.nilai}</p>
+        <h2 className="truncate text-[0.82rem] leading-snug text-foreground/85">{item.label}</h2>
+        <p className="mt-1.5 truncate text-[1.6rem] font-bold leading-none tabular-nums text-foreground">{item.nilai}</p>
         <p className={`mt-1.5 line-clamp-2 text-[11px] leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
       </div>
       {item.cincin !== undefined && (
-        <div className="relative hidden size-12 shrink-0 sm:block" aria-label={`${item.cincin}% kamar terisi`}>
+        <div className="relative size-14 shrink-0" aria-label={`${item.cincin}% kamar terisi`}>
           <svg viewBox="0 0 60 60" className="size-full -rotate-90 drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.35)]">
             <circle cx="30" cy="30" r={r} fill="oklch(0.16 0.006 80)" stroke="var(--secondary)" strokeWidth="5" />
             {item.cincin > 0 && (
