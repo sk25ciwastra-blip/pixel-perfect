@@ -109,16 +109,20 @@ function Logo({ ringkas }: { ringkas?: boolean }) {
   }
   return (
     <div className="text-center leading-tight">
-      <LambangTeratai className="mx-auto mb-2 h-9 w-14 text-gold drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.45)]" />
-      <p className="font-serif text-[1.5rem] text-foreground">
+      <div className="relative mx-auto mb-2 w-fit">
+        <span className="pointer-events-none absolute inset-0 -z-0 rounded-full bg-gold/25 blur-xl" aria-hidden="true" />
+        <LambangTeratai className="relative h-14 w-20 text-gold-light drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.7)]" />
+      </div>
+      <p className="font-serif text-[1.6rem] leading-none text-foreground">
         Baturaden <span className="text-gold-light">25</span>
       </p>
-      <p className="font-serif text-[1.5rem] text-foreground">Homestay</p>
+      <p className="mt-1 font-serif text-[1.6rem] leading-none text-foreground">Homestay</p>
       <div className="mx-auto mt-2 flex items-center justify-center gap-2">
-        <span className="h-px w-6 bg-gradient-to-r from-transparent to-gold" />
+        <span className="h-px w-8 bg-gradient-to-r from-transparent to-gold" />
         <span className="text-[0.55rem] font-semibold tracking-[0.3em] text-gold">MANAJEMEN</span>
-        <span className="h-px w-6 bg-gradient-to-l from-transparent to-gold" />
+        <span className="h-px w-8 bg-gradient-to-l from-transparent to-gold" />
       </div>
+      <p className="mt-2 text-[0.78rem] text-foreground/90">Nyaman Seperti di Rumah Sendiri</p>
     </div>
   );
 }
