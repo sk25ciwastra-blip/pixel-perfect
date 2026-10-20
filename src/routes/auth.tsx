@@ -50,7 +50,7 @@ function Auth() {
           <div className="panel-mewah space-y-6 bg-background/55 p-7 shadow-[0_0_60px_-15px_color-mix(in_oklch,var(--gold)_45%,transparent)] backdrop-blur-xl sm:p-9">
             <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
             <div className="text-center">
-              <p className="mb-2 font-serif text-sm italic text-gold-light/85">Setiap malam, pelayanan terbaik menanti.</p>
+              <p className="mb-2 font-serif text-sm italic text-gold-light/85">Senyum Tamu Dimulai dari Sistem yang Tepat</p>
               <h1 className="font-serif text-2xl leading-tight text-foreground">Selamat datang kembali</h1>
             </div>
             <form onSubmit={submit} className="space-y-5">
