@@ -936,7 +936,7 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
         </svg>
         <div className="absolute inset-0 grid place-items-center text-center">
           <div>
-            <p className="text-sm font-bold leading-tight tabular-nums text-foreground">{rupiah(totalPemasukan).replace(/^Rp\s?/, "Rp\n")}</p>
+            <p className="whitespace-pre-line text-sm font-bold leading-tight tabular-nums text-foreground">{rupiah(totalPemasukan).replace(/^Rp\s?/, "Rp\n")}</p>
             <p className="text-[10px] text-muted-foreground">Total</p>
           </div>
         </div>
