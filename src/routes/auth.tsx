@@ -28,25 +28,25 @@ function Auth() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/40 via-background/10 to-background/60" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/25 via-transparent to-background/25" />
 
-      <div className="relative mx-auto flex min-h-svh max-w-[1600px] flex-col gap-8 px-5 py-8 sm:px-10 lg:grid lg:grid-cols-[minmax(0,1fr)_440px] lg:gap-16 lg:px-16 lg:py-16 xl:grid-cols-[minmax(0,1fr)_480px]">
+      <div className="relative grid h-svh min-h-[740px] grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] justify-items-center px-5 py-6 sm:px-10">
         {/* Logo resmi Baturaden 25 Homestay */}
-        <div aria-label="Baturaden 25 Homestay" className="mx-auto w-fit self-center text-center leading-tight lg:mx-0 lg:mt-2 lg:self-start lg:justify-self-start">
-          <svg viewBox="0 0 64 40" className="mx-auto mb-4 h-16 w-24 text-gold drop-shadow-[0_0_12px_color-mix(in_oklch,var(--gold)_50%,transparent)] lg:h-28 lg:w-44" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+        <div aria-label="Baturaden 25 Homestay" className="mb-4 w-fit self-end text-center leading-tight">
+          <svg viewBox="0 0 64 40" className="mx-auto mb-2 h-10 w-[4.5rem] text-gold drop-shadow-[0_0_12px_color-mix(in_oklch,var(--gold)_50%,transparent)]" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
             <path d="M32 4c5 6 6 14 0 24C26 18 27 10 32 4Z" />
             <path d="M32 28c-4-8-10-13-19-14 0 9 8 15 19 14Z" />
             <path d="M32 28c4-8 10-13 19-14 0 9-8 15-19 14Z" />
             <path d="M32 30c-8 2-17 0-24-6 6 7 15 10 24 9 9 1 18-2 24-9-7 6-16 8-24 6Z" />
             <path d="M14 36h36" strokeOpacity="0.6" />
           </svg>
-          <p className="font-serif text-3xl text-foreground lg:text-5xl">Baturaden <span className="text-gold-light">25</span></p>
-          <p className="mt-2 font-serif text-2xl text-gold-light lg:text-3xl">Homestay</p>
+          <p className="font-serif text-2xl text-foreground">Baturaden <span className="text-gold-light">25</span></p>
+          <p className="font-serif text-2xl text-foreground">Homestay</p>
           <div className="mx-auto mt-3 flex items-center justify-center gap-2"><span className="h-px w-8 bg-gradient-to-r from-transparent to-gold" /><span className="text-[0.6rem] font-semibold text-gold">MANAJEMEN</span><span className="h-px w-8 bg-gradient-to-l from-transparent to-gold" /></div>
         </div>
 
-        {/* Formulir aktif di kanan, bertumpuk di HP. */}
-        <div className="relative mx-auto w-full max-w-[480px] self-center lg:row-span-2">
+        {/* Susunan formulir tengah dipulihkan; autentikasi tetap. */}
+        <div className="relative w-full max-w-[420px]">
           <div className="pointer-events-none absolute -inset-px rounded-[1.2rem] bg-gradient-to-b from-gold/60 via-gold/10 to-gold/40 opacity-70 blur-[2px]" />
-          <div className="relative space-y-7 rounded-2xl border border-gold/65 bg-background/80 p-7 shadow-emas backdrop-blur-sm sm:p-10 lg:py-12">
+          <div className="panel-mewah space-y-6 bg-background/55 p-7 shadow-[0_0_60px_-15px_color-mix(in_oklch,var(--gold)_45%,transparent)] backdrop-blur-xl sm:p-9">
             <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
             <div className="text-center">
               <p className="mb-2 font-serif text-sm italic text-gold-light/85">Senyum Tamu Dimulai dari Sistem yang Tepat</p>
@@ -78,7 +78,7 @@ function Auth() {
           </div>
         </div>
 
-        <p className="mx-auto max-w-md text-center text-xs leading-relaxed text-foreground/80 lg:mx-0 lg:self-end lg:text-left">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
+        <p className="mt-6 max-w-md self-start text-center text-xs leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
       </div>
     </main>
   );
