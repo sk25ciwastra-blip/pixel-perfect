@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
+import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil } from "lucide-react";
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { Kerangka } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { meta } from "@/lib/meta";
 import { usePeran } from "@/lib/peran";
 
 export const Route = createFileRoute("/kamar")({
-  head: () => meta("Status Room", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
+  head: () => meta("Status Kamar", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
   component: HalamanKamar,
 });
 
@@ -22,10 +23,17 @@ const statusMap: Record<Room["status"], StatusKamar> = {
 };
 
 const latar: Record<StatusKamar, string> = {
-  siap: "bg-siap/60 border-siap-foreground/15",
-  terisi: "bg-terisi/60 border-terisi-foreground/15",
-  perlu: "bg-perlu/60 border-perlu-foreground/15",
-  sedang: "bg-sedang/60 border-sedang-foreground/15",
+  siap: "bg-siap-foreground",
+  terisi: "bg-terisi-foreground",
+  perlu: "bg-perlu-foreground",
+  sedang: "bg-sedang-foreground",
+};
+
+const ikonStatus: Record<StatusKamar, typeof CheckCircle2> = {
+  siap: CheckCircle2,
+  terisi: UserRound,
+  perlu: Brush,
+  sedang: Sparkles,
 };
 
 const teks: Record<StatusKamar, string> = {
@@ -132,7 +140,7 @@ function HalamanKamar() {
     const otherRooms = rooms.rows.filter((room) => !nomorKamarTerpetakan.has(room.room_number));
 
     if (otherRooms.length) {
-      groups.push({ label: "ROOM LAINNYA", rooms: otherRooms });
+      groups.push({ label: "KAMAR LAINNYA", rooms: otherRooms });
     }
 
     return groups.filter((group) => group.rooms.length > 0);
@@ -180,8 +188,8 @@ function HalamanKamar() {
 
   return (
     <Kerangka
-      judul="Status Room"
-      keterangan={`${rooms.rows.length} Room`}
+      judul="Status Kamar"
+      keterangan={`${rooms.rows.length} kamar`}
       aksi={
         peran === "owner" && (
           <Button className="h-11 rounded-xl" onClick={() => edit()}>
@@ -190,7 +198,22 @@ function HalamanKamar() {
         )
       }
     >
-      <div className="border-t border-border pt-5">
+      <div>
+        <div className="panel-mewah mb-6 grid grid-cols-2 gap-px overflow-hidden p-0 sm:grid-cols-4">
+          {(["siap", "terisi", "perlu", "sedang"] as StatusKamar[]).map((st) => {
+            const Ikon = ikonStatus[st];
+            const jumlah = rooms.rows.filter((room) => statusMap[room.status] === st).length;
+            return (
+              <div key={st} className="flex items-center gap-3 bg-card/60 px-4 py-4">
+                <span className={`grid size-10 shrink-0 place-items-center rounded-full border border-gold/25 bg-navy-deep ${teks[st]}`}><Ikon className="size-5" strokeWidth={1.6} /></span>
+                <div className="min-w-0">
+                  <p className="font-serif text-2xl leading-none">{jumlah}</p>
+                  <p className={`mt-1 truncate text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${teks[st]}`}>{labelStatusKamar[st]}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
         {rooms.error && (
           <p role="alert" className="mt-3 text-sm text-destructive">
             {rooms.error}
@@ -201,10 +224,13 @@ function HalamanKamar() {
         <div className="mt-5 space-y-6">
           {groupedRooms.map((group) => (
             <section key={group.label}>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {group.label}
-              </h2>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="mb-3 flex items-center gap-3">
+                <BedDouble className="size-4 text-gold" strokeWidth={1.6} />
+                <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">{group.label}</h2>
+                <span className="text-xs text-muted-foreground">{group.rooms.length} kamar</span>
+                <span className="h-px flex-1 bg-gradient-to-r from-gold/35 to-transparent" />
+              </div>
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {group.rooms.map((room) => {
                   const status = statusMap[room.status];
                   const roomType = types.rows.find((type) => type.id === room.room_type_id);
@@ -225,16 +251,25 @@ function HalamanKamar() {
                   return (
                     <div
                       key={room.id}
-                      className={`flex flex-col rounded-2xl border p-4 ${latar[status]}`}
+                      className="panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 hover:border-gold/50"
                     >
-                      <p className="text-xs text-muted-foreground">ROOM</p>
-                      <p className="text-2xl font-bold">{room.room_number}</p>
-                      <p className={`mt-1 text-[11px] font-bold uppercase ${teks[status]}`}>
-                        {labelStatusKamar[status]}
+                      <span className={`absolute inset-y-0 left-0 w-1 ${latar[status]}`} aria-hidden="true" />
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[0.6rem] font-semibold tracking-[0.3em] text-muted-foreground">KAMAR</p>
+                          <p className="font-serif text-4xl leading-none text-foreground">{room.room_number}</p>
+                        </div>
+                        {(() => { const Ikon = ikonStatus[status]; return (
+                          <span className={`grid size-10 shrink-0 place-items-center rounded-full border border-gold/25 bg-navy-deep ${teks[status]}`}><Ikon className="size-5" strokeWidth={1.6} /></span>
+                        ); })()}
+                      </div>
+                      <p className="mt-2 truncate text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold-light/90">
+                        {roomType?.name ?? "Tipe kamar belum tersedia"}
                       </p>
-                      <p className="mt-2 text-xs font-semibold text-muted-foreground">
-                        {roomType?.name?.toUpperCase() ?? "TIPE KAMAR BELUM TERSEDIA"}
-                      </p>
+                      <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${teks[status]}`}>
+                        <span className={`size-1.5 rounded-full ${latar[status]}`} />{labelStatusKamar[status]}
+                      </span>
+                      <div className="mt-3 h-px bg-gradient-to-r from-gold/25 to-transparent" />
 
                       {transaction && (
                         <button
@@ -304,10 +339,10 @@ function HalamanKamar() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="mt-3"
+                          className="mt-auto translate-y-0 self-start pt-0 [margin-top:auto]"
                           onClick={() => edit(room)}
                         >
-                          Ubah
+                          <Pencil className="size-3.5" /> Ubah
                         </Button>
                       )}
                     </div>
