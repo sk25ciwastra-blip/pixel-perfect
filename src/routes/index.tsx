@@ -819,7 +819,7 @@ function KartuKpi({ item }: { item: Kpi }) {
   const r = 25;
   const keliling = 2 * Math.PI * r;
   return (
-    <article className="panel-mewah group relative flex min-w-0 flex-row items-center gap-3 overflow-hidden px-4 py-4 transition hover:-translate-y-0.5 hover:border-gold/50">
+    <article className="panel-mewah group relative flex min-w-0 flex-row items-center gap-2.5 overflow-hidden px-3.5 py-4 transition hover:-translate-y-0.5 hover:border-gold/50">
       <span className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-gold/[0.07] blur-2xl" aria-hidden="true" />
       {item.cincin === undefined && (
         <span className={`grid size-12 shrink-0 place-items-center rounded-xl border border-gold/25 bg-gold/10 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
@@ -830,12 +830,12 @@ function KartuKpi({ item }: { item: Kpi }) {
         <span className="grid size-12 shrink-0 place-items-center rounded-xl border border-gold/25 bg-gold/10 text-gold"><Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" /></span>
       )}
       <div className="min-w-0 flex-1">
-        <h2 className="truncate text-[0.82rem] leading-snug text-foreground/85">{item.label}</h2>
+        <h2 className="text-[0.8rem] leading-tight text-foreground/85">{item.label}</h2>
         <p className="mt-1.5 truncate text-[1.6rem] font-bold leading-none tabular-nums text-foreground">{item.nilai}</p>
         <p className={`mt-1.5 line-clamp-2 text-[11px] leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
       </div>
       {item.cincin !== undefined && (
-        <div className="relative size-14 shrink-0" aria-label={`${item.cincin}% kamar terisi`}>
+        <div className="relative size-11 shrink-0" aria-label={`${item.cincin}% kamar terisi`}>
           <svg viewBox="0 0 60 60" className="size-full -rotate-90 drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.35)]">
             <circle cx="30" cy="30" r={r} fill="oklch(0.16 0.006 80)" stroke="var(--secondary)" strokeWidth="5" />
             {item.cincin > 0 && (
