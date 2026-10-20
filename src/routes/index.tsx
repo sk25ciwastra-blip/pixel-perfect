@@ -87,7 +87,7 @@ function formatSisaWaktu(endsAt: string | null, sekarang: number) {
       status: "hampir" as const,
       waktu: formatDurasi(selisih),
       label: "lagi",
-      kelas: "text-amber-600",
+      kelas: "text-v0-warning",
     };
   }
 
@@ -394,7 +394,7 @@ function Ringkasan() {
     pemasukanHariIni.filter((p) => p.method.toLowerCase() === m).reduce((t, p) => t + Number(p.amount), 0);
   const komposisi = [
     { label: "QRIS", warna: "var(--v0-info)", nominal: totalMetode("qris") },
-    { label: "Transfer Bank", warna: "var(--v0-violet)", nominal: totalMetode("transfer") },
+    { label: "Transfer Bank", warna: "var(--gold)", nominal: totalMetode("transfer") },
     { label: "Cash", warna: "var(--v0-success)", nominal: totalMetode("cash") },
     ...(isFinanceViewer
       ? [{ label: "Pengeluaran", warna: "var(--v0-danger)", nominal: pengeluaranHariIni.reduce((t, e) => t + Number(e.amount), 0) }]
@@ -511,7 +511,7 @@ function Ringkasan() {
   const bolehAksiTransaksi = !["housekeeping", "investor", "inspector"].includes(posisiKode ?? "");
 
   return (
-    <Kerangka judul="Ringkasan" tanpaJudul mewah>
+    <Kerangka judul="Ringkasan" tanpaJudul>
       {/* Hero premium */}
       <header className="relative mb-6 overflow-hidden rounded-3xl border border-border shadow-lembut">
         <img src={skyline} alt="" width={1920} height={640} className="absolute inset-0 h-full w-full object-cover object-right" />

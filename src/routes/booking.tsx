@@ -505,7 +505,7 @@ Terima kasih.`;
       )}
 
       {selectedBooking && !readOnly && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4">
           <div
             role="dialog"
             aria-modal="true"

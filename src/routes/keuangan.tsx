@@ -260,7 +260,7 @@ function HalamanKeuangan() {
     <Kerangka judul="Keuangan" keterangan="Penerimaan, sesi kas, closing, dan pengawasan Owner">
       {message && <p role="alert" className="mb-4 rounded-xl bg-secondary px-3 py-2 text-sm">{message}</p>}
       {isTraining && (
-        <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className="mb-4 rounded-xl bg-perlu px-3 py-2 text-sm text-perlu-foreground">
           Training aktif sampai {training.ends_on ?? 'tanggal selesai'}; sesi kas milik Supervisor/Owner ditentukan otomatis. Peserta tidak dapat membuka atau menutup sesi.
         </p>
       )}

@@ -513,7 +513,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
             )}
 
             {isTraining && (
-              <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <p className="rounded-xl bg-perlu px-3 py-2 text-sm text-perlu-foreground">
                 Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.
               </p>
             )}

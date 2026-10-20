@@ -49,10 +49,10 @@ const bawah: Menu[] = [
 function Logo() {
   return (
     <div className="text-center leading-tight">
-      <p className="font-serif text-[1.45rem] text-white">
+      <p className="font-serif text-[1.45rem] text-foreground">
         Baturaden <span className="text-gold-light">25</span>
       </p>
-      <p className="font-serif text-[1.45rem] text-white">Homestay</p>
+      <p className="font-serif text-[1.45rem] text-foreground">Homestay</p>
       <p className="mt-1 text-[0.58rem] font-semibold tracking-[0.28em] text-gold-light">
         BANDUNG
       </p>
@@ -80,20 +80,20 @@ function EmergencyButton() {
       >
         <AlertTriangle className="h-4 w-4" /><span>EMERGENCY</span>
       </button>
-      {notice && <p role="alert" className="px-1 text-center text-[10px] leading-4 text-red-200">{notice}</p>}
+      {notice && <p role="alert" className="px-1 text-center text-[10px] leading-4 text-bahaya-foreground">{notice}</p>}
       {open && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4" role="presentation">
-          <div role="dialog" aria-modal="true" aria-labelledby="emergency-dialog-title" className="w-full max-w-md rounded-2xl bg-white p-5 text-slate-900 shadow-2xl">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="emergency-dialog-title" className="w-full max-w-md rounded-2xl border border-border bg-popover p-5 text-foreground shadow-lembut">
             <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-100 text-red-700"><AlertTriangle className="h-5 w-5" /></span>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-bahaya text-bahaya-foreground"><AlertTriangle className="h-5 w-5" /></span>
               <div>
                 <h2 id="emergency-dialog-title" className="text-lg font-bold">Konfirmasi Emergency</h2>
-                <p className="mt-1 text-sm text-slate-600">Permintaan bantuan akan ditujukan kepada Owner, Supervisor, Inspector, dan Housekeeping sesuai hak akses.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Permintaan bantuan akan ditujukan kepada Owner, Supervisor, Inspector, dan Housekeeping sesuai hak akses.</p>
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">Batal</button>
-              <button type="button" onClick={confirmEmergency} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white">Konfirmasi</button>
+              <button type="button" onClick={() => setOpen(false)} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground">Batal</button>
+              <button type="button" onClick={confirmEmergency} className="rounded-xl bg-destructive px-4 py-2 text-sm font-bold text-destructive-foreground">Konfirmasi</button>
             </div>
           </div>
         </div>
@@ -113,9 +113,9 @@ export function Kerangka({
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
 
   return (
-    <div className={`min-h-screen bg-background text-foreground ${mewah ? "tema-mewah" : ""}`}>
+    <div className={`min-h-screen bg-background text-foreground`}>
       {/* Sidebar desktop */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col overflow-hidden border-r border-navy-soft/40 bg-navy-deep px-4 py-5 text-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col overflow-hidden border-r border-border bg-navy-deep px-4 py-6 text-foreground lg:flex">
         <div className="px-2"><Logo /></div>
         <nav className="mt-8 flex-1 space-y-1">
           {menu.map((m) => (
@@ -123,11 +123,11 @@ export function Kerangka({
               key={m.ke}
               to={m.ke}
               activeOptions={{ exact: m.ke === "/" }}
-              activeProps={{ className: "bg-gradient-to-r from-gold-light to-gold font-bold text-navy-deep shadow-md" }}
-              inactiveProps={{ className: "text-white/90 hover:bg-white/10 hover:text-white" }}
+              activeProps={{ className: "bg-gradient-to-r from-gold-light/15 to-gold/5 font-semibold text-gold-light ring-1 ring-inset ring-gold/40" }}
+              inactiveProps={{ className: "text-muted-foreground hover:bg-secondary hover:text-foreground" }}
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors"
             >
-              <m.ikon className="h-[18px] w-[18px]" strokeWidth={2} />
+              <m.ikon className="h-[18px] w-[18px]" strokeWidth={1.6} />
               {m.label}
             </Link>
           ))}
@@ -138,12 +138,12 @@ export function Kerangka({
             <p className="text-sm font-semibold">{nama}</p>
             <p className="text-xs text-muted-foreground">{posisi}</p>
           </div>
-          <button onClick={() => void keluar()} className="w-full rounded-xl bg-secondary px-3 py-2 text-left text-sm text-foreground">Keluar</button>
+          <button onClick={() => void keluar()} className="w-full rounded-xl border border-border bg-secondary px-3 py-2 text-left text-sm text-foreground transition hover:border-primary/50">Keluar</button>
         </div>
       </aside>
 
       {/* Header HP */}
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-navy-soft/40 bg-navy-deep px-4 py-3 text-white backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-navy-deep/90 px-4 py-3 text-foreground backdrop-blur lg:hidden">
         <Logo />
         <button onClick={() => void keluar()} className="text-sm font-semibold text-gold-light">Keluar</button>
       </header>

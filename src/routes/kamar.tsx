@@ -283,7 +283,7 @@ function HalamanKamar() {
                       {issues.length > 0 && housekeepingJob && (
                         <button
                           type="button"
-                          className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-left text-xs text-red-800 hover:bg-red-100"
+                          className="mt-3 rounded-xl bg-bahaya px-3 py-2 text-left text-xs text-bahaya-foreground hover:bg-bahaya/80"
                           onClick={() =>
                             setDetailHousekeeping({
                               roomNumber: room.room_number,
@@ -438,7 +438,7 @@ function HalamanKamar() {
                 </p>
               )}
               {detailHousekeeping.issues.length > 0 && (
-                <div className="rounded-xl bg-red-50 p-3 text-red-800">
+                <div className="rounded-xl bg-bahaya p-3 text-bahaya-foreground">
                   <p className="font-semibold">❌ Kekurangan/kerusakan</p>
                   <ul className="mt-1 list-disc pl-5">
                     {detailHousekeeping.issues.map((issue) => (
