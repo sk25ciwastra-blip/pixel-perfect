@@ -323,62 +323,52 @@ function Ringkasan() {
     }
   }
 
-  const statistik = [
+  const jumlahTerisi = hitung("terisi");
+  const jumlahSiap = hitung("siap");
+  const jumlahPerlu = hitung("perlu");
+  const persenTerisi = kamarAktif.length > 0 ? Math.round((jumlahTerisi / kamarAktif.length) * 100) : 0;
+
+  const statistik: Kpi[] = [
     ...(peran === "owner"
-      ? [
-          {
-            label: "Pendapatan hari ini",
-            nilai: rupiah(
-              pembayaranHariIni.reduce(
-                (total, payment) =>
-                  total + Number(payment.amount),
-                0,
-              ),
-            ),
-            kelas: "text-primary",
-            ikon: CircleDollarSign,
-            ikonKelas: "bg-v0-success/15 text-v0-success",
-            catatan: "pembayaran tercatat hari ini",
-            lebar: true,
-          },
-        ]
+      ? [{
+          label: "Pendapatan Hari Ini",
+          nilai: rupiah(pembayaranHariIni.reduce((total, payment) => total + Number(payment.amount), 0)),
+          catatan: "pembayaran tercatat hari ini",
+          ikon: CircleDollarSign,
+          varian: "hijau" as const,
+        }]
       : []),
     {
-      label: "Booking aktif",
+      label: "Booking Aktif",
       nilai: String(bookingAktif.length),
-      kelas: "text-foreground",
+      catatan: "reservasi menunggu kedatangan",
       ikon: CalendarDays,
-      ikonKelas: "bg-v0-info/12 text-v0-info",
-      catatan: "reservasi aktif",
-      lebar: false,
+      varian: "emas",
     },
     {
-      label: "Kamar tersedia",
-      nilai: String(hitung("siap")),
-      kelas: "text-siap-foreground",
-      ikon: BedDouble,
-      ikonKelas: "bg-v0-warning/15 text-gold-dark",
+      label: "Kamar Terisi",
+      nilai: String(jumlahTerisi),
       catatan: `dari ${kamarAktif.length} kamar aktif`,
-      lebar: false,
-    },
-    {
-      label: "Kamar terisi",
-      nilai: String(hitung("terisi")),
-      kelas: "text-terisi-foreground",
       ikon: BedDouble,
-      ikonKelas: "bg-v0-danger/12 text-v0-danger",
-      catatan: "sedang digunakan",
-      lebar: false,
+      varian: "emas",
+      cincin: persenTerisi,
     },
     {
-      label: "Perlu dibersihkan",
-      nilai: String(hitung("perlu")),
-      kelas: "text-perlu-foreground",
-      ikon: Brush,
-      ikonKelas: "bg-v0-warning/15 text-gold-dark",
-      catatan: "setelah Check-out",
-      lebar: false,
+      label: "Kamar Tersedia",
+      nilai: String(jumlahSiap),
+      catatan: peran === "owner" ? `${jumlahPerlu} perlu dibersihkan` : "siap ditempati",
+      ikon: Sparkles,
+      varian: peran === "owner" && jumlahPerlu > 0 ? "amber" : "hijau",
     },
+    ...(peran !== "owner"
+      ? [{
+          label: "Perlu Dibersihkan",
+          nilai: String(jumlahPerlu),
+          catatan: "setelah Check-out",
+          ikon: Brush,
+          varian: "amber" as const,
+        }]
+      : []),
   ];
   const isFinanceViewer = peran === "owner" || posisiKode === "supervisor";
   const pengeluaranRows = financeExpenses.rows as unknown as {
