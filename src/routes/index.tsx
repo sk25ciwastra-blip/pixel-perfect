@@ -381,10 +381,13 @@ function Ringkasan() {
     },
   ];
   const isFinanceViewer = peran === "owner" || posisiKode === "supervisor";
+  const pengeluaranRows = financeExpenses.rows as unknown as {
+    id: string; category: string; expense_number: string | null; amount: number; method: string; created_at: string;
+  }[];
   const hariIni = tanggalWib(sekarang);
   const pemasukanHariIni = payments.rows.filter((p) => tanggalWib(p.created_at) === hariIni);
   const pengeluaranHariIni = isFinanceViewer && !financeExpenses.error
-    ? financeExpenses.rows.filter((e) => tanggalWib(e.created_at) === hariIni)
+    ? pengeluaranRows.filter((e) => tanggalWib(e.created_at) === hariIni)
     : [];
   const totalMetode = (m: string) =>
     pemasukanHariIni.filter((p) => p.method.toLowerCase() === m).reduce((t, p) => t + Number(p.amount), 0);
@@ -431,7 +434,7 @@ function Ringkasan() {
       };
     });
     const keluar = isFinanceViewer && !financeExpenses.error
-      ? financeExpenses.rows.map((e) => ({
+      ? pengeluaranRows.map((e) => ({
           id: `out-${e.id}`,
           jenis: "keluar" as const,
           judul: e.category,
@@ -445,7 +448,7 @@ function Ringkasan() {
     return [...masuk, ...keluar]
       .sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime())
       .slice(0, 8);
-  }, [payments.rows, transaksi, guests.rows, financeExpenses.rows, financeExpenses.error, isFinanceViewer]);
+  }, [payments.rows, transaksi, guests.rows, pengeluaranRows, financeExpenses.error, isFinanceViewer]);
 
   const [modeGrafik, setModeGrafik] = useState<ModeGrafik>("harian");
   const dataGrafik = useMemo(() => {
@@ -977,7 +980,7 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
     if (!kategori.trim() || !(Number(nominal) > 0)) { setPesan("Isi jenis pengeluaran dan nominal yang benar."); return; }
     setSimpan(true);
     setPesan("");
-    const { error } = await supabase.rpc(isTraining ? "record_training_finance_expense" : "record_finance_expense", {
+    const { error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>)(isTraining ? "record_training_finance_expense" : "record_finance_expense", {
       _idempotency_key: crypto.randomUUID(),
       _session_id: sessionId,
       _amount: Number(nominal),
