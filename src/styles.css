@@ -232,6 +232,23 @@
   box-shadow: 0 0 22px -6px oklch(0.76 0.115 82 / 0.45), 0 1px 0 oklch(1 0 0 / 0.08) inset;
 }
 
+/* Menu sidebar aktif: kaca keemasan dengan penanda kiri bercahaya. */
+@utility menu-aktif {
+  background: linear-gradient(90deg, oklch(0.76 0.115 82 / 0.16), oklch(0.76 0.115 82 / 0.03) 85%);
+  box-shadow: 0 0 0 1px oklch(0.76 0.115 82 / 0.22) inset;
+  &::before {
+    content: "";
+    position: absolute;
+    left: -0.75rem;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    border-radius: 9999px;
+    background: var(--emas-isi);
+    box-shadow: 0 0 12px var(--gold);
+  }
+}
+
 /* Lencana status ringkas (dipakai halaman berikutnya). */
 @utility lencana {
   display: inline-flex;
