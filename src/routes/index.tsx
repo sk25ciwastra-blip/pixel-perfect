@@ -828,9 +828,9 @@ function KartuKpi({ item }: { item: Kpi }) {
   const r = 25;
   const keliling = 2 * Math.PI * r;
   return (
-    <article className="panel-mewah group flex min-w-0 flex-col items-start gap-3 p-4 transition hover:-translate-y-0.5 hover:border-gold/50 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+    <article className="panel-mewah group flex min-w-0 flex-col items-start gap-3 p-4 transition hover:-translate-y-0.5 hover:border-gold/50 sm:flex-row sm:items-center sm:gap-3.5 sm:p-5 2xl:px-4">
       {item.cincin !== undefined ? (
-        <div className="relative size-14 shrink-0" aria-label={`${item.cincin}% kamar terisi`}>
+        <div className="relative size-14 shrink-0 2xl:size-12" aria-label={`${item.cincin}% kamar terisi`}>
           <svg viewBox="0 0 60 60" className="size-full -rotate-90 drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.35)]">
             <circle cx="30" cy="30" r={r} fill="oklch(0.16 0.006 80)" stroke="var(--secondary)" strokeWidth="5" />
             {item.cincin > 0 && (
@@ -840,7 +840,7 @@ function KartuKpi({ item }: { item: Kpi }) {
           <span className="absolute inset-0 grid place-items-center text-xs font-bold text-gold-light">{item.cincin}%</span>
         </div>
       ) : (
-        <span className={`ikon-bulat size-14 shrink-0 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
+        <span className={`ikon-bulat size-14 shrink-0 2xl:size-12 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
           <Ikon className="size-7" strokeWidth={1.5} aria-hidden="true" />
         </span>
       )}
