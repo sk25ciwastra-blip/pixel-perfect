@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
-import skyline from "@/assets/skyline-malam.jpg";
+import panorama from "@/assets/panorama-kota-malam.png.asset.json";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
@@ -97,7 +97,7 @@ function formatSisaWaktu(endsAt: string | null, sekarang: number) {
 
   return {
     status: "expired" as const,
-    waktu: "HABIS",
+    waktu: formatDurasi(0),
     label: "WAKTU HABIS",
     kelas: "text-bahaya-foreground",
   };
@@ -492,7 +492,7 @@ function Ringkasan() {
       <div className="relative isolate">
         {/* Panorama kota malam selebar layar, menyatu ke latar */}
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[440px] overflow-hidden sm:h-[520px]" aria-hidden="true">
-          <img src={skyline} alt="" width={1920} height={640} className="h-full w-full object-cover object-[65%_60%] saturate-[1.15] brightness-110" />
+          <img src={panorama.url} alt="" width={1672} height={941} className="h-full w-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/45 to-transparent" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_72%_62%,oklch(0.76_0.115_82/0.22),transparent_70%)] mix-blend-screen" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-transparent" />
@@ -553,12 +553,12 @@ function Ringkasan() {
           {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
           <div className="mt-5 grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,1.95fr)_minmax(320px,1fr)]">
             <section className="panel-mewah flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar">
-              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pb-3 pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
                   <div>
                     <h2 id="judul-status-kamar" className="font-serif text-lg font-semibold">Status Kamar <span className="text-gold-light">(Real-time)</span></h2>
-                    <p className="text-xs text-muted-foreground">Kamar yang saat ini sedang terisi, urut sisa waktu terdekat</p>
+                    <p className="text-xs text-muted-foreground">Kamar yang saat ini sedang terisi.</p>
                   </div>
                 </div>
                 <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-2 py-1.5 text-[11px] font-semibold">
@@ -575,17 +575,17 @@ function Ringkasan() {
                   <p className="mt-1 text-xs text-muted-foreground">Kamar akan muncul di sini setelah Check-in.</p>
                 </div>
               ) : (
-                <div className="mx-3 mb-4 max-h-[330px] flex-1 overflow-auto rounded-xl xl:max-h-none border border-gold/15 bg-navy-deep/50">
-                  <table className="w-full min-w-[700px] table-fixed text-left text-[13px] xl:min-w-0">
+                <div className="mx-4 mb-4 max-h-[330px] min-w-0 flex-1 overflow-auto rounded-lg xl:max-h-none border border-gold/15 bg-navy-deep/50">
+                  <table className="w-full min-w-[740px] table-fixed text-left text-xs xl:min-w-0">
                     <colgroup>
                       <col className="w-[58px]" />
                       <col className="w-[84px]" />
                       <col />
                       <col className="w-[62px]" />
                       <col className="w-[74px]" />
-                      <col className="w-[150px]" />
-                      <col className="w-[70px]" />
-                      <col className="w-[108px]" />
+                      <col className="w-[116px]" />
+                      <col className="w-[82px]" />
+                      <col className="w-[120px]" />
                     </colgroup>
                     <thead className="sticky top-0 z-10 bg-navy-deep text-xs [&_th]:normal-case [&_th]:tracking-normal [&_th]:text-foreground/85">
                       <tr className="border-b border-gold/20">
@@ -641,9 +641,9 @@ function Ringkasan() {
                             <td className="px-2 py-3 whitespace-nowrap tabular-nums">{item?.started_at ? jamWib(item.started_at) : "—"}</td>
                             <td className="px-2 py-3">
                               {sisa ? (
-                                <div className="flex items-center gap-2">
+                                <div className="flex min-w-0 flex-col gap-1.5">
                                   <span className={`shrink-0 font-mono font-bold tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
-                                  <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary" aria-hidden="true">
+                                  <span className="h-1 w-full overflow-hidden rounded-full bg-secondary" aria-hidden="true">
                                     <span className={`block h-full rounded-full ${warnaBatang}`} style={{ width: `${sisa.status === "expired" ? 100 : Math.max(4, porsi * 100)}%` }} />
                                   </span>
                                 </div>

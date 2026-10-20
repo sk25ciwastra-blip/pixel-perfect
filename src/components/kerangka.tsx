@@ -133,7 +133,7 @@ export function Kerangka({
   const [lainnya, setLainnya] = useState(false);
   const [tertutup, setTertutup] = useState<Record<string, boolean>>({});
   const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname, bagian: (r.location.search as { bagian?: string }).bagian }) });
-  const menu = semuaMenu.filter((m) => m.ke !== "/pengaturan" && bolehAksesMenu(m.ke, peran, posisiKode));
+  const menu = semuaMenu.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
 
   return (
@@ -188,7 +188,6 @@ export function Kerangka({
           <div className="mx-auto mb-3 h-px w-24 bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
           <LambangTeratai className="mx-auto h-6 w-10 text-gold/70" />
           <p className="mt-2 font-serif text-sm italic leading-snug text-gold-light/90">Kenyamanan tenang,<br />layanan sepenuh hati</p>
-          <p className="mt-3 truncate text-[0.7rem] tracking-wide text-muted-foreground">{nama || "Pengguna"} · <span className="text-gold">{posisi}</span></p>
         </div>
       </aside>
 
