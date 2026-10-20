@@ -1,6 +1,7 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Revisi Dashboard saat ini
+- [x] Susun Aksi Cepat pertama dan tiga ringkasan sejajar bawah, redupkan latar kutipan, hapus brand di atas sapaan, tambahkan pencarian dan verifikasi komputer/HP serta rincian transaksi nyata.
 - [x] Rapikan batas tabel, tampilkan timer, samakan panorama dengan Login, tampilkan Pengaturan dan hapus identitas footer sidebar.
 - [x] Verifikasi Dashboard dengan sesi Owner dan uji timer.
 
