@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
 import skyline from "@/assets/skyline-malam.jpg";
+import gedungSate from "@/assets/gedung-sate-malam.jpg";
 
 type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean; anak?: { bagian: string; label: string }[] };
 
@@ -143,7 +144,7 @@ export function Kerangka({
         className="fixed inset-y-0 left-0 z-30 hidden w-[228px] flex-col overflow-hidden border-r border-gold/15 text-foreground lg:flex"
         style={{ background: "var(--sidebar-mewah)" }}
       >
-        <img src={skyline} alt="" aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-80 w-full object-cover object-[30%_60%] opacity-60 saturate-[1.2] [mask-image:linear-gradient(to_top,black_35%,transparent)]" />
+        <img src={gedungSate} alt="" aria-hidden="true" width={768} height={1024} className="pointer-events-none absolute inset-x-0 bottom-0 h-80 w-full object-cover object-[50%_40%] opacity-55 [mask-image:linear-gradient(to_top,black_35%,transparent)]" />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-gold/40 via-gold/10 to-transparent" />
         <div className="relative px-5 pb-5 pt-7"><Logo /></div>
         <div className="relative mx-5 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
@@ -187,7 +188,7 @@ export function Kerangka({
         <div className="relative px-5 pb-6 pt-4 text-center [text-shadow:0_2px_10px_oklch(0_0_0/0.9)]">
           <div className="mx-auto mb-3 h-px w-24 bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
           <LambangTeratai className="mx-auto h-6 w-10 text-gold/70" />
-          <p className="mt-2 font-serif text-sm italic leading-snug text-gold-light/90">Kenyamanan tenang,<br />layanan sepenuh hati</p>
+          <p className="mt-2 font-serif text-sm italic leading-snug text-foreground/90">&ldquo;Pengalaman menginap yang nyaman selalu berawal dari pelayanan yang baik.&rdquo;</p>
         </div>
       </aside>
 
