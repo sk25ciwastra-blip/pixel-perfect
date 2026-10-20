@@ -1,8 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   LayoutGrid, BedDouble, CalendarDays, Receipt, Users, Sparkles, Wallet,
-  IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, type LucideIcon,
+  IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
 import skyline from "@/assets/skyline-malam.jpg";
@@ -30,7 +30,7 @@ function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
 
 const semuaMenu: Menu[] = [
   { ke: "/", label: "Dashboard", ikon: LayoutGrid },
-  { ke: "/kamar", label: "Room", ikon: BedDouble },
+  { ke: "/kamar", label: "Kamar", ikon: BedDouble },
   { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/transaksi", label: "Transaksi", ikon: Receipt },
   { ke: "/tamu", label: "Tamu", ikon: Users },
@@ -47,13 +47,19 @@ const semuaMenu: Menu[] = [
     { bagian: "harian", label: "Rekap Harian" },
     { bagian: "pendapatan", label: "Rekap Pendapatan" },
   ] },
-  { ke: "/karyawan", label: "Karyawan", ikon: IdCard, ownerSaja: true },
+  { ke: "/karyawan", label: "Tim & Akses", ikon: IdCard, ownerSaja: true, anak: [
+    { bagian: "receptionist", label: "Receptionist" },
+    { bagian: "housekeeping", label: "Housekeeping" },
+    { bagian: "supervisor", label: "Supervisor" },
+    { bagian: "inspector", label: "Inspector" },
+    { bagian: "investor", label: "Investor" },
+  ] },
   { ke: "/pengaturan", label: "Pengaturan", ikon: Settings, ownerSaja: true },
 ];
 
 const bawah: Menu[] = [
   { ke: "/", label: "Dashboard", ikon: LayoutGrid },
-  { ke: "/kamar", label: "Room", ikon: BedDouble },
+  { ke: "/kamar", label: "Kamar", ikon: BedDouble },
   { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/tamu", label: "Tamu", ikon: Users },
 ];
@@ -104,7 +110,7 @@ export function Kerangka({
   /** Konten memenuhi seluruh lebar setelah sidebar (Dashboard). */
   penuh?: boolean;
 }) {
-  const { peran, nama, posisi, posisiKode, keluar } = usePeran();
+  const { peran, nama, posisi, posisiKode } = usePeran();
   const [lainnya, setLainnya] = useState(false);
   const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname, bagian: (r.location.search as { bagian?: string }).bagian }) });
   const menu = semuaMenu.filter((m) => m.ke !== "/pengaturan" && bolehAksesMenu(m.ke, peran, posisiKode));
@@ -151,33 +157,26 @@ export function Kerangka({
             </div>
           ))}
         </nav>
-        <div className="relative m-3 rounded-2xl border border-gold/20 bg-background/70 p-3 backdrop-blur-md">
-          <div className="flex items-center gap-3">
-            <span className="emas-isi grid size-10 shrink-0 place-items-center rounded-full font-serif text-base font-bold">
-              {(nama || "P").slice(0, 1).toUpperCase()}
-            </span>
-            <div className="min-w-0 leading-tight">
-              <p className="truncate text-sm font-semibold">{nama}</p>
-              <p className="truncate text-xs text-gold">{posisi}</p>
-            </div>
-          </div>
-          <button onClick={() => void keluar()} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-secondary/70 px-3 py-2 text-xs font-semibold text-foreground transition hover:border-gold/60 hover:text-gold-light">
-            <LogOut className="h-3.5 w-3.5" /> Keluar
-          </button>
+        <div className="relative px-5 pb-6 pt-4 text-center">
+          <div className="mx-auto mb-3 h-px w-24 bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
+          <LambangTeratai className="mx-auto h-6 w-10 text-gold/70" />
+          <p className="mt-2 font-serif text-sm italic leading-snug text-gold-light/90">Kenyamanan tenang,<br />layanan sepenuh hati</p>
+          <p className="mt-3 truncate text-[0.7rem] tracking-wide text-muted-foreground">{nama || "Pengguna"} · <span className="text-gold">{posisi}</span></p>
         </div>
       </aside>
 
       {/* Header HP */}
       <header className="sticky top-0 z-20 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-gold/20 bg-navy-deep/90 px-4 py-3 text-foreground backdrop-blur lg:hidden">
         <Logo ringkas />
-        <button onClick={() => void keluar()} className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-gold-light">Keluar</button>
+        <MenuProfil ringkas />
       </header>
 
       <main className={`relative pb-28 lg:ml-[228px] lg:pb-12 ${penuh ? "" : "px-4 pt-6 lg:px-10 lg:pt-0"}`}>
         {penuh ? children : (
         <>
+          <div className="relative z-20 hidden justify-end pt-5 lg:flex"><MenuProfil /></div>
           {!tanpaJudul && (
-            <div className="relative -mx-4 mb-6 overflow-hidden px-4 lg:-mx-10 lg:px-10 lg:pt-10">
+            <div className="relative -mx-4 mb-6 overflow-hidden px-4 lg:-mx-10 lg:px-10 lg:pt-2">
               <img src={skyline} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[center_70%] opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/30" />
               <div className="relative mx-auto flex max-w-[1480px] flex-wrap items-end justify-between gap-3 pb-6">
@@ -256,6 +255,55 @@ export function Kerangka({
               ))}
             </ul>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
+  const { nama, posisi, keluar } = usePeran();
+  const [buka, setBuka] = useState(false);
+  const [yakin, setYakin] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!buka) return;
+    const tutup = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) { setBuka(false); setYakin(false); } };
+    document.addEventListener("mousedown", tutup);
+    return () => document.removeEventListener("mousedown", tutup);
+  }, [buka]);
+  const inisial = (nama || "P").slice(0, 1).toUpperCase();
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button type="button" onClick={() => setBuka((v) => !v)} aria-haspopup="menu" aria-expanded={buka} aria-label="Menu profil"
+        className="flex items-center gap-2.5 rounded-full border border-gold/25 bg-background/55 py-1.5 pl-1.5 pr-3 backdrop-blur-md transition hover:border-gold/60">
+        <span className={`emas-isi grid place-items-center rounded-full font-serif font-bold ${ringkas ? "size-7 text-xs" : "size-9 text-sm"}`}>{inisial}</span>
+        {!ringkas && (
+          <span className="text-left leading-tight">
+            <span className="block text-sm font-semibold">{nama || "Pengguna"}</span>
+            <span className="block text-xs text-gold">{posisi || "Pengguna"}</span>
+          </span>
+        )}
+        <ChevronDown className={`size-4 text-gold transition ${buka ? "rotate-180" : ""}`} />
+      </button>
+      {buka && (
+        <div role="menu" className="panel-mewah absolute right-0 top-full z-50 mt-2 w-60 p-3">
+          <p className="truncate text-sm font-semibold">{nama || "Pengguna"}</p>
+          <p className="truncate text-xs text-gold">{posisi || "Pengguna"}</p>
+          <div className="my-3 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
+          {yakin ? (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Yakin ingin keluar dari aplikasi?</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setYakin(false)} className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold">Batal</button>
+                <button type="button" role="menuitem" onClick={() => void keluar()} className="flex-1 rounded-lg bg-bahaya px-3 py-2 text-xs font-semibold text-bahaya-foreground">Ya, keluar</button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" role="menuitem" onClick={() => setYakin(true)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-gold/10 hover:text-gold-light">
+              <LogOut className="size-4" /> Keluar
+            </button>
+          )}
         </div>
       )}
     </div>
