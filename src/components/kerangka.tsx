@@ -185,7 +185,7 @@ export function Kerangka({
             </div>
           ))}
         </nav>
-        <div className="relative px-5 pb-6 pt-4 text-center [text-shadow:0_2px_10px_oklch(0_0_0/0.9)]">
+        <div className="relative bg-gradient-to-t from-background/90 via-background/70 to-background/30 px-5 pb-6 pt-4 text-center [text-shadow:0_2px_10px_oklch(0_0_0/0.9)]">
           <div className="mx-auto mb-3 h-px w-24 bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
           <LambangTeratai className="mx-auto h-6 w-10 text-gold/70" />
           <p className="mt-2 font-serif text-sm italic leading-snug text-foreground/90">&ldquo;Pengalaman menginap yang nyaman selalu berawal dari pelayanan yang baik.&rdquo;</p>

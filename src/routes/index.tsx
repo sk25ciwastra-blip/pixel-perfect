@@ -22,6 +22,7 @@ import {
   BarChart3,
   Target,
   Flag,
+  Search,
   type LucideIcon,
 } from "lucide-react";
 import { Kerangka, MenuProfil } from "@/components/kerangka";
@@ -39,7 +40,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
 
 export const Route = createFileRoute("/")({
-  head: () => meta("Ringkasan", "Ringkasan harian Baturaden 25 Homestay: pendapatan, kamar, booking, dan housekeeping."),
+  head: () => {
+    const metadata = meta("Ringkasan", "Ringkasan harian Baturaden 25 Homestay: pendapatan, kamar, booking, dan housekeeping.");
+    return { ...metadata, meta: [...metadata.meta, { property: "og:image", content: panorama.url }, { name: "twitter:image", content: panorama.url }] };
+  },
   component: Ringkasan,
 });
 
@@ -149,6 +153,7 @@ function Ringkasan() {
   const packages = useTable("packages");
   const activityLogs = useTable("activity_logs", peran === "owner");
   const employees = useTable("employees", peran === "owner");
+  const housekeepingHistory = useTable("housekeeping_history", peran === "owner" || ["supervisor", "housekeeping", "inspector"].includes(posisiKode ?? ""));
   const financeExpenses = useTable(
     "finance_expenses",
     peran === "owner" || posisiKode === "supervisor",
@@ -167,6 +172,8 @@ function Ringkasan() {
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
   const [checkingOutId, setCheckingOutId] = useState<string | null>(null);
   const [dashboardMessage, setDashboardMessage] = useState("");
+  const [pencarian, setPencarian] = useState("");
+  const [kataCari, setKataCari] = useState("");
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -329,7 +336,6 @@ function Ringkasan() {
   }
 
   const jumlahTerisi = hitung("terisi");
-  const jumlahSiap = hitung("siap");
   const jumlahPerlu = hitung("perlu");
   const persenTerisi = kamarAktif.length > 0 ? Math.round((jumlahTerisi / kamarAktif.length) * 100) : 0;
 
@@ -357,13 +363,6 @@ function Ringkasan() {
       ikon: BedDouble,
       varian: "emas",
       cincin: persenTerisi,
-    },
-    {
-      label: "Kamar Tersedia",
-      nilai: String(jumlahSiap),
-      catatan: peran === "owner" ? `${jumlahPerlu} perlu dibersihkan` : "siap ditempati",
-      ikon: Sparkles,
-      varian: peran === "owner" && jumlahPerlu > 0 ? "amber" : "hijau",
     },
     ...(peran !== "owner"
       ? [{
@@ -486,6 +485,13 @@ function Ringkasan() {
   const totalPemasukanHariIni = komposisi.filter((k) => k.label !== "Pengeluaran").reduce((t, k) => t + k.nominal, 0);
   const jamSekarang = new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(sekarang));
   const tanggalPanjang = new Date(sekarang).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
+  const cari = kataCari.trim().toLowerCase();
+  const hasilTransaksi = cari ? transaksi.filter((t) => {
+    const tamu = guests.rows.find((g) => g.id === t.guest_id);
+    return [t.transaction_number, tamu?.phone].some((nilai) => nilai?.toLowerCase().includes(cari));
+  }).slice(0, 8) : [];
+  const hasilHk = cari ? housekeepingHistory.rows.filter((h) => h.job_number?.toLowerCase().includes(cari)).filter((h, i, rows) => rows.findIndex((r) => r.job_number === h.job_number) === i).slice(0, 8) : [];
+  const hasilPengeluaran = cari ? pengeluaranRows.filter((e) => e.expense_number?.toLowerCase().includes(cari)).slice(0, 8) : [];
 
   return (
     <Kerangka judul="Ringkasan" penuh>
@@ -502,6 +508,11 @@ function Ringkasan() {
         <div className="px-4 pb-10 pt-5 sm:px-6 lg:px-8 2xl:px-10">
           {/* Baris atas: tanggal & profil */}
           <div className="flex flex-wrap items-center justify-end gap-3">
+            <form onSubmit={(e) => { e.preventDefault(); setKataCari(pencarian); }} className="flex min-w-0 flex-1 basis-full items-center gap-2 rounded-full border border-gold/25 bg-background/65 py-1.5 pl-4 pr-1.5 backdrop-blur-md xl:basis-0">
+              <Search className="size-4 shrink-0 text-foreground/90" aria-hidden="true" />
+              <input aria-label="Pencarian Dashboard" placeholder="Cari ID TRX, ID HK, ID EXP, No. Telp...." value={pencarian} onChange={(e) => { setPencarian(e.target.value); if (!e.target.value.trim()) setKataCari(""); }} className="h-8 w-full min-w-0 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
+              <Button type="submit" size="sm" className="shrink-0 rounded-full px-4"><Search className="size-4" />Cari</Button>
+            </form>
             <div className="flex items-center gap-3 rounded-full border border-gold/25 bg-background/55 px-4 py-2 text-sm backdrop-blur-md">
               <CalendarDays className="size-4 text-gold" aria-hidden="true" />
               <time className="font-medium capitalize">{tanggalPanjang}</time>
@@ -510,10 +521,20 @@ function Ringkasan() {
             </div>
             <div className="hidden lg:block"><MenuProfil /></div>
           </div>
+          {cari && (
+            <section aria-label="Hasil pencarian" className="panel-mewah mt-3 p-4">
+              <div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Hasil pencarian</h2><Button variant="ghost" size="icon" aria-label="Tutup pencarian" onClick={() => { setKataCari(""); setPencarian(""); }}><X /></Button></div>
+              <ul className="divide-y divide-border text-sm">
+                {hasilTransaksi.map((t) => <li key={t.id}><Button variant="ghost" className="h-auto w-full justify-start whitespace-normal py-3 text-left" onClick={() => setDetailTransactionId(t.id)}><Receipt className="text-gold" />{t.transaction_number} — {guests.rows.find((g) => g.id === t.guest_id)?.full_name ?? "Tamu"}</Button></li>)}
+                {hasilHk.map((h) => <li key={h.id}><Link to="/housekeeping" search={{ bagian: "riwayat" }} className="flex items-center gap-2 py-3 text-gold-light"><Sparkles className="size-4" />{h.job_number} — Kamar {kamar.find((r) => r.id === h.room_id)?.room_number ?? "—"}</Link></li>)}
+                {hasilPengeluaran.map((e) => <li key={e.id}><Link to="/keuangan" className="flex items-center gap-2 py-3 text-gold-light"><ArrowUpRight className="size-4" />{e.expense_number} — {e.category} · {rupiah(e.amount)}</Link></li>)}
+              </ul>
+              {hasilTransaksi.length + hasilHk.length + hasilPengeluaran.length === 0 && <p className="py-3 text-sm text-muted-foreground">Tidak ada hasil pada data yang dapat Anda akses.</p>}
+            </section>
+          )}
 
           {/* Sapaan */}
           <header className="mt-6 max-w-3xl sm:mt-10">
-            <p className="text-[0.7rem] font-semibold tracking-[0.3em] text-gold">BATURADEN 25 HOMESTAY</p>
             <p className="mt-2 text-base text-foreground/90 sm:text-lg">{salamWaktu(jamSekarang)}, <span className="font-semibold text-gold-light">{posisi || "Pengguna"}</span></p>
             <h1 className="mt-1 font-serif text-[2.1rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
               <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">{nama || "Pengguna"}</span>
@@ -522,12 +543,8 @@ function Ringkasan() {
           </header>
 
           {/* KPI + Aksi Cepat */}
-          <div className="mt-7 grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
-              {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
-            </div>
-
-            <section className="panel-mewah p-5" aria-labelledby="judul-aksi-cepat">
+          <div className="mt-7 grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(300px,1.25fr)_repeat(3,minmax(0,1fr))]">
+            <section className="panel-mewah min-w-0 p-4" aria-labelledby="judul-aksi-cepat">
               <h2 id="judul-aksi-cepat" className="font-serif text-xl font-semibold">Aksi Cepat</h2>
               {bolehAksiTransaksi ? (
                 <div className="mt-4 grid grid-cols-3 gap-2.5">
@@ -538,16 +555,17 @@ function Ringkasan() {
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
                   {posisiKode === "housekeeping" || posisiKode === "inspector" ? (
-                    <Link to="/housekeeping" className="flex flex-col items-center gap-2 rounded-xl border border-gold/25 bg-navy-deep/70 px-3 py-4 text-center text-sm font-semibold transition hover:border-gold/60">
+                    <Link to="/housekeeping" className="flex items-center gap-2 rounded-lg border border-gold/25 bg-navy-deep/70 px-3 py-4 text-sm font-semibold transition hover:border-gold/60">
                       <Sparkles className="h-5 w-5 text-gold" /> Housekeeping
                     </Link>
                   ) : null}
-                  <Link to="/kamar" className="flex flex-col items-center gap-2 rounded-xl border border-gold/25 bg-navy-deep/70 px-3 py-4 text-center text-sm font-semibold transition hover:border-gold/60">
+                  <Link to="/kamar" className="flex items-center gap-2 rounded-lg border border-gold/25 bg-navy-deep/70 px-3 py-4 text-sm font-semibold transition hover:border-gold/60">
                     <Clock3 className="h-5 w-5 text-gold" /> Status Kamar
                   </Link>
                 </div>
               )}
             </section>
+            {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
           </div>
 
           {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
@@ -870,10 +888,10 @@ function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; j
       variant="ghost"
       type="button"
       onClick={onClick}
-      className={`flex h-auto min-h-[5.5rem] whitespace-normal flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center text-[0.8rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
+      className={`flex h-auto min-h-12 whitespace-normal flex-row items-center justify-center gap-1.5 rounded-lg border px-2 py-2.5 text-left text-[0.65rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
       <Ikon className={`h-5 w-5 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
-      {judul}
+      <span className="min-w-0">{judul}</span>
     </Button>
   );
 }
