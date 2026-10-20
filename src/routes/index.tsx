@@ -833,23 +833,23 @@ function KartuKpi({ item }: { item: Kpi }) {
   const r = 25;
   const keliling = 2 * Math.PI * r;
   return (
-    <article className="panel-mewah group relative flex min-w-0 items-center gap-3 overflow-hidden p-4 transition hover:-translate-y-0.5 hover:border-gold/50 sm:gap-4 sm:p-5">
+    <article className="panel-mewah group relative flex min-w-0 items-center gap-3 overflow-hidden p-4 transition hover:-translate-y-0.5 hover:border-gold/50 sm:gap-3">
       <span className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-gold/[0.07] blur-2xl" aria-hidden="true" />
       {item.cincin === undefined && (
-        <span className={`ikon-bulat size-12 shrink-0 sm:size-14 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
+        <span className={`ikon-bulat size-11 shrink-0 2xl:size-12 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
           <Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" />
         </span>
       )}
       {item.cincin !== undefined && (
-        <span className="ikon-bulat size-12 shrink-0 text-gold sm:size-14"><Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" /></span>
+        <span className="ikon-bulat size-11 shrink-0 text-gold 2xl:size-12"><Ikon className="size-6 sm:size-7" strokeWidth={1.5} aria-hidden="true" /></span>
       )}
       <div className="min-w-0 flex-1">
-        <h2 className="truncate text-[0.8rem] text-muted-foreground">{item.label}</h2>
+        <h2 className="line-clamp-2 text-[0.8rem] leading-snug text-muted-foreground">{item.label}</h2>
         <p className="mt-1 truncate font-serif text-[1.65rem] font-semibold leading-none tabular-nums text-foreground">{item.nilai}</p>
-        <p className={`mt-1.5 truncate text-[11px] ${warnaVarian[item.varian]}`}>{item.catatan}</p>
+        <p className={`mt-1.5 line-clamp-2 text-[11px] leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
       </div>
       {item.cincin !== undefined && (
-        <div className="relative hidden size-14 shrink-0 sm:block" aria-label={`${item.cincin}% kamar terisi`}>
+        <div className="relative hidden size-12 shrink-0 sm:block" aria-label={`${item.cincin}% kamar terisi`}>
           <svg viewBox="0 0 60 60" className="size-full -rotate-90 drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.35)]">
             <circle cx="30" cy="30" r={r} fill="oklch(0.16 0.006 80)" stroke="var(--secondary)" strokeWidth="5" />
             {item.cincin > 0 && (
