@@ -137,7 +137,9 @@ export function Kerangka({
           {!tanpaJudul && (
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="text-2xl font-bold tracking-tight">{judul}</h1>
+                <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-gold">BATURADEN 25 HOMESTAY</p>
+                <h1 className="mt-1 font-serif text-3xl tracking-tight text-foreground">{judul}</h1>
+                <div className="mt-2 h-px w-16 bg-gradient-to-r from-gold to-transparent" />
                 {keterangan && <p className="mt-1 text-sm text-muted-foreground">{keterangan}</p>}
               </div>
               {aksi}
@@ -223,8 +225,9 @@ export function Judul({ children, aksi }: { children: ReactNode; aksi?: ReactNod
 
 export function Panel({ judul, children }: { judul: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 shadow-lembut sm:p-5">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{judul}</h2>
+    <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-navy-deep p-4 shadow-lembut sm:p-5">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+      <h2 className="font-serif text-lg text-gold-light">{judul}</h2>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -241,7 +244,7 @@ export function Angka({ label, nilai, catatan }: { label: string; nilai: string;
 }
 
 export function Daftar({ children }: { children: ReactNode }) {
-  return <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-lembut">{children}</ul>;
+  return <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-navy-deep shadow-lembut">{children}</ul>;
 }
 
 export function KotakCari({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
