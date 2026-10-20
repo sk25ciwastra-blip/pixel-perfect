@@ -508,7 +508,7 @@ function Ringkasan() {
         <div className="px-4 pb-10 pt-5 sm:px-6 lg:px-8 2xl:px-10">
           {/* Baris atas: tanggal & profil */}
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <form onSubmit={(e) => { e.preventDefault(); setKataCari(pencarian); }} className="flex w-full min-w-0 items-center gap-2 rounded-full border border-gold/25 bg-background/65 py-1.5 pl-4 pr-1.5 backdrop-blur-md xl:mr-auto xl:w-[30rem]">
+            <form onSubmit={(e) => { e.preventDefault(); setKataCari(pencarian); }} className="flex w-full min-w-0 items-center gap-2 rounded-full border border-gold/25 bg-background/65 py-1.5 pl-4 pr-1.5 backdrop-blur-md xl:mr-auto xl:w-[26.5rem]">
               <Search className="size-4 shrink-0 text-foreground/90" aria-hidden="true" />
               <input aria-label="Pencarian Dashboard" placeholder="Cari ID TRX, ID HK, ID EXP, No. Telp...." value={pencarian} onChange={(e) => { setPencarian(e.target.value); if (!e.target.value.trim()) setKataCari(""); }} className="h-8 w-full min-w-0 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
               <Button type="submit" size="sm" className="shrink-0 rounded-full px-4"><Search className="size-4" />Cari</Button>
