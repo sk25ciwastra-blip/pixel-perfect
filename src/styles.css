@@ -231,3 +231,7 @@
   background: radial-gradient(circle at 30% 25%, oklch(0.32 0.04 82), oklch(0.16 0.006 80) 70%);
   box-shadow: 0 0 22px -6px oklch(0.76 0.115 82 / 0.45), 0 1px 0 oklch(1 0 0 / 0.08) inset;
 }
+
+@layer base {
+  .font-serif { font-variant-numeric: lining-nums; }
+}

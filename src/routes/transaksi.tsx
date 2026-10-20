@@ -178,13 +178,13 @@ function Halaman() {
                 const guestName = guest?.full_name?.toUpperCase() ?? "TAMU";
 
                 return (
-                  <li key={transaction.id} className="px-4 py-3 sm:px-5 sm:py-4">
+                  <li key={transaction.id} className="px-4 py-3 transition hover:bg-gold/[0.04] sm:px-6 sm:py-4">
                     <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 sm:grid-cols-[auto_minmax(0,1.35fr)_minmax(170px,.9fr)_minmax(120px,.65fr)] sm:items-center">
-                      <div className="flex w-24 shrink-0 flex-col items-center justify-center rounded-xl bg-secondary px-2 py-2.5 text-center">
-                        <p className="max-w-full truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                      <div className="flex w-24 shrink-0 flex-col items-center justify-center rounded-xl border border-gold/30 bg-gradient-to-b from-navy-soft to-navy-deep px-2 py-2.5 text-center shadow-[0_0_18px_-8px_var(--gold)]">
+                        <p className="max-w-full truncate text-[10px] font-bold uppercase tracking-wide text-gold/80">
                           {roomType?.name ?? "ROOM"}
                         </p>
-                        <p className="mt-1 text-lg font-bold leading-none">
+                        <p className="mt-1 font-serif text-xl font-semibold leading-none text-gold-light">
                           {room?.room_number ?? "—"}
                         </p>
                       </div>
