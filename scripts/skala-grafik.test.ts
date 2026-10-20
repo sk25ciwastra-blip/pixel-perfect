@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { posisiSkala, skalaGrafik, labelJuta } from "./skala-grafik";
+import { posisiSkala, skalaGrafik, labelJuta } from "../src/lib/skala-grafik";
 
 test("skala harian 0, 1M, 3M, 6M", () => {
   expect(skalaGrafik.harian.map(labelJuta)).toEqual(["0", "1M", "3M", "6M"]);

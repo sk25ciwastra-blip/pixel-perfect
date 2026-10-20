@@ -12,8 +12,10 @@ export function posisiSkala(nilai: number, ticks: number[]): number {
   if (!(nilai > 0)) return 0;
   const n = ticks.length - 1;
   for (let i = 0; i < n; i += 1) {
-    if (nilai <= ticks[i + 1]) {
-      return (i + (nilai - ticks[i]) / (ticks[i + 1] - ticks[i])) / n;
+    const bawah = ticks[i] ?? 0;
+    const atas = ticks[i + 1] ?? bawah;
+    if (nilai <= atas) {
+      return (i + (nilai - bawah) / (atas - bawah || 1)) / n;
     }
   }
   return 1;
