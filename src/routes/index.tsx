@@ -17,12 +17,16 @@ import {
   LogOut,
   MessageCircle,
   Sparkles,
+  ChevronRight,
+  Receipt,
+  BarChart3,
+  Target,
+  Flag,
   type LucideIcon,
 } from "lucide-react";
-import { Kerangka, Judul } from "@/components/kerangka";
+import { Kerangka } from "@/components/kerangka";
 import skyline from "@/assets/skyline-malam.jpg";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
-import { LencanaStatus } from "@/components/status-kamar";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { usePeran } from "@/lib/peran";
@@ -323,62 +327,52 @@ function Ringkasan() {
     }
   }
 
-  const statistik = [
+  const jumlahTerisi = hitung("terisi");
+  const jumlahSiap = hitung("siap");
+  const jumlahPerlu = hitung("perlu");
+  const persenTerisi = kamarAktif.length > 0 ? Math.round((jumlahTerisi / kamarAktif.length) * 100) : 0;
+
+  const statistik: Kpi[] = [
     ...(peran === "owner"
-      ? [
-          {
-            label: "Pendapatan hari ini",
-            nilai: rupiah(
-              pembayaranHariIni.reduce(
-                (total, payment) =>
-                  total + Number(payment.amount),
-                0,
-              ),
-            ),
-            kelas: "text-primary",
-            ikon: CircleDollarSign,
-            ikonKelas: "bg-v0-success/15 text-v0-success",
-            catatan: "pembayaran tercatat hari ini",
-            lebar: true,
-          },
-        ]
+      ? [{
+          label: "Pendapatan Hari Ini",
+          nilai: rupiah(pembayaranHariIni.reduce((total, payment) => total + Number(payment.amount), 0)),
+          catatan: "pembayaran hari ini",
+          ikon: CircleDollarSign,
+          varian: "hijau" as const,
+        }]
       : []),
     {
-      label: "Booking aktif",
+      label: "Booking Aktif",
       nilai: String(bookingAktif.length),
-      kelas: "text-foreground",
+      catatan: "menunggu kedatangan",
       ikon: CalendarDays,
-      ikonKelas: "bg-v0-info/12 text-v0-info",
-      catatan: "reservasi aktif",
-      lebar: false,
+      varian: "emas",
     },
     {
-      label: "Kamar tersedia",
-      nilai: String(hitung("siap")),
-      kelas: "text-siap-foreground",
+      label: "Kamar Terisi",
+      nilai: String(jumlahTerisi),
+      catatan: `dari ${kamarAktif.length} kamar`,
       ikon: BedDouble,
-      ikonKelas: "bg-v0-warning/15 text-gold-dark",
-      catatan: `dari ${kamarAktif.length} kamar aktif`,
-      lebar: false,
+      varian: "emas",
+      cincin: persenTerisi,
     },
     {
-      label: "Kamar terisi",
-      nilai: String(hitung("terisi")),
-      kelas: "text-terisi-foreground",
-      ikon: BedDouble,
-      ikonKelas: "bg-v0-danger/12 text-v0-danger",
-      catatan: "sedang digunakan",
-      lebar: false,
+      label: "Kamar Tersedia",
+      nilai: String(jumlahSiap),
+      catatan: peran === "owner" ? `${jumlahPerlu} perlu dibersihkan` : "siap ditempati",
+      ikon: Sparkles,
+      varian: peran === "owner" && jumlahPerlu > 0 ? "amber" : "hijau",
     },
-    {
-      label: "Perlu dibersihkan",
-      nilai: String(hitung("perlu")),
-      kelas: "text-perlu-foreground",
-      ikon: Brush,
-      ikonKelas: "bg-v0-warning/15 text-gold-dark",
-      catatan: "setelah Check-out",
-      lebar: false,
-    },
+    ...(peran !== "owner"
+      ? [{
+          label: "Perlu Dibersihkan",
+          nilai: String(jumlahPerlu),
+          catatan: "setelah Check-out",
+          ikon: Brush,
+          varian: "amber" as const,
+        }]
+      : []),
   ];
   const isFinanceViewer = peran === "owner" || posisiKode === "supervisor";
   const pengeluaranRows = financeExpenses.rows as unknown as {
@@ -487,296 +481,307 @@ function Ringkasan() {
     await Promise.all([transactions.refresh(), rooms.refresh(), payments.refresh(), guests.refresh()]);
   };
 
-  const ikonStatistik: Record<string, string> = {
-    "Pendapatan hari ini": "text-primary",
-    "Booking aktif": "text-v0-info",
-    "Kamar tersedia": "text-siap-foreground",
-    "Kamar terisi": "text-terisi-foreground",
-    "Perlu dibersihkan": "text-perlu-foreground",
-  };
-
   const bolehAksiTransaksi = !["housekeeping", "investor", "inspector"].includes(posisiKode ?? "");
+  const totalPemasukanHariIni = komposisi.filter((k) => k.label !== "Pengeluaran").reduce((t, k) => t + k.nominal, 0);
+  const jamSekarang = new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(sekarang));
+  const tanggalPanjang = new Date(sekarang).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
 
   return (
-    <Kerangka judul="Ringkasan" tanpaJudul>
-      {/* Hero premium */}
-      <header className="relative mb-6 overflow-hidden rounded-3xl border border-border shadow-lembut">
-        <img src={skyline} alt="" width={1920} height={640} className="absolute inset-0 h-full w-full object-cover object-right" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-background/10" aria-hidden="true" />
-        <div className="relative flex flex-col gap-6 px-6 py-8 sm:flex-row sm:items-start sm:justify-between sm:px-8 sm:py-10">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.32em] text-primary">Baturaden 25 Homestay</p>
-            <h1 className="mt-4 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
-              Selamat datang, <span className="text-primary">{nama.split(" ")[0] || "Pengguna"}</span>
-            </h1>
-            <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Setiap tamu adalah cerita. Pastikan setiap kamar siap menyambut dengan sempurna.
-            </p>
-            <time className="mt-5 inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1.5 text-xs font-medium backdrop-blur">
-              <CalendarDays className="size-3.5 text-primary" />
-              {new Date(sekarang).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" })}
-            </time>
-          </div>
-          <div className="flex items-center gap-3 self-start rounded-2xl border border-border bg-background/60 px-3 py-2 backdrop-blur">
-            <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-gold-light to-gold-dark text-sm font-bold text-primary-foreground">
-              {(nama || "P").slice(0, 1).toUpperCase()}
-            </span>
-            <div className="leading-tight">
-              <p className="text-sm font-semibold">{nama || "Pengguna"}</p>
-              <p className="text-xs text-primary">{posisi || "Pengguna"}</p>
+    <Kerangka judul="Ringkasan" penuh>
+      <div className="relative isolate">
+        {/* Panorama kota malam selebar layar, menyatu ke latar */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] overflow-hidden sm:h-[480px]" aria-hidden="true">
+          <img src={skyline} alt="" width={1920} height={640} className="h-full w-full object-cover object-[70%_55%]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-background/5" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+        </div>
+
+        <div className="px-4 pb-10 pt-5 sm:px-6 lg:px-8 2xl:px-10">
+          {/* Baris atas: tanggal & profil */}
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex items-center gap-3 rounded-full border border-gold/25 bg-background/55 px-4 py-2 text-sm backdrop-blur-md">
+              <CalendarDays className="size-4 text-gold" aria-hidden="true" />
+              <time className="font-medium capitalize">{tanggalPanjang}</time>
+              <span className="h-4 w-px bg-gold/30" aria-hidden="true" />
+              <span className="font-semibold tabular-nums text-gold-light">{jamSekarang} WIB</span>
+            </div>
+            <div className="hidden items-center gap-3 rounded-full border border-gold/25 bg-background/55 py-1.5 pl-1.5 pr-4 backdrop-blur-md sm:flex">
+              <span className="emas-isi grid size-9 place-items-center rounded-full font-serif text-sm font-bold">
+                {(nama || "P").slice(0, 1).toUpperCase()}
+              </span>
+              <div className="leading-tight">
+                <p className="text-sm font-semibold">{nama || "Pengguna"}</p>
+                <p className="text-xs text-gold">{posisi || "Pengguna"}</p>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* KPI */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
-        {statistik.map((item) => {
-          const Icon = item.ikon as LucideIcon;
-          return (
-            <article key={item.label} className={`rounded-2xl border border-border bg-card p-4 shadow-lembut transition hover:border-primary/40 ${item.lebar ? "col-span-2 lg:col-span-1" : ""}`}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</h2>
-                <span className={`grid size-9 place-items-center rounded-xl bg-secondary ${ikonStatistik[item.label] ?? "text-primary"}`}>
-                  <Icon className="size-[18px]" aria-hidden="true" />
+          {/* Sapaan */}
+          <header className="mt-6 max-w-3xl sm:mt-10">
+            <p className="text-base text-foreground/90 sm:text-lg">Selamat datang, <span className="font-semibold text-gold-light">{nama.split(" ")[0] || "Pengguna"}</span></p>
+            <h1 className="mt-1 font-serif text-[2.1rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
+              <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">Baturaden 25</span> Homestay
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground sm:text-base">Pantau operasional, tingkatkan pelayanan, dan kembangkan bisnis Anda.</p>
+          </header>
+
+          {/* KPI + Aksi Cepat */}
+          <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "2xl:grid-cols-4" : "2xl:grid-cols-3"}`}>
+              {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
+            </div>
+
+            <section className="panel-mewah p-5" aria-labelledby="judul-aksi-cepat">
+              <h2 id="judul-aksi-cepat" className="font-serif text-xl font-semibold">Aksi Cepat</h2>
+              {bolehAksiTransaksi ? (
+                <div className="mt-4 grid grid-cols-3 gap-2.5">
+                  <TombolAksi ikon={LogIn} judul="Check-in Langsung" utama onClick={() => setModal("check_in")} />
+                  <TombolAksi ikon={CalendarPlus} judul="Buat Booking" onClick={() => setModal("booking")} />
+                  <TombolAksi ikon={ArrowUpRight} judul="Pengeluaran" onClick={() => setModal("pengeluaran")} />
+                </div>
+              ) : (
+                <div className="mt-4 grid grid-cols-2 gap-2.5">
+                  {posisiKode === "housekeeping" || posisiKode === "inspector" ? (
+                    <Link to="/housekeeping" className="flex flex-col items-center gap-2 rounded-xl border border-gold/25 bg-navy-deep/70 px-3 py-4 text-center text-sm font-semibold transition hover:border-gold/60">
+                      <Sparkles className="h-5 w-5 text-gold" /> Housekeeping
+                    </Link>
+                  ) : null}
+                  <Link to="/kamar" className="flex flex-col items-center gap-2 rounded-xl border border-gold/25 bg-navy-deep/70 px-3 py-4 text-center text-sm font-semibold transition hover:border-gold/60">
+                    <Clock3 className="h-5 w-5 text-gold" /> Status Kamar
+                  </Link>
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
+          <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(340px,1fr)]">
+            <section className="panel-mewah overflow-hidden" aria-labelledby="judul-status-kamar">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 pb-3 pt-5 sm:px-6">
+                <div className="flex items-center gap-3">
+                  <span className="ikon-bulat size-11 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
+                  <div>
+                    <h2 id="judul-status-kamar" className="font-serif text-xl font-semibold">Status Kamar <span className="text-gold-light">(Real-time)</span></h2>
+                    <p className="text-xs text-muted-foreground">Kamar yang saat ini sedang terisi, urut sisa waktu terdekat</p>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-3.5 py-1.5 text-xs font-semibold">
+                  <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Total terisi {statusKamarBaris.length} kamar
                 </span>
               </div>
-              <p className={`mt-3 text-2xl font-bold tracking-tight ${ikonStatistik[item.label] ?? ""}`}>{item.nilai}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{item.catatan}</p>
-            </article>
-          );
-        })}
-      </div>
+              {dashboardMessage && (
+                <p role="status" className="mx-5 mb-3 rounded-xl border border-border bg-secondary px-3 py-2 text-sm sm:mx-6">{dashboardMessage}</p>
+              )}
+              {statusKamarBaris.length === 0 ? (
+                <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-14 text-center sm:mx-6">
+                  <BedDouble className="size-8 text-gold/60" strokeWidth={1.4} />
+                  <p className="mt-3 font-serif text-lg">Tidak ada kamar sedang terisi</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Kamar akan muncul di sini setelah Check-in.</p>
+                </div>
+              ) : (
+                <div className="mx-3 mb-4 max-h-[460px] overflow-auto rounded-xl border border-gold/15 bg-navy-deep/50 sm:mx-5">
+                  <table className="w-full min-w-[820px] text-left text-sm">
+                    <thead className="sticky top-0 z-10 bg-navy-deep text-xs text-muted-foreground">
+                      <tr className="border-b border-gold/20">
+                        <th className="px-4 py-3 font-semibold">Kamar</th>
+                        <th className="px-3 py-3 font-semibold">Tipe</th>
+                        <th className="px-3 py-3 font-semibold">Tamu</th>
+                        <th className="px-3 py-3 font-semibold">Paket</th>
+                        <th className="px-3 py-3 font-semibold">Check-in</th>
+                        <th className="px-3 py-3 font-semibold">Sisa Waktu</th>
+                        <th className="px-3 py-3 font-semibold">Check-out</th>
+                        <th className="px-4 py-3 text-center font-semibold">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gold/10">
+                      {statusKamarBaris.map(({ room, roomType, terisi }) => {
+                        const item = terisi?.transaksi;
+                        const guest = terisi?.guest;
+                        const sisa = item ? formatSisaWaktu(item.ends_at, sekarang) : null;
+                        const packageItem = item ? packages.rows.find((p) => p.id === item.package_id) : undefined;
+                        const phoneNumber = guest?.phone ? normalizeWhatsAppNumber(guest.phone) : "";
+                        const phoneValid = /^62\d{8,13}$/.test(phoneNumber);
+                        const checkoutReason = item ? checkoutDisabledReason(item, room) : "";
+                        const checkoutDisabled = !item || Boolean(checkoutReason) || checkingOutId !== null;
+                        const mulai = item?.started_at ? new Date(item.started_at).getTime() : NaN;
+                        const akhir = item?.ends_at ? new Date(item.ends_at).getTime() : NaN;
+                        const porsi = Number.isFinite(mulai) && Number.isFinite(akhir) && akhir > mulai
+                          ? Math.min(1, Math.max(0, (akhir - sekarang) / (akhir - mulai)))
+                          : 0;
+                        const warnaBatang = sisa?.status === "expired" || sisa?.status === "hampir" && porsi < 0.1
+                          ? "bg-v0-danger"
+                          : sisa?.status === "hampir" ? "bg-v0-warning" : "bg-v0-success";
+                        return (
+                          <tr key={room.id} className="transition hover:bg-gold/[0.04]">
+                            <td className="px-4 py-3.5 font-serif text-lg font-semibold">{room.room_number}</td>
+                            <td className="px-3 py-3.5 text-foreground/90">{roomType?.name ?? "—"}</td>
+                            <td className="px-3 py-3.5">
+                              {guest ? (
+                                <>
+                                  <p className="font-medium">{guest.full_name}</p>
+                                  <p className="text-[11px] text-muted-foreground">WA ••••{guest.phone.replace(/\D/g, "").slice(-4)}</p>
+                                </>
+                              ) : <span className="text-muted-foreground">—</span>}
+                            </td>
+                            <td className="px-3 py-3.5">
+                              {item ? (
+                                <>
+                                  <p className="font-semibold">{kodePaket(packageItem?.name)}</p>
+                                  <p className="font-mono text-[10px] text-muted-foreground">{item.transaction_number}</p>
+                                </>
+                              ) : <span className="text-muted-foreground">—</span>}
+                            </td>
+                            <td className="px-3 py-3.5 tabular-nums">{item?.started_at ? jamWib(item.started_at) : "—"}</td>
+                            <td className="px-3 py-3.5">
+                              {sisa ? (
+                                <div className="flex items-center gap-3">
+                                  <span className={`w-[4.6rem] font-mono font-bold tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
+                                  <span className="h-1.5 w-20 overflow-hidden rounded-full bg-secondary" aria-hidden="true">
+                                    <span className={`block h-full rounded-full ${warnaBatang}`} style={{ width: `${sisa.status === "expired" ? 100 : Math.max(4, porsi * 100)}%` }} />
+                                  </span>
+                                </div>
+                              ) : <span className="text-muted-foreground">—</span>}
+                            </td>
+                            <td className="px-3 py-3.5 tabular-nums">{item?.ends_at ? jamWib(item.ends_at) : "—"}</td>
+                            <td className="px-4 py-3.5">
+                              {item ? (
+                                <div className="flex justify-center gap-2">
+                                  <IkonAksi label="Detail transaksi" onClick={() => setDetailTransactionId(item.id)}><Eye className="h-4 w-4" /></IkonAksi>
+                                  <IkonAksi
+                                    label={phoneValid ? "Hubungi tamu via WhatsApp" : "WhatsApp tidak tersedia"}
+                                    disabled={!phoneValid}
+                                    kelas="text-siap-foreground"
+                                    onClick={() => {
+                                      if (!guest?.phone || !phoneValid) return;
+                                      openWhatsApp(guest.phone, `Halo ${guest.full_name}, kami dari Baturaden 25 Homestay.\nNo. Transaksi: ${item.transaction_number}`);
+                                    }}
+                                  ><MessageCircle className="h-4 w-4" /></IkonAksi>
+                                  <IkonAksi
+                                    label={checkoutDisabled ? checkoutReason || "Check-out sedang diproses" : "Check-out"}
+                                    disabled={checkoutDisabled}
+                                    kelas="text-bahaya-foreground"
+                                    onClick={() => void checkOut(item.id)}
+                                  ><LogOut className="h-4 w-4" /></IkonAksi>
+                                </div>
+                              ) : <span className="block text-center text-xs text-muted-foreground">—</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
 
-      {/* Aksi cepat */}
-      <section className="mt-6">
-        <Judul>Aksi Cepat</Judul>
-        {bolehAksiTransaksi ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <TombolAksi ikon={LogIn} judul="Check-in Langsung" ket="Tamu datang sekarang" utama onClick={() => setModal("check_in")} />
-            <TombolAksi ikon={CalendarPlus} judul="Buat Booking" ket="Reservasi baru" onClick={() => setModal("booking")} />
-            <TombolAksi ikon={ArrowUpRight} judul="Pengeluaran" ket="Catat uang keluar" onClick={() => setModal("pengeluaran")} />
+            {/* Transaksi terbaru */}
+            <section className="panel-mewah flex flex-col p-5 sm:p-6" aria-labelledby="judul-trx-terbaru">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="ikon-bulat size-11 text-gold"><FileText className="size-5" strokeWidth={1.6} /></span>
+                  <h2 id="judul-trx-terbaru" className="font-serif text-xl font-semibold">Transaksi Terbaru</h2>
+                </div>
+                {bolehAksiTransaksi && (
+                  <Link to="/transaksi" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
+                    Lihat semua <ChevronRight className="size-3.5" />
+                  </Link>
+                )}
+              </div>
+              <div className="mt-4 h-px bg-gradient-to-r from-gold/40 via-gold/10 to-transparent" />
+              {transaksiTerbaru.length === 0 ? (
+                <div className="grid flex-1 place-items-center py-10 text-center">
+                  <div>
+                    <Receipt className="mx-auto size-8 text-gold/60" strokeWidth={1.4} />
+                    <p className="mt-3 text-sm text-muted-foreground">Belum ada transaksi tercatat.</p>
+                  </div>
+                </div>
+              ) : (
+                <ol className="mt-1 divide-y divide-gold/10">
+                  {transaksiTerbaru.map((t) => (
+                    <li key={t.id} className="flex items-center gap-3 py-3">
+                      <span className={`grid size-10 shrink-0 place-items-center rounded-full border ${t.jenis === "masuk" ? "border-v0-success/40 bg-siap text-siap-foreground" : "border-v0-danger/40 bg-bahaya text-bahaya-foreground"}`}>
+                        {t.jenis === "masuk" ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">
+                          {t.judul}{t.sub && <span className="ml-1.5 font-normal text-muted-foreground">({t.sub})</span>}
+                        </p>
+                        <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{t.nomor}</p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className={`text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
+                          {t.jenis === "masuk" ? "+ " : "− "}{rupiah(t.nominal)}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">{t.metode} · {jamWib(t.waktu)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {posisiKode === "housekeeping" || posisiKode === "inspector" ? (
-              <Link to="/housekeeping" className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-5 shadow-lembut transition hover:border-primary/40">
-                <div><p className="text-sm font-semibold">Housekeeping</p><p className="mt-1 text-xs text-muted-foreground">Lihat kamar yang perlu ditangani</p></div>
-                <Sparkles className="h-6 w-6 text-primary" />
-              </Link>
-            ) : null}
-            <Link to="/kamar" className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-5 shadow-lembut transition hover:border-primary/40">
-              <div><p className="text-sm font-semibold">Status Kamar</p><p className="mt-1 text-xs text-muted-foreground">Pantau kondisi kamar</p></div>
-              <Clock3 className="h-6 w-6 text-primary" />
-            </Link>
-          </div>
-        )}
-      </section>
 
-      {/* Status kamar real-time */}
-      <section className="mt-6 rounded-2xl border border-border bg-card shadow-lembut">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-4">
-          <div>
-            <h2 className="font-serif text-xl font-semibold">Status Kamar</h2>
-            <p className="text-xs text-muted-foreground">Real-time · hanya kamar terisi, urut sisa waktu terdekat</p>
+          {/* Tiga modul analitik berjajar */}
+          <div className={`mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "2xl:grid-cols-3" : ""}`}>
+            <section className="panel-mewah p-5 sm:p-6" aria-labelledby="judul-komposisi">
+              <JudulModul id="judul-komposisi" ikon={CircleDollarSign} judul="Pendapatan Hari Ini" sub={`Komposisi QRIS, Transfer Bank, Cash${isFinanceViewer ? " & Pengeluaran" : ""}`} />
+              <Donat data={komposisi} totalPemasukan={totalPemasukanHariIni} />
+            </section>
+
+            <section className="panel-mewah p-5 sm:p-6" aria-labelledby="judul-grafik">
+              <JudulModul id="judul-grafik" ikon={BarChart3} judul="Grafik Pendapatan" sub="Berdasarkan pembayaran tercatat · M = juta rupiah" />
+              <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-xl border border-gold/20 bg-navy-deep/70 p-1 text-xs font-semibold" role="tablist">
+                {(["harian", "mingguan", "bulanan"] as ModeGrafik[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    role="tab"
+                    aria-selected={modeGrafik === m}
+                    onClick={() => setModeGrafik(m)}
+                    className={`rounded-lg px-3 py-2 capitalize transition ${modeGrafik === m ? "emas-isi" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              <Grafik data={dataGrafik} ticks={skalaAdaptif(skalaGrafik[modeGrafik], Math.max(0, ...dataGrafik.map((d) => d.nilai)))} />
+            </section>
+
+            {peran === "owner" && (
+              <TargetOmzet
+                realisasi={omzetBulanIni}
+                target={target}
+                onUbah={(nilai) => {
+                  setTarget(nilai);
+                  window.localStorage.setItem(KUNCI_TARGET, String(nilai));
+                }}
+              />
+            )}
           </div>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-siap-foreground">
-            <span className="size-2 animate-pulse rounded-full bg-current" /> Langsung
-          </span>
+
+          {peran === "owner" && (
+            <section className="panel-mewah mt-5 p-5 sm:p-6" aria-labelledby="judul-aktivitas">
+              <JudulModul id="judul-aktivitas" ikon={Clock3} judul="Aktivitas Terbaru" sub="Catatan tindakan tim terakhir" />
+              {activityItems.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">Belum ada aktivitas tercatat.</p>
+              ) : (
+                <ol className="mt-4 grid gap-x-8 gap-y-3 md:grid-cols-2">
+                  {activityItems.map((activity) => (
+                    <li key={activity.id} className="flex items-start gap-3">
+                      <span className="mt-1.5 size-2 shrink-0 rounded-full bg-gold shadow-[0_0_8px_var(--gold)]" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">{activity.title}</p>
+                        <p className="text-xs text-muted-foreground">{activity.actor} · {jamWib(activity.created_at)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          )}
         </div>
-        {dashboardMessage && (
-          <p role="status" className="mx-5 mt-4 rounded-xl bg-secondary px-3 py-2 text-sm">{dashboardMessage}</p>
-        )}
-        {statusKamarBaris.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-muted-foreground">Tidak ada kamar sedang terisi.</p>
-        ) : (
-          <div className="max-h-[480px] overflow-auto">
-            <table className="w-full min-w-[880px] text-left text-sm">
-              <thead className="sticky top-0 bg-card text-[11px] uppercase tracking-wider text-muted-foreground">
-                <tr className="border-b border-border">
-                  <th className="px-5 py-3 font-semibold">Kamar</th>
-                  <th className="px-3 py-3 font-semibold">Status</th>
-                  <th className="px-3 py-3 font-semibold">Tamu</th>
-                  <th className="px-3 py-3 font-semibold">Paket</th>
-                  <th className="px-3 py-3 font-semibold">Check-in / out</th>
-                  <th className="px-3 py-3 font-semibold">Sisa waktu</th>
-                  <th className="px-5 py-3 text-right font-semibold">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {statusKamarBaris.map(({ room, roomType, terisi }) => {
-                  const item = terisi?.transaksi;
-                  const guest = terisi?.guest;
-                  const sisa = item ? formatSisaWaktu(item.ends_at, sekarang) : null;
-                  const packageItem = item ? packages.rows.find((p) => p.id === item.package_id) : undefined;
-                  const phoneNumber = guest?.phone ? normalizeWhatsAppNumber(guest.phone) : "";
-                  const phoneValid = /^62\d{8,13}$/.test(phoneNumber);
-                  const checkoutReason = item ? checkoutDisabledReason(item, room) : "";
-                  const checkoutDisabled = !item || Boolean(checkoutReason) || checkingOutId !== null;
-                  const status = statusKamarMap[room.status as keyof typeof statusKamarMap];
-                  return (
-                    <tr key={room.id} className="transition hover:bg-secondary/60">
-                      <td className="px-5 py-3.5">
-                        <p className="font-serif text-lg font-semibold leading-none">{room.room_number}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{roomType?.name ?? "—"}</p>
-                      </td>
-                      <td className="px-3 py-3.5">{status ? <LencanaStatus status={status} /> : room.status}</td>
-                      <td className="px-3 py-3.5">
-                        {guest ? (
-                          <>
-                            <p className="font-semibold">{guest.full_name}</p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">WA ••••{guest.phone.replace(/\D/g, "").slice(-4)}</p>
-                          </>
-                        ) : <span className="text-muted-foreground">—</span>}
-                      </td>
-                      <td className="px-3 py-3.5">
-                        {item ? (
-                          <>
-                            <p className="font-semibold">{kodePaket(packageItem?.name)}</p>
-                            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{item.transaction_number}</p>
-                          </>
-                        ) : <span className="text-muted-foreground">—</span>}
-                      </td>
-                      <td className="px-3 py-3.5 text-xs tabular-nums text-muted-foreground">
-                        {item?.started_at ? `${jamWib(item.started_at)} → ${item.ends_at ? jamWib(item.ends_at) : "—"}` : "—"}
-                      </td>
-                      <td className="px-3 py-3.5">
-                        {sisa ? (
-                          <p className={`font-mono font-bold tabular-nums ${sisa.kelas}`}>{sisa.waktu}</p>
-                        ) : <span className="text-muted-foreground">—</span>}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {item ? (
-                          <div className="flex justify-end gap-1.5">
-                            <IkonAksi label="Detail transaksi" onClick={() => setDetailTransactionId(item.id)}><Eye className="h-4 w-4" /></IkonAksi>
-                            <IkonAksi
-                              label={phoneValid ? "Hubungi tamu via WhatsApp" : "WhatsApp tidak tersedia"}
-                              disabled={!phoneValid}
-                              kelas="text-siap-foreground"
-                              onClick={() => {
-                                if (!guest?.phone || !phoneValid) return;
-                                openWhatsApp(guest.phone, `Halo ${guest.full_name}, kami dari Baturaden 25 Homestay.\nNo. Transaksi: ${item.transaction_number}`);
-                              }}
-                            ><MessageCircle className="h-4 w-4" /></IkonAksi>
-                            <IkonAksi
-                              label={checkoutDisabled ? checkoutReason || "Check-out sedang diproses" : "Check-out"}
-                              disabled={checkoutDisabled}
-                              kelas="text-bahaya-foreground"
-                              onClick={() => void checkOut(item.id)}
-                            ><LogOut className="h-4 w-4" /></IkonAksi>
-                          </div>
-                        ) : <span className="block text-right text-xs text-muted-foreground">—</span>}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-[2fr_3fr]">
-        {/* Komposisi pendapatan hari ini */}
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-lembut">
-          <h2 className="font-serif text-xl font-semibold">Pendapatan Hari Ini</h2>
-          <p className="text-xs text-muted-foreground">QRIS, Transfer Bank, Cash{isFinanceViewer ? " & Pengeluaran" : ""}</p>
-          <Donat data={komposisi} />
-        </section>
-
-        {/* Transaksi terbaru */}
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-lembut">
-          <h2 className="font-serif text-xl font-semibold">Transaksi Terbaru</h2>
-          {transaksiTerbaru.length === 0 ? (
-            <p className="mt-6 text-sm text-muted-foreground">Belum ada transaksi tercatat.</p>
-          ) : (
-            <ol className="mt-4 divide-y divide-border">
-              {transaksiTerbaru.map((t) => (
-                <li key={t.id} className="flex items-center gap-3 py-3">
-                  <span className={`grid size-9 shrink-0 place-items-center rounded-full ${t.jenis === "masuk" ? "bg-siap text-siap-foreground" : "bg-bahaya text-bahaya-foreground"}`}>
-                    {t.jenis === "masuk" ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {t.judul}{t.sub && <span className="ml-2 font-normal text-muted-foreground">{t.sub}</span>}
-                    </p>
-                    <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{t.nomor} · {jamWib(t.waktu)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
-                      {t.jenis === "masuk" ? "+" : "−"}{rupiah(t.nominal)}
-                    </p>
-                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t.metode}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-      </section>
-
-      <section className={`mt-4 grid grid-cols-1 gap-4 ${peran === "owner" ? "xl:grid-cols-[3fr_2fr]" : ""}`}>
-        {/* Grafik pendapatan */}
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-lembut">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="font-serif text-xl font-semibold">Grafik Pendapatan</h2>
-              <p className="text-xs text-muted-foreground">Berdasarkan pembayaran tercatat · M = juta rupiah</p>
-            </div>
-            <div className="flex rounded-xl border border-border bg-secondary p-1 text-xs font-semibold" role="tablist">
-              {(["harian", "mingguan", "bulanan"] as ModeGrafik[]).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  role="tab"
-                  aria-selected={modeGrafik === m}
-                  onClick={() => setModeGrafik(m)}
-                  className={`rounded-lg px-3 py-1.5 capitalize transition ${modeGrafik === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-          <Grafik data={dataGrafik} ticks={skalaAdaptif(skalaGrafik[modeGrafik], Math.max(0, ...dataGrafik.map((d) => d.nilai)))} />
-        </section>
-
-        {peran === "owner" && (
-          <TargetOmzet
-            realisasi={omzetBulanIni}
-            target={target}
-            onUbah={(nilai) => {
-              setTarget(nilai);
-              window.localStorage.setItem(KUNCI_TARGET, String(nilai));
-            }}
-          />
-        )}
-      </section>
-
-      {peran === "owner" && (
-        <section className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-lembut">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-serif text-xl font-semibold">Aktivitas Terbaru</h2>
-            <FileText className="size-5 text-primary" aria-hidden="true" />
-          </div>
-          {activityItems.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">Belum ada aktivitas tercatat.</p>
-          ) : (
-            <ol className="mt-4 flex flex-col gap-3">
-              {activityItems.map((activity) => (
-                <li key={activity.id} className="flex items-start gap-3">
-                  <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground">{activity.actor} · {jamWib(activity.created_at)}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-      )}
-
+      </div>
 
       {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {modal === "booking" && <FormulirPemesanan mode="booking" onClose={() => setModal(null)} onSaved={refreshSemua} />}
@@ -802,25 +807,81 @@ function Ringkasan() {
 
 const KUNCI_TARGET = "baturaden25.target_omzet_bulanan";
 
-function TombolAksi({ ikon: Ikon, judul, ket, utama, onClick }: { ikon: LucideIcon; judul: string; ket: string; utama?: boolean; onClick: () => void }) {
+type Kpi = {
+  label: string;
+  nilai: string;
+  catatan: string;
+  ikon: LucideIcon;
+  varian: "emas" | "hijau" | "merah" | "amber";
+  cincin?: number;
+};
+
+const warnaVarian: Record<Kpi["varian"], string> = {
+  emas: "text-gold-light",
+  hijau: "text-siap-foreground",
+  merah: "text-bahaya-foreground",
+  amber: "text-perlu-foreground",
+};
+
+function KartuKpi({ item }: { item: Kpi }) {
+  const Ikon = item.ikon;
+  const r = 25;
+  const keliling = 2 * Math.PI * r;
+  return (
+    <article className="panel-mewah group flex min-w-0 flex-col items-start gap-3 p-4 transition hover:-translate-y-0.5 hover:border-gold/50 sm:flex-row sm:items-center sm:gap-3.5 sm:p-5 2xl:px-4">
+      {item.cincin !== undefined ? (
+        <div className="relative size-14 shrink-0 2xl:size-12" aria-label={`${item.cincin}% kamar terisi`}>
+          <svg viewBox="0 0 60 60" className="size-full -rotate-90 drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.35)]">
+            <circle cx="30" cy="30" r={r} fill="oklch(0.16 0.006 80)" stroke="var(--secondary)" strokeWidth="5" />
+            {item.cincin > 0 && (
+              <circle cx="30" cy="30" r={r} fill="none" stroke="var(--gold)" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${(item.cincin / 100) * keliling} ${keliling}`} />
+            )}
+          </svg>
+          <span className="absolute inset-0 grid place-items-center text-xs font-bold text-gold-light">{item.cincin}%</span>
+        </div>
+      ) : (
+        <span className={`ikon-bulat size-14 shrink-0 2xl:size-12 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
+          <Ikon className="size-7" strokeWidth={1.5} aria-hidden="true" />
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        <h2 className="text-[0.8rem] leading-snug text-muted-foreground">{item.label}</h2>
+        <p className="mt-0.5 break-words text-2xl font-bold leading-tight tracking-tight tabular-nums 2xl:text-[1.7rem]">{item.nilai}</p>
+        <p className={`mt-0.5 line-clamp-2 text-xs leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
+      </div>
+    </article>
+  );
+}
+
+function JudulModul({ id, ikon: Ikon, judul, sub, aksi }: { id: string; ikon: LucideIcon; judul: string; sub?: string; aksi?: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="ikon-bulat size-11 shrink-0 text-gold"><Ikon className="size-5" strokeWidth={1.6} /></span>
+        <div className="min-w-0">
+          <h2 id={id} className="font-serif text-xl font-semibold">{judul}</h2>
+          {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+        </div>
+      </div>
+      {aksi}
+    </div>
+  );
+}
+
+function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; judul: string; utama?: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group flex items-center justify-between rounded-2xl border px-5 py-4 text-left shadow-lembut transition hover:-translate-y-0.5 ${utama ? "border-transparent bg-gradient-to-r from-gold-light via-gold to-gold-dark text-primary-foreground" : "border-border bg-card hover:border-primary/50"}`}
+      className={`flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-xl border px-2 py-3 text-center text-[0.8rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
-      <div>
-        <p className="text-sm font-bold">{judul}</p>
-        <p className={`mt-0.5 text-xs ${utama ? "opacity-75" : "text-muted-foreground"}`}>{ket}</p>
-      </div>
-      <span className={`grid size-10 place-items-center rounded-xl ${utama ? "bg-background/20" : "bg-secondary text-primary"}`}>
-        <Ikon className="h-5 w-5" />
-      </span>
+      <Ikon className={`h-5 w-5 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
+      {judul}
     </button>
   );
 }
 
-function IkonAksi({ label, disabled, kelas = "text-primary", onClick, children }: { label: string; disabled?: boolean; kelas?: string; onClick: () => void; children: React.ReactNode }) {
+function IkonAksi({ label, disabled, kelas = "text-gold-light", onClick, children }: { label: string; disabled?: boolean; kelas?: string; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -828,38 +889,46 @@ function IkonAksi({ label, disabled, kelas = "text-primary", onClick, children }
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`grid h-9 w-9 place-items-center rounded-lg border border-border bg-secondary transition hover:border-current focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-35 ${kelas}`}
+      className={`grid size-9 place-items-center rounded-full border border-gold/25 bg-secondary/80 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-35 ${kelas}`}
     >
       {children}
     </button>
   );
 }
 
-function Donat({ data }: { data: { label: string; warna: string; nominal: number }[] }) {
+function Donat({ data, totalPemasukan }: { data: { label: string; warna: string; nominal: number }[]; totalPemasukan: number }) {
   const total = data.reduce((s, d) => s + d.nominal, 0);
   const r = 52;
   const keliling = 2 * Math.PI * r;
   let offset = 0;
   return (
-    <div className="mt-4 flex flex-col items-center gap-5 sm:flex-row xl:flex-col 2xl:flex-row">
-      <svg viewBox="0 0 140 140" className="size-40 shrink-0 -rotate-90">
-        <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="16" />
-        {total > 0 && data.map((d) => {
-          const panjang = (d.nominal / total) * keliling;
-          const el = (
-            <circle key={d.label} cx="70" cy="70" r={r} fill="none" stroke={d.warna} strokeWidth="16"
-              strokeDasharray={`${panjang} ${keliling - panjang}`} strokeDashoffset={-offset} />
-          );
-          offset += panjang;
-          return el;
-        })}
-      </svg>
-      <ul className="w-full space-y-2.5">
+    <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
+      <div className="relative size-40 shrink-0">
+        <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.25)]">
+          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="18" />
+          {total > 0 && data.map((d) => {
+            const panjang = (d.nominal / total) * keliling;
+            const el = (
+              <circle key={d.label} cx="70" cy="70" r={r} fill="none" stroke={d.warna} strokeWidth="18"
+                strokeDasharray={`${panjang} ${keliling - panjang}`} strokeDashoffset={-offset} />
+            );
+            offset += panjang;
+            return el;
+          })}
+        </svg>
+        <div className="absolute inset-0 grid place-items-center text-center">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Pemasukan</p>
+            <p className="mt-0.5 text-sm font-bold tabular-nums text-gold-light">{rupiah(totalPemasukan)}</p>
+          </div>
+        </div>
+      </div>
+      <ul className="w-full min-w-0 space-y-3">
         {data.map((d) => (
-          <li key={d.label} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm">
-            <span className="size-3 rounded-full" style={{ backgroundColor: d.warna }} aria-hidden="true" />
-            <span className="text-muted-foreground">{d.label} <span className="text-xs">({total > 0 ? Math.round((d.nominal / total) * 100) : 0}%)</span></span>
-            <span className="font-semibold tabular-nums">{rupiah(d.nominal)}</span>
+          <li key={d.label} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-sm">
+            <span className="size-3 rounded-full ring-2 ring-background" style={{ backgroundColor: d.warna }} aria-hidden="true" />
+            <span className="min-w-0 leading-tight text-muted-foreground">{d.label}<span className="block text-[11px] text-muted-foreground/70">{total > 0 ? Math.round((d.nominal / total) * 100) : 0}%</span></span>
+            <span className={`font-semibold tabular-nums ${d.label === "Pengeluaran" ? "text-bahaya-foreground" : ""}`}>{rupiah(d.nominal)}</span>
           </li>
         ))}
       </ul>
@@ -870,29 +939,29 @@ function Donat({ data }: { data: { label: string; warna: string; nominal: number
 function Grafik({ data, ticks }: { data: { label: string; nilai: number }[]; ticks: number[] }) {
   return (
     <div className="mt-5 grid grid-cols-[auto_1fr] gap-3">
-      <div className="relative h-48 w-8 text-right text-[11px] text-muted-foreground">
+      <div className="relative h-44 w-8 text-right text-[11px] text-muted-foreground">
         {ticks.map((t, i) => (
-          <span key={t} className="absolute right-0 -translate-y-1/2" style={{ bottom: `calc(${(i / (ticks.length - 1)) * 100}% - 0.5rem)`, transform: "none" }}>
+          <span key={t} className="absolute right-0" style={{ bottom: `calc(${(i / (ticks.length - 1)) * 100}% - 0.5rem)` }}>
             {labelJuta(t)}
           </span>
         ))}
       </div>
       <div>
-        <div className="relative flex h-48 items-end gap-2 sm:gap-4">
+        <div className="relative flex h-44 items-end gap-2 sm:gap-3">
           {ticks.map((t, i) => (
-            <span key={t} className="absolute inset-x-0 border-t border-dashed border-border" style={{ bottom: `${(i / (ticks.length - 1)) * 100}%` }} aria-hidden="true" />
+            <span key={t} className="absolute inset-x-0 border-t border-dashed border-gold/15" style={{ bottom: `${(i / (ticks.length - 1)) * 100}%` }} aria-hidden="true" />
           ))}
           {data.map((d) => (
             <div key={d.label} className="relative flex h-full flex-1 items-end justify-center" title={`${d.label}: ${rupiah(d.nilai)}`}>
               <span
-                className="w-full max-w-10 rounded-t-md bg-gradient-to-t from-gold-dark to-gold-light transition-all duration-500"
+                className="w-full max-w-9 rounded-t-md bg-gradient-to-t from-gold-dark via-gold to-gold-light shadow-[0_0_16px_-4px_var(--gold)] transition-all duration-500"
                 style={{ height: `${Math.max(d.nilai > 0 ? 2 : 0, posisiSkala(d.nilai, ticks) * 100)}%` }}
               />
               <span className="sr-only">{d.label}: {rupiah(d.nilai)}</span>
             </div>
           ))}
         </div>
-        <div className="mt-2 flex gap-2 text-center text-[11px] text-muted-foreground sm:gap-4">
+        <div className="mt-2 flex gap-2 text-center text-[11px] text-muted-foreground sm:gap-3">
           {data.map((d) => <span key={d.label} className="flex-1 capitalize">{d.label}</span>)}
         </div>
       </div>
@@ -908,42 +977,44 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
   const keliling = 2 * Math.PI * r;
   const isi = Math.min(100, persen) / 100 * keliling;
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 shadow-lembut">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h2 className="font-serif text-xl font-semibold">Target Omzet</h2>
-          <p className="text-xs text-muted-foreground">Bulan ini</p>
-        </div>
-        <button type="button" onClick={() => { setIsian(target ? String(target) : ""); setUbah((v) => !v); }} className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-primary hover:bg-secondary">
-          {target > 0 ? "Ubah target" : "Atur target"}
-        </button>
-      </div>
+    <section className="panel-mewah p-5 sm:p-6" aria-labelledby="judul-target">
+      <JudulModul
+        id="judul-target"
+        ikon={Target}
+        judul="Target Omzet"
+        sub="Realisasi omzet bulan ini"
+        aksi={
+          <button type="button" onClick={() => { setIsian(target ? String(target) : ""); setUbah((v) => !v); }} className="shrink-0 rounded-lg border border-gold/30 px-3 py-1.5 text-xs font-semibold text-gold hover:border-gold/70">
+            {target > 0 ? "Ubah" : "Atur target"}
+          </button>
+        }
+      />
       {ubah && (
         <form
           className="mt-3 flex gap-2"
           onSubmit={(e) => { e.preventDefault(); const n = Number(isian); if (n > 0) { onUbah(n); setUbah(false); } }}
         >
           <input type="number" min="1" value={isian} onChange={(e) => setIsian(e.target.value)} placeholder="Target (Rp)" className="h-10 min-w-0 flex-1 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-          <button type="submit" className="rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground">Simpan</button>
+          <button type="submit" className="emas-isi rounded-xl px-4 text-sm font-bold">Simpan</button>
         </form>
       )}
-      <div className="mt-4 flex items-center gap-5">
-        <div className="relative size-36 shrink-0">
-          <svg viewBox="0 0 140 140" className="size-full -rotate-90">
-            <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="12" />
-            <circle cx="70" cy="70" r={r} fill="none" stroke="var(--gold)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${isi} ${keliling}`} className="transition-all duration-700" />
+      <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
+        <div className="relative size-40 shrink-0">
+          <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.3)]">
+            <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="11" />
+            {isi > 0 && <circle cx="70" cy="70" r={r} fill="none" stroke="var(--gold)" strokeWidth="11" strokeLinecap="round" strokeDasharray={`${isi} ${keliling}`} className="transition-all duration-700" />}
           </svg>
           <div className="absolute inset-0 grid place-items-center text-center">
             <div>
-              <p className="text-2xl font-bold text-primary">{target > 0 ? `${Math.round(persen)}%` : "—"}</p>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">tercapai</p>
+              <p className="text-3xl font-bold tabular-nums text-gold-light">{target > 0 ? `${Math.round(persen)}%` : "—"}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{target > 0 ? "tercapai" : "target belum diatur"}</p>
             </div>
           </div>
         </div>
-        <dl className="space-y-3 text-sm">
-          <div><dt className="text-xs text-muted-foreground">Target</dt><dd className="font-semibold">{target > 0 ? rupiah(target) : "Belum diatur"}</dd></div>
-          <div><dt className="text-xs text-muted-foreground">Realisasi</dt><dd className="font-semibold text-primary">{rupiah(realisasi)}</dd></div>
-          {target > 0 && <div><dt className="text-xs text-muted-foreground">Kekurangan</dt><dd className="font-semibold">{rupiah(Math.max(0, target - realisasi))}</dd></div>}
+        <dl className="w-full space-y-3 text-sm">
+          <div className="flex items-center gap-3"><Flag className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Target bulan ini</dt><dd className="font-semibold">{target > 0 ? rupiah(target) : "Belum diatur"}</dd></div></div>
+          <div className="flex items-center gap-3"><BarChart3 className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Realisasi</dt><dd className="font-semibold text-gold-light">{rupiah(realisasi)}</dd></div></div>
+          {target > 0 && <div className="flex items-center gap-3"><Target className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Sisa target</dt><dd className="font-semibold">{rupiah(Math.max(0, target - realisasi))}</dd></div></div>}
         </dl>
       </div>
     </section>
