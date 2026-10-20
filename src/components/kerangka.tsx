@@ -229,7 +229,8 @@ export function Kerangka({
         <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setLainnya(false)}>
           <div className="absolute inset-0 bg-navy-deep/75 backdrop-blur-sm" />
           <div
-            className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-background px-4 pb-8 pt-4"
+            className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-gold/30 px-4 pb-8 pt-4"
+            style={{ background: "var(--sidebar-mewah)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between px-1">
@@ -272,10 +273,10 @@ export function Judul({ children, aksi }: { children: ReactNode; aksi?: ReactNod
 
 export function Panel({ judul, children }: { judul: string; children: ReactNode }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-navy-deep p-4 shadow-lembut sm:p-5">
+    <section className="panel-mewah overflow-hidden p-4 sm:p-6">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-      <h2 className="font-serif text-lg text-gold-light">{judul}</h2>
-      <div className="mt-3">{children}</div>
+      <h2 className="font-serif text-xl text-gold-light">{judul}</h2>
+      <div className="mt-4">{children}</div>
     </section>
   );
 }
@@ -291,7 +292,7 @@ export function Angka({ label, nilai, catatan }: { label: string; nilai: string;
 }
 
 export function Daftar({ children }: { children: ReactNode }) {
-  return <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-card to-navy-deep shadow-lembut">{children}</ul>;
+  return <ul className="panel-mewah divide-y divide-border overflow-hidden">{children}</ul>;
 }
 
 export function KotakCari({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
@@ -300,7 +301,7 @@ export function KotakCari({ value, onChange, placeholder }: { value: string; onC
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="h-12 w-full rounded-2xl border border-input bg-background px-4 text-base outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+      className="h-12 w-full rounded-full border border-gold/30 bg-navy-deep/80 px-5 text-base shadow-lembut outline-none transition placeholder:text-muted-foreground/80 focus:border-gold focus:ring-4 focus:ring-gold/15"
     />
   );
 }
