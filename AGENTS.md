@@ -16,3 +16,4 @@
 - Pembuatan akun karyawan dilakukan melalui fungsi server berizin pemilik, sementara sandi dikelola penyedia autentikasi, agar sandi tidak tersimpan sebagai data aplikasi.
 - Shared visual primitives live in `src/styles.css` utilities (`panel-mewah`, `emas-isi`, `ikon-bulat`) and `Kerangka` (`penuh` for full-bleed Dashboard); pages reuse them so the black-gold look stays consistent without per-page colors.
 - Dashboard room rows use a fixed-layout table with separate room/type columns, a flexible guest column and reserved action width; desktop removes the mobile minimum width so all three operational actions fit inside the inset table.
+- Dashboard search reads existing RLS-scoped operational rows and opens existing detail views or pages; it never uses privileged queries or changes operational records.
