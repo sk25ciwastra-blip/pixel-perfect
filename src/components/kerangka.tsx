@@ -264,8 +264,9 @@ export function Kerangka({
 
 export function Judul({ children, aksi }: { children: ReactNode; aksi?: ReactNode }) {
   return (
-    <div className="mb-3 flex items-center justify-between">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{children}</h2>
+    <div className="mb-3 flex items-center gap-4">
+      <h2 className="shrink-0 text-xs font-semibold uppercase tracking-[0.22em] text-gold">{children}</h2>
+      <span className="h-px flex-1 bg-gradient-to-r from-gold/35 to-transparent" aria-hidden="true" />
       {aksi}
     </div>
   );
