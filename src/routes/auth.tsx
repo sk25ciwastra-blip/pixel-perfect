@@ -14,7 +14,6 @@ function Auth() {
   const navigate = useNavigate();
   const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
   const [error, setError] = useState(''); const [mode] = useState<'masuk'|'lupa'|'daftar'>('masuk'); const [busy, setBusy] = useState(false); const [lihat, setLihat] = useState(false);
-  const [ingat, setIngat] = useState(true);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError('');
     if (mode === 'lupa') { const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` }); setError(error?.message ?? 'Jika alamat terdaftar, tautan pengaturan ulang sudah dikirim.'); }
@@ -30,18 +29,18 @@ function Auth() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/75 via-background/45 to-background/90" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_15%,var(--background)_90%)] opacity-85" />
 
-      <div className="relative flex min-h-screen flex-col items-center justify-center px-5 py-10 sm:px-10">
+      <div className="relative grid h-svh min-h-[740px] grid-rows-[minmax(0,1fr)_auto_minmax(0,1fr)] justify-items-center px-5 py-6 sm:px-10">
         {/* Logo resmi Baturaden 25 Homestay */}
-        <div aria-label="Baturaden 25 Homestay" className="mb-8 w-fit text-center leading-tight">
-          <svg viewBox="0 0 64 40" className="mx-auto mb-3 h-12 w-[4.5rem] text-gold drop-shadow-[0_0_12px_color-mix(in_oklch,var(--gold)_50%,transparent)]" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+        <div aria-label="Baturaden 25 Homestay" className="mb-4 w-fit self-end text-center leading-tight">
+          <svg viewBox="0 0 64 40" className="mx-auto mb-2 h-10 w-[4.5rem] text-gold drop-shadow-[0_0_12px_color-mix(in_oklch,var(--gold)_50%,transparent)]" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
             <path d="M32 4c5 6 6 14 0 24C26 18 27 10 32 4Z" />
             <path d="M32 28c-4-8-10-13-19-14 0 9 8 15 19 14Z" />
             <path d="M32 28c4-8 10-13 19-14 0 9-8 15-19 14Z" />
             <path d="M32 30c-8 2-17 0-24-6 6 7 15 10 24 9 9 1 18-2 24-9-7 6-16 8-24 6Z" />
             <path d="M14 36h36" strokeOpacity="0.6" />
           </svg>
-          <p className="font-serif text-3xl text-foreground">Baturaden <span className="text-gold-light">25</span></p>
-          <p className="font-serif text-3xl text-foreground">Homestay</p>
+          <p className="font-serif text-2xl text-foreground">Baturaden <span className="text-gold-light">25</span></p>
+          <p className="font-serif text-2xl text-foreground">Homestay</p>
           <div className="mx-auto mt-3 flex items-center justify-center gap-2"><span className="h-px w-8 bg-gradient-to-r from-transparent to-gold" /><span className="text-[0.6rem] font-semibold text-gold">MANAJEMEN</span><span className="h-px w-8 bg-gradient-to-l from-transparent to-gold" /></div>
         </div>
 
@@ -67,17 +66,20 @@ function Auth() {
                   </button>
                 </span>
               </label>
-              <label className="flex cursor-pointer items-center gap-2.5 text-sm text-muted-foreground">
-                <input type="checkbox" checked={ingat} onChange={e => setIngat(e.target.checked)} className="h-4 w-4 rounded accent-gold" />
-                Remember me
-              </label>
+              <div>
+                <label className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                  <input type="checkbox" checked disabled aria-describedby="petunjuk-sesi" className="h-4 w-4 rounded accent-gold" />
+                  Ingat saya
+                </label>
+                <p id="petunjuk-sesi" className="mt-2 text-xs leading-relaxed text-muted-foreground">Sesi tersimpan otomatis. Pilihan penyimpanan sesi belum dapat diubah.</p>
+              </div>
               {error && <p role="status" className="rounded-lg border border-gold/25 bg-gold/5 px-3 py-2 text-sm text-gold-light">{error}</p>}
               <Button disabled={busy} className="h-12 w-full rounded-xl text-base">{busy ? 'Memproses…' : 'Masuk'}</Button>
             </form>
           </div>
         </div>
 
-        <p className="mt-8 max-w-md text-center text-xs leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
+        <p className="mt-6 max-w-md self-start text-center text-xs leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
       </div>
     </main>
   );
