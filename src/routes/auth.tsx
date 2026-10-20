@@ -4,10 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff } from 'lucide-react';
 import { meta } from '@/lib/meta';
-// Foto: "Bandung city centre - evening cropped.jpg" oleh Frans.global (Wikimedia Commons), CC BY-SA 2.0 —
-// sumber: https://commons.wikimedia.org/wiki/File:Bandung_city_centre_-_evening_cropped.jpg
-// Adaptasi (crop/tumpangan gelap) dilisensikan CC BY-SA 2.0; kredit juga ditampilkan di panel kiri halaman ini.
-import skyline from '@/assets/bandung-malam-login.jpg';
+// Latar: panorama kota malam unggahan Owner ("Panorama Kota Malam dengan Jembatan Bercahaya").
+import panorama from '@/assets/panorama-kota-malam.png.asset.json';
 
 export const Route = createFileRoute('/auth')({ head: () => meta('Masuk', 'Masuk ke Baturaden 25 Homestay.'), component: Auth });
 
@@ -37,15 +35,15 @@ function Auth() {
   </div>;
   return (
     <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      {/* Latar penuh: Bandung malam */}
-      <img src={skyline} alt="" aria-hidden="true" width={3016} height={1508} className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[60%_50%] saturate-[1.1]" />
+      {/* Latar penuh: panorama kota malam */}
+      <img src={panorama.url} alt="" aria-hidden="true" width={1672} height={941} className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center saturate-[1.05]" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/70 via-background/35 to-background/90" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,var(--background)_95%)] opacity-80" />
 
       <div className="relative flex min-h-screen flex-col px-5 py-6 sm:px-10 sm:py-8">
-        <header className="flex justify-center sm:justify-start">{logo}</header>
+        <header className="order-1 flex justify-center lg:flex-1 lg:justify-start lg:self-start">{logo}</header>
 
-        <section className="flex flex-1 items-center justify-center py-10">
+        <section className="order-2 flex flex-1 items-center justify-center py-10 lg:order-3 lg:w-[440px] lg:flex-none lg:py-0 xl:w-[480px]">
           <div className="relative w-full max-w-[420px]">
             <div className="pointer-events-none absolute -inset-px rounded-[1.2rem] bg-gradient-to-b from-gold/60 via-gold/10 to-gold/40 opacity-70 blur-[2px]" />
             <div className="panel-mewah space-y-7 bg-background/55 p-7 shadow-[0_0_60px_-15px_color-mix(in_oklch,var(--gold)_45%,transparent)] backdrop-blur-xl sm:p-10">
@@ -76,10 +74,9 @@ function Auth() {
           </div>
         </section>
 
-        <footer className="mx-auto max-w-xl text-center">
+        <footer className="order-3 mx-auto mt-6 max-w-xl pb-2 text-center lg:order-2 lg:mx-0 lg:mt-0 lg:flex-1 lg:self-end lg:pb-8 lg:text-left">
           <h2 className="font-serif text-xl leading-snug text-foreground sm:text-2xl">Setiap malam, <span className="italic text-gold-light">tamu pulang tenang.</span></h2>
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
-          <p className="mt-2 text-[0.6rem] leading-relaxed text-muted-foreground/70">Foto: <a href="https://commons.wikimedia.org/wiki/File:Bandung_city_centre_-_evening_cropped.jpg" target="_blank" rel="noopener noreferrer" className="underline decoration-gold/40 underline-offset-2 transition-colors hover:text-gold-light">Bandung city centre, Wikimedia Commons</a> — Frans.global, CC BY-SA 2.0 (dipotong & diberi tumpangan gelap).</p>
         </footer>
       </div>
     </main>
