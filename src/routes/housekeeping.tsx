@@ -14,10 +14,10 @@ import { Link } from '@tanstack/react-router';
 
 type BagianHk = 'status' | 'checklist' | 'perawatan' | 'riwayat';
 const bagianHk: { kode: BagianHk; label: string }[] = [
-  { kode: 'status', label: 'Status Housekeeping' },
-  { kode: 'checklist', label: 'Checklist Housekeeping' },
+  { kode: 'status', label: 'Status' },
+  { kode: 'checklist', label: 'Checklist' },
   { kode: 'perawatan', label: 'Perawatan Berkala' },
-  { kode: 'riwayat', label: 'Riwayat Housekeeping' },
+  { kode: 'riwayat', label: 'Riwayat Pekerjaan' },
 ];
 
 export const Route = createFileRoute('/housekeeping')({

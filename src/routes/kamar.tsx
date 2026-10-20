@@ -12,7 +12,7 @@ import { usePeran } from "@/lib/peran";
 
 export const Route = createFileRoute("/kamar")({
   head: () => meta("Status Kamar", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
-  validateSearch: (s: Record<string, unknown>): { bagian?: "semua" | "tersedia" | "terisi" | "perlu" } => ({
+  validateSearch: (s: Record<string, unknown>): { bagian?: "semua" | "tersedia" | "terisi" | "perlu" | undefined } => ({
     bagian: ["semua", "tersedia", "terisi", "perlu"].includes(String(s["bagian"])) ? (s["bagian"] as "semua") : undefined,
   }),
   component: HalamanKamar,

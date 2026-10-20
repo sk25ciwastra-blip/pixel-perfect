@@ -13,7 +13,7 @@ import { usePeran } from "@/lib/peran";
 
 export const Route = createFileRoute("/transaksi")({
   head: () => meta("Transaksi", "Daftar transaksi Baturaden 25 Homestay."),
-  validateSearch: (s: Record<string, unknown>): { bagian?: "semua" | "hari-ini" | "kemarin" | "riwayat" } => ({
+  validateSearch: (s: Record<string, unknown>): { bagian?: "semua" | "hari-ini" | "kemarin" | "riwayat" | undefined } => ({
     bagian: ["semua", "hari-ini", "kemarin", "riwayat"].includes(String(s["bagian"])) ? (s["bagian"] as "semua") : undefined,
   }),
   component: Halaman,
