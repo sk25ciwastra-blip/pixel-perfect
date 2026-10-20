@@ -833,7 +833,7 @@ function KartuKpi({ item }: { item: Kpi }) {
   const r = 25;
   const keliling = 2 * Math.PI * r;
   return (
-    <article className="panel-mewah group relative flex min-w-0 items-center gap-3 overflow-hidden p-4 transition hover:-translate-y-0.5 hover:border-gold/50 sm:gap-3">
+    <article className="panel-mewah group relative flex min-w-0 flex-col items-start gap-3 overflow-hidden p-4 sm:flex-row sm:items-center transition hover:-translate-y-0.5 hover:border-gold/50 sm:gap-3">
       <span className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-gold/[0.07] blur-2xl" aria-hidden="true" />
       {item.cincin === undefined && (
         <span className={`ikon-bulat size-11 shrink-0 2xl:size-12 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
