@@ -7,6 +7,7 @@ import { usePeran } from '@/lib/peran';
 import { supabase } from '@/integrations/supabase/client';
 import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
+import { setSesiKasKonteks } from '@/lib/sesi-kas';
 
 export const Route = createFileRoute('/keuangan')({
   head: () => meta('Keuangan', 'Sesi kas, penerimaan, closing, dan pengawasan keuangan.'),
@@ -21,9 +22,10 @@ function angka(value: string) {
 }
 
 function HalamanKeuangan() {
-  const { posisiKode } = usePeran();
-  const isOwner = posisiKode === 'owner';
-  const canCloseOthers = isOwner || posisiKode === 'supervisor';
+  const { posisiKode, training } = usePeran();
+  const isTraining = training.is_training;
+  const isOwner = posisiKode === 'owner' && !isTraining;
+  const canCloseOthers = !isTraining && (isOwner || posisiKode === 'supervisor');
   const [userId, setUserId] = useState('');
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [message, setMessage] = useState('');
@@ -40,6 +42,7 @@ function HalamanKeuangan() {
   const [expenseMethod, setExpenseMethod] = useState('CASH');
   const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseNote, setExpenseNote] = useState('');
+  const [expenseSearch, setExpenseSearch] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [depositMethod, setDepositMethod] = useState('CASH');
   const [depositBankId, setDepositBankId] = useState('');
@@ -68,6 +71,7 @@ function HalamanKeuangan() {
   const banks = useTable('finance_bank_accounts');
   const employees = useTable('employees');
   const handoffs = useTable('finance_drawer_handoffs');
+  const expenses = useTable('finance_expenses');
   const transactions = useTable('transactions');
 
   useEffect(() => {
@@ -91,8 +95,10 @@ function HalamanKeuangan() {
   }, [commissionConfigs.rows, financeSettings.rows]);
 
   const activeSession = useMemo(
-    () => sessions.rows.find((session) => session.opened_by === userId && session.status === 'OPEN'),
-    [sessions.rows, userId],
+    () => isTraining
+      ? sessions.rows.find((session) => session.id === training.session_id && session.status === 'OPEN')
+      : sessions.rows.find((session) => session.opened_by === userId && session.status === 'OPEN'),
+    [isTraining, sessions.rows, training.session_id, userId],
   );
 
   const selectedSession = activeSession ?? (canCloseOthers
@@ -100,10 +106,16 @@ function HalamanKeuangan() {
       ?? sessions.rows.find((session) => session.status === 'OPEN')
     : undefined);
 
+  useEffect(() => {
+    if (!sessions.loading) {
+      setSesiKasKonteks(selectedSession?.id ?? null);
+    }
+  }, [selectedSession?.id, sessions.loading]);
+
   async function refreshFinance() {
-    await Promise.all([sessions.refresh(), deposits.refresh(), commissionConfigs.refresh(), banks.refresh(), employees.refresh(), handoffs.refresh()]);
+    await Promise.all([sessions.refresh(), deposits.refresh(), commissionConfigs.refresh(), banks.refresh(), employees.refresh(), handoffs.refresh(), expenses.refresh()]);
     if (selectedSession) {
-      const { data } = await supabase.rpc('get_finance_session_summary', {
+      const { data } = await supabase.rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', {
         _session_id: selectedSession.id,
       });
       setSummary((data as Summary | null) ?? {});
@@ -115,10 +127,29 @@ function HalamanKeuangan() {
       setSummary({});
       return;
     }
-    void supabase.rpc('get_finance_session_summary', { _session_id: selectedSession.id }).then(({ data }) => {
+    void supabase.rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', { _session_id: selectedSession.id }).then(({ data }) => {
       setSummary((data as Summary | null) ?? {});
     });
-  }, [selectedSession?.id]);
+  }, [isTraining, selectedSession?.id]);
+
+  const visibleExpenses = useMemo(() => {
+    const term = expenseSearch.trim().toLowerCase();
+
+    return expenses.rows
+      .filter((expense) => expense.session_id === selectedSession?.id)
+      .filter((expense) => {
+        if (!term) return true;
+
+        return [
+          expense.expense_number,
+          expense.category,
+          expense.note,
+          expense.idempotency_key,
+          expense.created_at,
+        ].some((value) => value?.toLowerCase().includes(term));
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [expenseSearch, expenses.rows, selectedSession?.id]);
 
   async function run(action: () => Promise<{ error?: { message: string } | null }>) {
     setBusy(true);
@@ -154,7 +185,7 @@ function HalamanKeuangan() {
   async function recordExpense() {
     if (!selectedSession || !expenseAmount || !expenseCategory) return;
     await run(async () => {
-      const { error } = await supabase.rpc('record_finance_expense', {
+      const { error } = await supabase.rpc(isTraining ? 'record_training_finance_expense' : 'record_finance_expense', {
         _idempotency_key: crypto.randomUUID(),
         _session_id: selectedSession.id,
         _amount: angka(expenseAmount),
@@ -169,7 +200,7 @@ function HalamanKeuangan() {
   async function submitDeposit() {
     if (!selectedSession || !depositAmount) return;
     await run(async () => {
-      const { error } = await supabase.rpc('create_finance_deposit', {
+      const { error } = await supabase.rpc(isTraining ? 'create_training_finance_deposit' : 'create_finance_deposit', {
         _idempotency_key: crypto.randomUUID(),
         _session_id: selectedSession.id,
         _method: depositMethod,
@@ -227,7 +258,12 @@ function HalamanKeuangan() {
   return (
     <Kerangka judul="Keuangan" keterangan="Penerimaan, sesi kas, closing, dan pengawasan Owner">
       {message && <p role="alert" className="mb-4 rounded-xl bg-secondary px-3 py-2 text-sm">{message}</p>}
-      {!activeSession && (
+      {isTraining && (
+        <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Training aktif sampai {training.ends_on ?? 'tanggal selesai'}; sesi kas milik Supervisor/Owner ditentukan otomatis. Peserta tidak dapat membuka atau menutup sesi.
+        </p>
+      )}
+      {!activeSession && !isTraining && (
         <Panel judul="Sesi kas">
           <p className="text-sm text-muted-foreground">Buka sesi kas sebelum menerima pembayaran.</p>
           <div className="mt-3 flex gap-2"><input value={openingCash} onChange={(e) => setOpeningCash(e.target.value)} type="number" min="0" className="h-10 w-full rounded-xl border border-input px-3" placeholder="Saldo awal" /><Button disabled={busy} onClick={() => void openSession()}>Buka Sesi</Button></div>
@@ -249,7 +285,7 @@ function HalamanKeuangan() {
           <div className="mt-5 grid gap-3 sm:grid-cols-4"><input value={setorCash} onChange={(e) => setSetorCash(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="SETOR CASH" /><input value={setorTransfer} onChange={(e) => setSetorTransfer(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="SETOR TRANSFER" /><input value={diLaci} onChange={(e) => setDiLaci(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="DI LACI" /><input value={dibawa} onChange={(e) => setDibawa(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="DIBAWA" /></div>
           {angka(diLaci) > 0 && <select value={recipientUserId} onChange={(e) => setRecipientUserId(e.target.value)} className="mt-3 h-10 w-full rounded-xl border border-input px-3"><option value="">Pilih penerima DI LACI</option>{employees.rows.filter((employee) => employee.active).map((employee) => <option key={employee.user_id} value={employee.user_id}>{employee.name}</option>)}</select>}
           <input value={closingReason} onChange={(e) => setClosingReason(e.target.value)} className="mt-3 h-10 w-full rounded-xl border border-input px-3" placeholder="Alasan closing khusus bila diperlukan" />
-          <Button className="mt-3" disabled={busy} onClick={() => void closeSession()}>Finalkan Closing</Button>
+          {!isTraining && <Button className="mt-3" disabled={busy} onClick={() => void closeSession()}>Finalkan Closing</Button>}
         </Panel>
       )}
       {isOwner && (
@@ -269,6 +305,18 @@ function HalamanKeuangan() {
         <Panel judul="Pengeluaran sesi">
           <div className="grid gap-2 sm:grid-cols-2"><input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} type="number" min="1" className="h-10 rounded-xl border border-input px-3" placeholder="Nominal" /><select value={expenseMethod} onChange={(e) => setExpenseMethod(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select><input value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Kategori" /><input value={expenseNote} onChange={(e) => setExpenseNote(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Catatan" /></div>
           <Button className="mt-3" disabled={busy} onClick={() => void recordExpense()}>Catat Pengeluaran</Button>
+          <div className="mt-5 border-t border-border pt-4">
+            <input value={expenseSearch} onChange={(e) => setExpenseSearch(e.target.value)} className="h-10 w-full rounded-xl border border-input px-3" placeholder="Cari nomor pengeluaran, kategori, atau catatan" />
+            <ul className="mt-3 space-y-2 text-sm">
+              {visibleExpenses.map((expense) => (
+                <li key={expense.id} className="rounded-xl bg-secondary px-3 py-2">
+                  <p className="font-mono font-semibold">{expense.expense_number ?? 'Pengeluaran lama tanpa nomor baru'}</p>
+                  <p>{expense.category} · {rupiah(Number(expense.amount))} · {expense.method} · {new Date(expense.created_at).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' })}</p>
+                  {expense.note && <p className="text-muted-foreground">{expense.note}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
         </Panel>
         <Panel judul="Setoran">
           <div className="grid gap-2 sm:grid-cols-2"><input value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} type="number" min="1" className="h-10 rounded-xl border border-input px-3" placeholder="Nominal" /><select value={depositMethod} onChange={(e) => setDepositMethod(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="CASH">Cash</option><option value="Transfer">Transfer</option></select>{depositMethod === 'Transfer' && <select value={depositBankId} onChange={(e) => setDepositBankId(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="">Rekening Owner</option>{banks.rows.filter((bank) => bank.active).map((bank) => <option key={bank.id} value={bank.id}>{bank.bank_name} · {bank.account_number}</option>)}</select>}<input value={depositProof} onChange={(e) => setDepositProof(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Referensi bukti transfer" /></div>

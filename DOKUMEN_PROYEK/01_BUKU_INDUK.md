@@ -25,6 +25,7 @@ Dokumen ini adalah peta utama proyek agar keputusan dan pekerjaan tidak hilang k
 - [Status fitur](03_STATUS_FITUR.md)
 - [Riwayat perubahan](04_RIWAYAT_PERUBAHAN.md)
 - [Arsitektur sistem](05_ARSITEKTUR_SISTEM.md)
+- [Matriks desain v0](06_MATRIKS_DESAIN_V0.md)
 
 ## Status proyek saat ini
 
@@ -54,7 +55,7 @@ Dokumen ini adalah peta utama proyek agar keputusan dan pekerjaan tidak hilang k
 - **78 aturan bisnis/SOP** ber-ID permanen pada `02_ATURAN_BISNIS.md`.
 - **28 catatan fitur + 6 area rencana** pada `03_STATUS_FITUR.md`.
 - **30 riwayat proyek + 8 riwayat Git** pada `04_RIWAYAT_PERUBAHAN.md`.
-- **5 dokumen permanen** pada folder `DOKUMEN_PROYEK`.
+- **6 dokumen permanen** pada folder `DOKUMEN_PROYEK`.
 
 ## Arti status
 
@@ -200,3 +201,108 @@ Repository memiliki 6 migration Drizzle yang tercatat di journal, 1 file sidecar
 Langkah minimum berikutnya: ambil snapshot metadata katalog Supabase Staging yang tepat, bandingkan dengan ledger pada [05_ARSITEKTUR_SISTEM.md](05_ARSITEKTUR_SISTEM.md), lalu buat rencana forward-only bila diperlukan. Jangan mengulang E2E Finance 150, menjalankan migration, `db push`, repair, reset, atau mengubah Staging tanpa keputusan Owner berikutnya.
 
 Checkpoint ini mengikuti motto Owner: **“Jika ada yang mudah, kenapa harus susah.”**
+
+## Reconciliation Staging berbasis snapshot katalog — 2026-10-15
+
+Snapshot Owner `C:\Users\USER\Downloads\Baturaden25_Staging_Metadata (1).csv` terbaca valid: header `category,details`, 245 baris total termasuk header, 244 metadata rows, 11 tables, 94 columns, 53 constraints, 22 indexes, 25 functions, 21 triggers, dan 18 policies.
+
+Snapshot membuktikan Staging berada pada baseline operasional 11 tabel: 9 tabel Drizzle `0000`, `payments` dari `0005`, dan `package_room_type_prices` dari Supabase `20261006000005`, dengan scheduled booking `20261006000007–00009`. Tidak ada tabel Finance, `operational_calendar`, atau objek Housekeeping lanjutan di snapshot.
+
+Finance 150 belum dapat diselaraskan langsung. Blocker konkret: 12 tabel/relation baru Finance dan calendar belum ada, kolom payment/transaction Finance belum ada, RPC Staging masih 10-parameter `create_reservation` dan 3-parameter `record_transaction_payment`, serta function source/owner/search_path, grants, RLS-enabled flags, trigger definitions, dan migration history belum tercakup penuh.
+
+Rencana aman: pertahankan Staging, lengkapi metadata katalog dengan satu paket SELECT read-only, susun forward-only reconciliation berdasarkan diff exact, lalu minta keputusan Owner terpisah sebelum eksekusi. Tidak ada migration, database mutation, source change, atau commit pada tahap ini.
+
+Paket preflight lokal read-only untuk tahap berikutnya disimpan di `supabase/reconciliation/finance150_staging_preflight.sql`. File tersebut bukan migration dan belum dijalankan.
+
+Paket review reconciliation forward-only dan preflight agregat legacy juga tersedia di `supabase/reconciliation/finance150_staging_reconciliation_review.sql` dan `supabase/reconciliation/finance150_staging_legacy_preflight.sql`. Keduanya belum dijalankan; file review tidak menggantikan migration historis.
+
+Finance 150 Staging tetap **BELUM SIAP EKSEKUSI** karena backup/PITR Free Plan belum terkonfirmasi. Prosedur logical dump, checksum, isolated restore test, transaction rollback, dan restore-after-commit sudah dicatat di arsitektur; tidak ada asumsi bahwa data Staging akan tetap kosong.
+
+Update Support — 15 Oktober 2026: tiket resmi `SU-508298` untuk Baturaden-25-Staging (`bgtztcfbkcrvcipxbfti`) telah dikonfirmasi melalui email Supabase. Email tersebut adalah respons otomatis penerimaan tiket, bukan penyelesaian masalah. Status tetap **MENUNGGU RESPONS TEKNIS SUPABASE SUPPORT**. Paket Free tidak memiliki jaminan waktu respons.
+
+Backup/restore test 2026-10-15 belum berjalan: tidak ada Supabase CLI session, DB URL, password, atau access token yang tersedia secara sah; project lama tidak digunakan. Tidak ada backup, restore, atau resource sementara yang dibuat.
+
+## Checkpoint Supabase Support dan backup Staging — 2026-10-15
+
+Target tetap Baturaden-25-Staging, project ref `bgtztcfbkcrvcipxbfti`, region Tokyo (`ap-northeast-1`), paket Free; dashboard branch `main` bertanda PRODUCTION. Owner sudah mengirim tiket resmi melalui Contact support dan dashboard mengonfirmasi tiket tercatat untuk Baturaden-25-Staging. Belum ada balasan Support pada checkpoint ini.
+
+Status resmi: **BLOCKED pada akses PostgreSQL untuk backup**. Tidak ada backup valid, restore test belum berjalan, dan Finance 150 **dilarang diterapkan ke Staging** sebelum backup serta restore terisolasi terverifikasi PASS.
+
+Artefak `staging-20261015-011556.dump` berukuran 0 byte, tidak valid, dan tidak boleh digunakan untuk restore. Tidak ada checksum backup valid. Percobaan autentikasi/pooler sebelumnya tidak diulang; diagnosis baru harus berasal dari balasan Support.
+
+Tindakan berikutnya adalah menunggu Support, lalu membuat logical backup di luar repository, mencatat SHA-256, restore ke PostgreSQL lokal terisolasi, dan memverifikasi cakupan tabel/RLS/function/trigger/grants. Tidak ada izin otomatis untuk migration, perubahan Staging, commit, push, atau deploy setelah backup berhasil.
+
+## Checkpoint final Dashboard dan sesi kas — 2026-10-16
+
+Referensi visual terbaru Owner adalah `C:\Users\USER\Downloads\Dasbor Manajemen Homestay Modern.png`. Dashboard modern harus mengikuti referensi tersebut sedekat mungkin dengan warna utama biru bernuansa pastel, panel sambutan dan kalender, lima KPI, Kamar Terisi, Log Activity, tiga panel analitik, dan hierarki visual yang sama. Data Dashboard wajib berasal dari database, bukan angka atau identitas ilustrasi.
+
+Keputusan visual terbaru: Standard memakai kartu biru pastel; Superior A/B memakai hijau pastel; Deluxe memakai kuning pastel; tombol Check-out berwarna merah; nomor transaksi pada kartu kamar dapat membuka detail transaksi; Log Activity berbentuk timeline dengan ikon berwarna dan waktu aktivitas; Grafik Pendapatan memakai batang biru dengan filter Harian, Mingguan, Bulanan, Tahunan; Emergency berbentuk horizontal merah dengan bingkai hitam tipis di bagian bawah sidebar; Pengaturan berada di header; blok Owner dan tombol Keluar di sidebar dihapus; logout tetap melalui menu profil; aksi utama bernama Check-in Langsung dan Buat Booking.
+
+Visual browser Dashboard belum dinyatakan PASS dan masih memerlukan pemeriksaan/konfirmasi Owner. TypeScript, build, dan `git diff --check` lokal PASS untuk pekerjaan terkait.
+
+Pada UX sesi kas, Check-in Langsung dan pelunasan Booking tidak lagi meminta dropdown sesi kas. Resolver bersama menggunakan konteks sesi kerja: sesi `OPEN` milik operator diprioritaskan; Owner/Supervisor dapat memakai konteks sesi bantuan yang sah; satu-satunya sesi `OPEN` dapat dipakai otomatis. Tanpa sesi sah, transaksi diblokir dan sesi baru tidak dibuka otomatis. Operator aktual dan pemilik sesi tetap dibedakan oleh `auth.uid()`/`recorded_by` dan `finance_cash_sessions.opened_by`. ID konteks pada session storage hanya penunjuk UI non-rahasia; otorisasi tetap berada di server/RPC.
+
+Checkpoint ini belum mengubah database, Supabase, migration, konfigurasi, atau Git history. Perubahan source dan dokumentasi masih lokal/uncommitted dan harus dilindungi pada sesi berikutnya.
+
+## Sinkronisasi status Staging dan Training — 2026-10-18
+
+Checkpoint ini menjadi status live terbaru dan menggantikan kesimpulan provisional sebelumnya tentang migrasi yang masih belum terpasang. Riwayat audit lama tetap dipertahankan sebagai bukti keadaan pada tanggalnya.
+
+- Housekeeping 01–03 (`20261012000000` sampai `20261014000000`) telah **COMMIT di Baturaden-25-Staging** `bgtztcfbkcrvcipxbfti`.
+- Kalender 01–03 (`20261006000011` sampai `20261006000013`) telah **COMMIT**; dataset terverifikasi berisi 51 tanggal unik: 35 `national_holiday` dan 16 `collective_leave`.
+- Finance 150000–150003 telah **COMMIT**. Sebelas tabel Finance Foundation tersedia dengan RLS aktif; `finance_reservation_idempotency` tersedia sebagai tabel compatibility tambahan.
+- Kontrak RPC final Staging sesuai source Finance: `create_reservation` 12 parameter, `record_transaction_payment` 5 parameter, `check_in_booking(uuid)`, `check_out_transaction(uuid)`, dan `get_operational_day_mode(date)`. Signature lama booking/payment tidak lagi menjadi kontrak aktif.
+- Audit kode Finance 150 **PASS** berdasarkan source, signature, idempotency, overlap/scheduled guard, SECURITY DEFINER, search path, RLS, policy, dan grants. Smoke test operasional Staging belum dilakukan.
+- Model dual identity Owner/Supervisor tersedia: `auth.uid()`/`recorded_by` tetap operator aktual, sedangkan `finance_cash_sessions.opened_by` adalah pemilik sesi bantuan.
+- Training Enforcement: aturan Owner sudah final dan rancangan teknis sudah selesai, tetapi implementasi belum dimulai. Peserta Training belum dapat menggunakan alur Finance secara aman sampai assignment dua hari, validasi sesi supervisor, larangan sesi sendiri, dan label audit `Training` diterapkan di backend.
+- Migrasi harga P4 `20261006000010_correct_p4_prices.sql` tetap **BLOCKED** karena isinya bertentangan dengan harga P4 yang disetujui Owner.
+- SOP pengujian: Codex mengerjakan validasi teknis bertahap dan read-only; Owner menjalankan satu rangkaian pengujian menyeluruh setelah fitur wajib dan Training Enforcement siap.
+- Status operasional sementara: **BELUM READY** sampai smoke test Staging, uji akses/Training, pembersihan data uji, dan persetujuan akhir Owner selesai.
+
+## Checkpoint implementasi Training lokal — 2026-10-18
+
+- Migration lokal baru: `supabase/migrations/20261018000000_finance_training_enforcement.sql`.
+- Assignment Training dua hari kalender Asia/Jakarta, status Owner, validasi sesi kas penanggung jawab, larangan sesi kas sendiri, wrapper Finance, dan audit berlabel `Training` telah diimplementasikan secara lokal.
+- Integrasi source mencakup konteks peran, sesi kas, Booking, pembayaran/check-in, dan Finance.
+- Pengujian pure Training, TypeScript, dan build lokal **PASS**; lint file baru **PASS**; lint repository **BLOCKED** oleh masalah format/CRLF lama.
+- Migration belum dijalankan ke Staging/Production; smoke test operasional, cleanup data uji, dan validasi runtime belum dilakukan.
+- Progres Training: **70% lokal**; remote/runtime: **0%**. Status operasional tetap **BELUM READY**.
+
+## Checkpoint perbaikan Training setelah audit FAIL — 2026-10-18
+
+- Guard backend ditambahkan pada transaksi, pembayaran, expense, deposit, sesi kas, dan objek Finance lain; RPC lama tidak lagi menjadi jalur bebas bagi peserta Training.
+- `check_out_transaction` kini hanya dapat dipakai peserta melalui wrapper `check_out_training_transaction` dengan sesi kas assigned yang valid; audit memakai assignment/session/operator server-side.
+- Sesi `OPEN` milik peserta yang sudah ada tidak ditutup atau diubah otomatis, tetapi penggunaannya diblokir backend dan menunggu penyelesaian resmi Owner.
+- Pure negative tests, TypeScript, dan build **PASS**. Runtime SQL/Staging belum dijalankan. Lint dashboard masih **BLOCKED** oleh format/CRLF lama.
+- Progres Training: **85% lokal**; remote/runtime: **0%**. Status operasional tetap **BELUM READY**.
+
+## Checkpoint SQL runtime lokal Training — 2026-10-18
+
+- Cluster PostgreSQL temporary terisolasi dibuat di luar cluster restore lama; baseline dump 18 Oktober dipulihkan tanpa menyentuh Staging/Production.
+- 42 migration prasyarat lokal dijalankan tanpa migration P4 `060010`; Training migration berhasil **COMMIT lokal** dan rerun idempotency juga **PASS**.
+- Runtime PASS: assignment dua hari, batas supervisor, konteks sesi assigned, penolakan sesi sendiri/sesi lama, bypass RPC booking/payment/check-in/check-out/expense/deposit/summary/closing, payment dual identity, check-out wrapper, audit operator/supervisor/session/label, serta regresi helper Owner/Receptionist.
+- Ditemukan dan diperbaiki incompatibility runtime Finance 150 pada `finance_prepare_payment` untuk dual identity Training.
+- Fixture lokal memiliki constraint nomor transaksi lama `BTRD25-######`, sementara generator migration numbering menghasilkan `BTRD25-TRX-######-YY`; uji transaksi resmi penuh **BLOCKED** dan tidak diubah otomatis.
+- Server temporary telah dimatikan. Progres Training: **90% lokal**; remote: **0%**. Status operasional tetap **BELUM READY**.
+
+## Checkpoint P0-02 Dashboard operasional — 2026-10-19
+
+- Keputusan Owner final: Dashboard memakai tabel `Kamar Sedang Terisi`, bukan kartu/foto kamar.
+- Source lokal hanya menampilkan transaksi `check_in` dengan kamar aktif berstatus `occupied`, mengurutkan countdown terpendek, mempertahankan baris ketika waktu habis, dan tidak mengubah status dari timer.
+- Tiga aksi resmi: Detail transaksi, Hubungi WhatsApp memakai nomor tersimpan, dan Check-out melalui RPC resmi. Booking/Check-in tetap berada pada Aksi Cepat/halaman masing-masing.
+- Pure test dan TypeScript lulus; build, diff check, browser visual, dan runtime UI menjadi bukti lokal yang dicatat pada laporan P0-02.
+- Staging/Production tidak disentuh. RPC Check-out masih memiliki risiko server-side karena belum revalidasi pembayaran; P0-02 belum production-ready.
+
+## Checkpoint P0-02B Check-out server-side — 2026-10-19
+
+- Migration lokal baru: `supabase/migrations/20261019000001_harden_checkout_payment_settlement.sql`.
+- Sumber kebenaran settlement ditegaskan pada database: `SUM(payments.amount) - SUM(finance_refunds.amount)` versus `transactions.price_snapshot + SUM(finance_charge_events.amount)`. Underpayment, overpayment, DP-only, charge Extend/Overtime, refund, dan payment tidak tercatat diverifikasi.
+- Lock transaksi dipakai oleh Check-out dan payment state guard; payment mutation setelah `check_out`/`cancelled` ditolak. Transisi Housekeeping dan audit log tetap resmi.
+- PostgreSQL disposable runtime PASS untuk skenario positif/negatif, concurrency, unauthorized, Housekeeping, dan Training. Staging/Production tidak disentuh; hardening belum production-ready sebelum Owner menyetujui dan menjalankan migration target.
+
+## Checkpoint FASE B Dashboard v0 — 2026-10-19
+
+- Dashboard asli diberi adaptasi visual v0 untuk Hero, KPI, Activity, Revenue, Payment Breakdown, dan Quick Actions.
+- Semua angka berasal dari query live: transaksi/kamar/payment/package/activity log/employee/finance expense sesuai izin. Mock v0 tidak dipakai.
+- Tabel P0-02, Check-out P0-02B, Booking/Check-in, Finance, Training, sesi kas, dual identity, nomorator, dan Emergency dipertahankan.
+- Browser visual belum diuji; Staging/Production tidak disentuh. Desain Login dan halaman lain menunggu persetujuan Owner.

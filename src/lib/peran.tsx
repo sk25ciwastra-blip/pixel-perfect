@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getTrainingContext, NO_TRAINING_CONTEXT, type TrainingContext } from '@/lib/training';
 
 export type Peran = 'owner' | 'karyawan';
 export type PosisiKaryawan =
@@ -27,6 +28,7 @@ type Access = {
   posisiKode: PosisiAkses;
   siap: boolean;
   masuk: boolean;
+  training: TrainingContext;
   keluar: () => Promise<void>;
 };
 
@@ -37,6 +39,7 @@ const PeranContext = createContext<Access>({
   posisiKode: null,
   siap: false,
   masuk: false,
+  training: NO_TRAINING_CONTEXT,
   keluar: async () => {},
 });
 
@@ -48,6 +51,7 @@ export function PeranProvider({ children }: { children: ReactNode }) {
     posisiKode: null,
     siap: false,
     masuk: false,
+    training: NO_TRAINING_CONTEXT,
   });
 
   useEffect(() => {
@@ -65,6 +69,7 @@ export function PeranProvider({ children }: { children: ReactNode }) {
           posisiKode: null,
           siap: true,
           masuk: false,
+          training: NO_TRAINING_CONTEXT,
         });
         return;
       }
@@ -85,6 +90,7 @@ export function PeranProvider({ children }: { children: ReactNode }) {
           posisiKode: 'owner',
           siap: true,
           masuk: true,
+          training: NO_TRAINING_CONTEXT,
         });
         return;
       }
@@ -98,6 +104,11 @@ export function PeranProvider({ children }: { children: ReactNode }) {
       if (!alive) return;
 
       const posisiKode = (employee?.position ?? null) as PosisiKaryawan | null;
+      const training = role?.role === 'employee' && employee?.active
+        ? await getTrainingContext().catch(() => NO_TRAINING_CONTEXT)
+        : NO_TRAINING_CONTEXT;
+
+      if (!alive) return;
 
       setState({
         peran: 'karyawan',
@@ -106,6 +117,7 @@ export function PeranProvider({ children }: { children: ReactNode }) {
         posisiKode,
         siap: true,
         masuk: role?.role === 'employee' && !!employee?.active,
+        training,
       });
     }
 
@@ -132,6 +144,7 @@ export function PeranProvider({ children }: { children: ReactNode }) {
       posisiKode: null,
       siap: true,
       masuk: false,
+      training: NO_TRAINING_CONTEXT,
     });
   };
 

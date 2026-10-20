@@ -481,6 +481,7 @@ export type Database = {
           id: string
           idempotency_key: string
           session_id: string
+          expense_number: string | null
           amount: number
           method: string
           category: string
@@ -492,6 +493,7 @@ export type Database = {
           id?: string
           idempotency_key: string
           session_id: string
+          expense_number?: string | null
           amount: number
           method: string
           category: string
@@ -503,6 +505,7 @@ export type Database = {
           id?: string
           idempotency_key?: string
           session_id?: string
+          expense_number?: string | null
           amount?: number
           method?: string
           category?: string
@@ -1194,6 +1197,18 @@ export type Database = {
         Args: { _calendar_date: string }
         Returns: string
       }
+      next_transaction_number: {
+        Args: Record<string, never>
+        Returns: string
+      }
+      next_housekeeping_number: {
+        Args: Record<string, never>
+        Returns: string
+      }
+      next_expense_number: {
+        Args: Record<string, never>
+        Returns: string
+      }
       override_room_ready: {
         Args: { _room_id: string; _note?: string }
         Returns: undefined
@@ -1304,6 +1319,87 @@ export type Database = {
         Returns: string
       }
       get_finance_session_summary: {
+        Args: { _session_id: string }
+        Returns: Json
+      }
+      get_finance_training_context: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      create_finance_training_assignment: {
+        Args: {
+          _starts_on: string
+          _supervisor_user_id: string
+          _trainee_user_id: string
+        }
+        Returns: string
+      }
+      resolve_finance_training_assignment: {
+        Args: {
+          _assignment_id: string
+          _resolution_note?: string
+          _status: string
+        }
+        Returns: undefined
+      }
+      create_training_reservation: {
+        Args: {
+          _address: string
+          _amount: number
+          _day_mode: string
+          _idempotency_key: string
+          _method: string
+          _mode: string
+          _name: string
+          _package_id: string
+          _phone: string
+          _room_id: string
+          _scheduled_check_in?: string
+          _session_id: string
+        }
+        Returns: string
+      }
+      record_training_transaction_payment: {
+        Args: {
+          _amount: number
+          _idempotency_key: string
+          _method: string
+          _session_id: string
+          _transaction_id: string
+        }
+        Returns: string
+      }
+      check_in_training_booking: {
+        Args: { _session_id: string; _transaction_id: string }
+        Returns: string
+      }
+      check_out_training_transaction: {
+        Args: { _session_id: string; _transaction_id: string }
+        Returns: string
+      }
+      record_training_finance_expense: {
+        Args: {
+          _amount: number
+          _category: string
+          _idempotency_key: string
+          _method: string
+          _note?: string
+          _session_id: string
+        }
+        Returns: string
+      }
+      create_training_finance_deposit: {
+        Args: {
+          _amount: number
+          _bank_account_id?: string | null
+          _idempotency_key: string
+          _method: string
+          _proof_ref?: string
+          _session_id: string
+        }
+        Returns: string
+      }
+      get_training_finance_session_summary: {
         Args: { _session_id: string }
         Returns: Json
       }

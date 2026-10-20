@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { rupiah } from '@/lib/data-contoh';
 import { useTable } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
-import { usePeran } from '@/lib/peran';
+import { useSesiKasKonteks } from '@/lib/sesi-kas';
 
 type Mode = 'booking' | 'check_in';
 type DayMode = 'weekday' | 'weekend';
@@ -18,14 +18,12 @@ export function FormulirPemesanan({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
-  const { posisiKode } = usePeran();
   const rooms = useTable('rooms');
   const roomTypes = useTable('room_types');
   const packages = useTable('packages');
   const packagePrices = useTable('package_room_type_prices');
   const guests = useTable('guests');
   const transactions = useTable('transactions');
-  const financeSessions = useTable('finance_cash_sessions');
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -40,35 +38,17 @@ const [amount, setAmount] = useState('0');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedNumber, setSavedNumber] = useState('');
-  const [userId, setUserId] = useState('');
-  const [sessionId, setSessionId] = useState('');
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
   const [lastRequestFingerprint, setLastRequestFingerprint] = useState('');
-
-  const isSessionHelper = posisiKode === 'owner' || posisiKode === 'supervisor';
-  const openFinanceSessions = financeSessions.rows.filter(
-    session => session.status === 'OPEN',
-  );
-  const ownFinanceSession = openFinanceSessions.find(
-    session => session.opened_by === userId,
-  );
-
-  useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? '');
-    });
-  }, []);
-
-  useEffect(() => {
-    if (ownFinanceSession) {
-      setSessionId(ownFinanceSession.id);
-      return;
-    }
-
-    if (!sessionId && isSessionHelper && openFinanceSessions.length === 1) {
-      setSessionId(openFinanceSessions[0]?.id ?? '');
-    }
-  }, [isSessionHelper, openFinanceSessions, ownFinanceSession, sessionId]);
+  const {
+    sessionId,
+    activeSession,
+    needsAssistedContext,
+    isTraining,
+    trainingStatus,
+    loading: sessionLoading,
+    error: sessionError,
+  } = useSesiKasKonteks();
 
   const matchedGuest = guests.rows.find(
     guest => guest.phone === phone.trim(),
@@ -119,7 +99,7 @@ const [amount, setAmount] = useState('0');
     packagePrices.loading ||
     guests.loading ||
     transactions.loading ||
-    financeSessions.loading;
+    sessionLoading;
 
   const dataError =
     rooms.error ||
@@ -127,7 +107,8 @@ const [amount, setAmount] = useState('0');
     packages.error ||
     packagePrices.error ||
     guests.error ||
-    transactions.error;
+    transactions.error ||
+    sessionError;
 
   const fieldClass =
     'mt-1 h-11 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none focus:border-primary';
@@ -261,8 +242,10 @@ if (mode === 'booking' && !scheduledCheckIn) {
       return;
     }
 
-    if (payment > 0 && !sessionId) {
-      setError('Pilih atau buka sesi kas aktif sebelum mencatat pembayaran.');
+    if (!sessionId || needsAssistedContext) {
+      setError(needsAssistedContext
+        ? 'Pilih sesi bantuan aktif di halaman Keuangan sebelum menyimpan transaksi.'
+        : 'Buka sesi kas aktif sebelum menyimpan transaksi.');
       return;
     }
 
@@ -313,7 +296,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
     };
 
     const { data, error: failure } = await supabase.rpc(
-      'create_reservation',
+      isTraining ? 'create_training_reservation' : 'create_reservation',
       reservationArgs,
     );
 
@@ -528,23 +511,20 @@ if (mode === 'booking' && !scheduledCheckIn) {
               </p>
             )}
 
-            {(isSessionHelper || openFinanceSessions.length > 1) && (
-              <label className="block text-sm">
-                Sesi kas pembayaran
-                <select
-                  required
-                  value={sessionId}
-                  onChange={event => setSessionId(event.target.value)}
-                  className={fieldClass}
-                >
-                  <option value="">Pilih sesi kas aktif</option>
-                  {openFinanceSessions.map(session => (
-                    <option key={session.id} value={session.id}>
-                      {session.operational_date} · {session.opened_by.slice(0, 8)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            {isTraining && (
+              <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.
+              </p>
+            )}
+
+            {selectedPrice > 0 && (
+              <p className="rounded-xl bg-secondary px-3 py-2 text-sm">
+                {activeSession
+                  ? 'Sesi kas aktif terhubung otomatis ke pembayaran.'
+                  : needsAssistedContext
+                    ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.'
+                    : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}
+              </p>
             )}
 
             <label className="block text-sm">

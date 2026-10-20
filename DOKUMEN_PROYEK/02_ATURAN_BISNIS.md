@@ -67,6 +67,7 @@ Semua angka di bawah adalah `weekday/weekend` dalam Rupiah. Kolom package-level 
 | AB-BOOK-005 | Booking ditolak jika overlap dengan booking lain atau transaksi `check_in` aktif pada kamar yang sama. Interval yang tepat berbatasan checkout diperbolehkan. | DIKERJAKAN / SIAP UJI | 2026-10-13 | BELUM TERVERIFIKASI | Review SQL `00009`; booking | Booking |
 | AB-CHECK-001 | Check-in langsung harus membayar lunas; booking yang belum lunas tidak boleh di-check-in. | DIKERJAKAN / SIAP UJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06001`, `00008`, `00009`; check-in | Check-in |
 | AB-CHECK-002 | Check-in mengubah kamar ready menjadi occupied dan menyimpan waktu mulai/selesai berdasarkan paket. | DIKERJAKAN / SIAP UJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi canonical/check-in; check-in | Check-in |
+| AB-CHECK-003 | Check-out wajib menghitung ulang settlement database: `SUM(payments.amount) - SUM(finance_refunds.amount)` harus sama dengan `transactions.price_snapshot + SUM(finance_charge_events.amount)`. Kurang bayar dan lebih bayar ditolak; payment/charge/refund mutation mengambil lock transaksi dan ditolak setelah closed/cancelled. | DISETUJUI OWNER / SIAP UJI LOKAL | 2026-10-19 | 2026-10-19 | P0-02B correction dan migration `20261019000001_harden_checkout_payment_settlement.sql` | Check-out, pembayaran, Extend/Overtime, refund, Finance |
 | AB-PAY-001 | Metode pembayaran yang ditemukan: Cash, QRIS, Transfer. | BELUM TERVERIFIKASI | 2026-10-13 | BELUM TERVERIFIKASI | Schema Drizzle dan RPC pembayaran; belum ada keputusan Owner bertanggal | Pembayaran |
 | AB-PAY-002 | Payment dicatat terkait `transaction_id`; pembayaran tambahan tidak boleh melebihi sisa tagihan. | DIKERJAKAN / SIAP UJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06000`; pembayaran | Pembayaran |
 | AB-PAY-003 | `kind` pembayaran membedakan `dp` dan `payment`. | BELUM TERVERIFIKASI | 2026-10-13 | BELUM TERVERIFIKASI | Baseline Drizzle `0005` dan RPC reservasi; belum ada keputusan Owner bertanggal | Pembayaran |
@@ -77,6 +78,9 @@ Semua angka di bawah adalah `weekday/weekend` dalam Rupiah. Kolom package-level 
 |---|---|---|---|---|---|---|
 | AB-PLAN-001 | Perencanaan resmi dipertahankan dalam enam area: DASHBOARD, ROOM, BOOKING, TRANSAKSI, FINANCE, dan TIM & AKSES. | DISETUJUI OWNER | 2026-10-13 | BELUM TERVERIFIKASI | Keputusan Owner pada pembaruan terpadu | Perencanaan proyek |
 | AB-UI-DASH-001 | Menu Dashboard; kamar TERISI menampilkan countdown realtime dan diurutkan dari waktu tersisa paling pendek. | DISETUJUI OWNER | 2026-10-13 | BELUM TERVERIFIKASI | Keputusan Owner dan audit `src/routes/index.tsx` | Dashboard |
+| AB-UI-DASH-010 | Dashboard memakai tabel `Kamar Sedang Terisi`, bukan kartu/foto kamar. Hanya transaksi `check_in` dengan kamar aktif berstatus `occupied` yang tampil; booking mendatang, ready, dirty, dan cleaning tidak tampil. | DISETUJUI OWNER | 2026-10-19 | 2026-10-19 | P0-02 Owner dan `src/routes/index.tsx` | Dashboard |
+| AB-UI-DASH-011 | Tabel diurutkan berdasarkan sisa waktu paling sedikit. Countdown yang habis tetap tampil sebagai `WAKTU HABIS` sampai Check-out berhasil; status kamar tidak diubah otomatis oleh timer. | DISETUJUI OWNER | 2026-10-19 | 2026-10-19 | P0-02 Owner dan implementasi lokal | Dashboard |
+| AB-UI-DASH-012 | Setiap baris memiliki tepat tiga aksi: Detail transaksi (biru), Hubungi WhatsApp (hijau), dan Check-out (merah). Aksi WhatsApp hanya aktif bila nomor lengkap tersimpan dan valid; Check-out tunduk pada role, pembayaran, konfirmasi, dan RPC resmi. | DISETUJUI OWNER | 2026-10-19 | 2026-10-19 | P0-02 Owner, RPC `check_out_transaction`, dan source lokal | Dashboard, Check-out, akses |
 | AB-UI-BOOK-001 | Tampilan Booking yang diperiksa Owner dipertahankan: pengelompokan tanggal kedatangan, kartu nomor/tipe kamar, nama tamu + empat digit terakhir WhatsApp, nomor transaksi klik, Hubungi, Check-in, status BOOKING, serta kelompok AKAN DATANG/RIWAYAT. | DISETUJUI OWNER | 2026-10-13 | BELUM TERVERIFIKASI | Pemeriksaan Owner dan `src/routes/booking.tsx` | Booking |
 | AB-UI-ROOM-001 | Nama area/menu menjadi ROOM; status tampil sebagai TERSEDIA, TERISI, PERLU DIBERSIHKAN, dan SEDANG DIBERSIHKAN. | DISETUJUI OWNER | 2026-10-13 | BELUM TERVERIFIKASI | Keputusan Owner; source saat ini masih memakai Kamar/Siap | ROOM |
 | AB-UI-ROOM-002 | Tipe kamar ditampilkan kapital: STANDARD, SUPERIOR A, SUPERIOR B, DELUXE; harga kamar tidak ditampilkan pada kartu; pencarian, filter, dan tombol Ubah dipertahankan. | DISETUJUI OWNER | 2026-10-13 | BELUM TERVERIFIKASI | Keputusan Owner dan `src/routes/kamar.tsx` | ROOM |
@@ -95,6 +99,21 @@ Semua angka di bawah adalah `weekday/weekend` dalam Rupiah. Kolom package-level 
 | AB-NUM-004 | Format lama `BTRD25-000000` tidak digunakan untuk transaksi baru. | DISETUJUI OWNER | 2026-10-13 | BELUM TERVERIFIKASI | Keputusan Owner; baseline masih memiliki default lama | Transaksi |
 | AB-NUM-005 | Nomor TRX/HK lama tidak diganti sembarangan; kebutuhan migrasi/backfill harus diaudit dan tidak dijalankan otomatis. | DISETUJUI OWNER | 2026-10-13 | BELUM TERVERIFIKASI | Keputusan Owner; preflight `14000` menghentikan migrasi bila nomor duplikat | Data migration |
 | AB-NUM-006 | Aturan pergantian tahun, reset urutan, dan apakah sequence reset setiap tahun belum diputuskan. | BELUM DIPUTUSKAN | 2026-10-13 | BELUM TERVERIFIKASI | Audit generator `14000`: suffix tahun memakai `YY`, sequence tidak memiliki reset tahunan | Nomorator |
+
+### Keputusan Owner final — P0-01 (2026-10-19)
+
+Entri `AB-NUM-001` sampai `AB-NUM-006` di atas adalah histori keputusan sebelumnya. Untuk nomor baru, entri berikut menjadi aturan yang berlaku dan menggantikan format/tahun lama tanpa mengubah arsip.
+
+| ID | Aturan final | Status | Tanggal keputusan | Implementasi lokal |
+|---|---|---|---|---|
+| AB-NUM-007 | Nomor transaksi baru memakai `BTRDTRX-000001`; satu seri kategori transaksi, tidak ada kode tahun, tidak reset, dan nomor yang sama dipertahankan dari Booking sampai Check-out. | DISETUJUI OWNER | 2026-10-19 | `owner_transaction_number_seq` + `next_transaction_number()` |
+| AB-NUM-008 | Nomor Housekeeping baru memakai `BTRDHK-000001`; seri terpisah dari transaksi, tidak ada kode tahun, dan tidak reset. | DISETUJUI OWNER | 2026-10-19 | `owner_housekeeping_number_seq` + `next_housekeeping_number()` |
+| AB-NUM-009 | Nomor Pengeluaran baru memakai `BTRDEXP-000001`; seri terpisah, dibuat otomatis oleh database, dan dicari bersama tanggal pencatatan. | DISETUJUI OWNER | 2026-10-19 | `finance_expenses.expense_number` + `owner_expense_number_seq` |
+| AB-NUM-010 | Generator menggunakan `nextval` sequence database dan unique index; aman terhadap input bersamaan. Setelah `999999`, padding bertambah tanpa mengulang nomor. | DISETUJUI OWNER | 2026-10-19 | Migration `20261019000000_owner_final_numbering.sql` |
+| AB-NUM-011 | Titik awal sequence dihitung dari nilai terbesar yang ditemukan pada format Owner dan format historis kategori terkait. Nomor lama tidak di-backfill, diganti, atau dihapus; nomor lama tetap diterima constraint dan dapat dicari. | DISETUJUI OWNER | 2026-10-19 | `owner_final_numbering_preflight.sql` dan blok `sequence_sync` |
+| AB-NUM-012 | Arsip/filter tahun memakai `created_at` atau tanggal pencatatan, bukan nomorator. | DISETUJUI OWNER | 2026-10-19 | Route Transaksi mengelompokkan `transactions.created_at`; nomor tidak memuat tahun |
+
+Nomor pada `src/lib/data-contoh.ts` tetap data contoh antarmuka dan bukan bukti nomor yang pernah diterbitkan. Nomor aktual wajib dibaca dari database melalui preflight read-only. Karena sesi ini tidak memiliki koneksi database lokal/remote yang boleh ditulis, migration menentukan titik awal saat dijalankan pada clone/database target; Staging dan Production tidak disentuh.
 
 ## Relasi riwayat transaksi–Housekeeping
 
@@ -202,3 +221,50 @@ Desain Booking yang telah disetujui Owner adalah acuan visual yang harus diperta
 ## Aturan dokumentasi dan checkpoint
 
 Setiap pekerjaan yang selesai harus memperbarui bagian relevan dari lima dokumen resmi. Laporan akhir wajib menyebut pekerjaan selesai, PASS/FAIL, file berubah, commit terakhir, blocker nyata, langkah berikutnya, dan persentase progres tahap terkait. Commit, push, deploy, migration, perubahan database remote, dan tindakan destruktif tetap memerlukan otorisasi Owner yang terpisah.
+
+## Catatan aturan environment — reconciliation Staging 2026-10-15
+
+Snapshot katalog Staging adalah bukti schema/metadata saja, bukan bukti bahwa Finance 150 sudah aktif. Tabel dan RPC existing tidak boleh diubah hanya karena migration lokal menyediakan definisi baru. Perubahan Finance harus forward-only, mempertahankan data transaksi/payment existing, dan menunggu diff exact untuk function identity, grants, RLS, trigger, dan migration history.
+
+Absennya nama lama `cash_sessions` atau `cash_session_entries` bukan bukti absennya Finance; kontrak lokal memakai `finance_cash_sessions` dan `finance_session_allocations`. Pada snapshot kali ini kedua nama Finance tersebut memang belum terlihat, sehingga Finance Foundation tetap menjadi dependency yang belum diterapkan/terverifikasi.
+
+Preflight reconciliation lokal boleh memuat katalog metadata dan pemeriksaan keberadaan objek, tetapi tidak boleh menjadi migration terselubung. File `supabase/reconciliation/finance150_staging_preflight.sql` harus tetap SELECT-only sampai Owner menyetujui paket forward-only terpisah.
+
+## Keputusan UI Dashboard dan sesi kas — 2026-10-16
+
+| ID | Keputusan Owner | Status | Tanggal dicatat | Sumber / fitur terkait |
+|---|---|---|---|---|
+| AB-UI-DASH-002 | Dashboard modern mengikuti referensi `C:\Users\USER\Downloads\Dasbor Manajemen Homestay Modern.png` sedekat mungkin; data harus berasal dari database, bukan angka ilustrasi. | DISETUJUI OWNER / SIAP UJI VISUAL | 2026-10-16 | Referensi visual Owner, `dashboard-modern.tsx` |
+| AB-UI-DASH-003 | Warna kartu kamar: Standard biru pastel, Superior A/B hijau pastel, Deluxe kuning pastel. Tombol Check-out merah dan nomor transaksi pada kartu dapat membuka detail transaksi. | DISETUJUI OWNER / SIAP UJI VISUAL | 2026-10-16 | Keputusan warna Owner, Dashboard |
+| AB-UI-DASH-004 | Log Activity memakai timeline dengan ikon berwarna dan waktu; Grafik Pendapatan memakai batang biru dengan filter Harian/Mingguan/Bulanan/Tahunan. | DISETUJUI OWNER / SIAP UJI VISUAL | 2026-10-16 | Dashboard |
+| AB-UI-DASH-005 | Emergency horizontal merah dengan bingkai hitam tipis berada di bawah sidebar; Pengaturan berada di header; blok Owner dan tombol Keluar di sidebar dihapus; logout tetap melalui profil. | DISETUJUI OWNER / SIAP UJI VISUAL | 2026-10-16 | `kerangka.tsx`, Dashboard |
+| AB-UI-DASH-006 | Aksi utama Dashboard bernama Check-in Langsung dan Buat Booking; visual browser belum dinyatakan PASS sampai dikonfirmasi Owner. | DISETUJUI OWNER / BELUM TERVERIFIKASI VISUAL | 2026-10-16 | Dashboard |
+| AB-FIN-007 | Check-in Langsung dan pelunasan Booking tidak meminta dropdown sesi kas. Resolver memakai sesi kerja `OPEN`; operator aktual dan pemilik sesi tetap terpisah; Owner/Supervisor dapat membantu sesi sesuai otorisasi. | DISETUJUI OWNER / SIAP UJI LOKAL | 2026-10-16 | `sesi-kas.ts`, `formulir-pemesanan.tsx`, `booking.tsx`, `keuangan.tsx` |
+| AB-FIN-008 | Jika sesi kas sah tidak tersedia atau konteks bantuan belum valid, transaksi diblokir dan sistem tidak membuka sesi baru secara otomatis. ID konteks browser bukan batas keamanan; RPC/server tetap menjadi sumber otorisasi. | DISETUJUI OWNER / BELUM TERVERIFIKASI RUNTIME | 2026-10-16 | Finance 150, sesi kas |
+
+## Addendum status implementasi Staging — 2026-10-18
+
+- Housekeeping 01–03 dan Kalender 01–03 telah **COMMIT di Staging** `bgtztcfbkcrvcipxbfti`; Kalender memiliki 51 tanggal unik, 35 `national_holiday`, dan 16 `collective_leave`.
+- Finance 150000–150003 telah **COMMIT di Staging**. RLS, signature RPC final, idempotency, scheduled/overlap guard, dan model dual identity Owner/Supervisor telah diaudit secara read-only; smoke test operasional belum dilakukan.
+- Training adalah status assignment server-side yang menempel pada akun sendiri selama tepat dua hari kalender. Aturan Owner bersifat final: transaksi memakai sesi aktif Owner/Supervisor, peserta tidak membuka sesi sendiri, `auth.uid()` tetap operator aktual, dan audit diberi label `Training`.
+- Implementasi Training Enforcement belum dimulai. Sampai enforcement backend tersedia dan diuji, peserta Training belum boleh digunakan untuk operasional.
+- `20261006000010_correct_p4_prices.sql` tetap **BLOCKED** dan tidak boleh dijalankan tanpa keputusan Owner baru.
+- SOP pengujian resmi: Codex melakukan pemeriksaan teknis bertahap; Owner melakukan satu rangkaian uji menyeluruh setelah semua fitur wajib siap. Status operasional tetap **BELUM READY**.
+
+### Implementasi Training Enforcement lokal — 2026-10-18
+
+Aturan Owner untuk peserta Training tetap berlaku: login dengan ID sendiri, dua hari kalender Asia/Jakarta, pengawasan Owner/Supervisor yang ditugaskan, penggunaan sesi kas aktif penanggung jawab, larangan membuka sesi kas sendiri, operator dari `auth.uid()`, dan audit berlabel `Training`. Implementasi lokal menambahkan assignment server-side, guard sesi kas/RPC, wrapper Finance, trigger audit, serta integrasi UI; tidak mengubah aturan dual identity Finance 150.
+
+Status: **SIAP REVIEW LOKAL, BELUM READY OPERASIONAL**. Migration `20261018000000_finance_training_enforcement.sql` belum dijalankan ke remote. Pengujian pure, TypeScript, dan build **PASS**; runtime Staging dan smoke test belum dilakukan.
+
+### Koreksi enforcement setelah audit FAIL — 2026-10-18
+
+Guard database kini mencakup RPC lama check-out, closing, expense, deposit, payment, booking, check-in, sesi kas, serta mutation Finance lain. Check-out peserta wajib melalui wrapper dengan session assigned; assignment, supervisor, session, dan operator audit ditentukan server-side. Sesi lama peserta tidak diubah otomatis dan hanya ditandai untuk penyelesaian Owner.
+
+Status tetap **SIAP REVIEW LOKAL, BELUM READY OPERASIONAL** karena migration belum dipasang dan runtime Staging belum diuji.
+
+### Hasil SQL runtime Training lokal — 2026-10-18
+
+Pengujian pada cluster temporary terisolasi membuktikan assignment dua hari Asia/Jakarta, supervisor assigned, larangan sesi sendiri dan sesi lama, penolakan RPC legacy, dual identity payment, check-out Training, dan audit `Training`. `finance_prepare_payment` diperketat hanya untuk konteks Training yang tervalidasi; jalur normal Owner/Receptionist tetap lulus.
+
+Status: **PASS LOKAL / BELUM READY OPERASIONAL**. Migration belum dipasang remote. Uji nomor transaksi resmi penuh tertahan oleh constraint format lama pada fixture lokal dan tidak diubah dalam task ini.

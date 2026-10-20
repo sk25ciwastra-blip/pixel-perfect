@@ -60,6 +60,17 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-navy-soft: var(--navy-soft);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-v0-success: var(--v0-success);
+  --color-v0-info: var(--v0-info);
+  --color-v0-warning: var(--v0-warning);
+  --color-v0-danger: var(--v0-danger);
+  --color-v0-violet: var(--v0-violet);
   --color-siap: var(--siap);
   --color-siap-foreground: var(--siap-foreground);
   --color-terisi: var(--terisi);
@@ -76,6 +87,18 @@
 
 :root {
   --radius: 0.625rem;
+  /* v0 visual foundation tokens. Applied selectively in Phase A. */
+  --navy: oklch(0.28 0.13 260);
+  --navy-deep: oklch(0.18 0.1 260);
+  --navy-soft: oklch(0.37 0.14 260);
+  --gold: oklch(0.69 0.13 85);
+  --gold-light: oklch(0.85 0.13 90);
+  --gold-dark: oklch(0.56 0.13 75);
+  --v0-success: oklch(0.6 0.17 145);
+  --v0-info: oklch(0.52 0.19 255);
+  --v0-warning: oklch(0.72 0.17 70);
+  --v0-danger: oklch(0.56 0.2 25);
+  --v0-violet: oklch(0.52 0.23 310);
   --background: oklch(1 0 0);
   --foreground: oklch(0.21 0.01 250);
   --siap: oklch(0.965 0.035 155);

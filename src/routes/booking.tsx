@@ -1,7 +1,7 @@
 import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { Kerangka, Judul, Daftar } from '@/components/kerangka';
 import { FormulirPemesanan } from '@/components/formulir-pemesanan';
@@ -12,6 +12,7 @@ import { rupiah } from '@/lib/data-contoh';
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
+import { useSesiKasKonteks } from '@/lib/sesi-kas';
 
 export const Route = createFileRoute('/booking')({
   head: () =>
@@ -59,35 +60,15 @@ const guests = useTable('guests');
 const rooms = useTable('rooms');
 const roomTypes = useTable('room_types');
 const packages = useTable('packages');
-const financeSessions = useTable('finance_cash_sessions');
-const [userId, setUserId] = useState('');
-const [paymentSessionId, setPaymentSessionId] = useState('');
 const [paymentIdempotencyKey, setPaymentIdempotencyKey] = useState(() => crypto.randomUUID());
-
-useEffect(() => {
-  void supabase.auth.getUser().then(({ data }) => {
-    setUserId(data.user?.id ?? '');
-  });
-}, []);
-
-const openFinanceSessions = financeSessions.rows.filter(
-  (session) => session.status === 'OPEN',
-);
-const ownFinanceSession = openFinanceSessions.find(
-  (session) => session.opened_by === userId,
-);
-
-useEffect(() => {
-  if (ownFinanceSession) {
-    setPaymentSessionId(ownFinanceSession.id);
-  } else if (
-    !paymentSessionId &&
-    (posisiKode === 'owner' || posisiKode === 'supervisor') &&
-    openFinanceSessions.length === 1
-  ) {
-    setPaymentSessionId(openFinanceSessions[0]?.id ?? '');
-  }
-}, [openFinanceSessions, ownFinanceSession, paymentSessionId, posisiKode]);
+const {
+  sessionId: paymentSessionId,
+  activeSession: activePaymentSession,
+  needsAssistedContext,
+  isTraining,
+  loading: paymentSessionLoading,
+  error: paymentSessionError,
+} = useSesiKasKonteks();
 
   const selectedBooking = transactions.rows.find(
     (item) => item.id === selectedBookingId,
@@ -154,13 +135,20 @@ async function recordPayment() {
       return;
     }
 
-    if (!paymentSessionId) {
-      setMessage('Pilih atau buka sesi kas aktif sebelum mencatat pembayaran.');
+    if (paymentSessionLoading || paymentSessionError) {
+      setMessage(paymentSessionError || 'Sesi kas masih dimuat. Coba lagi sebentar.');
+      return;
+    }
+
+    if (!paymentSessionId || needsAssistedContext) {
+      setMessage(needsAssistedContext
+        ? 'Pilih sesi bantuan aktif di halaman Keuangan sebelum mencatat pembayaran.'
+        : 'Buka sesi kas aktif sebelum mencatat pembayaran.');
       return;
     }
 
     const { error: paymentError } = await supabase.rpc(
-      'record_transaction_payment',
+      isTraining ? 'record_training_transaction_payment' : 'record_transaction_payment',
       {
         _transaction_id: selectedBooking.id,
         _amount: amount,
@@ -210,10 +198,10 @@ async function finishCheckIn() {
 
   try {
     const { error: checkInError } = await supabase.rpc(
-      'check_in_booking',
-      {
-        _transaction_id: selectedBooking.id,
-      },
+      isTraining ? 'check_in_training_booking' : 'check_in_booking',
+      isTraining
+        ? { _transaction_id: selectedBooking.id, _session_id: paymentSessionId }
+        : { _transaction_id: selectedBooking.id },
     );
 
     if (checkInError) {
@@ -572,26 +560,13 @@ Terima kasih.`;
               </div>
             </dl>
 
-            {(posisiKode === 'owner' ||
-              posisiKode === 'supervisor' ||
-              openFinanceSessions.length > 1) && (
-              <label className="mt-5 block text-sm">
-                Sesi kas pembayaran
-                <select
-                  required
-                  value={paymentSessionId}
-                  onChange={(event) => setPaymentSessionId(event.target.value)}
-                  className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"
-                >
-                  <option value="">Pilih sesi kas aktif</option>
-                  {openFinanceSessions.map((session) => (
-                    <option key={session.id} value={session.id}>
-                      {session.operational_date} · {session.opened_by.slice(0, 8)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
+            <p className="mt-5 rounded-xl bg-secondary px-3 py-2 text-sm">
+              {activePaymentSession
+                ? 'Sesi kas aktif terhubung otomatis ke pembayaran.'
+                : needsAssistedContext
+                  ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.'
+                  : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}
+            </p>
 
             {selectedRemaining > 0 ? (
               <div className="mt-5 space-y-4">

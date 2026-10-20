@@ -80,15 +80,59 @@ Checkout mengubah kamar menjadi dirty. RPC housekeeping menggerakkan dirty → c
 
 ### Nomorator dan relasi transaksi–Housekeeping
 
-- Format Owner untuk transaksi baru: `BTRD25-TRX-000000-26`.
-- Format Owner untuk pekerjaan Housekeeping: `BTRD25-HK-000000-26`.
-- `14000_official_transaction_housekeeping_numbers.sql` mendefinisikan dua sequence terpisah, generator `next_transaction_number()` dan `next_housekeeping_number()`, serta suffix tahun `YY` berdasarkan Asia/Jakarta.
-- Sequence pada migrasi tersebut tidak mendefinisikan reset tahunan; aturan reset/pergantian tahun masih `BELUM DIPUTUSKAN`.
-- Baseline masih memiliki default nomor transaksi lama `BTRD25-000000`; migrasi `14000` belum terpasang pada status 22/40.
+- Format historis untuk transaksi: `BTRD25-TRX-000000-26`; transaksi baru memakai `BTRDTRX-000001`.
+- Format historis Owner untuk pekerjaan Housekeeping adalah `BTRD25-HK-000000-26`; format baru yang berlaku adalah `BTRDHK-000001`.
+- `14000_official_transaction_housekeeping_numbers.sql` adalah histori generator lama berbasis tahun. Migration forward-only `20261019000000_owner_final_numbering.sql` menggantikan default/generator baru tanpa mengubah migration tersebut.
+- Sequence final tidak reset pada pergantian tahun; tanggal arsip/filter berasal dari `created_at`/tanggal pencatatan, bukan nomor.
+- Baseline dan format historis `BTRD25-000000` tetap dipertahankan untuk pencarian/arsip; transaksi baru memakai `BTRDTRX-*`.
 - Relasi yang dirancang: `housekeeping_jobs.transaction_id`, `housekeeping_history.transaction_id`, `housekeeping_history.job_id/job_number`, dan `housekeeping_transaction_resolutions` untuk kandidat checkout yang ambigu.
 - `housekeeping_jobs.transaction_id` unik, sedangkan history dapat menyimpan beberapa kejadian; kebutuhan satu transaksi dengan lebih dari satu aktivitas Housekeeping masih harus diverifikasi sebelum menetapkan asumsi baru.
 - Source `kamar.tsx` saat ini membaca rooms, room types, dan transactions, tetapi belum membaca `housekeeping_history`/`housekeeping_jobs`; karena itu kartu ROOM belum dapat menampilkan HK resmi atau ❌ checklist.
 - Source `housekeeping.tsx` sudah membaca `housekeeping_history` dan menampilkan `job_number` bila tersedia, tetapi masih menampilkan fallback `HK legacy` bila nomor belum ada.
+
+### P0-01 — Nomorator final Owner (2026-10-19)
+
+Keputusan final Owner menetapkan tiga prefix tanpa tahun: `BTRDTRX-000001`, `BTRDHK-000001`, dan `BTRDEXP-000001`. Migration forward-only `20261019000000_owner_final_numbering.sql` tidak mengubah migration historis, nomor lama, relasi transaksi, atau data lama.
+
+- Sequence baru `owner_transaction_number_seq`, `owner_housekeeping_number_seq`, dan `owner_expense_number_seq` berdiri terpisah per kategori, memakai `nextval`, `NO MAXVALUE`, dan tetap aman saat concurrent insert. `lpad(..., 6, '0')` hanya padding minimum; angka ke-1.000.000 menjadi tujuh digit.
+- `next_transaction_number()` dan `next_housekeeping_number()` diganti secara forward-only, lalu default transaksi memakai generator baru. Booking, check-in, dan check-out tetap merujuk `transactions.id`/`transaction_number` yang sama sehingga nomor tidak berganti sepanjang siklus transaksi.
+- `finance_expenses.expense_number` ditambahkan nullable agar expense lama tidak di-backfill. Expense baru mendapat default `next_expense_number()`, unique partial index, dan constraint format baru. Record expense lama tetap dapat dibaca; pencarian baru mencocokkan nomor, kategori, catatan, dan idempotency key.
+- Constraint transaksi dan Housekeeping menerima format Owner baru serta format lama `BTRD25-...`; migration tidak melakukan mass replacement. Relasi `housekeeping_history.job_id/job_number` tetap menjadi identitas pekerjaan, bukan penyamaan angka TRX/HK.
+- Blok `sequence_sync` dan query read-only `supabase/reconciliation/owner_final_numbering_preflight.sql` mengambil maksimum dari nomor Owner dan format historis yang dikenal sebelum sequence dipakai. Data contoh di `src/lib/data-contoh.ts` tidak dihitung sebagai nomor terbit.
+- P0-01 correction juga menggantikan body trigger legacy `enforce_transaction_identity()` dan memasang ulang `transaction_identity_insert`: `created_by` tetap dipaksa dari `auth.uid()`, tetapi nomor selalu berasal dari `next_transaction_number()` Owner-final; default historis dilepas agar sequence tidak dikonsumsi dua kali.
+- Hotfix final P0-01 menjalankan trigger tersebut sebagai `SECURITY DEFINER` dengan `search_path = pg_catalog, public`; EXECUTE langsung dicabut dari `PUBLIC`, `anon`, dan `authenticated`. Generator tiga kategori tetap least-privilege dan tidak dibuka ke role aplikasi; insert resmi role `authenticated` menggunakan trigger, sedangkan Housekeeping/Expense memakai default melalui jalur RPC berizin.
+- Pencarian Transaksi menerima nomor baru, nomor resmi lama, dan nomor baseline lama. Arsip/filter tahun tetap memakai `transactions.created_at`/tanggal pencatatan, bukan substring nomor.
+
+### P0-02 — Dashboard operasional tabel kamar terisi (2026-10-19)
+
+- `src/routes/index.tsx` mengganti hanya bagian daftar kamar menjadi tabel `Kamar Sedang Terisi`; tidak ada foto kamar dan bagian Dashboard lain tetap dipertahankan.
+- Sumber baris adalah relasi live `transactions.room_id` → `rooms.id` → `room_types.id`. Filter wajib: `transactions.status = 'check_in'`, `rooms.active = true`, dan `rooms.status = 'occupied'`. Booking mendatang serta ready/dirty/cleaning tidak masuk tabel.
+- Countdown dihitung lokal dari `transactions.ends_at`, diurutkan berdasarkan sisa waktu. Timer tidak menulis database. Nilai nol/negatif diberi label `WAKTU HABIS` dan tetap tampil sampai RPC Check-out mengubah transaksi/kamar.
+- Kolom tabel: kamar + tipe, nama tamu + empat digit WhatsApp, paket, countdown, dan tepat tiga aksi ikon. Detail membuka `DetailTransaksi` dengan `transaction.id`; Hubungi memakai `guest.phone` tersimpan setelah validasi; nomor invalid/nonexistent membuat tombol disabled.
+- Check-out melakukan preflight client terhadap status transaksi, status kamar, pembayaran, role, dan sesi Training; konfirmasi memuat kamar/tamu/nomor transaksi. Mutation tetap melalui `check_out_transaction(uuid)` atau `check_out_training_transaction(uuid, uuid)`, lalu refresh transaksi, kamar, dan pembayaran. RPC resmi mengunci transaksi, mengubah kamar `occupied → dirty`, mengisi `checked_out_at`, dan menulis activity log.
+- Gap server-side tersebut ditutup oleh P0-02B secara lokal melalui migration `20261019000001_harden_checkout_payment_settlement.sql`; Dashboard tidak diubah ulang. Staging/Production tetap tidak disentuh.
+
+### P0-02B — Hardening Check-out server-side (2026-10-19)
+
+- Sumber kebenaran settlement: `transactions.price_snapshot` sebagai tagihan dasar, `SUM(finance_charge_events.amount)` sebagai kewajiban Extend/Overtime, `SUM(payments.amount)` sebagai penerimaan bruto, dan `SUM(finance_refunds.amount)` sebagai pengurang penerimaan bersih. Settlement wajib memenuhi `payments - refunds = price_snapshot + charge_events`.
+- `check_out_transaction(uuid)` mengambil `FOR UPDATE` pada transaksi, charge event, payment, dan refund mutations memakai lock transaksi yang sama, memvalidasi operator melalui `can_frontdesk`, status `check_in`, tagihan valid, lalu mensyaratkan equality settlement. Kurang bayar dan lebih bayar menghasilkan error eksplisit.
+- Trigger `payments_transaction_state_guard_trigger` mengambil lock transaksi pada INSERT/UPDATE/DELETE payment dan menolak mutation setelah `check_out`/`cancelled`, sehingga payment yang kalah race tidak masuk setelah checkout.
+- Hotfix final menambahkan guard null-safe pada UPDATE charge/refund: `transaction_id` settlement tidak dapat dipindahkan ke transaksi lain. INSERT/UPDATE/DELETE tetap mengambil lock transaksi yang dirujuk dan menolak state tertutup; formula tetap `gross payments - refunds = price_snapshot + charge_events`.
+- Setelah settlement PASS, transisi resmi tetap `rooms.occupied → dirty`, `transactions.check_in → check_out`, `checked_out_at`, dan satu activity log. Check-out kedua ditolak oleh status guard.
+- Training tetap memakai `check_out_training_transaction(uuid, uuid)`; wrapper menetapkan konteks session assigned sebelum memanggil RPC hardened. Dual identity dan audit Training tetap dipertahankan.
+- Runtime PostgreSQL disposable PASS untuk lunas, unpaid, DP-only, gabungan, Extend/Overtime, refund, unrelated/unrecorded payment, invalid amount, duplicate, unauthorized operator, post-checkout payment mutation, concurrency, Housekeeping, dan Training. Migration belum dijalankan remote.
+
+### FASE A integrasi desain v0 — 2026-10-19
+
+Referensi v0 adalah proyek Next.js/React terpisah dengan mock data preview. Source aplikasi asli tetap menjadi sumber fungsi/data. FASE A menambahkan token visual navy/gold oklch di `src/styles.css` dan mengadaptasi presentasi shared Sidebar/Layout pada `src/components/kerangka.tsx`; permission, route, auth, Emergency, live query, RPC, dan data tidak dipindahkan dari v0.
+
+Dashboard v0 memiliki referensi lengkap; komponen `RoomCards`/`mock-data` tidak disalin karena bertentangan dengan tabel P0-02. Login dan halaman operasional selain Dashboard tidak memiliki referensi v0 khusus yang dapat dibuktikan. Matriks lengkap ada di `DOKUMEN_PROYEK/06_MATRIKS_DESAIN_V0.md`.
+
+### FASE B Dashboard v0 — 2026-10-19
+
+`src/routes/index.tsx` kini memakai Hero navy/gold, KPI cards, Activity Feed, Revenue Chart, Payment Breakdown, dan Quick Actions dengan data live aplikasi asli. Revenue berasal dari `payments`; breakdown berasal dari method payment dan `finance_expenses` sesuai akses; Activity berasal dari `activity_logs` dan `employees` untuk Owner. Tidak ada import `mock-data.ts`, foto, cuaca, atau pencarian v0. Tabel P0-02 dan mutation P0-02B tetap berada pada source yang sama.
+
+Browser visual belum diuji. FASE B Dashboard selesai secara lokal; Login dan halaman lain tidak dikerjakan karena tidak memiliki referensi v0 khusus.
 
 ### Finance
 
@@ -324,3 +368,572 @@ Strategi minimum yang aman adalah forward-only reconciliation setelah exact diff
 - Blocker nyata: remote catalog/history/Auth/JWT/RLS/grants dan schema compatibility belum tersedia secara lengkap.
 - Progres dokumentasi tahap ini: **100%**; strategi penyelarasan Staging: **belum dimulai karena menunggu metadata read-only**.
 - Satu tindakan minimum berikutnya: ambil snapshot katalog Supabase Staging read-only dan lakukan diff terhadap ledger ini.
+
+## Reconciliation Staging dari CSV Owner — 2026-10-15
+
+### Validasi input
+
+File dibaca langsung dari `C:\Users\USER\Downloads\Baturaden25_Staging_Metadata (1).csv` dengan short-name Windows `BATURA~2.CSV` untuk akses shell. Header tepat `category,details`; 245 baris total berarti 244 metadata rows. Hitungan kategori:
+
+| Category | Rows |
+|---|---:|
+| `tables` | 11 |
+| `columns` | 94 |
+| `constraints` | 53 |
+| `indexes` | 22 |
+| `functions` | 25 |
+| `triggers` | 21 |
+| `policies` | 18 |
+| Total metadata | 244 |
+
+CSV hanya berisi catalog metadata dan tidak membaca row bisnis/tamu.
+
+### Schema Staging yang terbukti sesuai
+
+Tabel yang terlihat tepat 11: `activity_logs`, `employees`, `guests`, `package_price_history`, `package_room_type_prices`, `packages`, `payments`, `room_types`, `rooms`, `transactions`, `user_roles`.
+
+Metadata mendukung rekonstruksi baseline berikut:
+
+- Drizzle `0000` core tables dan enum identity/role/status tersedia.
+- Drizzle `0005` `payments` tersedia dengan amount/method/kind/recorded_by dan FK transaction.
+- `package_room_type_prices` tersedia dengan 27-katalog-compatible columns, unique `(package_id, pricing_group)`, price checks, dan read policy.
+- Pricing/timing columns tersedia: package weekday/weekend price, `time_mode`, slot/check-in/checkout times, room `pricing_group`, transaction `day_mode`, `scheduled_check_in`, `scheduled_check_out`, `started_at`, `ends_at`, dan `checked_out_at`.
+- Booking constraints/indexes tersedia, termasuk `transactions_scheduled_stay_valid`, `transactions_room_scheduled_check_in_idx`, dan `transactions_room_scheduled_window_idx`.
+- Existing trigger surface berisi audit, `updated_at`, room transition, dan transaction identity triggers; tidak ada Finance trigger pada snapshot.
+
+### Schema Staging yang terbukti belum sesuai Finance 150
+
+#### Relation dan columns
+
+Tidak terlihat `operational_calendar`, seluruh 11 tabel Finance Foundation, atau `finance_reservation_idempotency` dari Finance 150 Compatibility. Dengan demikian belum ada:
+
+- `finance_settings`, `finance_commission_configs`, `finance_bank_accounts`;
+- `finance_cash_sessions`, `finance_session_allocations`, `finance_drawer_handoffs`;
+- `finance_expenses`, `finance_deposits`, `finance_charge_events`;
+- `finance_refunds`, `finance_refund_allocations`, `finance_reservation_idempotency`.
+
+`payments` belum memiliki kolom Finance Foundation: `cash_session_id`, `idempotency_key`, `charge_event_id`, commission mode/rate/per-room/rounding/recipient/amount. `transactions` belum memiliki commission snapshot columns maupun Finance 150 minimum-DP snapshot columns: `minimum_dp_mode_snapshot`, `minimum_dp_value_snapshot`, `minimum_dp_amount_snapshot`.
+
+#### Functions/RPC
+
+CSV menunjukkan hanya satu `create_reservation` dengan 10 args:
+
+`(_mode, _room_id, _package_id, _name, _phone, _address, _amount, _method, _day_mode, _scheduled_check_in)`.
+
+Target Finance 150 menggantinya dengan 12 args melalui migration 150001/150002, menambahkan `_idempotency_key` dan `_session_id`. CSV juga hanya menunjukkan `record_transaction_payment(uuid,numeric,text)`, sedangkan target berurutan menjadi 4 args pada Foundation lalu 5 args pada Compatibility.
+
+Function Finance yang tidak terlihat antara lain `open_finance_cash_session`, `close_finance_cash_session`, `get_finance_session_summary`, `record_finance_expense`, `create_finance_deposit`, `decide_finance_deposit`, `create_finance_refund`, commission/settings/bank RPCs, `finance_is_owner_or_supervisor`, `finance_is_booking_operator`, dan Finance trigger functions. `get_operational_day_mode(date)` juga tidak terlihat, padahal dipakai authoritative-day-mode dan Finance 150 reservation path.
+
+Existing `check_in_booking(uuid)` dan `record_transaction_payment(uuid,numeric,text)` adalah dependency/compatibility boundary, bukan bukti Finance sudah aktif.
+
+Untuk `create_reservation` dan `record_transaction_payment`, CSV hanya menunjukkan satu signature masing-masing. Tidak ada bukti overload 12/5 parameter atau duplicate overload pada snapshot; status function owner/body/search_path/grants tetap memerlukan query supplement.
+
+#### Policies, grants, triggers, dan indexes
+
+- 18 policy yang terlihat masih berupa baseline/operational policies; tidak ada `finance_*` policy dan tidak ada Supervisor Finance read policies dari migration 150002.
+- `package_room_type_prices_read` sudah ada, tetapi privilege table-level dan routine-level grants tidak tercakup lengkap oleh CSV.
+- 21 trigger yang terlihat hanya audit, timestamp, room transition, dan transaction identity. Tidak ada `finance_prepare_payment_trigger`, booking payment guard, final-session guard, DP snapshot trigger, atau refund-source guard.
+- 22 index yang terlihat mencakup primary/unique baseline dan scheduled-booking indexes. Tidak ada `payments_idempotency_key_unique`, Finance session/deposit/commission indexes, atau idempotency transaction index.
+- Existing `transactions_insert` memakai helper `can_frontdesk`; Finance 150002 menulis ulang policy untuk Owner/Receptionist dan menambahkan Supervisor read-only policies. Semantik `can_frontdesk` serta grants efektif belum cukup dibuktikan dari CSV.
+
+### Risiko terhadap data existing
+
+1. Mengganti `create_reservation` 10 → 12 args dan payment RPC 3 → 5 args dapat memutus PostgREST callers atau meninggalkan overload ambigu bila signature lama tidak ditangani secara tepat.
+2. Finance payment trigger akan memperkaya existing `payments` dan memerlukan cash session OPEN. Existing payment rows tidak boleh dipaksa memiliki session/idempotency/commission snapshot tanpa strategi backfill yang disetujui.
+3. DP guard dan transaction snapshot trigger dapat menolak booking/payment lama bila diterapkan sebagai constraint retroaktif tanpa audit null/invalid values.
+4. Finance closing/refund functions mengunci `finance_cash_sessions`, allocations, payments, expenses, and refunds; belum ada objek untuk diuji terhadap data Staging dan tidak boleh diasumsikan kosong.
+5. RLS/policy replacement dapat memperluas atau mengurangi akses Supervisor/Receptionist; `auth.uid()`, JWT claim mapping, function owner, `SECURITY DEFINER`, `search_path`, table privileges, dan routine privileges belum seluruhnya ada di snapshot.
+6. Tidak adanya migration-history rows pada snapshot ini belum dapat disimpulkan karena CSV tidak memiliki category `migration_history`; provenance remote tetap belum terbukti.
+
+### Dependency chain yang harus dipenuhi
+
+Untuk Finance 150 minimum, dependency yang terbukti/kurang adalah:
+
+| Dependency | Status CSV |
+|---|---|
+| Drizzle baseline 0000–0005 | Terbukti melalui 11 tabel/columns/constraints existing. |
+| Pricing group + package room prices | Terbukti melalui `room_types.pricing_group` dan `package_room_type_prices`. |
+| Scheduled booking 0007–0009 | Terbukti melalui columns, constraints, indexes, dan 10-arg reservation. |
+| `operational_calendar` + `get_operational_day_mode` | Tidak terlihat; blocker untuk authoritative day mode/Finance reservation. |
+| Employee position/role helpers | Sebagian terlihat; exact body/grants/enum labels perlu catalog query. |
+| Finance Foundation 11 tables/columns/triggers/RLS | Tidak terlihat; blocker utama. |
+| Finance 150 idempotency/DP/payment/refund compatibility | Tidak terlihat; blocker utama. |
+| Supervisor alignment/RPC 12 args/policies | Tidak terlihat; blocker utama. |
+
+### Perubahan yang dapat dibuktikan aman sekarang
+
+- Tidak ada perubahan database yang aman untuk dieksekusi hanya dari snapshot ini.
+- Aman secara analitis: mempertahankan seluruh 11 tabel dan data existing; memperlakukan Staging sebagai baseline pre-Finance; menyiapkan diff/plan forward-only; meminta metadata catalog tambahan tanpa row data.
+- Tidak aman tanpa metadata tambahan: membuat Finance tables, menambah payment/transaction columns, memasang triggers, mengganti RPC signatures, mengubah policies/grants, atau menandai migration history.
+
+### Satu paket metadata tambahan SELECT-only — LEGACY SPLIT (SUPERSEDED)
+
+CSV sudah cukup untuk memastikan baseline dan gap relation/function signature, sehingga query berikut hanya melengkapi function identity/body attributes, trigger targets, RLS flags, grants, enum labels, target-object presence, dan migration-history existence. Semua statement SELECT/read-only; tidak membaca row bisnis atau data tamu.
+
+```sql
+-- Finance 150 Staging reconciliation supplement — SELECT ONLY
+SELECT n.nspname AS schema_name,
+       c.relname AS relation_name,
+       c.relkind,
+       c.relrowsecurity AS rls_enabled,
+       c.relforcerowsecurity AS rls_forced
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname IN ('public', 'supabase_migrations')
+  AND (c.relname IN (
+    'operational_calendar',
+    'finance_settings', 'finance_commission_configs', 'finance_bank_accounts',
+    'finance_cash_sessions', 'finance_session_allocations', 'finance_drawer_handoffs',
+    'finance_expenses', 'finance_deposits', 'finance_charge_events',
+    'finance_refunds', 'finance_refund_allocations', 'finance_reservation_idempotency'
+  ) OR n.nspname = 'supabase_migrations');
+
+SELECT p.oid::regprocedure AS identity_signature,
+       n.nspname AS schema_name,
+       p.proname,
+       pg_get_function_identity_arguments(p.oid) AS identity_arguments,
+       pg_get_function_result(p.oid) AS result_type,
+       p.prosecdef AS security_definer,
+       pg_get_userbyid(p.proowner) AS owner_name,
+       p.proconfig,
+       pg_get_functiondef(p.oid) AS function_definition
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public'
+  AND p.proname IN (
+    'create_reservation', 'record_transaction_payment', 'check_in_booking',
+    'get_operational_day_mode', 'open_finance_cash_session',
+    'close_finance_cash_session', 'get_finance_session_summary',
+    'record_finance_expense', 'create_finance_deposit', 'decide_finance_deposit',
+    'create_finance_refund', 'set_finance_settings',
+    'set_finance_commission_config', 'upsert_finance_bank_account',
+    'finance_is_owner_or_supervisor', 'finance_is_booking_operator',
+    'finance_prepare_payment', 'finance_booking_payment_guard',
+    'finance_final_session_guard', 'finance_snapshot_booking_dp',
+    'finance_refund_source_session_guard'
+  )
+ORDER BY p.proname, p.oid::regprocedure::text;
+
+SELECT n.nspname AS schema_name,
+       c.relname AS table_name,
+       t.tgname AS trigger_name,
+       t.tgenabled,
+       pg_get_triggerdef(t.oid) AS trigger_definition
+FROM pg_trigger t
+JOIN pg_class c ON c.oid = t.tgrelid
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE NOT t.tgisinternal
+  AND n.nspname = 'public'
+  AND (c.relname IN (
+    'payments', 'transactions', 'finance_cash_sessions', 'finance_expenses',
+    'finance_deposits', 'finance_refunds'
+  ) OR t.tgname ILIKE '%finance%')
+ORDER BY c.relname, t.tgname;
+
+SELECT table_schema, table_name, grantee, privilege_type
+FROM information_schema.table_privileges
+WHERE table_schema = 'public'
+  AND table_name IN (
+    'payments', 'transactions', 'package_room_type_prices', 'operational_calendar',
+    'finance_settings', 'finance_cash_sessions', 'finance_session_allocations',
+    'finance_expenses', 'finance_deposits', 'finance_refunds'
+  )
+ORDER BY table_name, grantee, privilege_type;
+
+SELECT routine_schema, routine_name, specific_name, grantee, privilege_type
+FROM information_schema.routine_privileges
+WHERE routine_schema = 'public'
+  AND routine_name IN (
+    'create_reservation', 'record_transaction_payment', 'check_in_booking',
+    'open_finance_cash_session', 'close_finance_cash_session',
+    'get_finance_session_summary', 'create_finance_refund'
+  )
+ORDER BY routine_name, specific_name, grantee, privilege_type;
+
+SELECT to_regclass('supabase_migrations.schema_migrations') AS schema_migrations_relation,
+       to_regclass('public.operational_calendar') AS operational_calendar_relation,
+       to_regclass('public.finance_cash_sessions') AS finance_cash_sessions_relation,
+       to_regclass('public.finance_reservation_idempotency') AS finance_idempotency_relation;
+```
+
+Enum labels are queried separately with the correct namespace column:
+
+```sql
+SELECT t.typname AS enum_name, e.enumsortorder, e.enumlabel
+FROM pg_type t
+JOIN pg_enum e ON e.enumtypid = t.oid
+JOIN pg_namespace n ON n.oid = t.typnamespace
+WHERE n.nspname = 'public'
+  AND t.typname IN ('app_role', 'employee_position', 'room_status', 'transaction_status')
+ORDER BY t.typname, e.enumsortorder;
+```
+
+### Satu paket metadata SELECT-only — CURRENT ONE-RESULT-SET EXPORT
+
+Gunakan hanya query berikut untuk ekspor CSV. Query menghasilkan satu result set dengan tepat dua kolom: `category` dan `details` JSONB. Paket split di atas dipertahankan hanya sebagai riwayat dan tidak dipakai untuk ekspor baru.
+
+```sql
+WITH target_relations(object_name) AS (
+  VALUES
+    ('public.operational_calendar'::text),
+    ('public.finance_settings'::text),
+    ('public.finance_commission_configs'::text),
+    ('public.finance_bank_accounts'::text),
+    ('public.finance_cash_sessions'::text),
+    ('public.finance_session_allocations'::text),
+    ('public.finance_drawer_handoffs'::text),
+    ('public.finance_expenses'::text),
+    ('public.finance_deposits'::text),
+    ('public.finance_charge_events'::text),
+    ('public.finance_refunds'::text),
+    ('public.finance_refund_allocations'::text),
+    ('public.finance_reservation_idempotency'::text),
+    ('public.cash_sessions'::text),
+    ('public.cash_session_entries'::text),
+    ('supabase_migrations.schema_migrations'::text)
+),
+target_tables(table_name) AS (
+  VALUES
+    ('payments'::text),
+    ('transactions'::text),
+    ('package_room_type_prices'::text),
+    ('operational_calendar'::text),
+    ('finance_settings'::text),
+    ('finance_commission_configs'::text),
+    ('finance_bank_accounts'::text),
+    ('finance_cash_sessions'::text),
+    ('finance_session_allocations'::text),
+    ('finance_drawer_handoffs'::text),
+    ('finance_expenses'::text),
+    ('finance_deposits'::text),
+    ('finance_charge_events'::text),
+    ('finance_refunds'::text),
+    ('finance_refund_allocations'::text),
+    ('finance_reservation_idempotency'::text)
+),
+target_routines(routine_name) AS (
+  VALUES
+    ('create_reservation'::text),
+    ('record_transaction_payment'::text),
+    ('check_in_booking'::text),
+    ('get_operational_day_mode'::text),
+    ('open_finance_cash_session'::text),
+    ('close_finance_cash_session'::text),
+    ('confirm_finance_drawer_handover'::text),
+    ('get_finance_session_summary'::text),
+    ('record_finance_expense'::text),
+    ('create_finance_deposit'::text),
+    ('decide_finance_deposit'::text),
+    ('create_finance_refund'::text),
+    ('set_finance_settings'::text),
+    ('set_finance_commission_config'::text),
+    ('upsert_finance_bank_account'::text),
+    ('finance_is_owner_or_supervisor'::text),
+    ('finance_is_booking_operator'::text),
+    ('finance_prepare_payment'::text),
+    ('finance_booking_payment_guard'::text),
+    ('finance_final_session_guard'::text),
+    ('finance_snapshot_booking_dp'::text),
+    ('finance_refund_source_session_guard'::text)
+)
+SELECT category, details
+FROM (
+  SELECT
+    'relation_flags'::text AS category,
+    jsonb_build_object(
+      'schema_name', n.nspname,
+      'relation_name', c.relname,
+      'relkind', c.relkind,
+      'rls_enabled', c.relrowsecurity,
+      'rls_forced', c.relforcerowsecurity
+    ) AS details
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname IN ('public', 'supabase_migrations')
+    AND (
+      n.nspname = 'supabase_migrations'
+      OR format('%I.%I', n.nspname, c.relname) IN (
+        SELECT object_name FROM target_relations
+      )
+    )
+
+  UNION ALL
+
+  SELECT
+    'function_metadata'::text AS category,
+    jsonb_build_object(
+      'identity_signature', p.oid::regprocedure::text,
+      'schema_name', n.nspname,
+      'routine_name', p.proname,
+      'identity_arguments', pg_get_function_identity_arguments(p.oid),
+      'result_type', pg_get_function_result(p.oid),
+      'security_definer', p.prosecdef,
+      'owner_name', pg_get_userbyid(p.proowner),
+      'search_path_config', to_jsonb(p.proconfig),
+      'function_definition', pg_get_functiondef(p.oid)
+    ) AS details
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public'
+    AND p.proname IN (SELECT routine_name FROM target_routines)
+
+  UNION ALL
+
+  SELECT
+    'trigger_metadata'::text AS category,
+    jsonb_build_object(
+      'schema_name', n.nspname,
+      'table_name', c.relname,
+      'trigger_name', t.tgname,
+      'enabled', t.tgenabled,
+      'trigger_definition', pg_get_triggerdef(t.oid)
+    ) AS details
+  FROM pg_trigger t
+  JOIN pg_class c ON c.oid = t.tgrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE NOT t.tgisinternal
+    AND n.nspname = 'public'
+    AND (
+      c.relname IN (SELECT table_name FROM target_tables)
+      OR t.tgname ILIKE '%finance%'
+    )
+
+  UNION ALL
+
+  SELECT
+    'table_grant'::text AS category,
+    jsonb_build_object(
+      'table_schema', tp.table_schema,
+      'table_name', tp.table_name,
+      'grantor', tp.grantor,
+      'grantee', tp.grantee,
+      'privilege_type', tp.privilege_type,
+      'is_grantable', tp.is_grantable
+    ) AS details
+  FROM information_schema.table_privileges tp
+  WHERE tp.table_schema = 'public'
+    AND tp.table_name IN (SELECT table_name FROM target_tables)
+
+  UNION ALL
+
+  SELECT
+    'routine_grant'::text AS category,
+    jsonb_build_object(
+      'routine_schema', rp.routine_schema,
+      'routine_name', rp.routine_name,
+      'specific_name', rp.specific_name,
+      'grantor', rp.grantor,
+      'grantee', rp.grantee,
+      'privilege_type', rp.privilege_type,
+      'is_grantable', rp.is_grantable
+    ) AS details
+  FROM information_schema.routine_privileges rp
+  WHERE rp.routine_schema = 'public'
+    AND rp.routine_name IN (SELECT routine_name FROM target_routines)
+
+  UNION ALL
+
+  SELECT
+    'enum'::text AS category,
+    jsonb_build_object(
+      'enum_schema', n.nspname,
+      'enum_name', t.typname,
+      'sort_order', e.enumsortorder,
+      'label', e.enumlabel
+    ) AS details
+  FROM pg_type t
+  JOIN pg_enum e ON e.enumtypid = t.oid
+  JOIN pg_namespace n ON n.oid = t.typnamespace
+  WHERE n.nspname = 'public'
+    AND t.typname IN ('app_role', 'employee_position', 'room_status', 'transaction_status')
+
+  UNION ALL
+
+  SELECT
+    'object_presence'::text AS category,
+    jsonb_build_object(
+      'object_name', tr.object_name,
+      'exists', to_regclass(tr.object_name) IS NOT NULL
+    ) AS details
+  FROM target_relations tr
+
+  UNION ALL
+
+  SELECT
+    'migration_history'::text AS category,
+    jsonb_build_object(
+      'relation_name', 'supabase_migrations.schema_migrations',
+      'exists', to_regclass('supabase_migrations.schema_migrations') IS NOT NULL,
+      'rows_read', false,
+      'note', 'Only relation existence is inspected; migration rows are not read by this package.'
+    ) AS details
+) AS metadata
+ORDER BY category, details::text;
+```
+
+### Export correction note — 2026-10-15
+
+Paket sebelumnya terdiri dari beberapa `SELECT`, sehingga ekspor CSV hanya menangkap satu result set terakhir pada sebagian jalur SQL Editor. Solusinya adalah query current di atas: seluruh kategori digabung dengan `UNION ALL` menjadi satu result set konsisten (`category`, `details`). Jika `information_schema` atau definisi function tidak terlihat karena privilege caller, baris yang hilang harus dilaporkan sebagai keterbatasan visibility; query ini tidak mengarang hasil dan tidak membaca data bisnis.
+
+### Incremental reconciliation plan — not executed
+
+1. Confirm target identity and collect the supplement above; do not inspect business rows.
+2. Diff exact object identities against Drizzle `0000–0005`, Supabase prerequisites through `06014`, and Finance `15000–15003`.
+3. Preserve the 11 existing relations; do not replay the 43-file chain or mark history by table count.
+4. If Owner later authorizes writes, create/review a forward-only prerequisite package for `operational_calendar` and Finance Foundation, with explicit guards and a rollback/backup plan.
+5. Reconcile `payments`/`transactions` columns and constraints only after null/invalid-value checks and a decision for legacy rows.
+6. Replace RPCs only as an atomic compatibility cutover: verify callers, drop exact old signatures only when approved, install 12/5-argument functions, then verify grants/RLS and PostgREST resolution.
+7. Add Finance triggers/policies/grants after relation/column creation, then run targeted non-business smoke checks in Staging. No step in this plan has been executed.
+
+## Latest Staging reconciliation checkpoint — 2026-10-15
+
+- CSV evidence: **VALID**; 244 metadata rows across 7 categories.
+- Baseline/scheduled schema: **MATCHES RECONSTRUCTION**.
+- Finance 150 target: **NOT PRESENT / NOT SELARAS** in the snapshot.
+- Concrete blockers: Finance relations and columns absent; `operational_calendar`/authoritative-day-mode absent; RPCs remain legacy 10/3 args; Finance triggers/policies/indexes/grants absent or not represented; function/trigger/privilege details incomplete.
+- Reconciliation progress: **40%** — catalog snapshot validated/diffed and local SELECT-only preflight package prepared; incremental write plan not executed.
+- No source, migration SQL, database, `.env`, project reference, commit, push, deploy, or application test was changed/run.
+- Next minimum action: obtain the supplement query result through the approved read-only Staging channel, then produce the exact forward-only reconciliation package for Owner review.
+
+## Staging reconciliation preparation checkpoint — 2026-10-15
+
+- Local review file: `supabase/reconciliation/finance150_staging_preflight.sql`.
+- File type: SELECT-only catalog preflight; no DDL/DML, no row reads, no migration execution.
+- Scope: relation flags, Finance column presence, function signatures/owner/search path/body, overload count, trigger definitions, RLS policies, table/routine grants, enum labels, object presence, and migration-history relation existence.
+- Execution status: **NOT RUN**.
+- Reconciliation package status: **PREPARED FOR REVIEW**, not ready for database execution because backup/rollback, relation flags, exact grants/RLS, trigger details, and legacy data compatibility remain blockers.
+- Next checkpoint: collect preflight result through the approved read-only Staging channel, then draft the forward-only migration package without editing historical migrations.
+
+## Finance 150 forward-only package checkpoint — 2026-10-15
+
+File review lokal yang dibuat:
+
+- `supabase/reconciliation/finance150_staging_reconciliation_review.sql` — paket phase-gated forward-only: preconditions, calendar prerequisite, Finance Foundation, Compatibility, Supervisor Alignment, grants/RLS, RPC cutover, legacy-data decision, rollback, dan smoke-test plan. Isinya review specification/commented execution contract; tidak dieksekusi.
+- `supabase/reconciliation/finance150_staging_legacy_preflight.sql` — SELECT-only aggregate preflight untuk 11 RLS flags, kualitas legacy `payments`/`transactions`, identitas database, dan kebutuhan backup/backfill. Tidak mengembalikan row individual.
+
+### Urutan dependency dan cutover
+
+1. Preflight identity, relation flags, exact signatures, RLS/grants, trigger definitions, dan aggregate legacy quality.
+2. Backup/PITR provider dan rollback owner wajib terkonfirmasi; statusnya tidak dapat dibuktikan dari katalog publik.
+3. Operational calendar (`06011–06014`) harus tersedia karena Finance 150 memakai `get_operational_day_mode`.
+4. Finance Foundation membuat 11 relation Finance, columns, triggers, RLS, dan RPC dasar.
+5. Booking Compatibility membuat idempotency/DP snapshots, lalu mengganti payment 3/4 args menjadi 5 args dan reservation 10 args menjadi 12 args.
+6. Supervisor Alignment mengganti function yang disetujui dan menambah policy read-only Supervisor.
+7. Reference grants diterapkan terakhir; verifikasi PostgREST/RLS/privilege dilakukan sebelum smoke test.
+
+Tidak ada backfill yang diasumsikan aman. Existing payment/transaction rows harus dinilai melalui aggregate preflight; legacy NULL snapshot/session fields dipertahankan atau dibackfill hanya setelah keputusan Owner. RPC cutover harus atomic agar tidak meninggalkan overload ambigu.
+
+### Blocker sebelum eksekusi
+
+- Relation flags 11 tabel existing belum tersedia pada CSV resmi terakhir.
+- Aggregate legacy compatibility belum tersedia.
+- Backup/PITR dan rollback owner belum terbukti.
+- Exact table/routine grants, RLS flags, trigger definitions, dan function identity target belum lengkap.
+- Tidak boleh mengeksekusi Finance Foundation atau RPC cutover sebelum blocker tersebut selesai.
+
+Progress reconciliation: **50%** — diff Staging, phase-gated review package, legacy aggregate guard, dan backup/rollback procedure sudah disiapkan; tidak ada write package yang dieksekusi.
+
+### Backup, restore, dan rollback untuk Supabase Free Plan
+
+- PITR dan downloadable Dashboard backup **tidak diasumsikan tersedia** pada Free Plan. Official Supabase guidance menyarankan logical export berkala dengan Supabase CLI `db dump` dan penyimpanan off-site; backup Dashboard yang dapat diunduh tidak tersedia pada Free Plan.
+- Sebelum write: Owner harus membuat logical dump melalui kanal resmi, menyimpan artefak di luar repository, mencatat checksum/waktu/target, dan memverifikasi dump dapat dipulihkan ke PostgreSQL terisolasi tanpa credential masuk ke repo.
+- Restore test: pulihkan dump ke database disposable/local isolated, jalankan pemeriksaan schema/catalog dan smoke query, lalu simpan bukti checksum/restore terpisah.
+- Rollback sebelum commit transaksi migration: gunakan abort/rollback transaksi bila seluruh package memang atomic.
+- Rollback setelah commit: jangan mengandalkan PITR Free Plan; hentikan aplikasi/write, simpan error/catalog state, lalu gunakan logical restore ke target yang dipulihkan sesuai prosedur Owner/provider. Restore langsung ke Staging memerlukan keputusan Owner karena dapat mengganti state existing.
+- Status sekarang: **BLOCKED BACKUP/PITR**. Tidak ada backup, restore, migration, atau database mutation yang dilakukan oleh sesi ini.
+
+## Backup/restore test checkpoint — 2026-10-15
+
+- Target tetap `Baturaden-25-Staging` / `bgtztcfbkcrvcipxbfti`; project lama `ijujmxhcifuerkllbbgq` tidak digunakan.
+- Local `pg_dump.exe`, `pg_restore.exe`, dan `psql.exe` tersedia dari `.tools/postgresql-test/runtime/pgsql/bin`.
+- Docker tidak tersedia di PATH/known location.
+- Supabase CLI system-wide tidak tersedia. Bundle CLI sementara ada, tetapi `--version` gagal karena mencoba menulis telemetry di `C:\Users\USER\.supabase`; tidak ada CLI session tersimpan.
+- `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_URL`, dan `SUPABASE_DB_PASSWORD` tidak tersedia di environment. Tidak ada credential yang diminta atau ditampilkan di chat.
+- Backup dan restore test: **NOT RUN / BLOCKED**. Tidak ada remote connection, backup file, restore target, atau resource sementara yang dibuat.
+- Satu instruksi Owner: autentikasi Supabase CLI secara lokal atau siapkan koneksi DB resmi untuk ref `bgtztcfbkcrvcipxbfti` di credential store/secure environment Windows; jangan mengirim token/password ke chat. Setelah itu backup dapat dijalankan dengan `supabase db dump --db-url ...` atau jalur CLI resmi tanpa mengubah `supabase/config.toml`.
+
+### Backup attempt checkpoint — credential file mismatch
+
+`staging.pgpass` ada dan ukurannya 96 bytes, tetapi `psql` tetap mengembalikan `fe_sendauth: no password supplied` untuk host `aws-0-ap-northeast-1.pooler.supabase.com`, port `5432`, database `postgres`, user `postgres.bgtztcfbkcrvcipxbfti`. Ini menunjukkan entry file tidak cocok atau tidak diterima libpq untuk target tersebut. Isinya tidak dibaca/dicetak. Backup dan restore tetap **FAIL/NOT RUN**; file dipertahankan agar Owner memperbaiki mapping secara lokal.
+
+### Supabase Support checkpoint — 2026-10-15
+
+- Tiket resmi Support sudah terkirim untuk Baturaden-25-Staging; dashboard mengonfirmasi tiket tercatat.
+- Balasan Support belum diterima; masalah autentikasi belum selesai.
+- Dump `staging-20261015-011556.dump` berukuran 0 byte dan invalid; tidak ada checksum valid.
+- Restore test belum dilakukan.
+- Finance 150 migration ke Staging tetap dilarang sampai backup valid dan restore lokal terisolasi PASS.
+- Jangan mengulang rangkaian koneksi identik; gunakan diagnosis baru dari Support sebagai perubahan keadaan berikutnya.
+
+### Support ticket update — 15 Oktober 2026
+
+- Ticket: `SU-508298`.
+- Project: Baturaden-25-Staging, ref `bgtztcfbkcrvcipxbfti`.
+- Supabase mengirim email konfirmasi penerimaan tiket pada 15 Oktober 2026.
+- Email tersebut otomatis dan hanya mengonfirmasi penerimaan, bukan penyelesaian masalah.
+- Status: **MENUNGGU RESPONS TEKNIS SUPABASE SUPPORT**.
+- Paket Free tidak memiliki jaminan waktu respons.
+- Backup/restore tetap **BLOCKED**; Finance 150 migration tetap dilarang sebelum backup valid dan restore terisolasi PASS.
+
+## Checkpoint source Dashboard dan resolver sesi kas — 2026-10-16
+
+Referensi visual Dashboard terbaru Owner: `C:\Users\USER\Downloads\Dasbor Manajemen Homestay Modern.png`. Komponen `src/components/dashboard-modern.tsx` dan kerangka `src/components/kerangka.tsx` harus mempertahankan struktur visual referensi: header search/notifikasi/profil, panel sambutan + kalender + lima KPI, Kamar Terisi + Log Activity, dan tiga panel analitik. Source memakai data live; angka/identitas ilustrasi bukan data produksi.
+
+Keputusan visual yang harus dipertahankan: biru/pastel sebagai identitas; Standard biru pastel; Superior A/B hijau pastel; Deluxe kuning pastel; Check-out merah; TRX pada kartu kamar membuka detail; Log Activity timeline ikon berwarna + waktu; Grafik Pendapatan batang biru dengan filter Harian/Mingguan/Bulanan/Tahunan; Emergency horizontal merah dengan bingkai hitam tipis; Pengaturan di header; Owner/Keluar di sidebar dihapus; logout melalui profil; aksi Check-in Langsung dan Buat Booking.
+
+Resolver `src/lib/sesi-kas.ts` menyatukan konteks sesi untuk `formulir-pemesanan.tsx`, `booking.tsx`, dan `keuangan.tsx`. Urutan konteks adalah sesi `OPEN` milik operator, konteks bantuan Owner/Supervisor yang dipilih di Keuangan, atau satu-satunya sesi `OPEN`. Jika tidak ada sesi sah/konteks bantuan valid, UI memblokir penyimpanan dan tidak membuka sesi baru. `auth.uid()`/`recorded_by` adalah operator aktual; `finance_cash_sessions.opened_by` adalah pemilik sesi. Session storage hanya membawa ID konteks non-rahasia dan bukan batas otorisasi.
+
+Status verifikasi: TypeScript, build, dan `git diff --check` lokal **PASS**. Visual browser belum dinyatakan PASS. Keamanan pemilihan sesi dan kecocokan RLS/RPC Staging belum diuji runtime; tidak ada perubahan database, migration, konfigurasi, atau deploy pada checkpoint ini.
+
+## Status arsitektur live Staging — 2026-10-18
+
+Bagian ini adalah status live terbaru dan supersedes label provisional `BELUM TERVERIFIKASI` pada ledger migration sebelumnya.
+
+### Housekeeping dan Kalender
+
+- `20261012000000_housekeeping_history.sql`, `20261013000000_housekeeping_checklists_maintenance.sql`, dan `20261014000000_official_transaction_housekeeping_numbers.sql`: **COMMIT di Staging**.
+- `20261006000011_operational_calendar.sql`, `20261006000012_calendar_event_types.sql`, dan `20261006000013_seed_official_calendar.sql`: **COMMIT di Staging**.
+- Kalender live berisi 51 tanggal unik: 35 `national_holiday` dan 16 `collective_leave`.
+- `20261006000010_correct_p4_prices.sql` tetap **BLOCKED** dan tidak termasuk jalur Finance.
+
+### Finance 150
+
+- `20261015000000_finance_foundation.sql` sampai `20261015000003_booking_reference_read_privileges.sql`: **COMMIT di Staging**.
+- Sebelas tabel Finance Foundation tersedia dengan RLS aktif; `finance_reservation_idempotency` tersedia sebagai compatibility table tambahan.
+- Kontrak live final: `create_reservation` 12 parameter, `record_transaction_payment` 5 parameter, `check_in_booking(uuid)`, `check_out_transaction(uuid)`, dan `get_operational_day_mode(date)`.
+- Signature lama 10/3 tidak lagi menjadi kontrak aktif.
+- Audit source/katalog Finance **PASS** untuk idempotency, overlap/scheduled guard, payment guard, role checks, SECURITY DEFINER, `search_path`, RLS, policy, dan grants.
+- Smoke test operasional Staging belum dilakukan; Finance belum production-ready.
+
+### Dual identity dan Training Enforcement
+
+- Model dual identity tersedia: `auth.uid()`/`recorded_by` adalah operator login, sedangkan `finance_cash_sessions.opened_by` adalah pemilik sesi kas.
+- Aturan Training Owner telah final: akun sendiri, dua hari kalender, transaksi di bawah Owner/Supervisor, sesi kas penanggung jawab, larangan sesi sendiri, operator aktual, dan label audit `Training`.
+- Rancangan Training Enforcement sudah selesai, tetapi implementasi belum dimulai. Belum ada assignment dua hari, helper/RPC server-side, larangan membuka sesi sendiri untuk peserta, atau label audit Training.
+- Training Enforcement menjadi blocker penggunaan peserta Training; akun Training dan data uji belum dibuat.
+
+### SOP dan status release
+
+- Codex melakukan validasi teknis bertahap, read-only terlebih dahulu, tanpa mengulang 150 pengujian lokal.
+- Owner menjalankan satu rangkaian pengujian menyeluruh setelah fitur wajib siap, termasuk Training Enforcement, lalu menyetujui cleanup data uji dan go-live.
+- Status operasional sementara: **BELUM READY**.
+
+### Training Enforcement — implementasi lokal 2026-10-18
+
+Migration lokal `20261018000000_finance_training_enforcement.sql` menambahkan assignment Training dua hari berdasarkan tanggal Asia/Jakarta, status/resolusi Owner, audit berlabel `Training`, validasi sesi kas aktif milik Owner/Supervisor yang ditugaskan, serta guard agar peserta tidak membuka sesi sendiri. Helper role, wrapper RPC untuk reservasi/pembayaran/check-in/expense/deposit/summary, dan trigger audit memakai identitas operator dari `auth.uid()` serta mempertahankan model dual identity Finance 150.
+
+Source lokal telah mengintegrasikan konteks Training ke peran, sesi kas, Booking, pembayaran/check-in, dan Finance. Pure tests, TypeScript, dan build **PASS**; lint file baru **PASS**, sedangkan lint repository **BLOCKED** oleh masalah format/CRLF lama. Migration belum dijalankan ke remote, smoke test runtime belum dilakukan, dan status operasional tetap **BELUM READY**.
+
+### Koreksi enforcement setelah audit FAIL — 2026-10-18
+
+Migration Training sekarang memasang guard backend pada transaksi, pembayaran, expense, deposit, sesi kas, allocation, handoff, charge, refund, dan konfigurasi Finance. Guard menolak mutation peserta tanpa konteks session assigned yang divalidasi terhadap assignment aktif, supervisor, status `OPEN`, dan tanggal Asia/Jakarta.
+
+`can_frontdesk` dan summary legacy juga diperketat; `check_out_transaction` hanya dapat dipanggil peserta melalui `check_out_training_transaction`. Audit assignment/session/operator diturunkan server-side dan tidak lagi memakai `assignment_id` dari GUC. Sesi `OPEN` lama peserta tidak ditutup otomatis, tetapi semua penggunaan/mutation backend diblokir.
+
+Pure negative tests, TypeScript, dan build **PASS**. SQL runtime lokal dan Staging **NOT TESTED**; lint dashboard masih terhambat format/CRLF lama. Status operasional tetap **BELUM READY**.
+
+### SQL runtime Training lokal — 2026-10-18
+
+Cluster PostgreSQL 17.11 temporary dibuat terisolasi, baseline dump lokal dipulihkan, 42 migration prasyarat dijalankan tanpa P4 `060010`, lalu Training migration berhasil COMMIT dan rerun idempotency PASS. Runtime membuktikan assignment dua hari, supervisor/session validation, blokir sesi lama, blokir RPC legacy, dual identity payment, check-out wrapper, audit server-side, serta regresi Owner/Receptionist.
+
+Temuan runtime pada trigger Finance 150 `finance_prepare_payment` diperbaiki di migration Training agar sesi supervisor assigned sah bagi peserta tanpa mengubah `recorded_by` operator. Uji numbering lama pernah terhambat constraint baseline `BTRD25-######`; P0-01 kini menyiapkan migration forward-only yang mempertahankan format lama dan menetapkan generator `BTRDTRX-*`/`BTRDHK-*`/`BTRDEXP-*`. Fixture PostgreSQL disposable untuk migration baru PASS, termasuk safe start, preservasi nomor lama, default expense, dan ekspansi tujuh digit. Full baseline/Staging belum dijalankan, Staging/Production tidak disentuh, dan status tetap **BELUM READY**.
