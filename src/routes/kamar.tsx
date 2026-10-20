@@ -283,7 +283,7 @@ function HalamanKamar() {
                       {issues.length > 0 && housekeepingJob && (
                         <button
                           type="button"
-                          className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-left text-xs text-red-800 hover:bg-red-100"
+                          className="mt-3 rounded-xl bg-bahaya px-3 py-2 text-left text-xs text-bahaya-foreground hover:bg-bahaya/80"
                           onClick={() =>
                             setDetailHousekeeping({
                               roomNumber: room.room_number,
@@ -324,7 +324,7 @@ function HalamanKamar() {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4">
           <form
             onSubmit={save}
             className="w-full max-w-md space-y-3 rounded-2xl bg-background p-5 shadow-lembut"
@@ -398,7 +398,7 @@ function HalamanKamar() {
 
       {detailHousekeeping && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4"
           onClick={() => setDetailHousekeeping(null)}
         >
           <section
@@ -438,7 +438,7 @@ function HalamanKamar() {
                 </p>
               )}
               {detailHousekeeping.issues.length > 0 && (
-                <div className="rounded-xl bg-red-50 p-3 text-red-800">
+                <div className="rounded-xl bg-bahaya p-3 text-bahaya-foreground">
                   <p className="font-semibold">❌ Kekurangan/kerusakan</p>
                   <ul className="mt-1 list-disc pl-5">
                     {detailHousekeeping.issues.map((issue) => (

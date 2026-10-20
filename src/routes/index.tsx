@@ -23,7 +23,7 @@ import { Kerangka, Judul } from "@/components/kerangka";
 import skyline from "@/assets/skyline-malam.jpg";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
 import { LencanaStatus } from "@/components/status-kamar";
-import { skalaGrafik, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
+import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { PerawatanBerkala } from "@/components/perawatan-berkala";
 import { usePeran } from "@/lib/peran";
@@ -87,7 +87,7 @@ function formatSisaWaktu(endsAt: string | null, sekarang: number) {
       status: "hampir" as const,
       waktu: formatDurasi(selisih),
       label: "lagi",
-      kelas: "text-amber-600",
+      kelas: "text-v0-warning",
     };
   }
 
@@ -394,30 +394,18 @@ function Ringkasan() {
     pemasukanHariIni.filter((p) => p.method.toLowerCase() === m).reduce((t, p) => t + Number(p.amount), 0);
   const komposisi = [
     { label: "QRIS", warna: "var(--v0-info)", nominal: totalMetode("qris") },
-    { label: "Transfer Bank", warna: "var(--v0-violet)", nominal: totalMetode("transfer") },
+    { label: "Transfer Bank", warna: "var(--gold)", nominal: totalMetode("transfer") },
     { label: "Cash", warna: "var(--v0-success)", nominal: totalMetode("cash") },
     ...(isFinanceViewer
       ? [{ label: "Pengeluaran", warna: "var(--v0-danger)", nominal: pengeluaranHariIni.reduce((t, e) => t + Number(e.amount), 0) }]
       : []),
   ];
 
-  const statusKamarBaris = useMemo(() => {
-    const urutan: Record<string, number> = { occupied: 0, dirty: 1, cleaning: 2, ready: 3 };
-    return kamarAktif
-      .map((room) => {
-        const terisi = kamarTerisi.find((k) => k.room?.id === room.id);
-        return {
-          room,
-          roomType: roomTypes.rows.find((t) => t.id === room.room_type_id),
-          terisi,
-        };
-      })
-      .sort((a, b) =>
-        (urutan[a.room.status] ?? 9) - (urutan[b.room.status] ?? 9) ||
-        (a.terisi?.endsAtMs ?? 0) - (b.terisi?.endsAtMs ?? 0) ||
-        a.room.room_number.localeCompare(b.room.room_number, "id", { numeric: true }),
-      );
-  }, [kamarAktif, kamarTerisi, roomTypes.rows]);
+  // Hanya kamar yang benar-benar TERISI, diurutkan dari sisa waktu paling dekat habis.
+  const statusKamarBaris = useMemo(
+    () => kamarTerisi.flatMap((k) => (k.room ? [{ room: k.room, roomType: k.roomType, terisi: k }] : [])),
+    [kamarTerisi],
+  );
 
   const transaksiTerbaru = useMemo(() => {
     const masuk = payments.rows.map((p) => {
@@ -511,7 +499,7 @@ function Ringkasan() {
   const bolehAksiTransaksi = !["housekeeping", "investor", "inspector"].includes(posisiKode ?? "");
 
   return (
-    <Kerangka judul="Ringkasan" tanpaJudul mewah>
+    <Kerangka judul="Ringkasan" tanpaJudul>
       {/* Hero premium */}
       <header className="relative mb-6 overflow-hidden rounded-3xl border border-border shadow-lembut">
         <img src={skyline} alt="" width={1920} height={640} className="absolute inset-0 h-full w-full object-cover object-right" />
@@ -591,7 +579,7 @@ function Ringkasan() {
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-4">
           <div>
             <h2 className="font-serif text-xl font-semibold">Status Kamar</h2>
-            <p className="text-xs text-muted-foreground">Real-time · kamar yang perlu ditindak tampil paling atas</p>
+            <p className="text-xs text-muted-foreground">Real-time · hanya kamar terisi, urut sisa waktu terdekat</p>
           </div>
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-siap-foreground">
             <span className="size-2 animate-pulse rounded-full bg-current" /> Langsung
@@ -601,7 +589,7 @@ function Ringkasan() {
           <p role="status" className="mx-5 mt-4 rounded-xl bg-secondary px-3 py-2 text-sm">{dashboardMessage}</p>
         )}
         {statusKamarBaris.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-muted-foreground">Belum ada kamar aktif.</p>
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">Tidak ada kamar sedang terisi.</p>
         ) : (
           <div className="max-h-[480px] overflow-auto">
             <table className="w-full min-w-[880px] text-left text-sm">
@@ -751,7 +739,7 @@ function Ringkasan() {
               ))}
             </div>
           </div>
-          <Grafik data={dataGrafik} ticks={skalaGrafik[modeGrafik]} />
+          <Grafik data={dataGrafik} ticks={skalaAdaptif(skalaGrafik[modeGrafik], Math.max(0, ...dataGrafik.map((d) => d.nilai)))} />
         </section>
 
         {peran === "owner" && (

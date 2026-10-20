@@ -24,3 +24,10 @@ export function posisiSkala(nilai: number, ticks: number[]): number {
 export function labelJuta(nilai: number) {
   return nilai === 0 ? "0" : `${nilai / 1_000_000}M`;
 }
+
+/** Tambah satu garis bantu bila data melebihi batas atas, agar batang tidak terpotong. */
+export function skalaAdaptif(ticks: number[], maksimum: number): number[] {
+  const atas = ticks[ticks.length - 1] ?? 0;
+  if (maksimum <= atas) return ticks;
+  return [...ticks, Math.ceil(maksimum / 1_000_000) * 1_000_000];
+}

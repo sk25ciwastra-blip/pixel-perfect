@@ -366,7 +366,7 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">{task.label}</p>
-                      <p className="mt-1 text-xs font-semibold text-amber-700">
+                      <p className="mt-1 text-xs font-semibold text-perlu-foreground">
                         {waitingAccess ? "MENUNGGU AKSES" : "JATUH TEMPO"}
                       </p>
                       <p className="mt-2 text-xs text-muted-foreground">

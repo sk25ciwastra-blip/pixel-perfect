@@ -314,7 +314,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/30 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4"
       onMouseDown={event => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -513,7 +513,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
             )}
 
             {isTraining && (
-              <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <p className="rounded-xl bg-perlu px-3 py-2 text-sm text-perlu-foreground">
                 Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.
               </p>
             )}
