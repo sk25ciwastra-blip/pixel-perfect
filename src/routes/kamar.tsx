@@ -339,7 +339,7 @@ function HalamanKamar() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="mt-auto translate-y-0 self-start pt-0 [margin-top:auto]"
+                          className="mt-4 self-start"
                           onClick={() => edit(room)}
                         >
                           <Pencil className="size-3.5" /> Ubah
