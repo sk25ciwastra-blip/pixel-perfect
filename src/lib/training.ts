@@ -1,3 +1,4 @@
+import { rpc } from "@/lib/data-live";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -50,7 +51,7 @@ function parseTrainingContext(value: unknown): TrainingContext {
 }
 
 export async function getTrainingContext(): Promise<TrainingContext> {
-  const { data, error } = await supabase.rpc("get_finance_training_context");
+  const { data, error } = await rpc("get_finance_training_context");
   if (error) throw error;
   return parseTrainingContext(data);
 }

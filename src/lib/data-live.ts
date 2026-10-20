@@ -9,12 +9,26 @@ export type Employee = Database['public']['Tables']['employees']['Row'];
 export type HousekeepingHistory = Database['public']['Tables']['housekeeping_history']['Row'];
 export type HousekeepingChecklist = Database['public']['Tables']['housekeeping_checklists']['Row'];
 export type HousekeepingMaintenance = Database['public']['Tables']['housekeeping_maintenance']['Row'];
-export function useTable<T extends keyof Database['public']['Tables']>(
+type Tabel = Database['public']['Tables'];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type BarisLonggar = Record<string, any> & { id: string; created_at: string };
+type Baris<T extends string> = T extends keyof Tabel ? Tabel[T]['Row'] : BarisLonggar;
+
+/** Pemanggil fungsi database untuk fungsi yang belum tercantum di definisi tipe. */
+export const rpc = ((fn: string, args?: Record<string, unknown>) =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (supabase.rpc as any)(fn, args)) as (
+  fn: string,
+  args?: Record<string, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+) => Promise<{ data: any; error: { message: string } | null }>;
+
+export function useTable<T extends string>(
   table: T,
   enabled = true,
 ) {
   const [rows, setRows] = useState<
-    Database['public']['Tables'][T]['Row'][]
+    Baris<T>[]
   >([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -28,12 +42,12 @@ export function useTable<T extends keyof Database['public']['Tables']>(
     }
 
     const { data, error: failure } = await supabase
-      .from(table)
+      .from(table as keyof Tabel)
       .select('*')
       .order('created_at', { ascending: true });
 
     setRows(
-      (data ?? []) as unknown as Database['public']['Tables'][T]['Row'][],
+      (data ?? []) as unknown as Baris<T>[],
     );
     setError(failure?.message ?? '');
     setLoading(false);

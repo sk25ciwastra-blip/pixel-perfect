@@ -1,3 +1,4 @@
+import { rpc } from "@/lib/data-live";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -302,7 +303,7 @@ function Ringkasan() {
     setDashboardMessage("");
 
     try {
-      const { error } = await supabase.rpc(
+      const { error } = await rpc(
         isCheckoutTraining
           ? "check_out_training_transaction"
           : "check_out_transaction",
@@ -980,7 +981,7 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
     if (!kategori.trim() || !(Number(nominal) > 0)) { setPesan("Isi jenis pengeluaran dan nominal yang benar."); return; }
     setSimpan(true);
     setPesan("");
-    const { error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>)(isTraining ? "record_training_finance_expense" : "record_finance_expense", {
+    const { error } = await rpc(isTraining ? "record_training_finance_expense" : "record_finance_expense", {
       _idempotency_key: crypto.randomUUID(),
       _session_id: sessionId,
       _amount: Number(nominal),

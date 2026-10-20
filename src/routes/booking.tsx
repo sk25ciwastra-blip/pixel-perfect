@@ -1,3 +1,4 @@
+import { rpc } from "@/lib/data-live";
 import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import { createFileRoute } from '@tanstack/react-router';
@@ -147,7 +148,7 @@ async function recordPayment() {
       return;
     }
 
-    const { error: paymentError } = await supabase.rpc(
+    const { error: paymentError } = await rpc(
       isTraining ? 'record_training_transaction_payment' : 'record_transaction_payment',
       {
         _transaction_id: selectedBooking.id,
@@ -197,7 +198,7 @@ async function finishCheckIn() {
   setBusy(true);
 
   try {
-    const { error: checkInError } = await supabase.rpc(
+    const { error: checkInError } = await rpc(
       isTraining ? 'check_in_training_booking' : 'check_in_booking',
       isTraining
         ? { _transaction_id: selectedBooking.id, _session_id: paymentSessionId }
