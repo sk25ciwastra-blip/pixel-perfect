@@ -103,9 +103,9 @@ function EmergencyButton() {
 }
 
 export function Kerangka({
-  judul, keterangan, aksi, children, tanpaJudul, mewah,
+  judul, keterangan, aksi, children, tanpaJudul,
 }: {
-  judul: string; keterangan?: string; aksi?: ReactNode; children: ReactNode; tanpaJudul?: boolean; mewah?: boolean;
+  judul: string; keterangan?: string; aksi?: ReactNode; children: ReactNode; tanpaJudul?: boolean;
 }) {
   const { peran, nama, posisi, posisiKode, keluar } = usePeran();
   const [lainnya, setLainnya] = useState(false);
