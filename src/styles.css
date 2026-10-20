@@ -145,6 +145,43 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
 
+/* Tema mewah (hitam & emas) khusus Dashboard */
+.tema-mewah {
+  --background: oklch(0.145 0.006 260);
+  --foreground: oklch(0.95 0.012 85);
+  --card: oklch(0.195 0.008 260);
+  --card-foreground: oklch(0.95 0.012 85);
+  --popover: oklch(0.195 0.008 260);
+  --popover-foreground: oklch(0.95 0.012 85);
+  --primary: oklch(0.8 0.12 85);
+  --primary-foreground: oklch(0.17 0.01 260);
+  --primary-soft: oklch(0.3 0.05 85);
+  --secondary: oklch(0.24 0.008 260);
+  --secondary-foreground: oklch(0.95 0.012 85);
+  --muted: oklch(0.24 0.008 260);
+  --muted-foreground: oklch(0.72 0.025 85);
+  --accent: oklch(0.24 0.008 260);
+  --accent-foreground: oklch(0.95 0.012 85);
+  --border: oklch(0.8 0.12 85 / 0.16);
+  --input: oklch(0.8 0.12 85 / 0.25);
+  --ring: oklch(0.8 0.12 85);
+  --navy: oklch(0.17 0.008 260);
+  --navy-deep: oklch(0.11 0.005 260);
+  --navy-soft: oklch(0.26 0.01 260);
+  --siap: oklch(0.3 0.06 155);
+  --siap-foreground: oklch(0.84 0.13 155);
+  --terisi: oklch(0.3 0.06 250);
+  --terisi-foreground: oklch(0.82 0.1 250);
+  --perlu: oklch(0.32 0.07 75);
+  --perlu-foreground: oklch(0.87 0.13 85);
+  --sedang: oklch(0.3 0.06 290);
+  --sedang-foreground: oklch(0.82 0.1 290);
+  --bahaya: oklch(0.3 0.08 25);
+  --bahaya-foreground: oklch(0.8 0.15 25);
+  --shadow-lembut: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 12px 32px -14px oklch(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);

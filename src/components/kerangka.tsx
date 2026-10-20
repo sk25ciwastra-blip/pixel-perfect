@@ -71,17 +71,15 @@ function EmergencyButton() {
 
   return (
     <div className="space-y-2">
-      <div className="mx-auto w-[148px] rounded-lg border-2 border-black bg-black p-0.5">
-        <button
-          type="button"
-          onClick={() => { setNotice(null); setOpen(true); }}
-          title="Emergency"
-          aria-label="Kirim permintaan Emergency"
-          className="flex h-8 w-full items-center justify-center rounded-md bg-red-600 text-[10px] font-extrabold tracking-[0.04em] text-white transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 focus:ring-offset-[#101827]"
-        >
-          <span className="flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5" /><span>EMERGENCY</span></span>
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => { setNotice(null); setOpen(true); }}
+        title="Emergency"
+        aria-label="Kirim permintaan Emergency"
+        className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-v0-danger/50 bg-v0-danger/10 text-[11px] font-bold tracking-[0.18em] text-bahaya-foreground transition hover:bg-v0-danger/25 focus:outline-none focus:ring-2 focus:ring-v0-danger/60"
+      >
+        <AlertTriangle className="h-4 w-4" /><span>EMERGENCY</span>
+      </button>
       {notice && <p role="alert" className="px-1 text-center text-[10px] leading-4 text-red-200">{notice}</p>}
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4" role="presentation">
@@ -105,9 +103,9 @@ function EmergencyButton() {
 }
 
 export function Kerangka({
-  judul, keterangan, aksi, children, tanpaJudul,
+  judul, keterangan, aksi, children, tanpaJudul, mewah,
 }: {
-  judul: string; keterangan?: string; aksi?: ReactNode; children: ReactNode; tanpaJudul?: boolean;
+  judul: string; keterangan?: string; aksi?: ReactNode; children: ReactNode; tanpaJudul?: boolean; mewah?: boolean;
 }) {
   const { peran, nama, posisi, posisiKode, keluar } = usePeran();
   const [lainnya, setLainnya] = useState(false);
@@ -115,7 +113,7 @@ export function Kerangka({
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className={`min-h-screen bg-background text-foreground ${mewah ? "tema-mewah" : ""}`}>
       {/* Sidebar desktop */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col overflow-hidden border-r border-navy-soft/40 bg-navy-deep px-4 py-5 text-white lg:flex">
         <div className="px-2"><Logo /></div>

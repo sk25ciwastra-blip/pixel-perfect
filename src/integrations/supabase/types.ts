@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -107,63 +107,6 @@ export type Database = {
         }
         Relationships: []
       }
-      housekeeping_history: {
-        Row: {
-          action: string
-          created_at: string
-          from_status: Database["public"]["Enums"]["room_status"]
-          id: string
-          job_number: string | null
-          note: string
-          performed_by: string
-          performed_by_name: string
-          room_id: string
-          to_status: Database["public"]["Enums"]["room_status"]
-          transaction_id: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          from_status: Database["public"]["Enums"]["room_status"]
-          id?: string
-          job_number?: string | null
-          note?: string
-          performed_by: string
-          performed_by_name: string
-          room_id: string
-          to_status: Database["public"]["Enums"]["room_status"]
-          transaction_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          from_status?: Database["public"]["Enums"]["room_status"]
-          id?: string
-          job_number?: string | null
-          note?: string
-          performed_by?: string
-          performed_by_name?: string
-          room_id?: string
-          to_status?: Database["public"]["Enums"]["room_status"]
-          transaction_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "housekeeping_history_room_id_fkey"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "housekeeping_history_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "transactions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       housekeeping_checklists: {
         Row: {
           ashtray_ok: boolean
@@ -182,11 +125,11 @@ export type Database = {
           performed_by_name: string
           result: string
           room_id: string
+          tissue_ok: boolean
+          tissue_reason: string
           towel_ok: boolean
           towel_reason: string
           transaction_id: string | null
-          tissue_ok: boolean
-          tissue_reason: string
           tv_remote_ok: boolean
           tv_remote_reason: string
         }
@@ -207,11 +150,11 @@ export type Database = {
           performed_by_name: string
           result: string
           room_id: string
+          tissue_ok: boolean
+          tissue_reason?: string
           towel_ok: boolean
           towel_reason?: string
           transaction_id?: string | null
-          tissue_ok: boolean
-          tissue_reason?: string
           tv_remote_ok: boolean
           tv_remote_reason?: string
         }
@@ -232,11 +175,11 @@ export type Database = {
           performed_by_name?: string
           result?: string
           room_id?: string
+          tissue_ok?: boolean
+          tissue_reason?: string
           towel_ok?: boolean
           towel_reason?: string
           transaction_id?: string | null
-          tissue_ok?: boolean
-          tissue_reason?: string
           tv_remote_ok?: boolean
           tv_remote_reason?: string
         }
@@ -259,6 +202,118 @@ export type Database = {
             foreignKeyName: "housekeeping_checklists_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      housekeeping_history: {
+        Row: {
+          action: string
+          created_at: string
+          from_status: Database["public"]["Enums"]["room_status"]
+          id: string
+          job_id: string | null
+          job_number: string | null
+          note: string
+          performed_by: string
+          performed_by_name: string
+          room_id: string
+          to_status: Database["public"]["Enums"]["room_status"]
+          transaction_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          from_status: Database["public"]["Enums"]["room_status"]
+          id?: string
+          job_id?: string | null
+          job_number?: string | null
+          note?: string
+          performed_by: string
+          performed_by_name: string
+          room_id: string
+          to_status: Database["public"]["Enums"]["room_status"]
+          transaction_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["room_status"]
+          id?: string
+          job_id?: string | null
+          job_number?: string | null
+          note?: string
+          performed_by?: string
+          performed_by_name?: string
+          room_id?: string
+          to_status?: Database["public"]["Enums"]["room_status"]
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housekeeping_history_job_identity_fkey"
+            columns: ["job_id", "job_number"]
+            isOneToOne: false
+            referencedRelation: "housekeeping_jobs"
+            referencedColumns: ["id", "job_number"]
+          },
+          {
+            foreignKeyName: "housekeeping_history_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housekeeping_history_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      housekeeping_jobs: {
+        Row: {
+          created_at: string
+          created_by: string
+          created_by_name: string
+          id: string
+          job_number: string
+          room_id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          created_by_name: string
+          id?: string
+          job_number: string
+          room_id: string
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          id?: string
+          job_number?: string
+          room_id?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housekeeping_jobs_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housekeeping_jobs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
             referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
@@ -317,429 +372,97 @@ export type Database = {
           },
         ]
       }
-      finance_bank_accounts: {
+      housekeeping_transaction_resolutions: {
         Row: {
-          id: string
-          bank_name: string
-          account_name: string
-          account_number: string
-          logo_key: string
-          active: boolean
-          created_by: string
+          checkout_activity_log_id: string
           created_at: string
-        }
-        Insert: {
-          id?: string
-          bank_name: string
-          account_name: string
-          account_number: string
-          logo_key?: string
-          active?: boolean
-          created_by: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          bank_name?: string
-          account_name?: string
-          account_number?: string
-          logo_key?: string
-          active?: boolean
-          created_by?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      finance_cash_sessions: {
-        Row: {
+          evidence_ref: string
           id: string
-          opened_by: string
-          operational_date: string
-          opened_at: string
-          opening_cash: number
-          opening_source_session_id: string | null
-          status: string
-          closed_at: string | null
-          closed_by: string | null
-          closing_reason: string
-          closing_snapshot: unknown
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          opened_by: string
-          operational_date?: string
-          opened_at?: string
-          opening_cash?: number
-          opening_source_session_id?: string | null
-          status?: string
-          closed_at?: string | null
-          closed_by?: string | null
-          closing_reason?: string
-          closing_snapshot?: unknown
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          opened_by?: string
-          operational_date?: string
-          opened_at?: string
-          opening_cash?: number
-          opening_source_session_id?: string | null
-          status?: string
-          closed_at?: string | null
-          closed_by?: string | null
-          closing_reason?: string
-          closing_snapshot?: unknown
-          created_at?: string
-        }
-        Relationships: []
-      }
-      finance_commission_configs: {
-        Row: {
-          id: string
-          mode: string
-          rate: number
-          per_room_amount: number
-          rounding_rule: string
-          effective_from: string
-          created_by: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          mode: string
-          rate?: number
-          per_room_amount?: number
-          rounding_rule?: string
-          effective_from?: string
-          created_by: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          mode?: string
-          rate?: number
-          per_room_amount?: number
-          rounding_rule?: string
-          effective_from?: string
-          created_by?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      finance_deposits: {
-        Row: {
-          id: string
-          idempotency_key: string
-          session_id: string
-          method: string
-          amount: number
-          bank_account_id: string | null
-          proof_ref: string
-          status: string
-          submitted_by: string
-          confirmed_by: string | null
-          confirmed_at: string | null
-          decision_reason: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          idempotency_key: string
-          session_id: string
-          method: string
-          amount: number
-          bank_account_id?: string | null
-          proof_ref?: string
-          status?: string
-          submitted_by: string
-          confirmed_by?: string | null
-          confirmed_at?: string | null
-          decision_reason?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          idempotency_key?: string
-          session_id?: string
-          method?: string
-          amount?: number
-          bank_account_id?: string | null
-          proof_ref?: string
-          status?: string
-          submitted_by?: string
-          confirmed_by?: string | null
-          confirmed_at?: string | null
-          decision_reason?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      finance_expenses: {
-        Row: {
-          id: string
-          idempotency_key: string
-          session_id: string
-          expense_number: string | null
-          amount: number
-          method: string
-          category: string
-          note: string
-          recorded_by: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          idempotency_key: string
-          session_id: string
-          expense_number?: string | null
-          amount: number
-          method: string
-          category: string
-          note?: string
-          recorded_by: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          idempotency_key?: string
-          session_id?: string
-          expense_number?: string | null
-          amount?: number
-          method?: string
-          category?: string
-          note?: string
-          recorded_by?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      finance_drawer_handoffs: {
-        Row: {
-          id: string
-          allocation_id: string
-          source_session_id: string
-          recipient_user_id: string
-          expected_amount: number
-          actual_amount: number | null
-          difference: number | null
-          status: string
           reason: string
-          created_by: string
-          confirmed_by: string | null
-          confirmed_at: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          allocation_id: string
-          source_session_id: string
-          recipient_user_id: string
-          expected_amount: number
-          actual_amount?: number | null
-          difference?: number | null
-          status?: string
-          reason?: string
-          created_by: string
-          confirmed_by?: string | null
-          confirmed_at?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          allocation_id?: string
-          source_session_id?: string
-          recipient_user_id?: string
-          expected_amount?: number
-          actual_amount?: number | null
-          difference?: number | null
-          status?: string
-          reason?: string
-          created_by?: string
-          confirmed_by?: string | null
-          confirmed_at?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      finance_refunds: {
-        Row: {
-          id: string
-          idempotency_key: string
+          resolved_by: string
+          room_id: string
           transaction_id: string
-          amount: number
-          refund_method: string
-          source_type: string
-          source_session_id: string | null
-          reason: string
-          original_payment_total: number
-          commission_adjustment: number
-          created_by: string
-          created_at: string
         }
         Insert: {
-          id?: string
-          idempotency_key: string
-          transaction_id: string
-          amount: number
-          refund_method: string
-          source_type: string
-          source_session_id?: string | null
-          reason: string
-          original_payment_total: number
-          commission_adjustment?: number
-          created_by: string
+          checkout_activity_log_id: string
           created_at?: string
+          evidence_ref: string
+          id?: string
+          reason: string
+          resolved_by: string
+          room_id: string
+          transaction_id: string
         }
         Update: {
+          checkout_activity_log_id?: string
+          created_at?: string
+          evidence_ref?: string
           id?: string
-          idempotency_key?: string
+          reason?: string
+          resolved_by?: string
+          room_id?: string
           transaction_id?: string
-          amount?: number
-          refund_method?: string
-          source_type?: string
-          source_session_id?: string | null
-          reason?: string
-          original_payment_total?: number
-          commission_adjustment?: number
-          created_by?: string
-          created_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "housekeeping_transaction_resoluti_checkout_activity_log_id_fkey"
+            columns: ["checkout_activity_log_id"]
+            isOneToOne: false
+            referencedRelation: "activity_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housekeeping_transaction_resolutions_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housekeeping_transaction_resolutions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      finance_session_allocations: {
+      operational_calendar: {
         Row: {
-          id: string
-          session_id: string
-          allocation_type: string
-          method: string
-          amount: number
-          recipient_user_id: string | null
-          created_by: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          session_id: string
-          allocation_type: string
-          method: string
-          amount: number
-          recipient_user_id?: string | null
-          created_by: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          session_id?: string
-          allocation_type?: string
-          method?: string
-          amount?: number
-          recipient_user_id?: string | null
-          created_by?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      finance_settings: {
-        Row: {
-          id: boolean
-          minimum_dp_mode: string
-          minimum_dp_value: number
-          updated_by: string | null
+          calendar_date: string
+          event_type: string | null
+          holiday_name: string | null
+          is_national_holiday: boolean
+          override_reason: string | null
+          owner_override: string | null
+          source_name: string | null
+          source_reference: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
-          id?: boolean
-          minimum_dp_mode?: string
-          minimum_dp_value?: number
-          updated_by?: string | null
+          calendar_date: string
+          event_type?: string | null
+          holiday_name?: string | null
+          is_national_holiday?: boolean
+          override_reason?: string | null
+          owner_override?: string | null
+          source_name?: string | null
+          source_reference?: string | null
           updated_at?: string
-        }
-        Update: {
-          id?: boolean
-          minimum_dp_mode?: string
-          minimum_dp_value?: number
           updated_by?: string | null
+        }
+        Update: {
+          calendar_date?: string
+          event_type?: string | null
+          holiday_name?: string | null
+          is_national_holiday?: boolean
+          override_reason?: string | null
+          owner_override?: string | null
+          source_name?: string | null
+          source_reference?: string | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      finance_charge_events: {
-        Row: {
-          id: string
-          idempotency_key: string
-          transaction_id: string
-          kind: string
-          amount: number
-          processed_by: string
-          commission_mode: string
-          commission_rate: number
-          commission_per_room_amount: number
-          commission_rounding: string
-          commission_recipient: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          idempotency_key: string
-          transaction_id: string
-          kind: string
-          amount: number
-          processed_by: string
-          commission_mode: string
-          commission_rate?: number
-          commission_per_room_amount?: number
-          commission_rounding?: string
-          commission_recipient?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          idempotency_key?: string
-          transaction_id?: string
-          kind?: string
-          amount?: number
-          processed_by?: string
-          commission_mode?: string
-          commission_rate?: number
-          commission_per_room_amount?: number
-          commission_rounding?: string
-          commission_recipient?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      finance_refund_allocations: {
-        Row: {
-          id: string
-          refund_id: string
-          payment_id: string
-          refunded_amount: number
-          original_commission: number
-          adjusted_commission: number
-          commission_delta: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          refund_id: string
-          payment_id: string
-          refunded_amount: number
-          original_commission?: number
-          adjusted_commission?: number
-          commission_delta?: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          refund_id?: string
-          payment_id?: string
-          refunded_amount?: number
-          original_commission?: number
-          adjusted_commission?: number
-          commission_delta?: number
-          created_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -784,60 +507,6 @@ export type Database = {
           },
         ]
       }
-      packages: {
-        Row: {
-          active: boolean
-          created_at: string
-          description: string
-          duration_minutes: number
-          id: string
-          name: string
-          price: number
-          weekday_price: number
-          weekend_price: number
-          time_mode: string | null
-          slot_start_time: string | null
-          checkin_start_time: string | null
-          checkin_end_time: string | null
-          checkout_time: string | null
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          description?: string
-          duration_minutes: number
-          id?: string
-          name: string
-          price: number
-          weekday_price: number
-          weekend_price: number
-          time_mode?: string | null
-          slot_start_time?: string | null
-          checkin_start_time?: string | null
-          checkin_end_time?: string | null
-          checkout_time?: string | null
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          description?: string
-          duration_minutes?: number
-          id?: string
-          name?: string
-          price?: number
-          weekday_price?: number
-          weekend_price?: number
-          time_mode?: string | null
-          slot_start_time?: string | null
-          checkin_start_time?: string | null
-          checkin_end_time?: string | null
-          checkout_time?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       package_room_type_prices: {
         Row: {
           created_at: string
@@ -876,57 +545,84 @@ export type Database = {
           },
         ]
       }
+      packages: {
+        Row: {
+          active: boolean
+          checkin_end_time: string | null
+          checkin_start_time: string | null
+          checkout_time: string | null
+          created_at: string
+          description: string
+          duration_minutes: number
+          id: string
+          name: string
+          price: number
+          slot_start_time: string | null
+          time_mode: string | null
+          updated_at: string
+          weekday_price: number
+          weekend_price: number
+        }
+        Insert: {
+          active?: boolean
+          checkin_end_time?: string | null
+          checkin_start_time?: string | null
+          checkout_time?: string | null
+          created_at?: string
+          description?: string
+          duration_minutes: number
+          id?: string
+          name: string
+          price: number
+          slot_start_time?: string | null
+          time_mode?: string | null
+          updated_at?: string
+          weekday_price: number
+          weekend_price: number
+        }
+        Update: {
+          active?: boolean
+          checkin_end_time?: string | null
+          checkin_start_time?: string | null
+          checkout_time?: string | null
+          created_at?: string
+          description?: string
+          duration_minutes?: number
+          id?: string
+          name?: string
+          price?: number
+          slot_start_time?: string | null
+          time_mode?: string | null
+          updated_at?: string
+          weekday_price?: number
+          weekend_price?: number
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
-          cash_session_id: string | null
-          charge_event_id: string | null
           created_at: string
           id: string
-          idempotency_key: string | null
           kind: string
-          commission_amount: number | null
-          commission_mode: string | null
-          commission_per_room_amount: number | null
-          commission_rate: number | null
-          commission_recipient: string | null
-          commission_rounding: string | null
           method: string
           recorded_by: string
           transaction_id: string
         }
         Insert: {
           amount: number
-          cash_session_id?: string | null
-          charge_event_id?: string | null
           created_at?: string
           id?: string
-          idempotency_key?: string | null
           kind: string
-          commission_amount?: number | null
-          commission_mode?: string | null
-          commission_per_room_amount?: number | null
-          commission_rate?: number | null
-          commission_recipient?: string | null
-          commission_rounding?: string | null
           method: string
           recorded_by?: string
           transaction_id: string
         }
         Update: {
           amount?: number
-          cash_session_id?: string | null
-          charge_event_id?: string | null
           created_at?: string
           id?: string
-          idempotency_key?: string | null
           kind?: string
-          commission_amount?: number | null
-          commission_mode?: string | null
-          commission_per_room_amount?: number | null
-          commission_rate?: number | null
-          commission_recipient?: string | null
-          commission_rounding?: string | null
           method?: string
           recorded_by?: string
           transaction_id?: string
@@ -1015,22 +711,15 @@ export type Database = {
           },
         ]
       }
-          transactions: {
+      transactions: {
         Row: {
           checked_out_at: string | null
-          commission_mode_snapshot: string | null
-          commission_per_room_amount_snapshot: number | null
-          commission_rate_snapshot: number | null
-          commission_rounding_snapshot: string | null
           created_at: string
           created_by: string
           day_mode: string | null
           ends_at: string | null
           guest_id: string
           id: string
-          minimum_dp_amount_snapshot: number | null
-          minimum_dp_mode_snapshot: string | null
-          minimum_dp_value_snapshot: number | null
           package_id: string | null
           price_snapshot: number | null
           room_id: string
@@ -1043,19 +732,12 @@ export type Database = {
         }
         Insert: {
           checked_out_at?: string | null
-          commission_mode_snapshot?: string | null
-          commission_per_room_amount_snapshot?: number | null
-          commission_rate_snapshot?: number | null
-          commission_rounding_snapshot?: string | null
           created_at?: string
           created_by?: string
           day_mode?: string | null
           ends_at?: string | null
           guest_id: string
           id?: string
-          minimum_dp_amount_snapshot?: number | null
-          minimum_dp_mode_snapshot?: string | null
-          minimum_dp_value_snapshot?: number | null
           package_id?: string | null
           price_snapshot?: number | null
           room_id: string
@@ -1068,19 +750,12 @@ export type Database = {
         }
         Update: {
           checked_out_at?: string | null
-          commission_mode_snapshot?: string | null
-          commission_per_room_amount_snapshot?: number | null
-          commission_rate_snapshot?: number | null
-          commission_rounding_snapshot?: string | null
           created_at?: string
           created_by?: string
           day_mode?: string | null
           ends_at?: string | null
           guest_id?: string
           id?: string
-          minimum_dp_amount_snapshot?: number | null
-          minimum_dp_mode_snapshot?: string | null
-          minimum_dp_value_snapshot?: number | null
           package_id?: string | null
           price_snapshot?: number | null
           room_id?: string
@@ -1138,80 +813,45 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      advance_room_cleaning: {
-        Args: { _room_id: string; _note?: string }
+      advance_room_cleaning:
+        | { Args: { _room_id: string }; Returns: undefined }
+        | { Args: { _note: string; _room_id: string }; Returns: undefined }
+      apply_official_package_timing: {
+        Args: { _package_id: string; _package_name: string }
         Returns: undefined
       }
-      can_operate: { Args: { _user_id: string }; Returns: boolean }
-      change_package_prices: {
-        Args: {
-          _package_id: string
-          _weekday_price: number
-          _weekend_price: number
-          _reason: string
-        }
-        Returns: undefined
-      }
-      create_official_package: {
-        Args: {
-          _name: string
-          _description: string
-          _active: boolean
-          _weekday_price: number
-          _weekend_price: number
-        }
-        Returns: string
-      }
-      update_package: {
-        Args: {
-          _package_id: string
-          _name: string
-          _duration_minutes: number
-          _description: string
-          _active: boolean
-          _weekday_price: number
-          _weekend_price: number
-          _reason: string
-        }
-        Returns: undefined
-      }
-      check_in_booking: {
-        Args: { _transaction_id: string }
-        Returns: string
+      calculate_package_stay_times: {
+        Args: { _package_id: string; _started_at?: string }
+        Returns: {
+          ends_at: string
+          started_at: string
+        }[]
       }
       calculate_scheduled_booking_times: {
-        Args: {
-          _package_id: string
-          _scheduled_check_in: string
-        }
+        Args: { _package_id: string; _scheduled_check_in: string }
         Returns: {
           scheduled_check_in: string
           scheduled_check_out: string
         }[]
       }
+      can_frontdesk: { Args: { _user_id: string }; Returns: boolean }
+      can_housekeeping: { Args: { _user_id: string }; Returns: boolean }
+      can_operate: { Args: { _user_id: string }; Returns: boolean }
+      can_view_finance: { Args: { _user_id: string }; Returns: boolean }
+      can_view_operations: { Args: { _user_id: string }; Returns: boolean }
+      change_package_prices: {
+        Args: {
+          _package_id: string
+          _reason: string
+          _weekday_price: number
+          _weekend_price: number
+        }
+        Returns: undefined
+      }
+      check_in_booking: { Args: { _transaction_id: string }; Returns: string }
       check_out_transaction: {
         Args: { _transaction_id: string }
         Returns: string
-      }
-      get_operational_day_mode: {
-        Args: { _calendar_date: string }
-        Returns: string
-      }
-      next_transaction_number: {
-        Args: Record<string, never>
-        Returns: string
-      }
-      next_housekeeping_number: {
-        Args: Record<string, never>
-        Returns: string
-      }
-      next_expense_number: {
-        Args: Record<string, never>
-        Returns: string
-      }
-      override_room_ready: {
-        Args: { _room_id: string; _note?: string }
-        Returns: undefined
       }
       complete_housekeeping_checklist: {
         Args: {
@@ -1228,126 +868,21 @@ export type Database = {
         }
         Returns: string
       }
-      record_housekeeping_maintenance: {
+      create_official_package: {
         Args: {
-          _location_code: string
-          _maintenance_id: string
-          _note?: string
-          _performed_by?: string | null
-          _room_id?: string | null
-          _work_type: string
-        }
-        Returns: string
-      }
-      record_transaction_payment: {
-        Args: {
-          _amount: number
-          _idempotency_key: string
-          _method: string
-          _session_id?: string | null
-          _transaction_id: string
-        }
-        Returns: string
-      }
-      open_finance_cash_session: {
-        Args: { _opening_cash?: number }
-        Returns: string
-      }
-      close_finance_cash_session: {
-        Args: { _allocation: Json; _reason?: string; _session_id: string }
-        Returns: Json
-      }
-      record_finance_expense: {
-        Args: {
-          _amount: number
-          _category: string
-          _idempotency_key: string
-          _method: string
-          _note?: string
-          _session_id: string
-        }
-        Returns: string
-      }
-      create_finance_deposit: {
-        Args: {
-          _amount: number
-          _bank_account_id?: string | null
-          _idempotency_key: string
-          _method: string
-          _proof_ref?: string
-          _session_id: string
-        }
-        Returns: string
-      }
-      decide_finance_deposit: {
-        Args: { _deposit_id: string; _reason?: string; _status: string }
-        Returns: undefined
-      }
-      confirm_finance_drawer_handover: {
-        Args: { _actual_amount: number; _handoff_id: string; _reason?: string }
-        Returns: undefined
-      }
-      set_finance_settings: {
-        Args: { _minimum_dp_mode: string; _minimum_dp_value: number }
-        Returns: undefined
-      }
-      set_finance_commission_config: {
-        Args: { _mode: string; _per_room_amount: number; _rate: number }
-        Returns: string
-      }
-      upsert_finance_bank_account: {
-        Args: {
-          _account_name: string
-          _account_number: string
           _active: boolean
-          _bank_name: string
-          _id?: string | null
-          _logo_key?: string
+          _description: string
+          _name: string
+          _weekday_price: number
+          _weekend_price: number
         }
         Returns: string
       }
-      create_finance_refund: {
-        Args: {
-          _amount: number
-          _idempotency_key: string
-          _reason: string
-          _refund_method: string
-          _source_session_id?: string | null
-          _source_type: string
-          _transaction_id: string
-        }
-        Returns: string
-      }
-      get_finance_session_summary: {
-        Args: { _session_id: string }
-        Returns: Json
-      }
-      get_finance_training_context: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      create_finance_training_assignment: {
-        Args: {
-          _starts_on: string
-          _supervisor_user_id: string
-          _trainee_user_id: string
-        }
-        Returns: string
-      }
-      resolve_finance_training_assignment: {
-        Args: {
-          _assignment_id: string
-          _resolution_note?: string
-          _status: string
-        }
-        Returns: undefined
-      }
-      create_training_reservation: {
+      create_reservation: {
         Args: {
           _address: string
           _amount: number
           _day_mode: string
-          _idempotency_key: string
           _method: string
           _mode: string
           _name: string
@@ -1355,71 +890,20 @@ export type Database = {
           _phone: string
           _room_id: string
           _scheduled_check_in?: string
-          _session_id: string
         }
         Returns: string
       }
-      record_training_transaction_payment: {
+      get_operational_day_mode: {
+        Args: { _calendar_date: string }
+        Returns: string
+      }
+      has_employee_position: {
         Args: {
-          _amount: number
-          _idempotency_key: string
-          _method: string
-          _session_id: string
-          _transaction_id: string
+          _positions: Database["public"]["Enums"]["employee_position"][]
+          _user_id: string
         }
-        Returns: string
+        Returns: boolean
       }
-      check_in_training_booking: {
-        Args: { _session_id: string; _transaction_id: string }
-        Returns: string
-      }
-      check_out_training_transaction: {
-        Args: { _session_id: string; _transaction_id: string }
-        Returns: string
-      }
-      record_training_finance_expense: {
-        Args: {
-          _amount: number
-          _category: string
-          _idempotency_key: string
-          _method: string
-          _note?: string
-          _session_id: string
-        }
-        Returns: string
-      }
-      create_training_finance_deposit: {
-        Args: {
-          _amount: number
-          _bank_account_id?: string | null
-          _idempotency_key: string
-          _method: string
-          _proof_ref?: string
-          _session_id: string
-        }
-        Returns: string
-      }
-      get_training_finance_session_summary: {
-        Args: { _session_id: string }
-        Returns: Json
-      }
-      create_reservation: {
-  Args: {
-    _address: string
-    _amount: number
-    _day_mode: string
-          _idempotency_key: string
-    _method: string
-    _mode: string
-    _name: string
-    _package_id: string
-    _phone: string
-    _room_id: string
-    _scheduled_check_in?: string
-          _session_id?: string | null
-  }
-  Returns: string
-}
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1428,10 +912,62 @@ export type Database = {
         Returns: boolean
       }
       is_receptionist: { Args: { _user_id: string }; Returns: boolean }
+      next_housekeeping_number: { Args: never; Returns: string }
+      next_transaction_number: { Args: never; Returns: string }
+      override_room_ready:
+        | { Args: { _room_id: string }; Returns: undefined }
+        | { Args: { _note: string; _room_id: string }; Returns: undefined }
+      record_housekeeping_maintenance: {
+        Args: {
+          _location_code: string
+          _maintenance_id: string
+          _note?: string
+          _performed_by?: string
+          _room_id: string
+          _work_type: string
+        }
+        Returns: string
+      }
+      record_housekeeping_transaction_resolution: {
+        Args: {
+          _checkout_activity_log_id: string
+          _evidence_ref: string
+          _reason: string
+          _room_id: string
+          _transaction_id: string
+        }
+        Returns: string
+      }
+      record_transaction_payment: {
+        Args: { _amount: number; _method: string; _transaction_id: string }
+        Returns: string
+      }
+      resolve_housekeeping_transaction: {
+        Args: { _room_id: string }
+        Returns: string
+      }
+      update_package: {
+        Args: {
+          _active: boolean
+          _description: string
+          _duration_minutes: number
+          _name: string
+          _package_id: string
+          _reason: string
+          _weekday_price: number
+          _weekend_price: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "owner" | "employee"
-      employee_position: "receptionist" | "housekeeping" | "supervisor" | "inspector" | "investor"
+      employee_position:
+        | "receptionist"
+        | "housekeeping"
+        | "supervisor"
+        | "inspector"
+        | "investor"
       room_status: "ready" | "occupied" | "dirty" | "cleaning"
       transaction_status: "booking" | "check_in" | "check_out" | "cancelled"
     }
@@ -1562,7 +1098,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "employee"],
-      employee_position: ["receptionist", "housekeeping", "supervisor", "inspector", "investor"],
+      employee_position: [
+        "receptionist",
+        "housekeeping",
+        "supervisor",
+        "inspector",
+        "investor",
+      ],
       room_status: ["ready", "occupied", "dirty", "cleaning"],
       transaction_status: ["booking", "check_in", "check_out", "cancelled"],
     },
