@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Eye, EyeOff } from 'lucide-react';
 import { meta } from '@/lib/meta';
 // Foto: "Bandung city centre - evening cropped.jpg" oleh Frans.global (Wikimedia Commons), CC BY-SA 2.0 —
 // sumber: https://commons.wikimedia.org/wiki/File:Bandung_city_centre_-_evening_cropped.jpg
@@ -13,7 +14,7 @@ export const Route = createFileRoute('/auth')({ head: () => meta('Masuk', 'Masuk
 function Auth() {
   const navigate = useNavigate();
   const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
-  const [error, setError] = useState(''); const [mode] = useState<'masuk'|'lupa'|'daftar'>('masuk'); const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(''); const [mode] = useState<'masuk'|'lupa'|'daftar'>('masuk'); const [busy, setBusy] = useState(false); const [lihat, setLihat] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setError('');
     if (mode === 'lupa') { const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` }); setError(error?.message ?? 'Jika alamat terdaftar, tautan pengaturan ulang sudah dikirim.'); }
@@ -35,49 +36,52 @@ function Auth() {
     <div className="mx-auto mt-2 flex items-center justify-center gap-2"><span className="h-px w-6 bg-gradient-to-r from-transparent to-gold" /><span className="text-[0.55rem] font-semibold text-gold">MANAJEMEN</span><span className="h-px w-6 bg-gradient-to-l from-transparent to-gold" /></div>
   </div>;
   return (
-    <main className="relative grid min-h-screen bg-background text-foreground lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-      {/* Panel suasana malam */}
-      <section className="relative hidden overflow-hidden lg:block">
-        <img src={skyline} alt="" aria-hidden="true" width={1536} height={1024} className="absolute inset-0 h-full w-full object-cover object-[60%_50%]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/10 to-background/25" />
-        <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-r from-transparent to-background" />
-        <div className="relative flex h-full flex-col justify-between p-12">
-          {logo}
-          <div className="max-w-md">
-            <div className="mb-5 h-px w-16 bg-gradient-to-r from-gold to-transparent" />
-            <h2 className="font-serif text-5xl leading-[1.1] text-foreground">Setiap malam,<br /><span className="italic text-gold-light">tamu pulang tenang.</span></h2>
-            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
-            <p className="mt-4 text-[0.6rem] leading-relaxed text-muted-foreground/70">Foto: <a href="https://commons.wikimedia.org/wiki/File:Bandung_city_centre_-_evening_cropped.jpg" target="_blank" rel="noopener noreferrer" className="underline decoration-gold/40 underline-offset-2 transition-colors hover:text-gold-light">Bandung city centre, Wikimedia Commons</a> — Frans.global, CC BY-SA 2.0 (dipotong & diberi tumpangan gelap).</p>
-          </div>
-        </div>
-      </section>
+    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      {/* Latar penuh: Bandung malam */}
+      <img src={skyline} alt="" aria-hidden="true" width={3016} height={1508} className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[60%_50%] saturate-[1.1]" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/70 via-background/35 to-background/90" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,var(--background)_95%)] opacity-80" />
 
-      {/* Formulir */}
-      <section className="relative flex items-center justify-center overflow-hidden px-5 py-10 sm:px-10">
-        <img src={skyline} alt="" aria-hidden="true" width={1536} height={1024} className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[65%_50%] opacity-60 lg:hidden" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background lg:hidden" />
-        <div className="relative w-full max-w-[400px]">
-          <div className="mb-8 flex justify-center lg:hidden">{logo}</div>
-          <div className="panel-mewah space-y-7 p-7 sm:p-10">
-            <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
-            <div>
-              <p className="mb-3 text-[0.65rem] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
-              <p className="mb-3 font-serif text-sm italic text-gold-light/85">Kenyamanan tenang, layanan sepenuh hati</p>
-              <h1 className="font-serif text-3xl leading-tight text-foreground">Selamat datang kembali</h1>
-              <p className="mt-3 text-sm text-muted-foreground">Masuk untuk memulai shift Anda.</p>
-            </div>
-            <form onSubmit={submit} className="space-y-5">
-              <div>
-                <label className="block text-xs font-semibold text-gold-light">Username<input required type="email" autoComplete="username" aria-describedby="petunjuk-username" value={email} onChange={e => setEmail(e.target.value)} className={input} /></label>
-                <p id="petunjuk-username" className="mt-2 text-xs text-muted-foreground">Gunakan email akun</p>
+      <div className="relative flex min-h-screen flex-col px-5 py-6 sm:px-10 sm:py-8">
+        <header className="flex justify-center sm:justify-start">{logo}</header>
+
+        <section className="flex flex-1 items-center justify-center py-10">
+          <div className="relative w-full max-w-[420px]">
+            <div className="pointer-events-none absolute -inset-px rounded-[1.2rem] bg-gradient-to-b from-gold/60 via-gold/10 to-gold/40 opacity-70 blur-[2px]" />
+            <div className="panel-mewah space-y-7 bg-background/55 p-7 shadow-[0_0_60px_-15px_color-mix(in_oklch,var(--gold)_45%,transparent)] backdrop-blur-xl sm:p-10">
+              <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
+              <div className="text-center">
+                <p className="mb-3 text-[0.65rem] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
+                <p className="mb-3 font-serif text-sm italic text-gold-light/85">Kenyamanan tenang, layanan sepenuh hati</p>
+                <h1 className="font-serif text-3xl leading-tight text-foreground">Selamat datang kembali</h1>
+                <p className="mt-3 text-sm text-muted-foreground">Masuk untuk memulai shift Anda.</p>
               </div>
-              {mode !== 'lupa' && <label className="block text-xs font-semibold text-gold-light">Password<input required minLength={8} type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} className={input} /></label>}
-              {error && <p role="status" className="rounded-lg border border-gold/25 bg-gold/5 px-3 py-2 text-sm text-gold-light">{error}</p>}
-              <Button disabled={busy} className="h-12 w-full rounded-xl">{busy ? 'Memproses…' : 'Masuk'}</Button>
-            </form>
+              <form onSubmit={submit} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-semibold text-gold-light">Username<input required type="email" autoComplete="username" placeholder="Masukkan username" aria-describedby="petunjuk-username" value={email} onChange={e => setEmail(e.target.value)} className={input} /></label>
+                  <p id="petunjuk-username" className="mt-2 text-xs text-muted-foreground">Gunakan email akun</p>
+                </div>
+                {mode !== 'lupa' && <label className="block text-xs font-semibold text-gold-light">Password
+                  <span className="relative block">
+                    <input required minLength={8} type={lihat ? 'text' : 'password'} autoComplete="current-password" placeholder="Masukkan password" value={password} onChange={e => setPassword(e.target.value)} className={`${input} pr-12`} />
+                    <button type="button" onClick={() => setLihat(v => !v)} aria-label={lihat ? 'Sembunyikan password' : 'Tampilkan password'} className="absolute right-2 top-1/2 mt-1 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-gold-light/80 transition hover:text-gold-light">
+                      {lihat ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </span>
+                </label>}
+                {error && <p role="status" className="rounded-lg border border-gold/25 bg-gold/5 px-3 py-2 text-sm text-gold-light">{error}</p>}
+                <Button disabled={busy} className="h-12 w-full rounded-xl text-base">{busy ? 'Memproses…' : 'Masuk'}</Button>
+              </form>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <footer className="mx-auto max-w-xl text-center">
+          <h2 className="font-serif text-xl leading-snug text-foreground sm:text-2xl">Setiap malam, <span className="italic text-gold-light">tamu pulang tenang.</span></h2>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
+          <p className="mt-2 text-[0.6rem] leading-relaxed text-muted-foreground/70">Foto: <a href="https://commons.wikimedia.org/wiki/File:Bandung_city_centre_-_evening_cropped.jpg" target="_blank" rel="noopener noreferrer" className="underline decoration-gold/40 underline-offset-2 transition-colors hover:text-gold-light">Bandung city centre, Wikimedia Commons</a> — Frans.global, CC BY-SA 2.0 (dipotong & diberi tumpangan gelap).</p>
+        </footer>
+      </div>
     </main>
   );
 }
