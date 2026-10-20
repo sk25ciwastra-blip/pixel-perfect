@@ -3,7 +3,10 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { meta } from '@/lib/meta';
-import skyline from '@/assets/surapati-bandung-malam.jpg';
+// Foto: "Bandung city centre - evening cropped.jpg" oleh Frans.global (Wikimedia Commons), CC BY-SA 2.0 —
+// sumber: https://commons.wikimedia.org/wiki/File:Bandung_city_centre_-_evening_cropped.jpg
+// Adaptasi (crop/tumpangan gelap) dilisensikan CC BY-SA 2.0; kredit juga ditampilkan di panel kiri halaman ini.
+import skyline from '@/assets/bandung-malam-login.jpg';
 
 export const Route = createFileRoute('/auth')({ head: () => meta('Masuk', 'Masuk ke Baturaden 25 Homestay.'), component: Auth });
 
@@ -44,6 +47,7 @@ function Auth() {
             <div className="mb-5 h-px w-16 bg-gradient-to-r from-gold to-transparent" />
             <h2 className="font-serif text-5xl leading-[1.1] text-foreground">Setiap malam,<br /><span className="italic text-gold-light">tamu pulang tenang.</span></h2>
             <p className="mt-5 text-sm leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
+            <p className="mt-4 text-[0.6rem] leading-relaxed text-muted-foreground/70">Foto: <a href="https://commons.wikimedia.org/wiki/File:Bandung_city_centre_-_evening_cropped.jpg" target="_blank" rel="noopener noreferrer" className="underline decoration-gold/40 underline-offset-2 transition-colors hover:text-gold-light">Bandung city centre, Wikimedia Commons</a> — Frans.global, CC BY-SA 2.0 (dipotong & diberi tumpangan gelap).</p>
           </div>
         </div>
       </section>
