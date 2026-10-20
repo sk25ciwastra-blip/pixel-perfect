@@ -210,7 +210,7 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
           _work_type: task.workType,
           _room_id: task.roomId as string,
           _location_code: task.locationCode,
-          _performed_by: performedBy || null,
+          _performed_by: performedBy || undefined,
           _note: note,
         });
 
