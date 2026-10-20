@@ -582,12 +582,12 @@ function Ringkasan() {
                       <col className="w-[84px]" />
                       <col />
                       <col className="w-[62px]" />
-                      <col className="w-[64px]" />
+                      <col className="w-[74px]" />
                       <col className="w-[150px]" />
                       <col className="w-[70px]" />
                       <col className="w-[108px]" />
                     </colgroup>
-                    <thead className="sticky top-0 z-10 bg-navy-deep text-xs text-muted-foreground">
+                    <thead className="sticky top-0 z-10 bg-navy-deep text-xs [&_th]:normal-case [&_th]:tracking-normal [&_th]:text-foreground/85">
                       <tr className="border-b border-gold/20">
                         <th className="px-2 py-3 font-semibold">Kamar</th>
                         <th className="px-2 py-3 font-semibold">Tipe</th>
