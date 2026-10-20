@@ -75,6 +75,9 @@ function Auth() {
               {error && <p role="status" className="rounded-lg border border-gold/25 bg-gold/5 px-3 py-2 text-sm text-gold-light">{error}</p>}
               <Button disabled={busy} className="h-12 w-full rounded-xl text-base">{busy ? 'Memproses…' : 'Masuk'}</Button>
             </form>
+            <div className="border-t border-gold/15 pt-4">
+              <p className="text-center text-xs leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
+            </div>
           </div>
         </div>
 
