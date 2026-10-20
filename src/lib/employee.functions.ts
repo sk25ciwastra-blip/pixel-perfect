@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
-export const createEmployee = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((data:{name:string;employeeId:string;email:string;password:string;position:'receptionist'|'housekeeping'})=>data).handler(async ({data,context})=>{
+export const createEmployee = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((data:{name:string;employeeId:string;email:string;password:string;position:'receptionist'|'housekeeping'|'supervisor'|'inspector'|'investor'})=>data).handler(async ({data,context})=>{
  const {data:owner,error:roleError}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'owner'});
  if(roleError||!owner)throw new Error('Akses ditolak');
  if(!data.name.trim()||!data.employeeId.trim()||!/^\S+@\S+\.\S+$/.test(data.email)||data.password.length<8)throw new Error('Periksa data karyawan.');
@@ -13,7 +13,7 @@ export const createEmployee = createServerFn({method:'POST'}).middleware([requir
  if(employeeInsert){await supabaseAdmin.auth.admin.deleteUser(id);throw new Error(employeeInsert.message)}
  return {ok:true};
 });
-export const manageEmployee = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((data:{id:string;name:string;position:'receptionist'|'housekeeping';active:boolean;password?:string})=>data).handler(async ({data,context})=>{
+export const manageEmployee = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((data:{id:string;name:string;position:'receptionist'|'housekeeping'|'supervisor'|'inspector'|'investor';active:boolean;password?:string})=>data).handler(async ({data,context})=>{
  const {data:owner}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'owner'});
  if(!owner)throw new Error('Akses ditolak');
  const {data:employee,error:readError}=await context.supabase.from('employees').select('user_id').eq('id',data.id).single();

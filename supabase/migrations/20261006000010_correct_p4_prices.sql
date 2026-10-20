@@ -1,0 +1,18 @@
+-- Baturaden 25 Homestay
+-- Historical P4 correction migration: quarantined as a deliberate no-op.
+--
+-- OWNER RULE PRESERVATION (2026-10-20)
+-- This file previously raised P4 prices by Rp 10.000 for each pricing group.
+-- That conflicted with the canonical business rules in:
+-- DOKUMEN_PROYEK/02_ATURAN_BISNIS.md (AB-PRICE-P4).
+--
+-- Canonical P4 room-type catalog (weekday / weekend):
+--   standard  80000 /  90000
+--   superior  90000 / 100000
+--   deluxe  100000 / 110000
+--
+-- Supabase staging was verified to already contain these canonical values.
+-- Do not silently reintroduce the conflicting UPDATE statement.
+-- The original statement remains recoverable in Git history.
+-- This migration intentionally performs no data or schema changes.
+SELECT 1;

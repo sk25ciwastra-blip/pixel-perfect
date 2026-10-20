@@ -148,18 +148,87 @@ function RootComponent() {
 }
 
 function AccessGate({ children }: { children: ReactNode }) {
-  const { siap, masuk, peran, posisi } = usePeran();
-  const location = useLocation(); const navigate = useNavigate();
-  const publicPage = location.pathname === '/auth' || location.pathname === '/reset-password';
-  const restricted = ['/karyawan', '/keuangan', '/pengaturan'];
-  const housekeepingOnly = ['/', '/kamar', '/housekeeping'];
+  const { siap, masuk, peran, posisiKode } = usePeran();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const publicPage =
+    location.pathname === '/auth' ||
+    location.pathname === '/reset-password';
+
+  function bolehAksesHalaman(pathname: string) {
+    if (peran === 'owner') return true;
+
+    switch (posisiKode) {
+      case 'supervisor':
+        return !['/karyawan', '/pengaturan'].includes(pathname);
+
+      case 'receptionist':
+        return [
+          '/',
+          '/kamar',
+          '/booking',
+          '/check-in',
+          '/transaksi',
+          '/tamu',
+          '/keuangan',
+        ].includes(pathname);
+
+      case 'housekeeping':
+        return ['/', '/kamar', '/housekeeping'].includes(pathname);
+
+      case 'inspector':
+        return [
+          '/',
+          '/kamar',
+          '/booking',
+          '/transaksi',
+          '/tamu',
+          '/housekeeping',
+        ].includes(pathname);
+
+      case 'investor':
+        return ['/', '/kamar'].includes(pathname);
+
+      default:
+        return false;
+    }
+  }
+
+  const aksesDitolak =
+    masuk &&
+    !publicPage &&
+    !bolehAksesHalaman(location.pathname);
+
   useEffect(() => {
     if (!siap) return;
-    if (!masuk && !publicPage) void navigate({ to: '/auth', replace: true });
-    else if (masuk && publicPage) void navigate({ to: '/', replace: true });
-    else if (masuk && ((peran !== 'owner' && restricted.includes(location.pathname)) || (posisi === 'Petugas Kebersihan' && !housekeepingOnly.includes(location.pathname)))) void navigate({ to: '/', replace: true });
-  }, [siap, masuk, publicPage, peran, posisi, location.pathname, navigate]);
-  if (!siap) return <div className="min-h-screen bg-background" />;
-  if ((!masuk && !publicPage) || (masuk && publicPage) || (masuk && ((peran !== 'owner' && restricted.includes(location.pathname)) || (posisi === 'Petugas Kebersihan' && !housekeepingOnly.includes(location.pathname))))) return null;
+
+    if (!masuk && !publicPage) {
+      void navigate({ to: '/auth', replace: true });
+    } else if (masuk && publicPage) {
+      void navigate({ to: '/', replace: true });
+    } else if (aksesDitolak) {
+      void navigate({ to: '/', replace: true });
+    }
+  }, [
+    siap,
+    masuk,
+    publicPage,
+    aksesDitolak,
+    navigate,
+  ]);
+
+  if (!siap) {
+    return <div className="min-h-screen bg-background" />;
+  }
+
+  if (
+    (!masuk && !publicPage) ||
+    (masuk && publicPage) ||
+    aksesDitolak
+  ) {
+    return null;
+  }
+
   return children;
 }

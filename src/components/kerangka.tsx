@@ -2,15 +2,34 @@ import { Link } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import {
   LayoutGrid, BedDouble, CalendarDays, Receipt, Users, Sparkles, Wallet,
-  IdCard, Settings, MoreHorizontal, X, type LucideIcon,
+  IdCard, Settings, MoreHorizontal, X, AlertTriangle, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
 
 type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean };
 
+function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
+  if (peran === "owner") return true;
+
+  switch (posisiKode) {
+    case "supervisor":
+      return !["/karyawan", "/pengaturan"].includes(ke);
+    case "receptionist":
+      return ["/", "/kamar", "/booking", "/transaksi", "/tamu", "/keuangan"].includes(ke);
+    case "housekeeping":
+      return ["/", "/kamar", "/housekeeping"].includes(ke);
+    case "inspector":
+      return ["/", "/kamar", "/booking", "/transaksi", "/tamu", "/housekeeping"].includes(ke);
+    case "investor":
+      return ["/", "/kamar"].includes(ke);
+    default:
+      return false;
+  }
+}
+
 const semuaMenu: Menu[] = [
-  { ke: "/", label: "Ringkasan", ikon: LayoutGrid },
-  { ke: "/kamar", label: "Kamar", ikon: BedDouble },
+  { ke: "/", label: "Dashboard", ikon: LayoutGrid },
+  { ke: "/kamar", label: "Room", ikon: BedDouble },
   { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/transaksi", label: "Transaksi", ikon: Receipt },
   { ke: "/tamu", label: "Tamu", ikon: Users },
@@ -21,22 +40,66 @@ const semuaMenu: Menu[] = [
 ];
 
 const bawah: Menu[] = [
-  { ke: "/", label: "Beranda", ikon: LayoutGrid },
-  { ke: "/kamar", label: "Kamar", ikon: BedDouble },
+  { ke: "/", label: "Dashboard", ikon: LayoutGrid },
+  { ke: "/kamar", label: "Room", ikon: BedDouble },
   { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/tamu", label: "Tamu", ikon: Users },
 ];
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-        25
+    <div className="text-center leading-tight">
+      <p className="font-serif text-[1.45rem] text-white">
+        Baturaden <span className="text-gold-light">25</span>
+      </p>
+      <p className="font-serif text-[1.45rem] text-white">Homestay</p>
+      <p className="mt-1 text-[0.58rem] font-semibold tracking-[0.28em] text-gold-light">
+        BANDUNG
+      </p>
+    </div>
+  );
+}
+
+function EmergencyButton() {
+  const [open, setOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  function confirmEmergency() {
+    setOpen(false);
+    setNotice("Emergency belum terkirim: layanan notifikasi internal belum tersedia di backend.");
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="mx-auto w-[148px] rounded-lg border-2 border-black bg-black p-0.5">
+        <button
+          type="button"
+          onClick={() => { setNotice(null); setOpen(true); }}
+          title="Emergency"
+          aria-label="Kirim permintaan Emergency"
+          className="flex h-8 w-full items-center justify-center rounded-md bg-red-600 text-[10px] font-extrabold tracking-[0.04em] text-white transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2 focus:ring-offset-[#101827]"
+        >
+          <span className="flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5" /><span>EMERGENCY</span></span>
+        </button>
       </div>
-      <div className="leading-tight">
-        <p className="text-sm font-bold tracking-tight">Baturaden 25</p>
-        <p className="text-xs text-muted-foreground">Homestay</p>
-      </div>
+      {notice && <p role="alert" className="px-1 text-center text-[10px] leading-4 text-red-200">{notice}</p>}
+      {open && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="emergency-dialog-title" className="w-full max-w-md rounded-2xl bg-white p-5 text-slate-900 shadow-2xl">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-100 text-red-700"><AlertTriangle className="h-5 w-5" /></span>
+              <div>
+                <h2 id="emergency-dialog-title" className="text-lg font-bold">Konfirmasi Emergency</h2>
+                <p className="mt-1 text-sm text-slate-600">Permintaan bantuan akan ditujukan kepada Owner, Supervisor, Inspector, dan Housekeeping sesuai hak akses.</p>
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">Batal</button>
+              <button type="button" onClick={confirmEmergency} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white">Konfirmasi</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -46,15 +109,15 @@ export function Kerangka({
 }: {
   judul: string; keterangan?: string; aksi?: ReactNode; children: ReactNode; tanpaJudul?: boolean;
 }) {
-  const { peran, nama, posisi, keluar } = usePeran();
+  const { peran, nama, posisi, posisiKode, keluar } = usePeran();
   const [lainnya, setLainnya] = useState(false);
-  const menu = semuaMenu.filter((m) => (peran === "owner" || !m.ownerSaja) && (posisi !== "Petugas Kebersihan" || ["/", "/kamar", "/housekeeping"].includes(m.ke)));
+  const menu = semuaMenu.filter((m) => m.ke !== "/pengaturan" && bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Sidebar desktop */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-border bg-background px-4 py-5 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col overflow-hidden border-r border-navy-soft/40 bg-navy-deep px-4 py-5 text-white lg:flex">
         <div className="px-2"><Logo /></div>
         <nav className="mt-8 flex-1 space-y-1">
           {menu.map((m) => (
@@ -62,9 +125,9 @@ export function Kerangka({
               key={m.ke}
               to={m.ke}
               activeOptions={{ exact: m.ke === "/" }}
-              activeProps={{ className: "bg-primary-soft text-primary font-semibold" }}
-              inactiveProps={{ className: "text-muted-foreground hover:bg-secondary hover:text-foreground" }}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors"
+              activeProps={{ className: "bg-gradient-to-r from-gold-light to-gold font-bold text-navy-deep shadow-md" }}
+              inactiveProps={{ className: "text-white/90 hover:bg-white/10 hover:text-white" }}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors"
             >
               <m.ikon className="h-[18px] w-[18px]" strokeWidth={2} />
               {m.label}
@@ -72,6 +135,7 @@ export function Kerangka({
           ))}
         </nav>
         <div className="space-y-3 border-t border-border pt-4">
+          <EmergencyButton />
           <div className="px-2">
             <p className="text-sm font-semibold">{nama}</p>
             <p className="text-xs text-muted-foreground">{posisi}</p>
@@ -81,9 +145,9 @@ export function Kerangka({
       </aside>
 
       {/* Header HP */}
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/90 px-4 py-3 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-navy-soft/40 bg-navy-deep px-4 py-3 text-white backdrop-blur lg:hidden">
         <Logo />
-        <button onClick={() => void keluar()} className="text-sm font-semibold text-primary">Keluar</button>
+        <button onClick={() => void keluar()} className="text-sm font-semibold text-gold-light">Keluar</button>
       </header>
 
       <main className="px-4 pb-28 pt-6 lg:ml-60 lg:px-10 lg:pb-12 lg:pt-10">
@@ -104,7 +168,7 @@ export function Kerangka({
       {/* Navigasi bawah HP */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         <ul className="grid grid-cols-5">
-          {bawah.filter((m) => posisi !== "Petugas Kebersihan" || ["/", "/kamar"].includes(m.ke)).map((m) => (
+          {bawah.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode)).map((m) => (
             <li key={m.ke}>
               <Link
                 to={m.ke}

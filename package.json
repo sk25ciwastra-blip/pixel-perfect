@@ -9,7 +9,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:training": "node scripts/training-enforcement-pure-tests.cjs",
+    "test:numbering": "node scripts/owner-final-numbering-pure-tests.cjs",
+    "test:dashboard": "node scripts/dashboard-operational-pure-tests.cjs",
+    "test:checkout-hardening": "node scripts/checkout-hardening-pure-tests.cjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

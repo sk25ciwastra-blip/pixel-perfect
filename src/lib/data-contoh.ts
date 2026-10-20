@@ -1,10 +1,10 @@
 export type StatusKamar = "siap" | "terisi" | "perlu" | "sedang";
 
 export const labelStatusKamar: Record<StatusKamar, string> = {
-  siap: "Siap",
-  terisi: "Terisi",
-  perlu: "Perlu Dibersihkan",
-  sedang: "Sedang Dibersihkan",
+  siap: "TERSEDIA",
+  terisi: "TERISI",
+  perlu: "PERLU DIBERSIHKAN",
+  sedang: "SEDANG DIBERSIHKAN",
 };
 
 export type Kamar = {
