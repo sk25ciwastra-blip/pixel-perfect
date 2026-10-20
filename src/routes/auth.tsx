@@ -20,7 +20,7 @@ function Auth() {
   }
   const input = 'mt-2.5 h-12 w-full rounded-xl border border-gold/25 bg-navy-deep/80 px-4 text-sm font-normal normal-case text-foreground outline-none transition focus:border-gold focus:ring-4 focus:ring-gold/15';
   const logo = <div aria-label="Baturaden 25 Homestay" className="w-fit text-center leading-tight">
-    <svg viewBox="0 0 64 40" className="mx-auto mb-2 h-9 w-14 text-gold" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+    <svg viewBox="0 0 64 40" className="mx-auto mb-2 h-9 w-14 text-gold drop-shadow-[0_0_10px_color-mix(in_oklch,var(--gold)_45%,transparent)]" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
       <path d="M32 4c5 6 6 14 0 24C26 18 27 10 32 4Z" />
       <path d="M32 28c-4-8-10-13-19-14 0 9 8 15 19 14Z" />
       <path d="M32 28c4-8 10-13 19-14 0 9-8 15-19 14Z" />
@@ -43,6 +43,7 @@ function Auth() {
           <div className="max-w-md">
             <div className="mb-5 h-px w-16 bg-gradient-to-r from-gold to-transparent" />
             <h2 className="font-serif text-5xl leading-[1.1] text-foreground">Setiap malam,<br /><span className="italic text-gold-light">tamu pulang tenang.</span></h2>
+            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">Ruang kerja harian tim Baturaden 25 Homestay — kamar, tamu, transaksi, dan kas dalam satu tempat.</p>
           </div>
         </div>
       </section>
@@ -57,11 +58,15 @@ function Auth() {
             <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
             <div>
               <p className="mb-3 text-[0.65rem] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
+              <p className="mb-3 font-serif text-sm italic text-gold-light/85">Kenyamanan tenang, layanan sepenuh hati</p>
               <h1 className="font-serif text-3xl leading-tight text-foreground">Selamat datang kembali</h1>
-              <p className="mt-3 text-sm text-muted-foreground">Silakan masuk ke akun Anda.</p>
+              <p className="mt-3 text-sm text-muted-foreground">Masuk untuk memulai shift Anda.</p>
             </div>
             <form onSubmit={submit} className="space-y-5">
-              <label className="block text-xs font-semibold text-gold-light">Username<input required type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} className={input} /></label>
+              <div>
+                <label className="block text-xs font-semibold text-gold-light">Username<input required type="email" autoComplete="username" aria-describedby="petunjuk-username" value={email} onChange={e => setEmail(e.target.value)} className={input} /></label>
+                <p id="petunjuk-username" className="mt-2 text-xs text-muted-foreground">Gunakan email akun</p>
+              </div>
               {mode !== 'lupa' && <label className="block text-xs font-semibold text-gold-light">Password<input required minLength={8} type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} className={input} /></label>}
               {error && <p role="status" className="rounded-lg border border-gold/25 bg-gold/5 px-3 py-2 text-sm text-gold-light">{error}</p>}
               <Button disabled={busy} className="h-12 w-full rounded-xl">{busy ? 'Memproses…' : 'Masuk'}</Button>
