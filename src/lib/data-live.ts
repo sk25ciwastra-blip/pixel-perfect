@@ -11,7 +11,7 @@ export type HousekeepingChecklist = Database['public']['Tables']['housekeeping_c
 export type HousekeepingMaintenance = Database['public']['Tables']['housekeeping_maintenance']['Row'];
 type Tabel = Database['public']['Tables'];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type BarisLonggar = Record<string, any> & { id: string; created_at: string };
+type BarisLonggar = any;
 type Baris<T extends string> = T extends keyof Tabel ? Tabel[T]['Row'] : BarisLonggar;
 
 /** Pemanggil fungsi database untuk fungsi yang belum tercantum di definisi tipe. */
