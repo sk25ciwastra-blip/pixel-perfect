@@ -40,7 +40,7 @@ function Auth() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/70 via-background/35 to-background/90" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,var(--background)_95%)] opacity-80" />
 
-      <div className="relative flex min-h-screen flex-col px-5 py-6 sm:px-10 sm:py-8">
+      <div className="relative flex min-h-screen flex-col px-5 py-6 sm:px-10 sm:py-8 lg:flex-row">
         <header className="order-1 flex justify-center lg:flex-1 lg:justify-start lg:self-start">{logo}</header>
 
         <section className="order-2 flex flex-1 items-center justify-center py-10 lg:order-3 lg:w-[440px] lg:flex-none lg:py-0 xl:w-[480px]">
