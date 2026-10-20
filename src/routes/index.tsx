@@ -523,7 +523,7 @@ function Ringkasan() {
 
           {/* KPI + Aksi Cepat */}
           <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "2xl:grid-cols-4" : "2xl:grid-cols-3"}`}>
+            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
               {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
             </div>
 
@@ -551,8 +551,8 @@ function Ringkasan() {
           </div>
 
           {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
-          <div className="mt-5 grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1.95fr)_minmax(320px,1fr)]">
-            <section className="panel-mewah min-w-0 overflow-hidden" aria-labelledby="judul-status-kamar">
+          <div className="mt-5 grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,1.95fr)_minmax(320px,1fr)]">
+            <section className="panel-mewah flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pb-3 pt-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
@@ -575,21 +575,23 @@ function Ringkasan() {
                   <p className="mt-1 text-xs text-muted-foreground">Kamar akan muncul di sini setelah Check-in.</p>
                 </div>
               ) : (
-                <div className="mx-3 mb-4 max-h-[330px] overflow-auto rounded-xl border border-gold/15 bg-navy-deep/50">
-                  <table className="w-full min-w-[640px] table-fixed text-left text-xs xl:min-w-0">
+                <div className="mx-3 mb-4 max-h-[330px] flex-1 overflow-auto rounded-xl xl:max-h-none border border-gold/15 bg-navy-deep/50">
+                  <table className="w-full min-w-[700px] table-fixed text-left text-[13px] xl:min-w-0">
                     <colgroup>
-                      <col className="w-[64px]" />
+                      <col className="w-[58px]" />
+                      <col className="w-[84px]" />
                       <col />
                       <col className="w-[62px]" />
-                      <col className="w-[64px]" />
-                      <col className="w-[90px]" />
+                      <col className="w-[74px]" />
+                      <col className="w-[150px]" />
                       <col className="w-[70px]" />
                       <col className="w-[108px]" />
                     </colgroup>
-                    <thead className="sticky top-0 z-10 bg-navy-deep text-xs text-muted-foreground">
+                    <thead className="sticky top-0 z-10 bg-navy-deep text-xs [&_th]:normal-case [&_th]:tracking-normal [&_th]:text-foreground/85">
                       <tr className="border-b border-gold/20">
                         <th className="px-2 py-3 font-semibold">Kamar</th>
-                                                <th className="px-2 py-3 font-semibold">Tamu</th>
+                        <th className="px-2 py-3 font-semibold">Tipe</th>
+                        <th className="px-2 py-3 font-semibold">Tamu</th>
                         <th className="px-2 py-3 font-semibold">Paket</th>
                         <th className="px-2 py-3 whitespace-nowrap font-semibold">Check-in</th>
                         <th className="px-2 py-3 font-semibold">Sisa Waktu</th>
@@ -617,20 +619,18 @@ function Ringkasan() {
                           : sisa?.status === "hampir" ? "bg-v0-warning" : "bg-v0-success";
                         return (
                           <tr key={room.id} className="transition hover:bg-gold/[0.04]">
-                            <td className="px-2 py-3.5">
-                              <p className="font-serif text-lg font-semibold">{room.room_number}</p>
-                              <p className="break-words text-[10px] leading-snug text-muted-foreground">{roomType?.name ?? "—"}</p>
+                            <td className="px-2 py-3">
+                              <span className="font-semibold tabular-nums">{room.room_number}</span>
                             </td>
-                            <td className="px-2 py-3.5">
+                            <td className="truncate px-2 py-3.5" title={roomType?.name}>{roomType?.name ?? "—"}</td>
+                            <td className="px-2 py-3">
                               {guest ? (
                                 <>
-                                  <p className="break-words font-medium leading-snug" title={guest.full_name}>{guest.full_name}</p>
-                                  <p className="whitespace-nowrap text-[10px] text-muted-foreground">WA ••••{guest.phone.replace(/\D/g, "").slice(-4)}</p>
-                                  <p className="mt-0.5 truncate font-mono text-[10px] text-gold/80" title={item?.transaction_number}>{item?.transaction_number}</p>
+                                  <p className="truncate font-medium" title={`${guest.full_name} · ${item?.transaction_number ?? ""}`}>{guest.full_name}</p>
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-2 py-3.5">
+                            <td className="px-2 py-3">
                               {item ? (
                                 <>
                                   <p className="font-semibold">{kodePaket(packageItem?.name)}</p>
@@ -638,19 +638,19 @@ function Ringkasan() {
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-2 py-3.5 whitespace-nowrap tabular-nums">{item?.started_at ? jamWib(item.started_at) : "—"}</td>
-                            <td className="px-2 py-3.5">
+                            <td className="px-2 py-3 whitespace-nowrap tabular-nums">{item?.started_at ? jamWib(item.started_at) : "—"}</td>
+                            <td className="px-2 py-3">
                               {sisa ? (
-                                <div className="flex flex-col items-start gap-1.5">
-                                  <span className={`w-[4.6rem] font-mono font-bold tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
-                                  <span className="h-1 w-full overflow-hidden rounded-full bg-secondary" aria-hidden="true">
+                                <div className="flex items-center gap-2">
+                                  <span className={`shrink-0 font-mono font-bold tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
+                                  <span className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary" aria-hidden="true">
                                     <span className={`block h-full rounded-full ${warnaBatang}`} style={{ width: `${sisa.status === "expired" ? 100 : Math.max(4, porsi * 100)}%` }} />
                                   </span>
                                 </div>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-2 py-3.5 whitespace-nowrap tabular-nums">{item?.ends_at ? jamWib(item.ends_at) : "—"}</td>
-                            <td className="px-2 py-3.5">
+                            <td className="px-2 py-3 whitespace-nowrap tabular-nums">{item?.ends_at ? jamWib(item.ends_at) : "—"}</td>
+                            <td className="px-2 py-3">
                               {item ? (
                                 <div className="flex justify-center gap-1">
                                   <IkonAksi label="Detail transaksi" onClick={() => setDetailTransactionId(item.id)}><Eye className="h-4 w-4" /></IkonAksi>
