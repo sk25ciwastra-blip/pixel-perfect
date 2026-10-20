@@ -337,7 +337,7 @@ function Ringkasan() {
       ? [{
           label: "Pendapatan Hari Ini",
           nilai: rupiah(pembayaranHariIni.reduce((total, payment) => total + Number(payment.amount), 0)),
-          catatan: "pembayaran tercatat hari ini",
+          catatan: "pembayaran hari ini",
           ikon: CircleDollarSign,
           varian: "hijau" as const,
         }]
@@ -345,14 +345,14 @@ function Ringkasan() {
     {
       label: "Booking Aktif",
       nilai: String(bookingAktif.length),
-      catatan: "reservasi menunggu kedatangan",
+      catatan: "menunggu kedatangan",
       ikon: CalendarDays,
       varian: "emas",
     },
     {
       label: "Kamar Terisi",
       nilai: String(jumlahTerisi),
-      catatan: `dari ${kamarAktif.length} kamar aktif`,
+      catatan: `dari ${kamarAktif.length} kamar`,
       ikon: BedDouble,
       varian: "emas",
       cincin: persenTerisi,
@@ -527,8 +527,8 @@ function Ringkasan() {
           </header>
 
           {/* KPI + Aksi Cepat */}
-          <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
-            <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${statistik.length >= 4 ? "2xl:grid-cols-4" : "2xl:grid-cols-3"}`}>
+          <div className="mt-7 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+            <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${statistik.length >= 4 ? "2xl:grid-cols-4" : "2xl:grid-cols-3"}`}>
               {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
             </div>
 
@@ -825,27 +825,30 @@ const warnaVarian: Record<Kpi["varian"], string> = {
 
 function KartuKpi({ item }: { item: Kpi }) {
   const Ikon = item.ikon;
-  const r = 24;
+  const r = 25;
   const keliling = 2 * Math.PI * r;
   return (
-    <article className="panel-mewah group flex min-w-0 items-center gap-4 p-5 transition hover:-translate-y-0.5 hover:border-gold/50">
-      <span className={`ikon-bulat size-14 shrink-0 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
-        <Ikon className="size-7" strokeWidth={1.5} aria-hidden="true" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <h2 className="text-sm text-muted-foreground">{item.label}</h2>
-        <p className="mt-0.5 truncate text-[1.65rem] font-bold leading-tight tracking-tight tabular-nums">{item.nilai}</p>
-        <p className={`mt-0.5 truncate text-xs ${warnaVarian[item.varian]}`}>{item.catatan}</p>
-      </div>
-      {item.cincin !== undefined && (
-        <div className="relative size-16 shrink-0" aria-label={`${item.cincin}% kamar terisi`}>
-          <svg viewBox="0 0 60 60" className="size-full -rotate-90">
-            <circle cx="30" cy="30" r={r} fill="none" stroke="var(--secondary)" strokeWidth="5" />
-            <circle cx="30" cy="30" r={r} fill="none" stroke="var(--gold)" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${(item.cincin / 100) * keliling} ${keliling}`} />
+    <article className="panel-mewah group flex min-w-0 flex-col items-start gap-3 p-4 transition hover:-translate-y-0.5 hover:border-gold/50 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+      {item.cincin !== undefined ? (
+        <div className="relative size-14 shrink-0" aria-label={`${item.cincin}% kamar terisi`}>
+          <svg viewBox="0 0 60 60" className="size-full -rotate-90 drop-shadow-[0_0_10px_oklch(0.76_0.115_82/0.35)]">
+            <circle cx="30" cy="30" r={r} fill="oklch(0.16 0.006 80)" stroke="var(--secondary)" strokeWidth="5" />
+            {item.cincin > 0 && (
+              <circle cx="30" cy="30" r={r} fill="none" stroke="var(--gold)" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${(item.cincin / 100) * keliling} ${keliling}`} />
+            )}
           </svg>
-          <span className="absolute inset-0 grid place-items-center text-xs font-bold">{item.cincin}%</span>
+          <span className="absolute inset-0 grid place-items-center text-xs font-bold text-gold-light">{item.cincin}%</span>
         </div>
+      ) : (
+        <span className={`ikon-bulat size-14 shrink-0 ${item.varian === "emas" ? "text-gold" : warnaVarian[item.varian]}`}>
+          <Ikon className="size-7" strokeWidth={1.5} aria-hidden="true" />
+        </span>
       )}
+      <div className="min-w-0 flex-1">
+        <h2 className="text-[0.8rem] leading-snug text-muted-foreground">{item.label}</h2>
+        <p className="mt-0.5 break-words text-2xl font-bold leading-tight tracking-tight tabular-nums 2xl:text-[1.7rem]">{item.nilai}</p>
+        <p className={`mt-0.5 line-clamp-2 text-xs leading-snug ${warnaVarian[item.varian]}`}>{item.catatan}</p>
+      </div>
     </article>
   );
 }
@@ -900,7 +903,7 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
   let offset = 0;
   return (
     <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
-      <div className="relative size-44 shrink-0">
+      <div className="relative size-40 shrink-0">
         <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.25)]">
           <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="18" />
           {total > 0 && data.map((d) => {
@@ -916,7 +919,7 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
         <div className="absolute inset-0 grid place-items-center text-center">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Pemasukan</p>
-            <p className="mt-0.5 font-serif text-base font-semibold text-gold-light">{rupiah(totalPemasukan)}</p>
+            <p className="mt-0.5 text-sm font-bold tabular-nums text-gold-light">{rupiah(totalPemasukan)}</p>
           </div>
         </div>
       </div>
@@ -924,7 +927,7 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
         {data.map((d) => (
           <li key={d.label} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-sm">
             <span className="size-3 rounded-full ring-2 ring-background" style={{ backgroundColor: d.warna }} aria-hidden="true" />
-            <span className="truncate text-muted-foreground">{d.label} <span className="text-xs">({total > 0 ? Math.round((d.nominal / total) * 100) : 0}%)</span></span>
+            <span className="min-w-0 leading-tight text-muted-foreground">{d.label}<span className="block text-[11px] text-muted-foreground/70">{total > 0 ? Math.round((d.nominal / total) * 100) : 0}%</span></span>
             <span className={`font-semibold tabular-nums ${d.label === "Pengeluaran" ? "text-bahaya-foreground" : ""}`}>{rupiah(d.nominal)}</span>
           </li>
         ))}
@@ -996,14 +999,14 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
         </form>
       )}
       <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row">
-        <div className="relative size-44 shrink-0">
+        <div className="relative size-40 shrink-0">
           <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.3)]">
             <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="11" />
-            <circle cx="70" cy="70" r={r} fill="none" stroke="var(--gold)" strokeWidth="11" strokeLinecap="round" strokeDasharray={`${isi} ${keliling}`} className="transition-all duration-700" />
+            {isi > 0 && <circle cx="70" cy="70" r={r} fill="none" stroke="var(--gold)" strokeWidth="11" strokeLinecap="round" strokeDasharray={`${isi} ${keliling}`} className="transition-all duration-700" />}
           </svg>
           <div className="absolute inset-0 grid place-items-center text-center">
             <div>
-              <p className="font-serif text-3xl font-semibold text-gold-light">{target > 0 ? `${Math.round(persen)}%` : "—"}</p>
+              <p className="text-3xl font-bold tabular-nums text-gold-light">{target > 0 ? `${Math.round(persen)}%` : "—"}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{target > 0 ? "tercapai" : "target belum diatur"}</p>
             </div>
           </div>
