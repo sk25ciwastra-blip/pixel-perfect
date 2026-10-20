@@ -508,7 +508,7 @@ function Ringkasan() {
         <div className="px-4 pb-10 pt-5 sm:px-6 lg:px-8 2xl:px-10">
           {/* Baris atas: tanggal & profil */}
           <div className="flex flex-wrap items-center justify-end gap-3">
-            <form onSubmit={(e) => { e.preventDefault(); setKataCari(pencarian); }} className="flex min-w-0 flex-1 basis-full items-center gap-2 rounded-full border border-gold/25 bg-background/65 py-1.5 pl-4 pr-1.5 backdrop-blur-md xl:basis-0">
+            <form onSubmit={(e) => { e.preventDefault(); setKataCari(pencarian); }} className="flex w-full min-w-0 items-center gap-2 rounded-full border border-gold/25 bg-background/65 py-1.5 pl-4 pr-1.5 backdrop-blur-md xl:mr-auto xl:w-[26.5rem]">
               <Search className="size-4 shrink-0 text-foreground/90" aria-hidden="true" />
               <input aria-label="Pencarian Dashboard" placeholder="Cari ID TRX, ID HK, ID EXP, No. Telp...." value={pencarian} onChange={(e) => { setPencarian(e.target.value); if (!e.target.value.trim()) setKataCari(""); }} className="h-8 w-full min-w-0 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
               <Button type="submit" size="sm" className="shrink-0 rounded-full px-4"><Search className="size-4" />Cari</Button>
@@ -539,7 +539,7 @@ function Ringkasan() {
             <h1 className="mt-1 font-serif text-[2.1rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
               <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">{nama || "Pengguna"}</span>
             </h1>
-            <p className="mt-3 text-sm text-muted-foreground sm:text-base">Pantau operasional, tingkatkan pelayanan, dan kembangkan bisnis Anda.</p>
+            <p className="mt-3 text-sm text-muted-foreground sm:text-base">Di Balik Hotel yang Ramai, Ada Resepsionist yang Hebat.</p>
           </header>
 
           {/* KPI + Aksi Cepat */}
@@ -753,14 +753,14 @@ function Ringkasan() {
 
           {/* Tiga modul analitik berjajar */}
           <div className={`mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "xl:grid-cols-3" : ""}`}>
-            <section className="panel-mewah p-5 sm:p-6" aria-labelledby="judul-komposisi">
-              <JudulModul id="judul-komposisi" ikon={CircleDollarSign} judul="Pendapatan Hari Ini" sub={`Komposisi QRIS, Transfer Bank, Cash${isFinanceViewer ? " & Pengeluaran" : ""}`} />
+            <section className="panel-mewah p-4" aria-labelledby="judul-komposisi">
+              <JudulModul id="judul-komposisi" ikon={CircleDollarSign} judul="Pendapatan Hari Ini" sub="Komposisi berdasarkan metode pembayaran" aksi={peran === "owner" ? <Link to="/keuangan" className="shrink-0 text-xs font-semibold text-gold hover:text-gold-light">Lihat Detail ›</Link> : undefined} />
               <Donat data={komposisi} totalPemasukan={totalPemasukanHariIni} />
             </section>
 
-            <section className="panel-mewah p-5 sm:p-6" aria-labelledby="judul-grafik">
-              <JudulModul id="judul-grafik" ikon={BarChart3} judul="Grafik Pendapatan" sub="Berdasarkan pembayaran tercatat · M = juta rupiah" />
-              <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-xl border border-gold/20 bg-navy-deep/70 p-1 text-xs font-semibold" role="tablist">
+            <section className="panel-mewah p-4" aria-labelledby="judul-grafik">
+              <JudulModul id="judul-grafik" ikon={BarChart3} judul="Grafik Pendapatan" sub={`Perbandingan pendapatan ${modeGrafik === "harian" ? "per hari" : modeGrafik === "mingguan" ? "per minggu" : "per bulan"}`} aksi={peran === "owner" ? <Link to="/laporan" search={{ bagian: "pendapatan" } as never} className="shrink-0 text-xs font-semibold text-gold hover:text-gold-light">Lihat Detail ›</Link> : undefined} />
+              <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-gold/20 bg-navy-deep/70 p-1 text-xs font-semibold" role="tablist">
                 {(["harian", "mingguan", "bulanan"] as ModeGrafik[]).map((m) => (
                   <button
                     key={m}
@@ -768,7 +768,7 @@ function Ringkasan() {
                     role="tab"
                     aria-selected={modeGrafik === m}
                     onClick={() => setModeGrafik(m)}
-                    className={`rounded-lg px-3 py-2 capitalize transition ${modeGrafik === m ? "emas-isi" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`rounded-lg px-3 py-1.5 capitalize transition ${modeGrafik === m ? "emas-isi" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     {m}
                   </button>
@@ -871,9 +871,9 @@ function JudulModul({ id, ikon: Ikon, judul, sub, aksi }: { id: string; ikon: Lu
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="ikon-bulat size-11 shrink-0 text-gold"><Ikon className="size-5" strokeWidth={1.6} /></span>
+        <span className="ikon-bulat size-9 shrink-0 text-gold"><Ikon className="size-4" strokeWidth={1.6} /></span>
         <div className="min-w-0">
-          <h2 id={id} className="font-serif text-xl font-semibold">{judul}</h2>
+          <h2 id={id} className="font-serif text-lg font-semibold leading-tight">{judul}</h2>
           {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
         </div>
       </div>
@@ -920,8 +920,8 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
   const keliling = 2 * Math.PI * r;
   let offset = 0;
   return (
-    <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row xl:flex-col min-[1800px]:flex-row">
-      <div className="relative size-40 shrink-0">
+    <div className="mt-4 flex flex-row items-center gap-4">
+      <div className="relative size-32 shrink-0">
         <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.25)]">
           <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="18" />
           {total > 0 && data.map((d) => {
@@ -936,17 +936,18 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
         </svg>
         <div className="absolute inset-0 grid place-items-center text-center">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Pemasukan</p>
-            <p className="mt-0.5 text-sm font-bold tabular-nums text-gold-light">{rupiah(totalPemasukan)}</p>
+            <p className="whitespace-pre-line text-sm font-bold leading-tight tabular-nums text-foreground">{rupiah(totalPemasukan).replace(/^Rp\s?/, "Rp\n")}</p>
+            <p className="text-[10px] text-muted-foreground">Total</p>
           </div>
         </div>
       </div>
-      <ul className="w-full min-w-0 space-y-3">
+      <ul className="w-full min-w-0 space-y-2">
         {data.map((d) => (
-          <li key={d.label} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 text-sm">
+          <li key={d.label} className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2 text-xs">
             <span className="size-3 rounded-full ring-2 ring-background" style={{ backgroundColor: d.warna }} aria-hidden="true" />
-            <span className="min-w-0 leading-tight text-muted-foreground">{d.label}<span className="block text-[11px] text-muted-foreground/70">{total > 0 ? Math.round((d.nominal / total) * 100) : 0}%</span></span>
+            <span className="min-w-0 truncate text-muted-foreground">{d.label}</span>
             <span className={`font-semibold tabular-nums ${d.label === "Pengeluaran" ? "text-bahaya-foreground" : ""}`}>{rupiah(d.nominal)}</span>
+            <span className="w-8 text-right tabular-nums text-muted-foreground">{total > 0 ? Math.round((d.nominal / total) * 100) : 0}%</span>
           </li>
         ))}
       </ul>
@@ -956,8 +957,8 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
 
 function Grafik({ data, ticks }: { data: { label: string; nilai: number }[]; ticks: number[] }) {
   return (
-    <div className="mt-5 grid grid-cols-[auto_1fr] gap-3">
-      <div className="relative h-44 w-8 text-right text-[11px] text-muted-foreground">
+    <div className="mt-4 grid grid-cols-[auto_1fr] gap-3">
+      <div className="relative h-28 w-8 text-right text-[11px] text-muted-foreground">
         {ticks.map((t, i) => (
           <span key={t} className="absolute right-0" style={{ bottom: `calc(${(i / (ticks.length - 1)) * 100}% - 0.5rem)` }}>
             {labelJuta(t)}
@@ -965,7 +966,7 @@ function Grafik({ data, ticks }: { data: { label: string; nilai: number }[]; tic
         ))}
       </div>
       <div>
-        <div className="relative flex h-44 items-end gap-2 sm:gap-3">
+        <div className="relative flex h-28 items-end gap-2 sm:gap-3">
           {ticks.map((t, i) => (
             <span key={t} className="absolute inset-x-0 border-t border-dashed border-gold/15" style={{ bottom: `${(i / (ticks.length - 1)) * 100}%` }} aria-hidden="true" />
           ))}
@@ -995,7 +996,7 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
   const keliling = 2 * Math.PI * r;
   const isi = Math.min(100, persen) / 100 * keliling;
   return (
-    <section className="panel-mewah p-5 sm:p-6" aria-labelledby="judul-target">
+    <section className="panel-mewah p-4" aria-labelledby="judul-target">
       <JudulModul
         id="judul-target"
         ikon={Target}
@@ -1016,20 +1017,20 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
           <button type="submit" className="emas-isi rounded-xl px-4 text-sm font-bold">Simpan</button>
         </form>
       )}
-      <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row xl:flex-col min-[1800px]:flex-row">
-        <div className="relative size-40 shrink-0">
+      <div className="mt-4 flex flex-row items-center gap-4">
+        <div className="relative size-32 shrink-0">
           <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.3)]">
             <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="11" />
             {isi > 0 && <circle cx="70" cy="70" r={r} fill="none" stroke="var(--gold)" strokeWidth="11" strokeLinecap="round" strokeDasharray={`${isi} ${keliling}`} className="transition-all duration-700" />}
           </svg>
           <div className="absolute inset-0 grid place-items-center text-center">
             <div>
-              <p className="text-3xl font-bold tabular-nums text-gold-light">{target > 0 ? `${Math.round(persen)}%` : "—"}</p>
+              <p className="text-2xl font-bold tabular-nums text-gold-light">{target > 0 ? `${Math.round(persen)}%` : "—"}</p>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{target > 0 ? "tercapai" : "target belum diatur"}</p>
             </div>
           </div>
         </div>
-        <dl className="w-full space-y-3 text-sm">
+        <dl className="w-full min-w-0 space-y-2 text-sm">
           <div className="flex items-center gap-3"><Flag className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Target bulan ini</dt><dd className="font-semibold">{target > 0 ? rupiah(target) : "Belum diatur"}</dd></div></div>
           <div className="flex items-center gap-3"><BarChart3 className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Realisasi</dt><dd className="font-semibold text-gold-light">{rupiah(realisasi)}</dd></div></div>
           {target > 0 && <div className="flex items-center gap-3"><Target className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Sisa target</dt><dd className="font-semibold">{rupiah(Math.max(0, target - realisasi))}</dd></div></div>}
