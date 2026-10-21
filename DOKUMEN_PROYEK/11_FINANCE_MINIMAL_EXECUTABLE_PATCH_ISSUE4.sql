@@ -2604,6 +2604,45 @@ GRANT EXECUTE ON FUNCTION public.can_operate(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.can_view_finance(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.can_view_operations(uuid) TO authenticated;
 
+-- Final privilege boundary: apply after every CREATE/GRANT in this patch.
+REVOKE ALL ON FUNCTION public.finance_is_booking_operator(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.finance_is_booking_operator(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.finance_is_owner_or_supervisor(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.finance_is_owner_or_supervisor(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid,numeric,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_transaction_payment(uuid,numeric,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid,numeric,text,uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_transaction_payment(uuid,numeric,text,uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid,numeric,text,uuid,uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_transaction_payment(uuid,numeric,text,uuid,uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz) TO authenticated;
+REVOKE ALL ON FUNCTION public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.check_in_booking(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.check_in_booking(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.open_finance_cash_session(numeric) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.open_finance_cash_session(numeric) TO authenticated;
+REVOKE ALL ON FUNCTION public.close_finance_cash_session(uuid,jsonb,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.close_finance_cash_session(uuid,jsonb,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.record_finance_expense(uuid,uuid,numeric,text,text,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_finance_expense(uuid,uuid,numeric,text,text,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.create_finance_deposit(uuid,uuid,text,numeric,uuid,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_finance_deposit(uuid,uuid,text,numeric,uuid,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.decide_finance_deposit(uuid,text,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.decide_finance_deposit(uuid,text,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.set_finance_settings(text,numeric) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.set_finance_settings(text,numeric) TO authenticated;
+REVOKE ALL ON FUNCTION public.set_finance_commission_config(text,numeric,numeric) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.set_finance_commission_config(text,numeric,numeric) TO authenticated;
+REVOKE ALL ON FUNCTION public.upsert_finance_bank_account(uuid,text,text,text,text,boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.upsert_finance_bank_account(uuid,text,text,text,text,boolean) TO authenticated;
+REVOKE ALL ON FUNCTION public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text) TO authenticated;
+REVOKE ALL ON FUNCTION public.get_finance_session_summary(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_finance_session_summary(uuid) TO authenticated;
+REVOKE ALL ON FUNCTION public.confirm_finance_drawer_handover(uuid,numeric,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.confirm_finance_drawer_handover(uuid,numeric,text) TO authenticated;
 DO $postcheck$
 BEGIN
   IF (SELECT count(*) FROM public.transactions) <> 9
