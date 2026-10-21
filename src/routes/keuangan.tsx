@@ -15,8 +15,21 @@ export const Route = createFileRoute('/keuangan')({
   component: HalamanKeuangan,
 });
 
-type Summary = Record<string, number | string | null>;
+type NumericSummaryValue = number | string | null | undefined;
+type Summary = {
+  expected_cash?: NumericSummaryValue;
+  opening_cash?: NumericSummaryValue;
+  cash?: NumericSummaryValue;
+  expenses?: NumericSummaryValue;
+  refunds?: NumericSummaryValue;
+  snapshot?: { expected_cash?: NumericSummaryValue } | null;
+  [key: string]: unknown;
+};
 
+function angkaRingkasan(value: NumericSummaryValue) {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 function angka(value: string) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
@@ -171,12 +184,24 @@ function HalamanKeuangan() {
     });
   }
 
-  const expectedCash = typeof summary['expected_cash'] === 'number'
-    ? summary['expected_cash']
-    : Number(summary['expected_cash']);
-  const hasExpectedCash = summary['expected_cash'] !== undefined
-    && summary['expected_cash'] !== null
-    && Number.isFinite(expectedCash);
+  const expectedCash = angkaRingkasan(summary.expected_cash)
+    ?? angkaRingkasan(summary.snapshot?.expected_cash)
+    ?? (() => {
+      const openingCash = angkaRingkasan(summary.opening_cash);
+      const cashReceived = angkaRingkasan(summary.cash);
+      const expensesTotal = angkaRingkasan(summary.expenses);
+      const refundsTotal = angkaRingkasan(summary.refunds);
+      const sessionExpenseRows = expenses.rows.filter((expense) => expense.session_id === selectedSession?.id);
+      const visibleExpenseTotal = sessionExpenseRows.reduce((total, expense) => total + Number(expense.amount), 0);
+      const cashExpenseTotal = sessionExpenseRows
+        .filter((expense) => expense.method.toUpperCase() === 'CASH')
+        .reduce((total, expense) => total + Number(expense.amount), 0);
+      const expensesAreComplete = expensesTotal !== null
+        && Math.abs(visibleExpenseTotal - expensesTotal) < 0.005;
+      if (openingCash === null || cashReceived === null || refundsTotal !== 0 || !expensesAreComplete) return null;
+      return openingCash + cashReceived - cashExpenseTotal;
+    })();
+  const hasExpectedCash = expectedCash !== null;
   const cashDeficit = hasExpectedCash && expectedCash < 0;
 
   async function closeSession() {
