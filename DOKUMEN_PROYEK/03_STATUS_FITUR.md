@@ -251,3 +251,24 @@ Koreksi ukuran grafik terakhir: tinggi SVG ditargetkan 240px mobile dan 260px de
 - Titik awal: dihitung dari maksimum nomor yang tersimpan pada database saat migration/preflight dijalankan. Data contoh UI tidak dihitung. Sesi ini tidak memiliki izin/koneksi untuk membaca database Staging/Production dan tidak menyentuhnya.
 - Staging: **TIDAK DISENTUH / BELUM DIVERIFIKASI**.
 - P0 berikutnya: **STOP — menunggu instruksi Owner**.
+
+
+## STATUS TERBARU — 21 Oktober 2026 (bedakan environment)
+
+| Fitur/lingkungan | Status/bukti |
+|---|---|
+| Finance schema Lovable | **PASS LIVE** — patch commit `2b7cb860`; 12 tabel dengan RLS; hardening 6 helper commit `26282e6` |
+| Closing negatif dan pergantian sesi | **PASS LIVE DEMO** — -Rp50.000 FINAL; alokasi 0; sesi berikutnya OPEN Rp0 |
+| Nomorator Transaksi | **PASS LIVE** — `BTRDTRX-000020` diterbitkan; legacy `BTRD25-000019` tetap |
+| Nomorator Pengeluaran | **PASS LIVE** — `BTRDEXP-000001` diterbitkan; expense legacy nullable tetap |
+| Nomorator Housekeeping | **INSTALLED / BELUM LIVE TEST** — sequence/RPC aktif; dua history legacy tetap; menunggu kamar dirty dari checkout yang sah |
+| Booking + pembayaran DP | **PASS LIVE DEMO** — 2 booking @ Rp70.000, DP QRIS @ Rp28.000, sisa @ Rp42.000 |
+| Booking nama tamu | **FIX MERGED** PR #10, editor Lovable sync; uji browser sesudah merge belum PASS |
+| Frontend Finance | **FIX MERGED** PR #9, editor sync; web Finance dan closing negatif diuji langsung |
+| Pelunasan, Check-in, Check-out demo terjadwal | **BELUM TEST** — 22 Okt kamar 06 jam 14.00 dan 07 jam 15.00 WIB |
+| Training, role per staf, dual identity, settlement checkout hardening penuh | **STATUS TERPISAH; belum dibuktikan semuanya di Lovable runtime**, meskipun beberapa lulus lokal Codex |
+| GitHub main ↔ Lovable editor | **SYNC** pada commit `47e760b0`; published build tidak otomatis terverifikasi |
+| Backup/restore | Custom backup 21 Okt dipulihkan kompatibel lokal; restore penuh layanan/pasca commit belum teruji |
+| Supabase Staging | **BUKAN** database Lovable; jangan samakan status |
+
+**OPERASIONAL SEMENTARA: kandidat / belum GO.** Butuh uji alur inti, kewenangan staf, dan checkpoint persetujuan Owner; **100% seluruh roadmap belum dapat diklaim**. Persentase progres harus dihitung dari scope/task yang telah dipetakan, bukan berdasarkan klaim migrasi tunggal.
