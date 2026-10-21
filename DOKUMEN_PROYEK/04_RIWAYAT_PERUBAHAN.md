@@ -126,3 +126,20 @@ Backup attempt RIW-041: host Session Pooler Staging dapat dicapai, tetapi `psql`
 | RIW-062 | FASE A integrasi desain v0 selesai: audit read-only v0 dan aplikasi asli, matriks halaman, token navy/gold selektif, dan adaptasi visual shared Sidebar/Layout. Dashboard detail ditunda ke FASE B; halaman tanpa referensi v0 tidak diubah. | 2026-10-19 | 2026-10-19 | Dashboard/numbering/checkout pure regressions PASS; TypeScript PASS; build PASS dengan warning deprecation lama; diff check PASS tanpa whitespace error. Tidak ada server v0, database, migration, Staging/Production, commit, push, deploy, reset, clean, atau restore yang disentuh. | SIAP REVIEW OWNER / FASE B DITUNDA | Keputusan Owner, v0 source read-only, source aplikasi asli, matriks `06_MATRIKS_DESAIN_V0.md` | FASE A, design tokens, Sidebar, Layout, auth/permission |
 | RIW-063 | FASE B Dashboard v0 diadaptasi ke aplikasi asli: Hero navy/gold, KPI live, Activity live Owner, Revenue live dari payments, Payment Breakdown live, dan Quick Actions bergaya v0. `mock-data.ts`, foto, cuaca, pencarian, serta RoomCards mock tidak digunakan; tabel P0-02 dan P0-02B dipertahankan. | 2026-10-19 | 2026-10-19 | Dashboard regression PASS; TypeScript PASS; build PASS dengan warning lama; browser visual belum diuji; diff check harus menjadi validasi akhir checkpoint. Tidak ada v0 server, database, migration, Staging/Production, commit, push, deploy, reset, clean, atau restore. | SIAP REVIEW OWNER / FASE B LOKAL SELESAI | Keputusan Owner, v0 source read-only, live source Dashboard | FASE B, Dashboard, visual UX, live data |
 | RIW-064 | Koreksi final P0-01/P0-02B diterapkan lokal: trigger `transaction_identity_insert` kini memakai generator `BTRDTRX-*` dan mempertahankan `created_by`; settlement Check-out kini menghitung `payments - refunds = price_snapshot + charge_events`, dengan guard lock untuk payment/charge/refund mutation. | 2026-10-19 | 2026-10-19 | Static tests, TypeScript, numbering isolated runtime dengan trigger Staging-like, dan checkout isolated runtime dengan Extend/Overtime/refund/concurrency PASS. Tidak ada database remote, migration Staging/Production, commit, push, deploy, reset, clean, atau restore. | PASS LOKAL / SIAP AUDIT OWNER | Temuan audit Staging, migration correction, runtime harness | P0-01, P0-02B, numbering, settlement, Finance |
+
+
+## Checkpoint sesudah RIW-064 — 21 Oktober 2026
+
+> Penomoran RIW berikutnya perlu direkonsiliasi dengan riwayat sejak RIW-064 sebelum menetapkan ID permanen; catatan ini tidak menghapus riwayat sebelumnya.
+
+| Tanggal | Perubahan dan bukti | Status/lingkungan |
+|---|---|---|
+| 21 Okt | Finance patch `2b7cb860` COMMIT; percobaan `5fe10dcf` rollback karena anon EXECUTE; hardening 6 fungsi `26282e6` COMMIT | PASS DB Lovable; 12 tabel Finance RLS |
+| 21 Okt | Frontend Finance merge PR #9 (`7544134a`), Booking guests refresh merge PR #10 (`47e760b0`) | GitHub main = Lovable editor; **tanpa perintah deploy/publish** |
+| 21 Okt | Booking demo pertama `BTRD25-000019` dan kedua `BTRDTRX-000020`, masing-masing DP Rp28.000 QRIS simulasi | PASS DB Lovable; historis dipertahankan |
+| 21 Okt | Nomorator migration `b1106413` COMMIT; percobaan `8e14c566` rollback akibat privilege anon. Expense baru `BTRDEXP-000001` | PASS DB Lovable; HK belum live test |
+| 21 Okt | Sesi kas Rp0 → expense demo Rp50.000 → FINAL -Rp50.000 tanpa alokasi/handover; sesi baru OPEN Rp0; expense demo berikutnya Rp1.000 | PASS browser + DB Lovable |
+| 21 Okt | Housekeeping history 2 legacy NULL job_number; 0 job aktif; pembuktian generator menunggu dirty-room legal | Audit read-only; tidak memaksa status kamar |
+| 22 Okt (rencana) | Pelunasan Rp42.000, Check-in sesuai jam, Check-out dan HK; verifikasi batas waktu dan role | **BELUM DIEKSEKUSI** |
+
+Catatan kejujuran status: hasil lokal Codex tidak otomatis sama dengan seluruh source/DB Lovable; restore full platform/PITR belum terbukti; operasional sementara masih menunggu GO/NO-GO Owner.
