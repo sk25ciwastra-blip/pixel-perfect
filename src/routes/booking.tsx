@@ -518,7 +518,7 @@ Terima kasih.`;
         <FormulirPemesanan
           mode="booking"
           onClose={() => setOpen(false)}
-          onSaved={transactions.refresh}
+          onSaved={async () => { await Promise.all([transactions.refresh(), guests.refresh()]); }}
         />
       )}
 
