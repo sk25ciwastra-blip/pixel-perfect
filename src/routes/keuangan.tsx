@@ -171,12 +171,30 @@ function HalamanKeuangan() {
     });
   }
 
+  const expectedCash = typeof summary['expected_cash'] === 'number'
+    ? summary['expected_cash']
+    : Number(summary['expected_cash']);
+  const hasExpectedCash = summary['expected_cash'] !== undefined
+    && summary['expected_cash'] !== null
+    && Number.isFinite(expectedCash);
+  const cashDeficit = hasExpectedCash && expectedCash < 0;
+
   async function closeSession() {
     if (!selectedSession) return;
+    if (!hasExpectedCash) {
+      setMessage('Saldo kas belum tersedia. Muat ulang ringkasan sebelum closing.');
+      return;
+    }
     await run(async () => {
       const { error } = await rpc('close_finance_cash_session', {
         _session_id: selectedSession.id,
-        _allocation: { setor_cash: angka(setorCash), setor_transfer: angka(setorTransfer), di_laci: angka(diLaci), dibawa: angka(dibawa), recipient_user_id: recipientUserId || null },
+        _allocation: {
+          setor_cash: cashDeficit ? 0 : angka(setorCash),
+          setor_transfer: angka(setorTransfer),
+          di_laci: cashDeficit ? 0 : angka(diLaci),
+          dibawa: cashDeficit ? 0 : angka(dibawa),
+          recipient_user_id: cashDeficit ? null : recipientUserId || null,
+        },
         _reason: closingReason,
       });
       return { error };
@@ -303,10 +321,14 @@ function HalamanKeuangan() {
         <Panel judul="Closing sesi kas">
           {canCloseOthers && !activeSession && <select value={selectedSession.id} onChange={(e) => setSelectedSessionId(e.target.value)} className="mb-4 h-10 w-full rounded-xl border border-input px-3">{sessions.rows.filter((session) => session.status === 'OPEN').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {session.opened_by}</option>)}</select>}
           <p className="mb-3 text-xs text-muted-foreground">Alokasi closing sesi</p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-4"><input value={setorCash} onChange={(e) => setSetorCash(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="SETOR CASH" /><input value={setorTransfer} onChange={(e) => setSetorTransfer(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="SETOR TRANSFER" /><input value={diLaci} onChange={(e) => setDiLaci(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="DI LACI" /><input value={dibawa} onChange={(e) => setDibawa(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="DIBAWA" /></div>
+          <p className={`mb-3 text-sm font-semibold ${cashDeficit ? 'text-bahaya-foreground' : 'text-foreground'}`}>
+            Saldo CASH sesi: {hasExpectedCash ? rupiah(expectedCash) : 'Memuat saldo...'}
+          </p>
+          {cashDeficit && <p className="mb-3 text-xs text-bahaya-foreground">Saldo minus dicatat dalam closing sesi. Alokasi CASH otomatis nol; SETOR TRANSFER tetap wajib sesuai penerimaan transfer.</p>}
+          <div className="mt-5 grid gap-3 sm:grid-cols-4"><input disabled={cashDeficit} value={setorCash} onChange={(e) => setSetorCash(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="SETOR CASH" /><input value={setorTransfer} onChange={(e) => setSetorTransfer(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="SETOR TRANSFER" /><input disabled={cashDeficit} value={diLaci} onChange={(e) => setDiLaci(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="DI LACI" /><input disabled={cashDeficit} value={dibawa} onChange={(e) => setDibawa(e.target.value)} type="number" min="0" className="h-10 rounded-xl border border-input px-3" placeholder="DIBAWA" /></div>
           {angka(diLaci) > 0 && <select value={recipientUserId} onChange={(e) => setRecipientUserId(e.target.value)} className="mt-3 h-10 w-full rounded-xl border border-input px-3"><option value="">Pilih penerima DI LACI</option>{employees.rows.filter((employee) => employee.active).map((employee) => <option key={employee.user_id} value={employee.user_id}>{employee.name}</option>)}</select>}
           <input value={closingReason} onChange={(e) => setClosingReason(e.target.value)} className="mt-3 h-10 w-full rounded-xl border border-input px-3" placeholder="Alasan closing khusus bila diperlukan" />
-          {!isTraining && <Button className="mt-3" disabled={busy} onClick={() => void closeSession()}>Finalkan Closing</Button>}
+          {!isTraining && <Button className="mt-3" disabled={busy || !hasExpectedCash} onClick={() => void closeSession()}>Finalkan Closing</Button>}
         </Panel>
       )}
       {selectedSession && (
