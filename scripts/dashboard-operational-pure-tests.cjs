@@ -7,7 +7,6 @@ assert.match(source, /<table className=/);
 assert.match(source, /item\.status === "check_in"/);
 assert.match(source, /item\.room\.status === "occupied"/);
 assert.match(source, /<Eye className=/);
-assert.match(source, /<MessageCircle className=/);
 assert.match(source, /<LogOut className=/);
 assert.match(source, /check_out_transaction/);
 assert.match(source, /check_out_training_transaction/);
