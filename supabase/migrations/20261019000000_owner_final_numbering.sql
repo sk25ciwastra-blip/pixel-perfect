@@ -397,9 +397,9 @@ CREATE INDEX IF NOT EXISTS housekeeping_number_created_at_idx
 CREATE INDEX IF NOT EXISTS finance_expenses_number_created_at_idx
   ON public.finance_expenses (expense_number, created_at DESC);
 
-REVOKE ALL ON FUNCTION public.next_transaction_number() FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.next_housekeeping_number() FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.next_expense_number() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.next_transaction_number() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.next_housekeeping_number() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.next_expense_number() FROM PUBLIC, anon, authenticated;
 
 GRANT EXECUTE ON FUNCTION public.next_transaction_number() TO postgres;
 GRANT EXECUTE ON FUNCTION public.next_housekeeping_number() TO postgres;
