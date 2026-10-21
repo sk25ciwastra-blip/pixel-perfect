@@ -1,10 +1,9 @@
 -- FINANCE MINIMAL EXECUTABLE PATCH — ISSUE #4
 -- REVIEW-ONLY: DO NOT EXECUTE WITHOUT EXPLICIT OWNER APPROVAL.
 -- PostgreSQL-only / Lovable Cloud SQL Editor compatible.
--- Before execution, the operator must set a transaction/session setting:
---   SET app.owner_user_id = '<exact Owner auth.users UUID>';
--- The setting is validated by SQL; no UUID is hardcoded and no account is
--- selected by ORDER BY/LIMIT. Do not replace this with psql substitution.
+-- Replace the placeholder in SET LOCAL below with the exact Owner UUID
+-- before execution. The zero UUID intentionally fails the preflight.
+-- The placeholder is not an Owner identity and must not be left unchanged.
 --
 -- Generated from reviewed main migrations:
 --   20261015000000, 20261015000001, 20261015000002, 20261015000003
@@ -23,6 +22,7 @@
 -- backup or use an approved forward-fix. Do not run blind down SQL.
 
 BEGIN;
+SET LOCAL app.owner_user_id = '00000000-0000-0000-0000-000000000000';
 SET LOCAL lock_timeout = '5s';
 SET LOCAL statement_timeout = '10min';
 
@@ -30,7 +30,7 @@ DO $preflight$
 DECLARE
   v_count integer;
   v_owner uuid;
-BEGIN
+BEGIN;
   BEGIN
     v_owner := NULLIF(current_setting('app.owner_user_id', true), '')::uuid;
   EXCEPTION WHEN invalid_text_representation THEN
@@ -317,7 +317,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS payments_idempotency_key_unique
   WHERE idempotency_key IS NOT NULL;
 
 DO $finance_fk$
-BEGIN
+BEGIN;
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
     WHERE conrelid = 'public.payments'::regclass
@@ -390,7 +390,7 @@ DECLARE
   paid_before numeric;
   commission_before numeric;
   target_commission numeric;
-BEGIN
+BEGIN;
   IF NEW.idempotency_key IS NULL THEN
     NEW.idempotency_key := gen_random_uuid();
   END IF;
@@ -519,7 +519,7 @@ DECLARE
   total_paid numeric;
   minimum_value numeric;
   settings_row public.finance_settings;
-BEGIN
+BEGIN;
   IF NEW.status <> 'booking' THEN
     RETURN NEW;
   END IF;
@@ -556,7 +556,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $function$
-BEGIN
+BEGIN;
   IF OLD.status = 'FINAL' THEN
     RAISE EXCEPTION 'Closing final tidak dapat diubah atau dihapus';
   END IF;
@@ -596,7 +596,7 @@ DECLARE
   previous_session public.finance_cash_sessions;
   carried_amount numeric := 0;
   new_id uuid;
-BEGIN
+BEGIN;
   IF NOT (public.has_role(auth.uid(), 'owner') OR public.is_receptionist(auth.uid())) THEN
     RAISE EXCEPTION 'Hanya Owner atau Receptionist yang dapat membuka sesi kas';
   END IF;
@@ -655,7 +655,7 @@ DECLARE
   remaining_amount numeric;
   existing_payment uuid;
   new_payment_id uuid;
-BEGIN
+BEGIN;
   IF NOT (public.has_role(auth.uid(), 'owner') OR public.is_receptionist(auth.uid())) THEN
     RAISE EXCEPTION 'Akses ditolak';
   END IF;
@@ -748,7 +748,7 @@ DECLARE
   di_laci_allocation_id uuid;
   total_allocated numeric;
   snapshot jsonb;
-BEGIN
+BEGIN;
   SELECT * INTO selected_session
   FROM public.finance_cash_sessions s
   WHERE s.id = _session_id
@@ -878,7 +878,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $function$
 DECLARE handoff public.finance_drawer_handoffs;
-BEGIN
+BEGIN;
   SELECT * INTO handoff FROM public.finance_drawer_handoffs WHERE id = _handoff_id FOR UPDATE;
   IF NOT FOUND OR handoff.status <> 'MENUNGGU_HITUNG' THEN RAISE EXCEPTION 'Serah terima tidak aktif'; END IF;
   IF auth.uid() <> handoff.recipient_user_id AND NOT public.finance_is_owner_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'Penerima atau pengawas yang berwenang wajib mengonfirmasi'; END IF;
@@ -910,7 +910,7 @@ AS $function$
 DECLARE
   existing_id uuid;
   session_status text;
-BEGIN
+BEGIN;
   IF NOT (public.has_role(auth.uid(), 'owner') OR public.is_receptionist(auth.uid())) THEN
     RAISE EXCEPTION 'Akses ditolak';
   END IF;
@@ -945,7 +945,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $function$
 DECLARE existing_id uuid; session_status text;
-BEGIN
+BEGIN;
   IF NOT (public.has_role(auth.uid(), 'owner') OR public.is_receptionist(auth.uid())) THEN RAISE EXCEPTION 'Akses ditolak'; END IF;
   SELECT id INTO existing_id FROM public.finance_deposits WHERE idempotency_key = _idempotency_key;
   IF existing_id IS NOT NULL THEN RETURN existing_id; END IF;
@@ -977,7 +977,7 @@ DECLARE
   session_row public.finance_cash_sessions;
   allocated_amount numeric;
   accepted_amount numeric;
-BEGIN
+BEGIN;
   IF NOT public.has_role(auth.uid(), 'owner') THEN RAISE EXCEPTION 'Hanya Owner yang dapat mengonfirmasi setoran'; END IF;
   IF _status NOT IN ('DITERIMA', 'DITOLAK', 'BELUM_DITERIMA') THEN RAISE EXCEPTION 'Status setoran tidak valid'; END IF;
   SELECT * INTO deposit_row FROM public.finance_deposits WHERE id = _deposit_id FOR UPDATE;
@@ -1035,7 +1035,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $function$
-BEGIN
+BEGIN;
   IF NOT public.has_role(auth.uid(), 'owner') THEN RAISE EXCEPTION 'Hanya Owner yang dapat mengubah minimum DP'; END IF;
   IF _minimum_dp_mode NOT IN ('AMOUNT', 'PERCENTAGE') OR _minimum_dp_value < 0 THEN RAISE EXCEPTION 'Konfigurasi minimum DP tidak valid'; END IF;
   UPDATE public.finance_settings SET minimum_dp_mode = _minimum_dp_mode, minimum_dp_value = _minimum_dp_value, updated_by = auth.uid(), updated_at = now() WHERE id = true;
@@ -1053,7 +1053,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $function$
 DECLARE new_id uuid;
-BEGIN
+BEGIN;
   IF NOT public.has_role(auth.uid(), 'owner') THEN RAISE EXCEPTION 'Hanya Owner yang dapat mengubah komisi'; END IF;
   IF _mode NOT IN ('PERCENTAGE', 'PER_ROOM', 'OFF') OR _rate < 0 OR _per_room_amount < 0 THEN RAISE EXCEPTION 'Konfigurasi komisi tidak valid'; END IF;
   IF _mode = 'PERCENTAGE' AND _rate > 100 THEN RAISE EXCEPTION 'Persentase komisi tidak valid'; END IF;
@@ -1076,7 +1076,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $function$
 DECLARE account_id uuid := COALESCE(_id, gen_random_uuid());
-BEGIN
+BEGIN;
   IF NOT public.has_role(auth.uid(), 'owner') THEN RAISE EXCEPTION 'Hanya Owner yang dapat mengelola rekening'; END IF;
   INSERT INTO public.finance_bank_accounts (id, bank_name, account_name, account_number, logo_key, active, created_by)
   VALUES (account_id, trim(_bank_name), trim(_account_name), trim(_account_number), trim(coalesce(_logo_key, '')), _active, auth.uid())
@@ -1117,7 +1117,7 @@ DECLARE
   commission_before numeric := 0;
   commission_after numeric := 0;
   first_allocation boolean := true;
-BEGIN
+BEGIN;
   IF NOT public.has_role(auth.uid(), 'owner') THEN RAISE EXCEPTION 'Hanya Owner yang dapat melakukan refund'; END IF;
   SELECT id INTO refund_id FROM public.finance_refunds WHERE idempotency_key = _idempotency_key;
   IF refund_id IS NOT NULL THEN RETURN refund_id; END IF;
@@ -1274,7 +1274,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $function$
 DECLARE s public.finance_cash_sessions; result jsonb;
-BEGIN
+BEGIN;
   SELECT * INTO s FROM public.finance_cash_sessions WHERE id = _session_id;
   IF NOT FOUND OR (s.opened_by <> auth.uid() AND NOT public.finance_is_owner_or_supervisor(auth.uid()) AND NOT public.has_role(auth.uid(), 'owner')) THEN RAISE EXCEPTION 'Akses sesi ditolak'; END IF;
   SELECT jsonb_build_object(
@@ -1393,7 +1393,7 @@ AS $function$
 DECLARE
   setting_row public.finance_settings;
   raw_minimum numeric;
-BEGIN
+BEGIN;
   IF NEW.status <> 'booking' OR NEW.minimum_dp_mode_snapshot IS NOT NULL THEN
     RETURN NEW;
   END IF;
@@ -1435,7 +1435,7 @@ SET search_path = public
 AS $function$
 DECLARE
   total_paid numeric;
-BEGIN
+BEGIN;
   IF NEW.status <> 'booking' THEN
     RETURN NEW;
   END IF;
@@ -1482,7 +1482,7 @@ DECLARE
   paid_before numeric;
   commission_before numeric;
   target_commission numeric;
-BEGIN
+BEGIN;
   IF NEW.idempotency_key IS NULL THEN
     NEW.idempotency_key := gen_random_uuid();
   END IF;
@@ -1623,7 +1623,7 @@ DECLARE
   already_paid numeric;
   remaining_amount numeric;
   new_payment_id uuid;
-BEGIN
+BEGIN;
   IF NOT (
     public.has_role(auth.uid(), 'owner')
     OR public.is_receptionist(auth.uid())
@@ -1727,7 +1727,7 @@ DECLARE
   existing_id uuid;
   session_status text;
   session_owner uuid;
-BEGIN
+BEGIN;
   IF NOT (
     public.has_role(auth.uid(), 'owner')
     OR public.is_receptionist(auth.uid())
@@ -1772,7 +1772,7 @@ DECLARE
   existing_id uuid;
   session_status text;
   session_owner uuid;
-BEGIN
+BEGIN;
   IF NOT (
     public.has_role(auth.uid(), 'owner')
     OR public.is_receptionist(auth.uid())
@@ -1808,7 +1808,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $function$
 DECLARE s public.finance_cash_sessions; result jsonb;
-BEGIN
+BEGIN;
   SELECT * INTO s FROM public.finance_cash_sessions WHERE id = _session_id;
   IF NOT FOUND OR (s.opened_by <> auth.uid() AND NOT public.finance_is_owner_or_supervisor(auth.uid()) AND NOT public.has_role(auth.uid(), 'owner')) THEN RAISE EXCEPTION 'Akses sesi ditolak'; END IF;
   SELECT jsonb_build_object(
@@ -1867,7 +1867,7 @@ DECLARE
   operational_date date;
   request_fingerprint text;
   existing_idempotency public.finance_reservation_idempotency;
-BEGIN
+BEGIN;
   IF _idempotency_key IS NULL THEN
     RAISE EXCEPTION 'Idempotency key booking wajib diisi';
   END IF;
@@ -2040,7 +2040,7 @@ SET search_path = public
 AS $function$
 DECLARE
   source_status text;
-BEGIN
+BEGIN;
   IF NEW.source_session_id IS NULL THEN
     RETURN NEW;
   END IF;
@@ -2093,7 +2093,7 @@ DECLARE
   previous_session public.finance_cash_sessions;
   carried_amount numeric := 0;
   new_id uuid;
-BEGIN
+BEGIN;
   IF NOT public.finance_is_booking_operator(auth.uid()) THEN
     RAISE EXCEPTION 'Hanya Owner, Receptionist, atau Supervisor yang dapat membuka sesi kas';
   END IF;
@@ -2149,7 +2149,7 @@ DECLARE
   already_paid numeric(12,2);
   jakarta_now timestamp;
   scheduled_local timestamp;
-BEGIN
+BEGIN;
   IF NOT public.finance_is_booking_operator(auth.uid()) THEN
     RAISE EXCEPTION 'Akses ditolak';
   END IF;
@@ -2254,7 +2254,7 @@ DECLARE
   operational_date date;
   request_fingerprint text;
   existing_idempotency public.finance_reservation_idempotency;
-BEGIN
+BEGIN;
   IF _idempotency_key IS NULL THEN RAISE EXCEPTION 'Idempotency key booking wajib diisi'; END IF;
   IF NOT public.finance_is_booking_operator(auth.uid()) THEN RAISE EXCEPTION 'Akses ditolak'; END IF;
 
@@ -2442,7 +2442,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $function$
-BEGIN
+BEGIN;
   RETURN public.record_transaction_payment(
     _transaction_id, _amount, _method, _idempotency_key, NULL::uuid
   );
@@ -2468,7 +2468,7 @@ SET search_path = public
 AS $function$
 DECLARE
   active_session uuid;
-BEGIN
+BEGIN;
   SELECT id INTO active_session
   FROM public.finance_cash_sessions
   WHERE opened_by = auth.uid()
@@ -2512,7 +2512,7 @@ GRANT EXECUTE ON FUNCTION public.can_view_finance(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.can_view_operations(uuid) TO authenticated;
 
 DO $postcheck$
-BEGIN
+BEGIN;
   IF (SELECT count(*) FROM public.transactions) <> 9
      OR (SELECT count(*) FROM public.payments) <> 11
      OR (SELECT count(*) FROM public.employees) <> 7
@@ -2627,5 +2627,7 @@ COMMIT;
 -- 5. Confirm Owner/Supervisor authenticated access before any isolated smoke test.
 -- 6. If any postcheck fails, abort transaction; after commit, restore verified
 --    DB/Auth backup or use an approved forward-fix. Never use blind down SQL.
+
+
 
 
