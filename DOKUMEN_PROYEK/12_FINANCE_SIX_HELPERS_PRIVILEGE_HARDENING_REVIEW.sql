@@ -36,7 +36,7 @@ BEGIN
     )
   LOOP
     IF has_function_privilege('anon',v_proc,'EXECUTE')
-      OR has_function_privilege('PUBLIC',v_proc,'EXECUTE')
+      OR EXISTS (SELECT 1 FROM aclexplode(COALESCE((SELECT proacl FROM pg_proc WHERE oid=v_proc),acldefault('f',(SELECT proowner FROM pg_proc WHERE oid=v_proc)))) acl WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE')
       OR NOT has_function_privilege('authenticated',v_proc,'EXECUTE') THEN
       RAISE EXCEPTION 'Finance helper function privilege hardening failed: %',v_proc::regprocedure;
     END IF;
