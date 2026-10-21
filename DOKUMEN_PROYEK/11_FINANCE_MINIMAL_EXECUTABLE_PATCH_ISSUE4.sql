@@ -13,7 +13,7 @@
 --   * legacy record_transaction_payment signature remains available;
 --   * Supervisor uses SECURITY DEFINER RPCs;
 --   * no direct Supervisor transaction INSERT policy is created;
---   * automatic DP 40% UPDATE is removed;
+--   * Owner-approved minimum DP of 40% applies to new bookings only;
 --   * exactly one 8% commission seed is created for future events;
 --   * existing transactions/payments/prices/P4 remain unchanged.
 --
@@ -2426,9 +2426,29 @@ WHERE NOT EXISTS (
   SELECT 1 FROM public.finance_commission_configs
 );
 
--- No DP 40% UPDATE is included. finance_settings remains:
--- minimum_dp_mode = AMOUNT, minimum_dp_value = 0
--- until Owner approves a different DP policy.
+-- Owner decision 21 Oct 2026: new bookings require a minimum DP of 40%.
+-- Applies prospectively via booking DP snapshot/guard; prior bookings untouched.
+UPDATE public.finance_settings
+SET minimum_dp_mode = 'PERCENTAGE',
+    minimum_dp_value = 40,
+    updated_by = NULLIF(current_setting('app.owner_user_id', true), '')::uuid,
+    updated_at = now()
+WHERE id = true
+  AND minimum_dp_mode = 'AMOUNT'
+  AND minimum_dp_value = 0;
+
+DO $owner_dp_check$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.finance_settings
+    WHERE id = true
+      AND minimum_dp_mode = 'PERCENTAGE'
+      AND minimum_dp_value = 40
+  ) THEN
+    RAISE EXCEPTION 'Owner-approved Booking minimum DP 40 percent was not set';
+  END IF;
+END
+$owner_dp_check$;
 
 -- Preserve the original three-argument payment RPC for existing app callers.
 CREATE OR REPLACE FUNCTION public.record_transaction_payment(
@@ -2625,10 +2645,10 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM public.finance_settings
     WHERE id = true
-      AND minimum_dp_mode = 'AMOUNT'
-      AND minimum_dp_value = 0
+      AND minimum_dp_mode = 'PERCENTAGE'
+      AND minimum_dp_value = 40
   ) THEN
-    RAISE EXCEPTION 'DP preserving/non-enforcing postcheck failed';
+    RAISE EXCEPTION 'Owner-approved minimum DP 40 percent postcheck failed';
   END IF;
 
   IF NOT EXISTS (
