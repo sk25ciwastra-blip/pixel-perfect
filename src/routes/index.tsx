@@ -15,7 +15,7 @@ import {
   FileText,
   LogIn,
   LogOut,
-  MessageCircle,
+  ReceiptText,
   Sparkles,
   ChevronRight,
   Receipt,
@@ -484,7 +484,11 @@ function Ringkasan() {
   const bolehAksiTransaksi = !["housekeeping", "investor", "inspector"].includes(posisiKode ?? "");
   const totalPemasukanHariIni = komposisi.filter((k) => k.label !== "Pengeluaran").reduce((t, k) => t + k.nominal, 0);
   const jamSekarang = new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(sekarang));
-  const tanggalPanjang = new Date(sekarang).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" });
+  const bulanSingkat = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sept", "Okt", "Nov", "Des"];
+  const tanggalPanjang = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "numeric", year: "numeric", timeZone: "Asia/Jakarta" })
+    .formatToParts(new Date(sekarang))
+    .map((bagian) => bagian.type === "month" ? bulanSingkat[Number(bagian.value) - 1] : bagian.value.replaceAll("/", " "))
+    .join("");
   const cari = kataCari.trim().toLowerCase();
   const hasilTransaksi = cari ? transaksi.filter((t) => {
     const tamu = guests.rows.find((g) => g.id === t.guest_id);
@@ -510,7 +514,7 @@ function Ringkasan() {
           <div className="flex flex-wrap items-center justify-end gap-3">
             <form onSubmit={(e) => { e.preventDefault(); setKataCari(pencarian); }} className="flex w-full min-w-0 items-center gap-2 rounded-full border border-gold/25 bg-background/65 py-1.5 pl-4 pr-1.5 backdrop-blur-md xl:mr-auto xl:w-[26.5rem]">
               <Search className="size-4 shrink-0 text-foreground/90" aria-hidden="true" />
-              <input aria-label="Pencarian Dashboard" placeholder="Cari ID TRX, ID HK, ID EXP, No. Telp...." value={pencarian} onChange={(e) => { setPencarian(e.target.value); if (!e.target.value.trim()) setKataCari(""); }} className="h-8 w-full min-w-0 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
+              <input aria-label="Pencarian Dashboard" placeholder="Cari Transaksi dan Tamu...." value={pencarian} onChange={(e) => { setPencarian(e.target.value); if (!e.target.value.trim()) setKataCari(""); }} className="h-8 w-full min-w-0 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
               <Button type="submit" size="sm" className="shrink-0 rounded-full px-4"><Search className="size-4" />Cari</Button>
             </form>
             <div className="flex items-center gap-3 rounded-full border border-gold/25 bg-background/55 px-4 py-2 text-sm backdrop-blur-md">
@@ -539,7 +543,7 @@ function Ringkasan() {
             <h1 className="mt-1 font-serif text-[2.1rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
               <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">{nama || "Pengguna"}</span>
             </h1>
-            <p className="mt-3 text-sm text-muted-foreground sm:text-base">Di Balik Hotel yang Ramai, Ada Resepsionist yang Hebat.</p>
+            <p className="mt-3 w-fit rounded-lg bg-background/70 px-3 py-2 text-sm font-medium leading-relaxed text-foreground backdrop-blur-sm sm:text-base">Dibalik Homestay yang Ramai, ada Tim yang memiliki Visi &amp; Misi yang sama.</p>
           </header>
 
           {/* KPI + Aksi Cepat */}
@@ -549,8 +553,8 @@ function Ringkasan() {
               {bolehAksiTransaksi ? (
                 <div className="mt-4 grid grid-cols-3 gap-2.5">
                   <TombolAksi ikon={LogIn} judul="Check-in Langsung" utama onClick={() => setModal("check_in")} />
-                  <TombolAksi ikon={CalendarPlus} judul="Buat Booking" onClick={() => setModal("booking")} />
-                  <TombolAksi ikon={ArrowUpRight} judul="Pengeluaran" onClick={() => setModal("pengeluaran")} />
+                  <TombolAksi ikon={CalendarPlus} judul="Tambah Booking" onClick={() => setModal("booking")} />
+                  <TombolAksi ikon={ReceiptText} judul="Tambah Pengeluaran" onClick={() => setModal("pengeluaran")} />
                 </div>
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -581,7 +585,7 @@ function Ringkasan() {
                 </div>
                 <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-2 py-1.5 text-[11px] font-semibold">
-                  <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Total terisi {statusKamarBaris.length} kamar
+                  <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Terisi {statusKamarBaris.length} Kamar
                 </span>
                 <Link to="/kamar" search={{ bagian: "terisi" } as never} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
                   Lihat semua <ChevronRight className="size-3.5" />
@@ -599,7 +603,7 @@ function Ringkasan() {
                 </div>
               ) : (
                 <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg border border-gold/15 bg-navy-deep/50">
-                  <table className="w-full min-w-[740px] table-fixed text-left text-xs xl:min-w-0">
+                  <table className="w-full min-w-[740px] table-fixed text-center text-xs [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
                       <col className="w-[58px]" />
                       <col className="w-[84px]" />
@@ -685,7 +689,7 @@ function Ringkasan() {
                                       if (!guest?.phone || !phoneValid) return;
                                       openWhatsApp(guest.phone, `Halo ${guest.full_name}, kami dari Baturaden 25 Homestay.\nNo. Transaksi: ${item.transaction_number}`);
                                     }}
-                                  ><MessageCircle className="h-4 w-4" /></IkonAksi>
+                                  ><svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.05 0C5.46 0 .1 5.36.1 11.95c0 2.1.55 4.16 1.6 5.98L0 24l6.23-1.63a11.96 11.96 0 0 0 5.82 1.49h.01c6.58 0 11.94-5.36 11.94-11.95 0-3.2-1.24-6.2-3.48-8.43ZM12.05 21.85a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.7.97.99-3.61-.24-.37a9.87 9.87 0 0 1-1.51-5.3c0-5.48 4.46-9.94 9.94-9.94a9.87 9.87 0 0 1 7.03 2.91 9.87 9.87 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94Zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.2 5.08 4.49.71.31 1.27.5 1.7.64.71.22 1.36.19 1.87.12.57-.09 1.77-.73 2.02-1.43.25-.7.25-1.3.17-1.43-.07-.12-.27-.2-.57-.35Z" /></svg></IkonAksi>
                                   <IkonAksi
                                     label={checkoutDisabled ? checkoutReason || "Check-out sedang diproses" : "Check-out"}
                                     disabled={checkoutDisabled}
@@ -1069,32 +1073,32 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
     await onSaved();
   }
 
-  const kelasInput = "h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10";
+  const kelasInput = "h-11 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none focus:border-primary";
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/70 p-4 backdrop-blur-sm" onClick={onClose}>
-      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-lembut">
-        <div className="flex items-start justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm" onClick={onClose}>
+      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-background p-5 shadow-lembut">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Uang keluar</p>
-            <h2 id="judul-pengeluaran" className="mt-1 font-serif text-2xl font-semibold">Catat Pengeluaran</h2>
+            <h2 id="judul-pengeluaran" className="mt-1 text-lg font-bold">Catat Pengeluaran</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Tutup" className="grid size-9 place-items-center rounded-full bg-secondary"><X className="size-4" /></button>
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Tutup"><X className="size-4" /></Button>
         </div>
         {berhasil ? (
           <div className="mt-6 text-center">
             <p className="font-semibold text-siap-foreground">Pengeluaran tersimpan.</p>
-            <button type="button" onClick={onClose} className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground">Selesai</button>
+            <Button type="button" onClick={onClose} className="mt-4">Selesai</Button>
           </div>
         ) : (
-          <div className="mt-5 space-y-3">
-            <label className="block text-xs font-semibold text-muted-foreground">Jenis pengeluaran
+          <div className="space-y-3">
+            <label className="block text-sm">Jenis pengeluaran
               <input value={kategori} onChange={(e) => setKategori(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Contoh: Listrik, Laundry" />
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <label className="block text-xs font-semibold text-muted-foreground">Nominal (Rp)
+              <label className="block text-sm">Nominal (Rp)
                 <input type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
               </label>
-              <label className="block text-xs font-semibold text-muted-foreground">Metode
+              <label className="block text-sm">Metode
                 <select value={metode} onChange={(e) => setMetode(e.target.value)} className={`mt-1 ${kelasInput}`}>
                   <option value="CASH">Cash</option>
                   <option value="QRIS">QRIS</option>
@@ -1102,13 +1106,13 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
                 </select>
               </label>
             </div>
-            <label className="block text-xs font-semibold text-muted-foreground">Catatan
+            <label className="block text-sm">Catatan
               <input value={catatan} onChange={(e) => setCatatan(e.target.value)} className={`mt-1 ${kelasInput}`} />
             </label>
             {pesan && <p role="alert" className="rounded-xl bg-bahaya px-3 py-2 text-sm text-bahaya-foreground">{pesan}</p>}
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={onClose} className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold">Batal</button>
-              <button type="submit" disabled={simpan} className="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50">{simpan ? "Menyimpan…" : "Simpan"}</button>
+              <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
+              <Button type="submit" disabled={simpan}>{simpan ? "Menyimpan…" : "Simpan"}</Button>
             </div>
           </div>
         )}
