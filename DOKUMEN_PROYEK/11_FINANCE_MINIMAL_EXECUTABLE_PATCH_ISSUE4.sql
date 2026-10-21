@@ -1335,7 +1335,6 @@ REVOKE INSERT, UPDATE, DELETE ON TABLE public.finance_settings, public.finance_c
 GRANT SELECT ON TABLE public.finance_settings, public.finance_commission_configs, public.finance_bank_accounts, public.finance_cash_sessions, public.finance_session_allocations, public.finance_drawer_handoffs, public.finance_expenses, public.finance_deposits, public.finance_charge_events, public.finance_refunds, public.finance_refund_allocations TO authenticated;
 
 REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid, numeric, text) FROM PUBLIC;
-DROP FUNCTION IF EXISTS public.record_transaction_payment(uuid, numeric, text);
 REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid, numeric, text, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.record_transaction_payment(uuid, numeric, text, uuid) TO authenticated;
 
@@ -1609,8 +1608,8 @@ CREATE OR REPLACE FUNCTION public.record_transaction_payment(
   _transaction_id uuid,
   _amount numeric,
   _method text,
-  _idempotency_key uuid DEFAULT NULL,
-  _session_id uuid DEFAULT NULL
+  _idempotency_key uuid,
+  _session_id uuid
 )
 RETURNS uuid
 LANGUAGE plpgsql
@@ -1844,9 +1843,9 @@ CREATE OR REPLACE FUNCTION public.create_reservation(
   _amount numeric,
   _method text,
   _day_mode text,
-  _scheduled_check_in timestamptz DEFAULT NULL,
-  _idempotency_key uuid DEFAULT NULL,
-  _session_id uuid DEFAULT NULL
+  _scheduled_check_in timestamptz,
+  _idempotency_key uuid,
+  _session_id uuid
 )
 RETURNS text
 LANGUAGE plpgsql
@@ -2231,9 +2230,9 @@ CREATE OR REPLACE FUNCTION public.create_reservation(
   _amount numeric,
   _method text,
   _day_mode text,
-  _scheduled_check_in timestamptz DEFAULT NULL,
-  _idempotency_key uuid DEFAULT NULL,
-  _session_id uuid DEFAULT NULL
+  _scheduled_check_in timestamptz,
+  _idempotency_key uuid,
+  _session_id uuid
 )
 RETURNS text
 LANGUAGE plpgsql
@@ -2567,6 +2566,30 @@ BEGIN
        OR p.active IS DISTINCT FROM s.active
   ) THEN
     RAISE EXCEPTION 'Package/P4 preservation postcheck failed';
+  END IF;
+
+
+  IF to_regprocedure('public.record_transaction_payment(uuid,numeric,text)') IS NULL
+     OR to_regprocedure('public.record_transaction_payment(uuid,numeric,text,uuid)') IS NULL
+     OR to_regprocedure('public.record_transaction_payment(uuid,numeric,text,uuid,uuid)') IS NULL
+     OR to_regprocedure('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz)') IS NULL
+     OR to_regprocedure('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid)') IS NULL THEN
+    RAISE EXCEPTION 'Legacy/new payment or reservation signature is missing';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM pg_proc
+    WHERE oid IN (
+      to_regprocedure('public.record_transaction_payment(uuid,numeric,text)'),
+      to_regprocedure('public.record_transaction_payment(uuid,numeric,text,uuid)'),
+      to_regprocedure('public.record_transaction_payment(uuid,numeric,text,uuid,uuid)'),
+      to_regprocedure('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz)'),
+      to_regprocedure('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid)')
+    )
+    AND pronargdefaults <> 0
+  ) THEN
+    RAISE EXCEPTION 'Legacy/new compatibility functions must not use default arguments';
   END IF;
 
   IF to_regprocedure('public.finance_is_booking_operator(uuid)') IS NULL
