@@ -8,6 +8,8 @@
 -- Generated from reviewed main migrations:
 --   20261015000000, 20261015000001, 20261015000002, 20261015000003
 -- Compatibility decisions:
+--   * negative expected_cash is recorded in closing snapshot with zero physical CASH allocation;
+--   * transfer settlement remains mandatory; next-session carry stays nonnegative;
 --   * legacy create_reservation signature remains available;
 --   * Finance-compatible create_reservation signature is added;
 --   * legacy record_transaction_payment signature remains available;
@@ -792,7 +794,15 @@ BEGIN
     - cash_expenses - cash_refunds;
   total_allocated := setor_cash + di_laci + dibawa;
 
-  IF expected_cash <> total_allocated THEN
+  -- Saldo kas negatif adalah defisit sesi (bukan uang tunai fisik).
+  -- Simpan expected_cash negatif di closing_snapshot; jangan membuat
+  -- alokasi negatif atau catatan talangan pribadi terpisah.
+  -- Nilai alokasi fisik harus nol saat expected_cash <= 0.
+  IF expected_cash < 0 THEN
+    IF total_allocated <> 0 THEN
+      RAISE EXCEPTION 'Saldo kas minus: alokasi CASH harus nol';
+    END IF;
+  ELSIF expected_cash <> total_allocated THEN
     RAISE EXCEPTION 'Alokasi kas tidak sama dengan saldo fisik yang diharapkan';
   END IF;
 
