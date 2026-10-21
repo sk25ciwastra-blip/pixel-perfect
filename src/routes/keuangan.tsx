@@ -40,8 +40,7 @@ function HalamanKeuangan() {
   const [recipientUserId, setRecipientUserId] = useState('');
   const [closingReason, setClosingReason] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
-  const [expenseMethod, setExpenseMethod] = useState('CASH');
-  const [expenseCategory, setExpenseCategory] = useState('');
+    const [expenseCategory, setExpenseCategory] = useState('');
   const [expenseNote, setExpenseNote] = useState('');
   const [expenseSearch, setExpenseSearch] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
@@ -190,7 +189,7 @@ function HalamanKeuangan() {
         _idempotency_key: crypto.randomUUID(),
         _session_id: selectedSession.id,
         _amount: angka(expenseAmount),
-        _method: expenseMethod,
+        _method: 'CASH',
         _category: expenseCategory,
         _note: expenseNote,
       });
@@ -310,8 +309,8 @@ function HalamanKeuangan() {
         </Panel>
       )}
       {selectedSession && (
-        <Panel judul="Pengeluaran sesi">
-          <div className="grid gap-2 sm:grid-cols-2"><input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} type="number" min="1" className="h-10 rounded-xl border border-input px-3" placeholder="Nominal" /><select value={expenseMethod} onChange={(e) => setExpenseMethod(e.target.value)} className="h-10 rounded-xl border border-input px-3"><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select><input value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Kategori" /><input value={expenseNote} onChange={(e) => setExpenseNote(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Catatan" /></div>
+        <Panel judul="Kas Keluar">
+          <div className="grid gap-2 sm:grid-cols-2"><input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} type="number" min="1" className="h-10 rounded-xl border border-input px-3" placeholder="Nominal" /><p className="flex h-10 items-center rounded-xl border border-input px-3 text-sm text-muted-foreground">Metode: CASH (otomatis)</p><input value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Kategori" /><input value={expenseNote} onChange={(e) => setExpenseNote(e.target.value)} className="h-10 rounded-xl border border-input px-3" placeholder="Catatan" /></div>
           <Button className="mt-3" disabled={busy} onClick={() => void recordExpense()}>Catat Pengeluaran</Button>
           <div className="mt-5 border-t border-border pt-4">
             <input value={expenseSearch} onChange={(e) => setExpenseSearch(e.target.value)} className="h-10 w-full rounded-xl border border-input px-3" placeholder="Cari nomor pengeluaran, kategori, atau catatan" />

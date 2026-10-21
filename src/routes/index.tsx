@@ -550,7 +550,7 @@ function Ringkasan() {
                 <div className="mt-4 grid grid-cols-3 gap-2.5">
                   <TombolAksi ikon={LogIn} judul="Check-in Langsung" utama onClick={() => setModal("check_in")} />
                   <TombolAksi ikon={CalendarPlus} judul="Buat Booking" onClick={() => setModal("booking")} />
-                  <TombolAksi ikon={ArrowUpRight} judul="Pengeluaran" onClick={() => setModal("pengeluaran")} />
+                  <TombolAksi ikon={ArrowUpRight} judul="Kas Keluar" onClick={() => setModal("pengeluaran")} />
                 </div>
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -1043,8 +1043,7 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
 function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sessionId: string; isTraining: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
   const [kategori, setKategori] = useState("");
   const [nominal, setNominal] = useState("");
-  const [metode, setMetode] = useState("CASH");
-  const [catatan, setCatatan] = useState("");
+    const [catatan, setCatatan] = useState("");
   const [pesan, setPesan] = useState("");
   const [simpan, setSimpan] = useState(false);
   const [berhasil, setBerhasil] = useState(false);
@@ -1059,7 +1058,7 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
       _idempotency_key: crypto.randomUUID(),
       _session_id: sessionId,
       _amount: Number(nominal),
-      _method: metode,
+      _method: "CASH",
       _category: kategori.trim(),
       _note: catatan,
     });
@@ -1075,8 +1074,8 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
       <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-lembut">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Uang keluar</p>
-            <h2 id="judul-pengeluaran" className="mt-1 font-serif text-2xl font-semibold">Catat Pengeluaran</h2>
+            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Pengeluaran tunai sesi kas</p>
+            <h2 id="judul-pengeluaran" className="mt-1 font-serif text-2xl font-semibold">Kas Keluar</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Tutup" className="grid size-9 place-items-center rounded-full bg-secondary"><X className="size-4" /></button>
         </div>
@@ -1090,18 +1089,10 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
             <label className="block text-xs font-semibold text-muted-foreground">Jenis pengeluaran
               <input value={kategori} onChange={(e) => setKategori(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Contoh: Listrik, Laundry" />
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block text-xs font-semibold text-muted-foreground">Nominal (Rp)
-                <input type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
-              </label>
-              <label className="block text-xs font-semibold text-muted-foreground">Metode
-                <select value={metode} onChange={(e) => setMetode(e.target.value)} className={`mt-1 ${kelasInput}`}>
-                  <option value="CASH">Cash</option>
-                  <option value="QRIS">QRIS</option>
-                  <option value="Transfer">Transfer</option>
-                </select>
-              </label>
-            </div>
+            <label className="block text-xs font-semibold text-muted-foreground">Nominal (Rp)
+              <input type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
+            </label>
+            <p className="text-xs text-muted-foreground">Metode: CASH · Otomatis dicatat sebagai pengeluaran tunai sesi kas.</p>
             <label className="block text-xs font-semibold text-muted-foreground">Catatan
               <input value={catatan} onChange={(e) => setCatatan(e.target.value)} className={`mt-1 ${kelasInput}`} />
             </label>
