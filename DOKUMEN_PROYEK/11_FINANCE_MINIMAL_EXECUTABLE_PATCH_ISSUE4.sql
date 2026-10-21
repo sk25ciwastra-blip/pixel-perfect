@@ -1735,6 +1735,15 @@ BEGIN
     RAISE EXCEPTION 'Akses ditolak';
   END IF;
 
+  IF _method IS DISTINCT FROM 'CASH' THEN
+    RAISE EXCEPTION 'Kas Keluar hanya menerima pembayaran tunai (CASH)';
+  END IF;
+  IF _idempotency_key IS NULL OR _session_id IS NULL
+     OR _amount IS NULL OR _amount <= 0
+     OR length(trim(coalesce(_category, ''))) = 0 THEN
+    RAISE EXCEPTION 'Data Kas Keluar tidak valid';
+  END IF;
+
   SELECT id INTO existing_id FROM public.finance_expenses WHERE idempotency_key = _idempotency_key;
   IF existing_id IS NOT NULL THEN RETURN existing_id; END IF;
 
