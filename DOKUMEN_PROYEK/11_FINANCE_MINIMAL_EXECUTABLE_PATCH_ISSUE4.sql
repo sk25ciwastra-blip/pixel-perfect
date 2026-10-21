@@ -1289,6 +1289,11 @@ BEGIN
   IF NOT FOUND OR (s.opened_by <> auth.uid() AND NOT public.finance_is_owner_or_supervisor(auth.uid()) AND NOT public.has_role(auth.uid(), 'owner')) THEN RAISE EXCEPTION 'Akses sesi ditolak'; END IF;
   SELECT jsonb_build_object(
     'opening_cash', s.opening_cash,
+    -- Cash-only ledger balance, can be negative. QRIS/Transfer not mixed in.
+    'expected_cash', s.opening_cash
+      + COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'Cash'), 0)
+      - COALESCE((SELECT SUM(amount) FROM public.finance_expenses WHERE session_id = _session_id AND method = 'CASH'), 0)
+      - COALESCE((SELECT SUM(amount) FROM public.finance_refunds WHERE source_session_id = _session_id AND refund_method = 'CASH'), 0),
     'payments_total', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id), 0),
     'cash', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'Cash'), 0),
     'qris', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'QRIS'), 0),
@@ -1831,6 +1836,11 @@ BEGIN
   IF NOT FOUND OR (s.opened_by <> auth.uid() AND NOT public.finance_is_owner_or_supervisor(auth.uid()) AND NOT public.has_role(auth.uid(), 'owner')) THEN RAISE EXCEPTION 'Akses sesi ditolak'; END IF;
   SELECT jsonb_build_object(
     'opening_cash', s.opening_cash,
+    -- Cash-only ledger balance, can be negative. QRIS/Transfer not mixed in.
+    'expected_cash', s.opening_cash
+      + COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'Cash'), 0)
+      - COALESCE((SELECT SUM(amount) FROM public.finance_expenses WHERE session_id = _session_id AND method = 'CASH'), 0)
+      - COALESCE((SELECT SUM(amount) FROM public.finance_refunds WHERE source_session_id = _session_id AND refund_method = 'CASH'), 0),
     'payments_total', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id), 0),
     'cash', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'Cash'), 0),
     'qris', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'QRIS'), 0),
