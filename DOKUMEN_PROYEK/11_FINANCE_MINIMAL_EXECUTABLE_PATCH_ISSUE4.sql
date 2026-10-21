@@ -2430,6 +2430,24 @@ WHERE NOT EXISTS (
 -- minimum_dp_mode = AMOUNT, minimum_dp_value = 0
 -- until Owner approves a different DP policy.
 
+-- Preserve the original three-argument payment RPC for existing app callers.
+CREATE OR REPLACE FUNCTION public.record_transaction_payment(
+  _transaction_id uuid,
+  _amount numeric,
+  _method text
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+BEGIN
+  RETURN public.record_transaction_payment(
+    _transaction_id, _amount, _method, gen_random_uuid(), NULL::uuid
+  );
+END;
+$function$;
+
 CREATE OR REPLACE FUNCTION public.record_transaction_payment(
   _transaction_id uuid,
   _amount numeric,
@@ -2481,6 +2499,11 @@ BEGIN
   );
 END;
 $function$;
+
+REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid,numeric,text)
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.record_transaction_payment(uuid,numeric,text)
+  TO authenticated;
 
 REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid,numeric,text,uuid)
   FROM PUBLIC, anon;
