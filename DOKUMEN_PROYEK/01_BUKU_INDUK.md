@@ -306,3 +306,15 @@ Checkpoint ini menjadi status live terbaru dan menggantikan kesimpulan provision
 - Semua angka berasal dari query live: transaksi/kamar/payment/package/activity log/employee/finance expense sesuai izin. Mock v0 tidak dipakai.
 - Tabel P0-02, Check-out P0-02B, Booking/Check-in, Finance, Training, sesi kas, dual identity, nomorator, dan Emergency dipertahankan.
 - Browser visual belum diuji; Staging/Production tidak disentuh. Desain Login dan halaman lain menunggu persetujuan Owner.
+
+
+## Checkpoint 21 Oktober 2026 — Finance dan Nomorator Lovable (bukti runtime)
+
+- **Database Lovable (bukan Staging)**: patch Finance commit `2b7cb860` berhasil COMMIT setelah percobaan awal `5fe10dcf` rollback pada postcheck anon EXECUTE. Hardening 6 helper Finance commit `26282e6` kemudian berhasil; anon/PUBLIC 0/6, authenticated 6/6. Finance 12 tabel semuanya RLS aktif. Akun Auth 11, employees 7, roles 9 dipertahankan.
+- **Nomorator Owner final di Lovable**: migration `20261019000000_owner_final_numbering.sql` commit `b1106413` berhasil COMMIT setelah percobaan awal `8e14c566` rollback. Nomor lama dipertahankan. Runtime Booking mengeluarkan `BTRDTRX-000020`, expense mengeluarkan `BTRDEXP-000001`; generator Housekeeping terpasang tetapi `BTRDHK-000001` belum dibuktikan lewat workflow browser.
+- **Frontend GitHub→Lovable editor**: Finance UI merge PR #9 `7544134a`; refresh guests setelah save Booking merge PR #10 `47e760b0`. Lovable latest commit = `47e760b0`. Tidak ada perintah publish/deploy; jangan samakan editor sync dengan published build.
+- **Uji browser/live RPC**: satu sesi CASH Rp0 → expense uji Rp50.000 → closing FINAL dengan `expected_cash=-50000`, alokasi dan handoff nol; sesi berikutnya OPEN saldo fisik Rp0. Booking demo kamar 06 `BTRD25-000019` dan kamar 07 `BTRDTRX-000020`, masing-masing P2 Rp70.000, DP QRIS Rp28.000, sisa Rp42.000. Expense uji lain Rp1.000 = `BTRDEXP-000001`, sesi baru tetap OPEN. Semua adalah **DATA DEMO**.
+- **Booking nama tamu**: data DB untuk `BTRDTRX-000020` berisi `UJI NOMORATOR RESMI`; tampilan sempat `Tamu` karena guests tidak di-refresh. Perbaikan sudah merged, verifikasi browser setelah merge belum dilakukan.
+- **Housekeeping**: dua riwayat legacy `job_number=NULL` tetap tampil sebagai `HK legacy`; tugas aktif 0. Generator memakai `advance_room_cleaning` yang hanya sah untuk kamar `dirty`. Jangan ubah kamar READY/OCCUPIED untuk tes fiktif.
+- **Besok 22 Okt 2026**: kamar 06 dijadwalkan 14.00 WIB, kamar 07 15.00 WIB; lunasi Rp42.000 tiap booking yang diuji sebelum check-in, lalu Check-out → dirty → Housekeeping sesuai waktu dan otorisasi. SQL `check_in_booking` saat diperiksa memblokir sebelum *tanggal* tetapi belum menegakkan batas *jam* secara eksplisit; ini gap penting untuk review operasional.
+- **Go/No-Go**: Belum menyatakan OPERASIONAL SEMENTARA READY hanya dari uji Finance. Wajib uji pelunasan/Check-in/Check-out/HK, role-staff dan session/operator cash, cek blocker keamanan/kewenangan. Backup manual 21 Okt lolos restore kompatibilitas lokal tetapi full platform/PITR restore belum teruji. Staging bukan DB Lovable; jangan klaim seluruh Codex lokal sama dengan Lovable.
