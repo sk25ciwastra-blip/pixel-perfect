@@ -268,3 +268,13 @@ Status tetap **SIAP REVIEW LOKAL, BELUM READY OPERASIONAL** karena migration bel
 Pengujian pada cluster temporary terisolasi membuktikan assignment dua hari Asia/Jakarta, supervisor assigned, larangan sesi sendiri dan sesi lama, penolakan RPC legacy, dual identity payment, check-out Training, dan audit `Training`. `finance_prepare_payment` diperketat hanya untuk konteks Training yang tervalidasi; jalur normal Owner/Receptionist tetap lulus.
 
 Status: **PASS LOKAL / BELUM READY OPERASIONAL**. Migration belum dipasang remote. Uji nomor transaksi resmi penuh tertahan oleh constraint format lama pada fixture lokal dan tidak diubah dalam task ini.
+
+
+## Penerapan aturan Owner — checkpoint 21 Oktober 2026
+
+- **Finance sesi kas**: saldo sesi dapat negatif; closing FINAL menyimpan `expected_cash` negatif tanpa alokasi fisik negatif, tanpa pencatatan talangan pribadi otomatis. Sesi berikutnya boleh membuka saldo fisik Rp0 walau sesi sebelumnya defisit. Terbukti pada Lovable lewat saldo -Rp50.000 dan sesi berikutnya Rp0.
+- **DP minimum 40%** dan komisi 8% tetap berlaku. Booking demo P2 Standard weekday Rp70.000, DP Rp28.000, pelunasan Rp42.000 sebelum Check-in. Pembayaran demo bukan QRIS nyata.
+- **Nomorator forward-only**: `BTRDTRX-xxxxxx`, `BTRDHK-xxxxxx`, `BTRDEXP-xxxxxx`, counter per jenis dan tidak reset tiap tahun; legacy tidak diubah. Terbukti `BTRDTRX-000020` dan `BTRDEXP-000001`; HK menunggu pengujian alur.
+- **Aturan Check-in**: booking tidak boleh check-in sebelum jadwal operasional; pelunasan penuh wajib sebelum check-in. **Gap implementasi yang diketahui**: RPC aktif memeriksa tanggal (Asia/Jakarta), belum batas jam `scheduled_check_in` secara eksplisit. Jangan klaim enforcement jam sudah PASS; pengujian besok harus pada/selepas waktu booking yang sah.
+- **Tidak boleh merekayasa status kamar**: alur HK berasal dari checkout yang sah menghasilkan `dirty`, kemudian `advance_room_cleaning` oleh role yang sah. Riwayat HK legacy ber-`job_number=NULL` tidak di-backfill.
+- Keputusan Owner: operasional sementara membutuhkan alur inti dan role/session aman; seluruh fitur premium dan roadmap 100% tidak harus selesai lebih dahulu. Penggunaan produksi dengan tamu/uang sungguhan menunggu keputusan GO/NO-GO eksplisit.
