@@ -2515,6 +2515,28 @@ BEGIN
 END;
 $function$;
 
+-- PostgreSQL cannot remove defaults with CREATE OR REPLACE. Drop the legacy
+-- signature explicitly before recreating it as an unambiguous wrapper.
+DROP FUNCTION IF EXISTS public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz);
+-- SECURITY DEFINER RPCs must never inherit PUBLIC/anon EXECUTE.
+REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid,numeric,text,uuid,uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid,numeric,text,uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.record_transaction_payment(uuid,numeric,text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid) FROM PUBLIC, anon;
+
+REVOKE ALL ON FUNCTION public.check_in_booking(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.finance_is_owner_or_supervisor(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.open_finance_cash_session(numeric) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.close_finance_cash_session(uuid,jsonb,text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.record_finance_expense(uuid,uuid,numeric,text,text,text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.create_finance_deposit(uuid,uuid,text,numeric,uuid,text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.decide_finance_deposit(uuid,text,text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.set_finance_settings(text,numeric) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.set_finance_commission_config(text,numeric,numeric) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.upsert_finance_bank_account(uuid,text,text,text,text,boolean) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.get_finance_session_summary(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.confirm_finance_drawer_handover(uuid,numeric,text) FROM PUBLIC, anon;
 CREATE OR REPLACE FUNCTION public.create_reservation(
   _mode text,
   _room_id uuid,
@@ -2702,6 +2724,32 @@ BEGIN
     RAISE EXCEPTION 'Supervisor direct transaction INSERT policy detected';
   END IF;
 
+  IF EXISTS (
+    SELECT 1
+    FROM unnest(ARRAY[
+      'public.finance_is_booking_operator(uuid)'::regprocedure,
+      'public.record_transaction_payment(uuid,numeric,text)'::regprocedure,
+      'public.record_transaction_payment(uuid,numeric,text,uuid)'::regprocedure,
+      'public.record_transaction_payment(uuid,numeric,text,uuid,uuid)'::regprocedure,
+      'public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz)'::regprocedure,
+      'public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid)'::regprocedure,
+      'public.check_in_booking(uuid)'::regprocedure,
+      'public.open_finance_cash_session(numeric)'::regprocedure,
+      'public.close_finance_cash_session(uuid,jsonb,text)'::regprocedure,
+      'public.record_finance_expense(uuid,uuid,numeric,text,text,text)'::regprocedure,
+      'public.create_finance_deposit(uuid,uuid,text,numeric,uuid,text)'::regprocedure,
+      'public.decide_finance_deposit(uuid,text,text)'::regprocedure,
+      'public.set_finance_settings(text,numeric)'::regprocedure,
+      'public.set_finance_commission_config(text,numeric,numeric)'::regprocedure,
+      'public.upsert_finance_bank_account(uuid,text,text,text,text,boolean)'::regprocedure,
+      'public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text)'::regprocedure,
+      'public.get_finance_session_summary(uuid)'::regprocedure,
+      'public.confirm_finance_drawer_handover(uuid,numeric,text)'::regprocedure
+    ]::regprocedure[]) AS fn(proc)
+    WHERE has_function_privilege('anon', fn.proc, 'EXECUTE')
+  ) THEN
+    RAISE EXCEPTION 'Anonymous Finance RPC EXECUTE remains granted';
+  END IF;
   IF has_function_privilege(
        'anon',
        'public.finance_is_booking_operator(uuid)'::regprocedure,
