@@ -14,6 +14,68 @@ BEGIN
   END IF;
 END;
 $preflight$;
+DO $history_preflight$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.transactions
+    GROUP BY transaction_number
+    HAVING count(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'Nomor transaksi historis duplikat; aktivasi dibatalkan';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM public.transactions
+    WHERE transaction_number !~ '^BTRDTRX-[0-9]{6,}$'
+      AND transaction_number !~ '^BTRD25-TRX-[0-9]{6}-[0-9]{2}$'
+      AND transaction_number !~ '^BTRD25-[0-9]{6}$'
+  ) THEN
+    RAISE EXCEPTION 'Nomor transaksi historis memiliki format tidak dikenal';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.housekeeping_jobs
+    GROUP BY job_number
+    HAVING count(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'Nomor Housekeeping historis duplikat; aktivasi dibatalkan';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM public.housekeeping_jobs
+    WHERE job_number !~ '^BTRDHK-[0-9]{6,}$'
+      AND job_number !~ '^BTRD25-HK-[0-9]{6}-[0-9]{2}$'
+  ) THEN
+    RAISE EXCEPTION 'Nomor Housekeeping historis memiliki format tidak dikenal';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.housekeeping_history
+    WHERE job_number IS NOT NULL
+      AND job_number !~ '^BTRDHK-[0-9]{6,}$'
+      AND job_number !~ '^BTRD25-HK-[0-9]{6}-[0-9]{2}$'
+  ) THEN
+    RAISE EXCEPTION 'Nomor Housekeeping history memiliki format tidak dikenal';
+  END IF;
+END;
+$history_preflight$;
+
+CREATE TEMP TABLE _owner_numbering_transactions ON COMMIT DROP AS
+SELECT id, transaction_number FROM public.transactions;
+CREATE TEMP TABLE _owner_numbering_housekeeping_jobs ON COMMIT DROP AS
+SELECT id, job_number FROM public.housekeeping_jobs;
+CREATE TEMP TABLE _owner_numbering_housekeeping_history ON COMMIT DROP AS
+SELECT id, job_number FROM public.housekeeping_history;
+CREATE TEMP TABLE _owner_numbering_expenses ON COMMIT DROP AS
+SELECT id FROM public.finance_expenses;
+CREATE TEMP TABLE _owner_numbering_payments ON COMMIT DROP AS
+SELECT id, transaction_id, amount, method, kind, created_at, recorded_by FROM public.payments;
+CREATE TEMP TABLE _owner_numbering_employees ON COMMIT DROP AS
+SELECT id, user_id, position, active FROM public.employees;
+CREATE TEMP TABLE _owner_numbering_roles ON COMMIT DROP AS
+SELECT user_id, role FROM public.user_roles;
 
 CREATE SEQUENCE IF NOT EXISTS public.owner_transaction_number_seq
   AS bigint
@@ -343,4 +405,84 @@ GRANT EXECUTE ON FUNCTION public.next_transaction_number() TO postgres;
 GRANT EXECUTE ON FUNCTION public.next_housekeeping_number() TO postgres;
 GRANT EXECUTE ON FUNCTION public.next_expense_number() TO postgres;
 
+DO $numbering_postcheck$
+BEGIN
+  IF (SELECT count(*) FROM public.transactions) <> (SELECT count(*) FROM _owner_numbering_transactions)
+     OR (SELECT count(*) FROM public.finance_expenses) <> (SELECT count(*) FROM _owner_numbering_expenses)
+     OR (SELECT count(*) FROM public.payments) <> (SELECT count(*) FROM _owner_numbering_payments)
+     OR (SELECT count(*) FROM public.employees) <> (SELECT count(*) FROM _owner_numbering_employees)
+     OR (SELECT count(*) FROM public.user_roles) <> (SELECT count(*) FROM _owner_numbering_roles) THEN
+    RAISE EXCEPTION 'Nomorator mengubah jumlah row histori/core';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.transactions t
+    FULL OUTER JOIN _owner_numbering_transactions b ON b.id = t.id
+    WHERE t.id IS NULL OR b.id IS NULL OR t.transaction_number IS DISTINCT FROM b.transaction_number
+  ) THEN
+    RAISE EXCEPTION 'Nomor transaksi historis berubah atau hilang';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.housekeeping_jobs j
+    FULL OUTER JOIN _owner_numbering_housekeeping_jobs b ON b.id = j.id
+    WHERE j.id IS NULL OR b.id IS NULL OR j.job_number IS DISTINCT FROM b.job_number
+  ) THEN
+    RAISE EXCEPTION 'Nomor Housekeeping historis berubah atau hilang';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.housekeeping_history h
+    FULL OUTER JOIN _owner_numbering_housekeeping_history b ON b.id = h.id
+    WHERE h.id IS NULL OR b.id IS NULL OR h.job_number IS DISTINCT FROM b.job_number
+  ) THEN
+    RAISE EXCEPTION 'Housekeeping history berubah atau hilang';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.payments p
+    FULL OUTER JOIN _owner_numbering_payments b ON b.id = p.id
+    WHERE p.id IS NULL OR b.id IS NULL
+       OR p.transaction_id IS DISTINCT FROM b.transaction_id
+       OR p.amount IS DISTINCT FROM b.amount
+       OR p.method IS DISTINCT FROM b.method
+       OR p.kind IS DISTINCT FROM b.kind
+       OR p.created_at IS DISTINCT FROM b.created_at
+       OR p.recorded_by IS DISTINCT FROM b.recorded_by
+  ) THEN
+    RAISE EXCEPTION 'Payment histori berubah atau hilang';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.finance_expenses e
+    FULL OUTER JOIN _owner_numbering_expenses b ON b.id = e.id
+    WHERE e.id IS NULL OR b.id IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Finance expense histori berubah atau hilang';
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.transactions GROUP BY transaction_number HAVING count(*) > 1)
+     OR EXISTS (SELECT 1 FROM public.housekeeping_jobs GROUP BY job_number HAVING count(*) > 1)
+     OR EXISTS (SELECT 1 FROM public.finance_expenses WHERE expense_number IS NOT NULL GROUP BY expense_number HAVING count(*) > 1) THEN
+    RAISE EXCEPTION 'Duplikasi nomor setelah aktivasi nomorator';
+  END IF;
+
+  IF to_regprocedure('public.next_transaction_number()') IS NULL
+     OR to_regprocedure('public.next_housekeeping_number()') IS NULL
+     OR to_regprocedure('public.next_expense_number()') IS NULL
+     OR to_regclass('public.transactions_transaction_number_owner_final_unique') IS NULL
+     OR to_regclass('public.housekeeping_jobs_job_number_owner_final_unique') IS NULL
+     OR to_regclass('public.finance_expenses_expense_number_unique') IS NULL
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'transaction_identity_insert' AND tgrelid = 'public.transactions'::regclass)
+  THEN
+    RAISE EXCEPTION 'Objek nomorator final tidak lengkap';
+  END IF;
+
+  IF has_function_privilege('anon','public.next_transaction_number()'::regprocedure,'EXECUTE')
+     OR has_function_privilege('anon','public.next_housekeeping_number()'::regprocedure,'EXECUTE')
+     OR has_function_privilege('anon','public.next_expense_number()'::regprocedure,'EXECUTE') THEN
+    RAISE EXCEPTION 'Generator nomorator dapat dipanggil anon/PUBLIC';
+  END IF;
+END;
+$numbering_postcheck$;
 COMMIT;
