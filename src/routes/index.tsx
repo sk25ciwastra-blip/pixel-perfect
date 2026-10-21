@@ -487,7 +487,7 @@ function Ringkasan() {
   const bulanSingkat = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sept", "Okt", "Nov", "Des"];
   const tanggalPanjang = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "numeric", year: "numeric", timeZone: "Asia/Jakarta" })
     .formatToParts(new Date(sekarang))
-    .map((bagian) => bagian.type === "month" ? bulanSingkat[Number(bagian.value) - 1] : bagian.value)
+    .map((bagian) => bagian.type === "month" ? bulanSingkat[Number(bagian.value) - 1] : bagian.value.replaceAll("/", " "))
     .join("");
   const cari = kataCari.trim().toLowerCase();
   const hasilTransaksi = cari ? transaksi.filter((t) => {
