@@ -1,28 +1,26 @@
 -- FINANCE MINIMAL EXECUTABLE PATCH — ISSUE #4
 -- REVIEW-ONLY: DO NOT EXECUTE WITHOUT EXPLICIT OWNER APPROVAL.
--- Intended runner: psql with -v ON_ERROR_STOP=1 -v OWNER_USER_ID=<owner-uuid>.
--- This file is generated from the reviewed Finance migrations on main:
---   20261015000000, 20261015000001, 20261015000002, 20261015000003
--- It intentionally:
---   * preserves the legacy create_reservation signature through a wrapper;
---   * adds the Finance-compatible signature;
---   * preserves the legacy record_transaction_payment signature;
---   * routes Supervisor through SECURITY DEFINER RPCs;
---   * does not create direct Supervisor transaction INSERT;
---   * removes the compatibility migration's automatic DP 40% UPDATE;
---   * seeds commission at the Owner-approved 8% only for future payments;
---   * leaves existing transactions, payments, price snapshots and P4 untouched.
+-- PostgreSQL-only / Lovable Cloud SQL Editor compatible.
+-- Before execution, the operator must set a transaction/session setting:
+--   SET app.owner_user_id = '<exact Owner auth.users UUID>';
+-- The setting is validated by SQL; no UUID is hardcoded and no account is
+-- selected by ORDER BY/LIMIT. Do not replace this with psql substitution.
 --
--- ROLLBACK/RESTORE: abort on any precondition/postcheck failure; for a
--- committed run, restore the verified DB/Auth backup or use a reviewed
--- forward-fix. Do not use blind down migrations.
-
-\set ON_ERROR_STOP on
-\if :{?OWNER_USER_ID}
-\else
-  \echo 'OWNER_USER_ID is required; aborting before any change'
-  \quit 3
-\endif
+-- Generated from reviewed main migrations:
+--   20261015000000, 20261015000001, 20261015000002, 20261015000003
+-- Compatibility decisions:
+--   * legacy create_reservation signature remains available;
+--   * Finance-compatible create_reservation signature is added;
+--   * legacy record_transaction_payment signature remains available;
+--   * Supervisor uses SECURITY DEFINER RPCs;
+--   * no direct Supervisor transaction INSERT policy is created;
+--   * automatic DP 40% UPDATE is removed;
+--   * exactly one 8% commission seed is created for future events;
+--   * existing transactions/payments/prices/P4 remain unchanged.
+--
+-- This patch is one transaction with fail-fast assertions and postchecks.
+-- Rollback/restore: abort on failure; after commit, restore verified DB/Auth
+-- backup or use an approved forward-fix. Do not run blind down SQL.
 
 BEGIN;
 SET LOCAL lock_timeout = '5s';
@@ -31,7 +29,27 @@ SET LOCAL statement_timeout = '10min';
 DO $preflight$
 DECLARE
   v_count integer;
+  v_owner uuid;
 BEGIN
+  BEGIN
+    v_owner := NULLIF(current_setting('app.owner_user_id', true), '')::uuid;
+  EXCEPTION WHEN invalid_text_representation THEN
+    RAISE EXCEPTION 'app.owner_user_id must be a valid UUID';
+  END;
+
+  IF v_owner IS NULL THEN
+    RAISE EXCEPTION 'Set app.owner_user_id to the exact Owner auth.users UUID before execution';
+  END IF;
+
+  IF (
+    SELECT count(*)
+    FROM public.user_roles
+    WHERE user_id = v_owner
+      AND role = 'owner'::public.app_role
+  ) <> 1 THEN
+    RAISE EXCEPTION 'app.owner_user_id must resolve to exactly one existing Owner role';
+  END IF;
+
   IF to_regclass('public.finance_cash_sessions') IS NOT NULL
      OR to_regclass('public.finance_settings') IS NOT NULL THEN
     RAISE EXCEPTION 'Finance objects already exist; use reconciliation, not this first-install patch';
@@ -63,15 +81,6 @@ BEGIN
   SELECT count(*) INTO v_count FROM public.user_roles;
   IF v_count <> 9 THEN
     RAISE EXCEPTION 'Role preservation precondition failed: expected 9, got %', v_count;
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1
-    FROM public.user_roles
-    WHERE user_id = :'OWNER_USER_ID'::uuid
-      AND role = 'owner'::public.app_role
-  ) THEN
-    RAISE EXCEPTION 'OWNER_USER_ID must map to an existing Owner role';
   END IF;
 
   IF to_regprocedure('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz)') IS NULL THEN
@@ -143,40 +152,7 @@ CREATE TABLE IF NOT EXISTS public.finance_commission_configs (
 
 CREATE INDEX IF NOT EXISTS finance_commission_configs_effective_idx
   ON public.finance_commission_configs (effective_from DESC);
-
-DO $commission_seed$
-DECLARE
-  owner_id uuid;
-BEGIN
-  SELECT ur.user_id
-  INTO owner_id
-  FROM public.user_roles ur
-  WHERE ur.role = 'owner'
-  ORDER BY ur.user_id
-  LIMIT 1;
-
-  IF owner_id IS NULL THEN
-    RAISE EXCEPTION 'Owner wajib tersedia untuk seed komisi 8%%';
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1
-    FROM public.finance_commission_configs c
-    WHERE c.mode = 'PERCENTAGE'
-      AND c.rate = 8
-  ) THEN
-    INSERT INTO public.finance_commission_configs (
-      mode,
-      rate,
-      per_room_amount,
-      rounding_rule,
-      created_by
-    )
-    VALUES ('PERCENTAGE', 8, 0, 'FLOOR_RP1000', owner_id);
-  END IF;
-END;
-$commission_seed$;
-
+-- Original arbitrary commission seed removed; one deterministic seed is added below.
 CREATE TABLE IF NOT EXISTS public.finance_bank_accounts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bank_name text NOT NULL,
@@ -1406,6 +1382,7 @@ CREATE TABLE IF NOT EXISTS public.finance_reservation_idempotency (
 
 CREATE INDEX IF NOT EXISTS finance_reservation_idempotency_transaction_idx
   ON public.finance_reservation_idempotency (transaction_id);
+
 -- DP default update intentionally removed; Owner approval is required.
 CREATE OR REPLACE FUNCTION public.finance_snapshot_booking_dp()
 RETURNS trigger
@@ -2439,21 +2416,21 @@ FROM PUBLIC, anon, authenticated;
 
 
 
--- Owner-approved commission rule for future Finance payment events only.
--- Existing 11 payments are never recalculated.
+-- Exactly one deterministic 8% seed for future Finance events.
+-- The Owner identity comes only from app.owner_user_id, validated above.
 INSERT INTO public.finance_commission_configs (
   mode, rate, per_room_amount, rounding_rule, effective_from, created_by
 )
-SELECT 'PERCENTAGE', 8, 0, 'FLOOR_RP1000', now(), :'OWNER_USER_ID'::uuid
+SELECT 'PERCENTAGE', 8, 0, 'FLOOR_RP1000', now(),
+       NULLIF(current_setting('app.owner_user_id', true), '')::uuid
 WHERE NOT EXISTS (
   SELECT 1 FROM public.finance_commission_configs
 );
 
--- The compatibility migration's automatic 40% UPDATE was removed.
--- finance_settings remains non-enforcing until Owner approves DP:
--- minimum_dp_mode = AMOUNT, minimum_dp_value = 0.
+-- No DP 40% UPDATE is included. finance_settings remains:
+-- minimum_dp_mode = AMOUNT, minimum_dp_value = 0
+-- until Owner approves a different DP policy.
 
--- Preserve legacy payment callers while new application code uses _session_id.
 CREATE OR REPLACE FUNCTION public.record_transaction_payment(
   _transaction_id uuid,
   _amount numeric,
@@ -2472,8 +2449,6 @@ BEGIN
 END;
 $function$;
 
--- Preserve legacy reservation callers while new application code supplies
--- idempotency and session context.
 CREATE OR REPLACE FUNCTION public.create_reservation(
   _mode text,
   _room_id uuid,
@@ -2518,7 +2493,6 @@ REVOKE ALL ON FUNCTION public.create_reservation(text,uuid,uuid,text,text,text,n
 GRANT EXECUTE ON FUNCTION public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz)
   TO authenticated;
 
--- Harden helper functions without removing authenticated access.
 REVOKE ALL ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.has_employee_position(uuid, public.employee_position[]) FROM PUBLIC, anon;
 REVOKE ALL ON FUNCTION public.is_receptionist(uuid) FROM PUBLIC, anon;
@@ -2653,4 +2627,5 @@ COMMIT;
 -- 5. Confirm Owner/Supervisor authenticated access before any isolated smoke test.
 -- 6. If any postcheck fails, abort transaction; after commit, restore verified
 --    DB/Auth backup or use an approved forward-fix. Never use blind down SQL.
+
 
