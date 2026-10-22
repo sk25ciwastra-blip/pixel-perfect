@@ -673,7 +673,7 @@ function Ringkasan() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/10">
-                      {statusKamarBaris.slice(0, 8).map(({ room, roomType, terisi, booking, bookingBerikutnya }) => {
+                      {statusKamarBaris.map(({ room, roomType, terisi, booking, bookingBerikutnya }) => {
                         const item = terisi?.transaksi ?? booking;
                         const guest = terisi?.guest ?? guests.rows.find((guestItem) => guestItem.id === booking?.guest_id);
                         const sisa = terisi ? formatSisaWaktu(item?.ends_at ?? null, sekarang) : booking?.scheduled_check_in && booking?.scheduled_check_out ? formatStatusBooking(booking.scheduled_check_in, booking.scheduled_check_out, sekarang) : null;
