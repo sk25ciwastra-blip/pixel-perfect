@@ -207,21 +207,6 @@ function HalamanKamar() {
       }
     >
       <div>
-        <div className="panel-mewah mb-6 grid grid-cols-2 gap-px overflow-hidden p-0 sm:grid-cols-4">
-          {(["siap", "terisi", "perlu", "sedang"] as StatusKamar[]).map((st) => {
-            const Ikon = ikonStatus[st];
-            const jumlah = rooms.rows.filter((room) => statusMap[room.status] === st).length;
-            return (
-              <div key={st} className="flex items-center gap-3 bg-card/60 px-4 py-4">
-                <span className={`grid size-10 shrink-0 place-items-center rounded-full border border-gold/25 bg-navy-deep ${teks[st]}`}><Ikon className="size-5" strokeWidth={1.6} /></span>
-                <div className="min-w-0">
-                  <p className="font-serif text-2xl leading-none">{jumlah}</p>
-                  <p className={`mt-1 truncate text-[0.65rem] font-semibold uppercase tracking-[0.18em] ${teks[st]}`}>{labelStatusKamar[st]}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
         {rooms.error && (
           <p role="alert" className="mt-3 text-sm text-destructive">
             {rooms.error}
