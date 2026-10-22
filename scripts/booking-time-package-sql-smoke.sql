@@ -22,7 +22,7 @@ BEGIN
   PERFORM set_config('request.jwt.claim.sub', v_owner::text, true);
 
   FOR v_package IN
-    SELECT id, name, duration_minutes FROM public.packages
+    SELECT id, name, duration_minutes, time_mode FROM public.packages
     WHERE name IN ('Paket 2 Jam','Paket 4 Jam','Paket 6 Jam','Paket 12 Jam','Paket 24 Jam') AND active
     ORDER BY duration_minutes
   LOOP
@@ -34,8 +34,20 @@ BEGIN
     INSERT INTO public.payments(transaction_id,amount,method,kind,recorded_by,cash_session_id) VALUES(v_tx,1000,'Cash','dp',v_owner,v_session);
     PERFORM public.check_in_booking(v_tx);
     SELECT ends_at INTO v_ends FROM public.transactions WHERE id = v_tx;
+    -- Calculate expected checkout independently using the official time mode.
+    -- Packages with a midnight cap stop at 00:00 Asia/Jakarta; others retain full duration.
     v_expected := v_package.duration_minutes * interval '1 minute';
-    IF abs(extract(epoch FROM (v_ends - (v_now + v_expected)))) > 2 THEN RAISE EXCEPTION 'FAIL duration package %', v_package.name; END IF;
+    IF v_package.time_mode = 'duration_midnight_cap' THEN
+      v_expected := LEAST(
+        v_expected,
+        ((date_trunc('day', v_now AT TIME ZONE 'Asia/Jakarta') + interval '1 day') AT TIME ZONE 'Asia/Jakarta') - v_now
+      );
+    ELSIF v_package.time_mode <> 'duration' THEN
+      RAISE EXCEPTION 'Unexpected time mode % for duration package %', v_package.time_mode, v_package.name;
+    END IF;
+    IF abs(extract(epoch FROM (v_ends - (v_now + v_expected)))) > 2 THEN
+      RAISE EXCEPTION 'FAIL duration package %, mode %, expected %, actual %', v_package.name, v_package.time_mode, v_now + v_expected, v_ends;
+    END IF;
     RAISE NOTICE 'PASS duration %', v_package.name;
   END LOOP;
 
