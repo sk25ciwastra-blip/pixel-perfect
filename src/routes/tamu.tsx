@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { MessageCircle, Eye, X, Phone, MapPin, CalendarDays, Search } from 'lucide-react';
+import { MessageCircle, Eye, X, Phone, MapPin, CalendarDays, Search, Plus } from 'lucide-react';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { useTable, type Guest } from '@/lib/data-live';
@@ -73,10 +73,10 @@ function HalamanTamu() {
   const jumlahKunjungan = (id: string) => transaksiTamu(id).filter((t) => t.status === 'check_in' || t.status === 'check_out').length;
 
   return (
-    <Kerangka judul="Daftar Tamu" keterangan={`${rows.length} tamu tercatat`} aksi={!readOnly && <Button className="h-11 rounded-xl" onClick={() => edit()}>Tambah</Button>}>
+    <Kerangka judul="Daftar Tamu" keterangan={`${rows.length} tamu tercatat`} aksi={!readOnly && <Button className="h-11 shrink-0 gap-2 rounded-xl px-5" onClick={() => edit()}><Plus className="size-4" /><span className="leading-none">Tambah Tamu</span></Button>}>
       <form onSubmit={(e) => e.preventDefault()} className="flex w-full min-w-0 items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 py-1.5 pl-4 pr-1.5 backdrop-blur-md sm:max-w-md">
         <Search className="size-4 shrink-0 text-foreground/90" aria-hidden="true" />
-        <input aria-label="Pencarian tamu" placeholder="Cari Nama atau Nomor Whatsapp...." value={cari} onChange={(e) => setCari(e.target.value)} className="h-8 w-full min-w-0 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
+        <input aria-label="Pencarian tamu" placeholder="Cari Nama atau Nomor Whatsapp...." value={cari} onChange={(e) => setCari(e.target.value)} className="h-8 w-full min-w-0 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
         <Button type="submit" size="sm" className="shrink-0 rounded-full px-4"><Search className="size-4" />Cari</Button>
       </form>
       {loading && <p className="mt-4 text-sm">Memuat tamu…</p>}
@@ -89,7 +89,7 @@ function HalamanTamu() {
         <ul className="divide-y divide-border/60">
           {hasil.map((t) => (
             <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 text-center transition hover:bg-gold/[0.04] md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_236px] md:gap-4 md:px-5">
-              <div className="col-span-2 flex min-w-0 items-center justify-center gap-3 md:col-span-1">
+              <div className="col-span-2 flex min-w-0 items-center justify-start gap-3 md:col-span-1">
                 <span className="grid size-10 shrink-0 place-items-center rounded-full border border-gold/40 bg-gradient-to-b from-navy-soft to-navy-deep font-serif text-base text-gold-light">{t.full_name[0]?.toUpperCase()}</span>
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{t.full_name}</p>
