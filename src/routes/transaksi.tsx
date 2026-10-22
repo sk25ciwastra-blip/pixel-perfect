@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
-import { Daftar, Kerangka, KotakCari } from "@/components/kerangka";
+import { Daftar, Kerangka } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import { Lencana } from "@/components/status-kamar";
 import { rupiah } from "@/lib/data-contoh";
@@ -147,14 +147,18 @@ function Halaman() {
       keterangan="Daftar transaksi tamu"
       aksi={
         canCheckIn && (
-          <Button className="h-11 rounded-xl" onClick={() => setOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Check-in Langsung
+          <Button className="h-11 shrink-0 gap-2 rounded-xl px-5" onClick={() => setOpen(true)}>
+            <Plus className="size-4" />
+            <span className="leading-none">Check-in Langsung</span>
           </Button>
         )
       }
     >
-      <KotakCari value={search} onChange={setSearch} placeholder="Cari nomor transaksi" />
+      <form onSubmit={(e) => e.preventDefault()} className="flex w-full min-w-0 items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 py-1.5 pl-4 pr-1.5 backdrop-blur-md sm:max-w-md">
+        <Search className="size-4 shrink-0 text-foreground/90" aria-hidden="true" />
+        <input aria-label="Pencarian transaksi" placeholder="Cari Nomor Transaksi..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 w-full min-w-0 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
+        <Button type="submit" size="sm" className="shrink-0 rounded-full px-4"><Search className="size-4" />Cari</Button>
+      </form>
 
       {error && (
         <p role="alert" className="mt-3 text-sm text-destructive">
