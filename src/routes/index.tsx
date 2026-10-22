@@ -85,7 +85,7 @@ function formatSisaWaktu(endsAt: string | null, sekarang: number) {
     return {
       status: "normal" as const,
       waktu: formatDurasi(selisih),
-      label: "lagi",
+      label: "TERISI",
       kelas: "text-siap-foreground",
     };
   }
@@ -94,7 +94,7 @@ function formatSisaWaktu(endsAt: string | null, sekarang: number) {
     return {
       status: "hampir" as const,
       waktu: formatDurasi(selisih),
-      label: "lagi",
+      label: "TERISI",
       kelas: "text-v0-warning",
     };
   }
@@ -102,9 +102,24 @@ function formatSisaWaktu(endsAt: string | null, sekarang: number) {
   return {
     status: "expired" as const,
     waktu: formatDurasi(0),
-    label: "WAKTU HABIS",
+    label: "TERISI",
     kelas: "text-bahaya-foreground",
   };
+}
+
+function formatStatusBooking(scheduledCheckIn = "", scheduledCheckOut = "", sekarang = 0) {
+  const mulai = new Date(scheduledCheckIn).getTime();
+  const akhir = new Date(scheduledCheckOut).getTime();
+  if (!Number.isFinite(mulai) || !Number.isFinite(akhir)) {
+    return { status: "unknown" as const, waktu: "—", label: "BOOKING", kelas: "text-muted-foreground" };
+  }
+  if (sekarang >= akhir) {
+    return { status: "expired" as const, waktu: "00:00:00", label: "KEDALUWARSA", kelas: "text-bahaya-foreground" };
+  }
+  if (sekarang > mulai) {
+    return { status: "late" as const, waktu: formatDurasi(akhir - sekarang), label: "TERLAMBAT", kelas: "text-v0-warning" };
+  }
+  return { status: "booking" as const, waktu: formatDurasi(mulai - sekarang), label: "BOOKING", kelas: "text-gold-light" };
 }
 
 function kodePaket(name: string | undefined) {
@@ -207,6 +222,16 @@ function Ringkasan() {
   const bookingAktif = transaksi.filter(
     (item) => item.status === "booking",
   );
+
+  const bookingHariIni = useMemo(() => {
+    const awalHari = new Date(`${tanggalWib(sekarang)}T00:00:00+07:00`).getTime();
+    const akhirHari = awalHari + 86_400_000;
+    return bookingAktif.filter((item) => {
+      const mulai = item.scheduled_check_in ? new Date(item.scheduled_check_in).getTime() : NaN;
+      const akhir = item.scheduled_check_out ? new Date(item.scheduled_check_out).getTime() : NaN;
+      return Number.isFinite(mulai) && Number.isFinite(akhir) && mulai < akhirHari && akhir > awalHari;
+    });
+  }, [bookingAktif, sekarang]);
 
   const kamarTerisi = useMemo(() => {
     return transaksi
@@ -394,10 +419,26 @@ function Ringkasan() {
       : []),
   ];
 
-  // Hanya kamar yang benar-benar TERISI, diurutkan dari sisa waktu paling dekat habis.
+  const bookingPeringatan = useMemo(() => bookingHariIni
+    .map((item) => ({ item, status: item.scheduled_check_in && item.scheduled_check_out ? formatStatusBooking(item.scheduled_check_in, item.scheduled_check_out, sekarang) : null }))
+    .filter(({ item, status }) => status?.status === "late" || status?.status === "expired" || status?.status === "booking" && new Date(item.scheduled_check_in ?? 0).getTime() - sekarang <= BATAS_HAMPIR_HABIS_MS)
+    .sort((a, b) => new Date(a.item.scheduled_check_in ?? 0).getTime() - new Date(b.item.scheduled_check_in ?? 0).getTime())
+    .slice(0, 3), [bookingHariIni, sekarang]);
+
+  // Satu baris utama per kamar: stay aktif lebih dahulu, lalu booking terdekat.
   const statusKamarBaris = useMemo(
-    () => kamarTerisi.flatMap((k) => (k.room ? [{ room: k.room, roomType: k.roomType, terisi: k }] : [])),
-    [kamarTerisi],
+    () => kamarAktif.flatMap((room) => {
+      const terisi = kamarTerisi.find((item) => item.room?.id === room.id);
+      const bookings = bookingHariIni
+        .filter((item) => item.room_id === room.id)
+        .sort((a, b) => new Date(a.scheduled_check_in ?? 0).getTime() - new Date(b.scheduled_check_in ?? 0).getTime());
+      if (!terisi && bookings.length === 0) return [];
+      const booking = bookings[0];
+      const bookingBerikutnya = terisi ? bookings.find((item) => new Date(item.scheduled_check_in ?? 0).getTime() > sekarang) : bookings[1];
+      const roomType = roomTypes.rows.find((typeItem) => typeItem.id === room.room_type_id);
+      return [{ room, roomType, terisi, booking, bookingBerikutnya }];
+    }),
+    [bookingHariIni, kamarAktif, kamarTerisi, roomTypes.rows, sekarang],
   );
 
   const transaksiTerbaru = useMemo(() => {
@@ -580,12 +621,12 @@ function Ringkasan() {
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
                   <div>
                     <h2 id="judul-status-kamar" className="font-serif text-lg font-semibold">Status Kamar <span className="text-gold-light">(Real-time)</span></h2>
-                    <p className="text-xs text-muted-foreground">Kamar yang saat ini sedang terisi.</p>
+                    <p className="text-xs text-muted-foreground">Kamar terisi dan Booking hari ini.</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-2 py-1.5 text-[11px] font-semibold">
-                  <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Terisi {statusKamarBaris.length} Kamar
+                  <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Terisi {statusKamarBaris.filter((row) => row.terisi).length} Kamar · Booking {bookingHariIni.length}
                 </span>
                 <Link to="/kamar" search={{ bagian: "terisi" } as never} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
                   Lihat semua <ChevronRight className="size-3.5" />
@@ -595,11 +636,16 @@ function Ringkasan() {
               {dashboardMessage && (
                 <p role="status" className="mx-5 mb-3 rounded-xl border border-border bg-secondary px-3 py-2 text-sm sm:mx-6">{dashboardMessage}</p>
               )}
+              {bookingPeringatan.length > 0 && (
+                <div role="status" className="mx-5 mb-3 space-y-1 rounded-xl border border-gold/25 bg-gold/10 px-3 py-2 text-xs sm:mx-6">
+                  {bookingPeringatan.map(({ item, status }) => <p key={item.id}><span className={`font-bold ${status?.kelas}`}>{status?.label}</span> · {guests.rows.find((guest) => guest.id === item.guest_id)?.full_name ?? "Tamu"} · {item.transaction_number}</p>)}
+                </div>
+              )}
               {statusKamarBaris.length === 0 ? (
                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
                   <BedDouble className="size-8 text-gold/60" strokeWidth={1.4} />
-                  <p className="mt-3 font-serif text-lg">Tidak ada kamar sedang terisi</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Kamar akan muncul di sini setelah Check-in.</p>
+                  <p className="mt-3 font-serif text-lg">Tidak ada kamar terisi atau Booking hari ini</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Kamar dan Booking akan muncul di sini secara realtime.</p>
                 </div>
               ) : (
                 <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg border border-gold/15 bg-navy-deep/50">
@@ -627,23 +673,15 @@ function Ringkasan() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/10">
-                      {statusKamarBaris.slice(0, 8).map(({ room, roomType, terisi }) => {
-                        const item = terisi?.transaksi;
-                        const guest = terisi?.guest;
-                        const sisa = item ? formatSisaWaktu(item.ends_at, sekarang) : null;
+                      {statusKamarBaris.slice(0, 8).map(({ room, roomType, terisi, booking, bookingBerikutnya }) => {
+                        const item = terisi?.transaksi ?? booking;
+                        const guest = terisi?.guest ?? guests.rows.find((guestItem) => guestItem.id === booking?.guest_id);
+                        const sisa = terisi ? formatSisaWaktu(item?.ends_at ?? null, sekarang) : booking?.scheduled_check_in && booking?.scheduled_check_out ? formatStatusBooking(booking.scheduled_check_in, booking.scheduled_check_out, sekarang) : null;
                         const packageItem = item ? packages.rows.find((p) => p.id === item.package_id) : undefined;
                         const phoneNumber = guest?.phone ? normalizeWhatsAppNumber(guest.phone) : "";
                         const phoneValid = /^62\d{8,13}$/.test(phoneNumber);
-                        const checkoutReason = item ? checkoutDisabledReason(item, room) : "";
-                        const checkoutDisabled = !item || Boolean(checkoutReason) || checkingOutId !== null;
-                        const mulai = item?.started_at ? new Date(item.started_at).getTime() : NaN;
-                        const akhir = item?.ends_at ? new Date(item.ends_at).getTime() : NaN;
-                        const porsi = Number.isFinite(mulai) && Number.isFinite(akhir) && akhir > mulai
-                          ? Math.min(1, Math.max(0, (akhir - sekarang) / (akhir - mulai)))
-                          : 0;
-                        const warnaBatang = sisa?.status === "expired" || sisa?.status === "hampir" && porsi < 0.1
-                          ? "bg-v0-danger"
-                          : sisa?.status === "hampir" ? "bg-v0-warning" : "bg-v0-success";
+                        const checkoutReason = terisi && item ? checkoutDisabledReason(item, room) : "Booking belum Check-in.";
+                        const checkoutDisabled = !terisi || !item || Boolean(checkoutReason) || checkingOutId !== null;
                         return (
                           <tr key={room.id} className="transition hover:bg-gold/[0.04]">
                             <td className="px-2 py-3">
@@ -661,22 +699,20 @@ function Ringkasan() {
                               {item ? (
                                 <>
                                   <p className="font-semibold">{kodePaket(packageItem?.name)}</p>
-                                  
+                                  {bookingBerikutnya && <p className="mt-1 text-[10px] text-gold-light">Booking berikutnya {jamWib(bookingBerikutnya.scheduled_check_in ?? bookingBerikutnya.created_at)}</p>}
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-2 py-3 whitespace-nowrap tabular-nums">{item?.started_at ? jamWib(item.started_at) : "—"}</td>
+                            <td className="px-2 py-3 whitespace-nowrap tabular-nums">{terisi ? item?.started_at ? jamWib(item.started_at) : "—" : item?.scheduled_check_in ? jamWib(item.scheduled_check_in) : "—"}</td>
                             <td className="px-2 py-3">
                               {sisa ? (
-                                <div className="flex min-w-0 flex-col gap-1.5">
-                                  <span className={`shrink-0 font-mono font-bold tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
-                                  <span className="h-1 w-full overflow-hidden rounded-full bg-secondary" aria-hidden="true">
-                                    <span className={`block h-full rounded-full ${warnaBatang}`} style={{ width: `${sisa.status === "expired" ? 100 : Math.max(4, porsi * 100)}%` }} />
-                                  </span>
+                                <div className="flex min-w-0 flex-col items-center gap-0.5">
+                                  <span className={`shrink-0 text-lg font-mono font-bold leading-none tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
+                                  <span className={`text-[10px] font-bold tracking-wide ${sisa.kelas}`}>{sisa.label}</span>
                                 </div>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-2 py-3 whitespace-nowrap tabular-nums">{item?.ends_at ? jamWib(item.ends_at) : "—"}</td>
+                            <td className="px-2 py-3 whitespace-nowrap tabular-nums">{terisi ? item?.ends_at ? jamWib(item.ends_at) : "—" : item?.scheduled_check_out ? jamWib(item.scheduled_check_out) : "—"}</td>
                             <td className="px-2 py-3">
                               {item ? (
                                 <div className="flex justify-center gap-1">
