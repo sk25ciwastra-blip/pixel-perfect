@@ -554,7 +554,7 @@ function Ringkasan() {
                 <div className="mt-4 grid grid-cols-3 gap-2.5">
                   <TombolAksi ikon={LogIn} judul="Check-in Langsung" utama onClick={() => setModal("check_in")} />
                   <TombolAksi ikon={CalendarPlus} judul="Tambah Booking" onClick={() => setModal("booking")} />
-                  <TombolAksi ikon={ReceiptText} judul="Tambah Pengeluaran" onClick={() => setModal("pengeluaran")} />
+                  <TombolAksi ikon={ReceiptText} judul={"Kas\nKeluar"} onClick={() => setModal("pengeluaran")} />
                 </div>
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -892,7 +892,7 @@ function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; j
       variant="ghost"
       type="button"
       onClick={onClick}
-      className={`flex h-auto min-h-12 whitespace-normal flex-row items-center justify-center gap-1.5 rounded-lg border px-2 py-2.5 text-left text-[0.65rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
+      className={`flex h-auto min-h-12 whitespace-pre-line flex-row items-center justify-center gap-1.5 rounded-lg border px-2 py-2.5 text-left text-[0.65rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
       <Ikon className={`h-5 w-5 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
       <span className="min-w-0">{judul}</span>

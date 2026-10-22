@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { MessageCircle, Eye, X, Phone, MapPin, CalendarDays } from 'lucide-react';
-import { Kerangka, KotakCari } from '@/components/kerangka';
+import { MessageCircle, Eye, X, Phone, MapPin, CalendarDays, Search } from 'lucide-react';
+import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { useTable, type Guest } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
