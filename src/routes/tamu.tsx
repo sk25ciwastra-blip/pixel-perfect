@@ -83,12 +83,12 @@ function HalamanTamu() {
       {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
 
       <div className="panel-mewah mt-5 overflow-hidden p-0">
-        <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_auto] gap-4 border-b border-gold/20 px-5 py-3 text-center text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-gold md:grid">
+        <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_236px] gap-4 border-b border-gold/20 px-5 py-3 text-center text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-gold md:grid">
           <span>Nama</span><span>Nomor Telepon</span><span>Alamat</span><span>Terdaftar</span><span>Aksi</span>
         </div>
         <ul className="divide-y divide-border/60">
           {hasil.map((t) => (
-            <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 text-center transition hover:bg-gold/[0.04] md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_auto] md:gap-4 md:px-5">
+            <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 text-center transition hover:bg-gold/[0.04] md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_236px] md:gap-4 md:px-5">
               <div className="col-span-2 flex min-w-0 items-center justify-center gap-3 md:col-span-1">
                 <span className="grid size-10 shrink-0 place-items-center rounded-full border border-gold/40 bg-gradient-to-b from-navy-soft to-navy-deep font-serif text-base text-gold-light">{t.full_name[0]?.toUpperCase()}</span>
                 <div className="min-w-0">
