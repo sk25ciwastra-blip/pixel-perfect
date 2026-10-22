@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
-import { MessageCircle, Eye, X, Phone, MapPin, CalendarDays } from 'lucide-react';
-import { Kerangka, KotakCari } from '@/components/kerangka';
+import { MessageCircle, Eye, X, Phone, MapPin, CalendarDays, Search } from 'lucide-react';
+import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { useTable, type Guest } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,28 +74,32 @@ function HalamanTamu() {
 
   return (
     <Kerangka judul="Daftar Tamu" keterangan={`${rows.length} tamu tercatat`} aksi={!readOnly && <Button className="h-11 rounded-xl" onClick={() => edit()}>Tambah</Button>}>
-      <KotakCari value={cari} onChange={setCari} placeholder="Cari nama atau nomor HP" />
+      <form onSubmit={(e) => e.preventDefault()} className="flex w-full min-w-0 items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 py-1.5 pl-4 pr-1.5 backdrop-blur-md sm:max-w-md">
+        <Search className="size-4 shrink-0 text-foreground/90" aria-hidden="true" />
+        <input aria-label="Pencarian tamu" placeholder="Cari Nama atau Nomor Whatsapp...." value={cari} onChange={(e) => setCari(e.target.value)} className="h-8 w-full min-w-0 bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
+        <Button type="submit" size="sm" className="shrink-0 rounded-full px-4"><Search className="size-4" />Cari</Button>
+      </form>
       {loading && <p className="mt-4 text-sm">Memuat tamu…</p>}
       {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
 
       <div className="panel-mewah mt-5 overflow-hidden p-0">
-        <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_auto] gap-4 border-b border-gold/20 px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-gold md:grid">
-          <span>Nama</span><span>Nomor Telepon</span><span>Alamat</span><span>Terdaftar</span><span className="text-right">Aksi</span>
+        <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_236px] gap-4 border-b border-gold/20 px-5 py-3 text-center text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-gold md:grid">
+          <span>Nama</span><span>Nomor Telepon</span><span>Alamat</span><span>Terdaftar</span><span>Aksi</span>
         </div>
         <ul className="divide-y divide-border/60">
           {hasil.map((t) => (
-            <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 transition hover:bg-gold/[0.04] md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_auto] md:gap-4 md:px-5">
-              <div className="col-span-2 flex min-w-0 items-center gap-3 md:col-span-1">
+            <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-4 text-center transition hover:bg-gold/[0.04] md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,.9fr)_236px] md:gap-4 md:px-5">
+              <div className="col-span-2 flex min-w-0 items-center justify-center gap-3 md:col-span-1">
                 <span className="grid size-10 shrink-0 place-items-center rounded-full border border-gold/40 bg-gradient-to-b from-navy-soft to-navy-deep font-serif text-base text-gold-light">{t.full_name[0]?.toUpperCase()}</span>
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{t.full_name}</p>
                   <p className="text-xs text-muted-foreground">{jumlahKunjungan(t.id)} kunjungan</p>
                 </div>
               </div>
-              <p className="col-span-2 flex items-center gap-2 font-mono text-sm tabular-nums md:col-span-1"><Phone className="size-3.5 text-gold md:hidden" />{t.phone}</p>
-              <p className="col-span-2 flex items-center gap-2 truncate text-sm text-muted-foreground md:col-span-1"><MapPin className="size-3.5 shrink-0 text-gold md:hidden" /><span className="truncate">{t.address || '—'}</span></p>
-              <p className="col-span-2 flex items-center gap-2 text-xs text-muted-foreground md:col-span-1"><CalendarDays className="size-3.5 text-gold md:hidden" />{tanggalWib(t.created_at)}</p>
-              <div className="col-span-2 flex justify-end gap-2 md:col-span-1">
+              <p className="col-span-2 flex items-center justify-center gap-2 font-mono text-sm tabular-nums md:col-span-1"><Phone className="size-3.5 text-gold md:hidden" />{t.phone}</p>
+              <p className="col-span-2 flex min-w-0 items-center justify-center gap-2 text-sm text-muted-foreground md:col-span-1"><MapPin className="size-3.5 shrink-0 text-gold md:hidden" /><span className="truncate">{t.address || '—'}</span></p>
+              <p className="col-span-2 flex items-center justify-center gap-2 text-xs text-muted-foreground md:col-span-1"><CalendarDays className="size-3.5 text-gold md:hidden" />{tanggalWib(t.created_at)}</p>
+              <div className="col-span-2 flex justify-center gap-2 md:col-span-1">
                 {!readOnly && (
                   <Button size="sm" variant="outline" className="border-siap-foreground/40 text-siap-foreground" onClick={() => openWhatsApp(t.phone)}>
                     <MessageCircle className="mr-1.5 size-4" />Hubungi
