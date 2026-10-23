@@ -122,6 +122,24 @@ function formatStatusBooking(scheduledCheckIn = "", scheduledCheckOut = "", seka
   return { status: "booking" as const, waktu: formatDurasi(mulai - sekarang), label: "BOOKING", kelas: "text-gold-light" };
 }
 
+// Tampilan tabel saja: gunakan timestamp yang sama tanpa mengubah aturan waktu.
+function formatSisaTabel(endsAt: string | null, sekarang: number) {
+  if (!endsAt) return "—";
+  const selisih = new Date(endsAt).getTime() - sekarang;
+  if (!Number.isFinite(selisih)) return "—";
+  return `${selisih < 0 ? "+" : "-"}${formatDurasi(Math.abs(selisih))}`;
+}
+
+function tipeKamarRingkas(name: string | undefined) {
+  if (!name) return "—";
+  const tipe = name.trim().toLowerCase();
+  if (/^(standard|standar|std)$/.test(tipe)) return "Std";
+  if (/^(superior|sup)\s*a$/.test(tipe)) return "Sup A";
+  if (/^(superior|sup)\s*b$/.test(tipe)) return "Sup B";
+  if (/^(deluxe|deluks|dlx)$/.test(tipe)) return "Dlx";
+  return name;
+}
+
 function kodePaket(name: string | undefined) {
   const kode: Record<string, string> = {
     "Paket 2 Jam": "P2",
@@ -649,27 +667,29 @@ function Ringkasan() {
                 </div>
               ) : (
                 <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg border border-gold/15 bg-navy-deep/50">
-                  <table className="w-full min-w-[740px] table-fixed text-center text-xs [&_th]:text-center [&_td]:text-center xl:min-w-0">
+                  <table className="w-full min-w-[720px] table-fixed text-center text-[11px] [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
-                      <col className="w-[58px]" />
-                      <col className="w-[84px]" />
+                      <col className="w-[44px]" />
+                      <col className="w-[48px]" />
                       <col />
-                      <col className="w-[62px]" />
-                      <col className="w-[74px]" />
-                      <col className="w-[116px]" />
-                      <col className="w-[82px]" />
-                      <col className="w-[120px]" />
+                      <col className="w-[40px]" />
+                      <col className="w-[100px]" />
+                      <col className="w-[60px]" />
+                      <col className="w-[90px]" />
+                      <col className="w-[64px]" />
+                      <col className="w-[68px]" />
                     </colgroup>
-                    <thead className="sticky top-0 z-10 bg-navy-deep text-xs [&_th]:normal-case [&_th]:tracking-normal [&_th]:text-foreground/85">
+                    <thead className="sticky top-0 z-10 bg-navy-deep text-[11px] [&_th]:normal-case [&_th]:tracking-normal [&_th]:text-gold-light">
                       <tr className="border-b border-gold/20">
-                        <th className="px-2 py-3 font-semibold">Kamar</th>
-                        <th className="px-2 py-3 font-semibold">Tipe</th>
-                        <th className="px-2 py-3 font-semibold">Tamu</th>
-                        <th className="px-2 py-3 font-semibold">Paket</th>
-                        <th className="px-2 py-3 whitespace-nowrap font-semibold">Check-in</th>
-                        <th className="px-2 py-3 font-semibold">Sisa Waktu</th>
-                        <th className="px-2 py-3 whitespace-nowrap font-semibold">Check-out</th>
-                        <th className="px-2 py-3 text-center font-semibold">Aksi</th>
+                        <th className="px-1 py-2 font-semibold">Kamar</th>
+                        <th className="px-1 py-2 font-semibold">Tipe</th>
+                        <th className="px-1 py-2 font-semibold">Tamu</th>
+                        <th className="px-1 py-2 font-semibold">Paket</th>
+                        <th className="px-1 py-2 font-semibold">Status</th>
+                        <th className="px-1 py-2 whitespace-nowrap font-semibold">Check-in</th>
+                        <th className="px-1 py-2 font-semibold">Sisa Waktu</th>
+                        <th className="px-1 py-2 whitespace-nowrap font-semibold">Check-out</th>
+                        <th className="px-1 py-2 text-center font-semibold">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gold/10">
@@ -677,6 +697,9 @@ function Ringkasan() {
                         const item = terisi?.transaksi ?? booking;
                         const guest = terisi?.guest ?? guests.rows.find((guestItem) => guestItem.id === booking?.guest_id);
                         const sisa = terisi ? formatSisaWaktu(item?.ends_at ?? null, sekarang) : booking?.scheduled_check_in && booking?.scheduled_check_out ? formatStatusBooking(booking.scheduled_check_in, booking.scheduled_check_out, sekarang) : null;
+                        const labelStatus = terisi ? sisa?.status === "expired" ? "Overtime" : "Terisi" : sisa?.status === "late" ? "Terlambat Datang" : sisa?.status === "expired" ? "Booking kedaluwarsa" : "Booking";
+                        const kelasStatus = terisi ? "text-bahaya-foreground" : sisa?.status === "late" || sisa?.status === "expired" ? "text-v0-warning" : "text-terisi-foreground";
+                        const batasTimer = terisi ? item?.ends_at : sisa?.status === "booking" ? item?.scheduled_check_in : item?.scheduled_check_out;
                         const packageItem = item ? packages.rows.find((p) => p.id === item.package_id) : undefined;
                         const phoneNumber = guest?.phone ? normalizeWhatsAppNumber(guest.phone) : "";
                         const phoneValid = /^62\d{8,13}$/.test(phoneNumber);
@@ -684,18 +707,18 @@ function Ringkasan() {
                         const checkoutDisabled = !terisi || !item || Boolean(checkoutReason) || checkingOutId !== null;
                         return (
                           <tr key={room.id} className="transition hover:bg-gold/[0.04]">
-                            <td className="px-2 py-3">
+                            <td className="px-1 py-2">
                               <span className="font-semibold tabular-nums">{room.room_number}</span>
                             </td>
-                            <td className="truncate px-2 py-3.5" title={roomType?.name}>{roomType?.name ?? "—"}</td>
-                            <td className="px-2 py-3">
+                            <td className="truncate px-1 py-2" title={roomType?.name}>{tipeKamarRingkas(roomType?.name)}</td>
+                            <td className="px-1 py-2">
                               {guest ? (
                                 <>
                                   <p className="truncate font-medium" title={`${guest.full_name} · ${item?.transaction_number ?? ""}`}>{guest.full_name}</p>
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-2 py-3">
+                            <td className="px-1 py-2">
                               {item ? (
                                 <>
                                   <p className="font-semibold">{kodePaket(packageItem?.name)}</p>
@@ -703,20 +726,22 @@ function Ringkasan() {
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-2 py-3 whitespace-nowrap tabular-nums">{terisi ? item?.started_at ? jamWib(item.started_at) : "—" : item?.scheduled_check_in ? jamWib(item.scheduled_check_in) : "—"}</td>
-                            <td className="px-2 py-3">
+                            <td className="px-1 py-2">
+                              <span className={`inline-flex max-w-full items-center justify-center gap-1.5 leading-tight ${kelasStatus}`}>
+                                <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
+                                <span>{labelStatus}</span>
+                              </span>
+                            </td>
+                            <td className="px-1 py-2 whitespace-nowrap tabular-nums">{terisi ? item?.started_at ? jamWib(item.started_at) : "—" : item?.scheduled_check_in ? jamWib(item.scheduled_check_in) : "—"}</td>
+                            <td className="px-1 py-2">
                               {sisa ? (
-                                <div className="flex min-w-0 flex-col items-center gap-0.5">
-                                  <span className={`shrink-0 text-lg font-mono font-bold leading-none tabular-nums ${sisa.kelas}`}>{sisa.waktu}</span>
-                                  <span className={`text-[10px] font-bold tracking-wide ${sisa.kelas}`}>{sisa.label}</span>
-                                </div>
+                                <span className={`whitespace-nowrap font-mono text-xs font-semibold tabular-nums ${sisa.status === "expired" ? "text-bahaya-foreground" : "text-gold-light"}`}>{formatSisaTabel(batasTimer ?? null, sekarang)}</span>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
-                            <td className="px-2 py-3 whitespace-nowrap tabular-nums">{terisi ? item?.ends_at ? jamWib(item.ends_at) : "—" : item?.scheduled_check_out ? jamWib(item.scheduled_check_out) : "—"}</td>
-                            <td className="px-2 py-3">
+                            <td className="px-1 py-2 whitespace-nowrap tabular-nums">{terisi ? item?.ends_at ? jamWib(item.ends_at) : "—" : item?.scheduled_check_out ? jamWib(item.scheduled_check_out) : "—"}</td>
+                            <td className="px-1 py-2">
                               {item ? (
                                 <div className="flex justify-center gap-1">
-                                  <IkonAksi label="Detail transaksi" onClick={() => setDetailTransactionId(item.id)}><Eye className="h-4 w-4" /></IkonAksi>
                                   <IkonAksi
                                     label={phoneValid ? "Hubungi tamu via WhatsApp" : "WhatsApp tidak tersedia"}
                                     disabled={!phoneValid}
@@ -726,14 +751,14 @@ function Ringkasan() {
                                       openWhatsApp(guest.phone, `Halo ${guest.full_name}, kami dari Baturaden 25 Homestay.\nNo. Transaksi: ${item.transaction_number}`);
                                     }}
                                   ><svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.05 0C5.46 0 .1 5.36.1 11.95c0 2.1.55 4.16 1.6 5.98L0 24l6.23-1.63a11.96 11.96 0 0 0 5.82 1.49h.01c6.58 0 11.94-5.36 11.94-11.95 0-3.2-1.24-6.2-3.48-8.43ZM12.05 21.85a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.7.97.99-3.61-.24-.37a9.87 9.87 0 0 1-1.51-5.3c0-5.48 4.46-9.94 9.94-9.94a9.87 9.87 0 0 1 7.03 2.91 9.87 9.87 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94Zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.2 5.08 4.49.71.31 1.27.5 1.7.64.71.22 1.36.19 1.87.12.57-.09 1.77-.73 2.02-1.43.25-.7.25-1.3.17-1.43-.07-.12-.27-.2-.57-.35Z" /></svg></IkonAksi>
-                                  <IkonAksi
+                                  {terisi && <IkonAksi
                                     label={checkoutDisabled ? checkoutReason || "Check-out sedang diproses" : "Check-out"}
                                     disabled={checkoutDisabled}
                                     kelas="text-bahaya-foreground"
                                     onClick={() => void checkOut(item.id)}
-                                  ><LogOut className="h-4 w-4" /></IkonAksi>
+                                  ><LogOut className="h-4 w-4" /></IkonAksi>}
                                 </div>
-                              ) : <span className="block text-center text-xs text-muted-foreground">—</span>}
+                              ) : <span className="block text-center text-[11px] text-muted-foreground">—</span>}
                             </td>
                           </tr>
                         );
