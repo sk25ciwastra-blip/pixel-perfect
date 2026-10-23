@@ -128,8 +128,8 @@ function HalamanTamu() {
               <td className="pemisah-kolom border-b border-border/60 px-2 py-3"><span className="text-xs text-muted-foreground" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span></td>
               <td className="border-b border-border/60 px-2 py-2"><div className="flex justify-center gap-0">
                 <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Lihat detail ${t.full_name}`} aria-label={`Lihat detail ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setOpen(false); setDetailTamu(t); }}><Eye className="size-[21px]" /></Button>
-                {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-siap-foreground" title={`WhatsApp ${t.full_name}`} aria-label={`WhatsApp ${t.full_name}`} onClick={() => openWhatsApp(t.phone)}><IkonWhatsApp className="size-[21px]" /></Button>
-                 {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Tambah catatan ${t.full_name}`} aria-label={`Tambah catatan ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setDetailTamu(t); edit(t, true); }}><NotebookPen className="size-[21px]" /></Button>}}
+                {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-siap-foreground" title={`WhatsApp ${t.full_name}`} aria-label={`WhatsApp ${t.full_name}`} onClick={() => openWhatsApp(t.phone)}><IkonWhatsApp className="size-[21px]" /></Button>}
+                 {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Tambah catatan ${t.full_name}`} aria-label={`Tambah catatan ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setDetailTamu(t); edit(t, true); }}><NotebookPen className="size-[21px]" /></Button>}
               </div></td>
             </tr>)}</tbody>
           </table>
