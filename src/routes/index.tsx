@@ -801,7 +801,7 @@ function Ringkasan() {
                   </table>
                 </div>
               )}
-              <div aria-label="Indikator status kamar" className="mt-auto flex flex-wrap items-center gap-1.5 px-4 pb-3 pt-1">
+              <div aria-label="Indikator status kamar" className="mt-auto flex flex-wrap items-center justify-center gap-1.5 px-4 pb-3 pt-1">
                 {indikatorStatus.map((status) => (
                   <span
                     key={status.label}
