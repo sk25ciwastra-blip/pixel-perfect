@@ -474,7 +474,7 @@ function Ringkasan() {
       terisi: statusKamarBaris.filter((row) => row.terisi).length,
       booking: bookingHariIni.length,
       persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
-      terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in, item.scheduled_check_out, sekarang)?.status === "late").length,
+      terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in ?? "", item.scheduled_check_out ?? "", sekarang)?.status === "late").length,
       perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
       overtime: statusKamarBaris.filter(({ terisi }) => terisi && formatSisaWaktu(terisi.transaksi.ends_at ?? null, sekarang).status === "expired").length,
     };
