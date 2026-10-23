@@ -135,7 +135,7 @@ export function PapanInformasi() {
       {owner && <Button variant="ghost" size="icon" className="absolute right-2 top-2 z-10 size-7 text-gold" title="Kelola pengumuman" aria-label="Kelola pengumuman" onClick={() => setManage(true)}><Settings2 className="size-4" /></Button>}
       <div className="relative min-w-0 flex-1 border border-transparent px-4 py-2 sm:border-l-gold/15 sm:border-t-0 sm:pl-6">
         {current && enabled && !error ? <>
-          <div ref={content} className="pb-5 pr-3">
+          <div ref={content} className="pb-7 pr-3">
             <p className="flex items-center gap-1.5 text-[12px] font-semibold tracking-wide text-gold"><Sparkles className="size-3.5 shrink-0" aria-hidden="true" />PENGUMUMAN OWNER</p>
             <p className="line-clamp-4 whitespace-pre-wrap break-words text-[14px] leading-5 text-foreground sm:line-clamp-2" tabIndex={0}>{current.body}</p>
           </div>
