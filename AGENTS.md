@@ -21,3 +21,4 @@
 - Database changes awaiting Owner approval are prepared in `supabase/pending/` and not applied; the UI falls back gracefully until they are applied.
 - Guest note history is append-only and captured atomically by the existing guest save trigger; legacy author/time stay unknown, and guest presentation rules live in a pure tested helper to keep visit counting separate from UI.
 - Guest-page WhatsApp controls share a local SVG renderer using the Dashboard's official path; this keeps both guest controls consistent without modifying the approved Dashboard.
+- Guest note shortcuts reuse the guest-save trigger with a notes-only update; guest status remains unavailable until an authoritative stored field exists, preventing fabricated eligibility labels.
