@@ -185,7 +185,9 @@ function Ringkasan() {
   const packages = useTable("packages");
   const activityLogs = useTable("activity_logs", peran === "owner");
   const employees = useTable("employees", peran === "owner");
-  const housekeepingHistory = useTable("housekeeping_history", peran === "owner" || ["supervisor", "housekeeping", "inspector"].includes(posisiKode ?? ""));
+  const bolehLihatHousekeeping = peran === "owner" || ["supervisor", "housekeeping", "inspector"].includes(posisiKode ?? "");
+  const housekeepingHistory = useTable("housekeeping_history", bolehLihatHousekeeping);
+  const housekeepingChecklists = useTable("housekeeping_checklists", bolehLihatHousekeeping);
   const financeExpenses = useTable(
     "finance_expenses",
     peran === "owner" || posisiKode === "supervisor",
