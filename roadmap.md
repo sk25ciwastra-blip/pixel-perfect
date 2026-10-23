@@ -1,6 +1,7 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Revisi Dashboard saat ini
+- [x] Tambahkan panel horizontal compact Papan Informasi di antara baris Status Kamar/Transaksi Terbaru dan tiga modul analitik; sisi kiri ikon megafon + judul + subtitle, sisi kanan area pengumuman prioritas (empty state "Belum ada pengumuman operasional" karena belum ada sistem pengumuman — tanpa data dummy/backend); responsif vertikal di HP, komputer/HP terverifikasi tanpa publikasi.
 - [x] Subtitle di bawah judul panel Transaksi Terbaru ditulis tepat "Aktivitas Cash Flow Terkini" (text-xs muted, gaya sama Status Kamar); ikon dan Lihat semua tidak berubah, komputer/HP terverifikasi tanpa publikasi.
 - [x] Rapikan panel Transaksi Terbaru: nama tamu nama depan huruf awal kapital + 4 digit WA, tanpa kode paket (baris 2 = nomor • Booking), nomor pengeluaran ikut bisa diklik membuka rincian pengeluaran, baris pengeluaran = jenis • keperluan dan nomor • operator; komputer/HP, detail transaksi & pengeluaran terbuka/tertutup, tanpa publikasi.
 - [x] Ubah indikator di bawah tabel Status Kamar menjadi 6 kotak mini (Terisi hijau, Booking biru, Persiapan kuning, Terlambat ungu, Perlu Tindakan oranye, Overtime merah) dengan angka dinamis dari data nyata; tinggi panel tetap, komputer/HP terverifikasi.
