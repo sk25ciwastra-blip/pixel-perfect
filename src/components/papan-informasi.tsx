@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Megaphone, Pencil, Pin, Plus, Settings2, Trash2 } from 'lucide-react';
+import { Megaphone, Pencil, Plus, Settings2, Sparkles, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { usePeran } from '@/lib/peran';
@@ -131,12 +131,12 @@ export function PapanInformasi() {
         <div className="min-w-0"><h2 id="judul-papan-informasi" className="font-serif text-lg font-semibold">Papan Informasi</h2>
           <p className="text-xs text-muted-foreground">Informasi dan pengumuman operasional</p></div>
       </div>
-      {owner && <Button variant="ghost" size="icon" className="absolute right-2 top-2 size-7 text-gold" title="Kelola pengumuman" aria-label="Kelola pengumuman" onClick={() => setManage(true)}><Settings2 className="size-4" /></Button>}
+      {owner && <Button variant="ghost" size="icon" className="absolute right-2 top-2 z-10 size-7 text-gold" title="Kelola pengumuman" aria-label="Kelola pengumuman" onClick={() => setManage(true)}><Settings2 className="size-4" /></Button>}
       <div className="relative min-w-0 flex-1 border border-transparent px-4 py-2 sm:border-l-gold/15 sm:border-t-0 sm:pl-6">
         {current && enabled && !error ? <>
           <div ref={content} className="pr-6">
-            <p className="flex items-center gap-1 text-[10px] font-semibold text-gold"><Pin className="size-3 shrink-0" aria-hidden="true" />PENGUMUMAN OWNER</p>
-            <p className="line-clamp-2 whitespace-pre-wrap break-words text-xs leading-5 text-foreground" tabIndex={0}>{current.body.length > 110 ? `${current.body.slice(0, 109)}…` : current.body}</p>
+            <p className="flex items-center gap-1.5 text-[12px] font-semibold tracking-wide text-gold"><Sparkles className="size-3.5 shrink-0" aria-hidden="true" />PENGUMUMAN OWNER</p>
+            <p className="line-clamp-2 whitespace-pre-wrap break-words text-[15px] leading-5 text-foreground" tabIndex={0}>{current.body.length > 110 ? `${current.body.slice(0, 109)}…` : current.body}</p>
             <p className="text-[10px] text-muted-foreground">{waktu(current.created_at)}{current.updated_at !== current.created_at ? ` · Diubah ${waktu(current.updated_at)}` : ''}</p>
           </div>
           <div className="absolute bottom-2 right-2">
