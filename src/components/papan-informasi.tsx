@@ -131,7 +131,7 @@ export function PapanInformasi() {
         <div className="min-w-0"><h2 id="judul-papan-informasi" className="font-serif text-lg font-semibold">Papan Informasi</h2>
           <p className="text-xs text-muted-foreground">Informasi dan pengumuman operasional</p></div>
       </div>
-      {owner && <Button variant="ghost" size="icon" className="absolute right-2 top-2 size-7 text-gold" title="Kelola pengumuman" aria-label="Kelola pengumuman" onClick={() => setManage(true)}><Settings2 className="size-4" /></Button>}
+      {owner && <Button variant="ghost" size="icon" className="absolute right-2 top-2 z-10 size-7 text-gold" title="Kelola pengumuman" aria-label="Kelola pengumuman" onClick={() => setManage(true)}><Settings2 className="size-4" /></Button>}
       <div className="relative min-w-0 flex-1 border border-transparent px-4 py-2 sm:border-l-gold/15 sm:border-t-0 sm:pl-6">
         {current && enabled && !error ? <>
           <div ref={content} className="pr-6">
