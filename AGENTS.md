@@ -19,3 +19,4 @@
 - Dashboard search reads existing RLS-scoped operational rows and opens existing detail views or pages; it never uses privileged queries or changes operational records.
 - Announcements use browser RLS-scoped CRUD and an isolated Dashboard panel with paginated complete reads, cleaned-up realtime refresh, deterministic rotation, and database-authoritative actor/timestamps/audit; this keeps announcement changes independent of operational and finance modules.
 - Database changes awaiting Owner approval are prepared in `supabase/pending/` and not applied; the UI falls back gracefully until they are applied.
+- Guest note history is append-only and captured atomically by the existing guest save trigger; legacy author/time stay unknown, and guest presentation rules live in a pure tested helper to keep visit counting separate from UI.

@@ -1,5 +1,10 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Halaman Tamu — rancangan final Owner
+- [x] Rapikan tabel empat kolom, urutan nama/kunjungan, modal tengah dan formulir inline.
+- [x] Riwayat guest_notes append-only diterapkan dengan baca mengikuti izin guests, tanpa hak tulis langsung staf; trigger atomik menyimpan metadata aktual dan backfill legacy tetap tidak diketahui.
+- [x] Uji komputer/HP, tambah tamu sementara, dua catatan persisten setelah reload, pembaruan inline, pencarian WA penuh dan DetailTransaksi existing; lima tes aturan serta build otomatis lulus. Data sementara dihapus; tanpa publikasi. Akun inspector tidak diuji langsung.
+
 ## Revisi Dashboard saat ini
 - [x] Aktifkan pengumuman persisten khusus Owner: migrasi aditif diterapkan, RLS izin baca operasional/tulis Owner dan audit penulis aktual; seluruh pengumuman rotasi 60 detik, navigasi manual, jeda hover/focus, animasi 450ms/reduced-motion; CRUD, reload persisten, realtime lintas halaman, desktop/HP, satu/kosong dan tes murni terverifikasi tanpa publikasi. Sesi staf tidak diuji langsung; kebijakan remote diverifikasi.
 - [x] Tambahkan panel horizontal compact Papan Informasi di antara baris Status Kamar/Transaksi Terbaru dan tiga modul analitik; sisi kiri ikon megafon + judul + subtitle, sisi kanan area pengumuman prioritas (empty state "Belum ada pengumuman operasional" karena belum ada sistem pengumuman — tanpa data dummy/backend); responsif vertikal di HP, komputer/HP terverifikasi tanpa publikasi.
