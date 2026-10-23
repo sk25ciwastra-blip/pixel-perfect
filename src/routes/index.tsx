@@ -843,7 +843,10 @@ function Ringkasan() {
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><FileText className="size-5" strokeWidth={1.6} /></span>
-                  <h2 id="judul-trx-terbaru" className="font-serif text-lg font-semibold">Transaksi Terbaru</h2>
+                  <div>
+                    <h2 id="judul-trx-terbaru" className="font-serif text-lg font-semibold">Transaksi Terbaru</h2>
+                    <p className="text-xs text-muted-foreground">Aktivitas pemasukan dan pengeluaran terkini.</p>
+                  </div>
                 </div>
                 {bolehAksiTransaksi && (
                   <Link to="/transaksi" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
