@@ -44,4 +44,24 @@ assert.equal(signedFormatter(null, now), '—');
 assert.equal(/^62\d{8,13}$/.test('628123456789'), true);
 assert.equal(/^62\d{8,13}$/.test('081234'), false);
 
+// Aturan penghitung indikator status: overtime, terlambat, dan tanpa angka palsu.
+const [sisaFn, bookingFn] = vm.runInNewContext(`${formatterSource}\n[formatSisaWaktu, formatStatusBooking]`);
+const stays = [
+  { ends_at: '2026-10-20T21:00:00Z' },
+  { ends_at: '2026-10-20T23:00:00Z' },
+  { ends_at: null },
+];
+assert.equal(stays.filter((s) => sisaFn(s.ends_at ?? null, now).status === 'expired').length, 1);
+const bookings = [
+  { scheduled_check_in: '2026-10-20T21:00:00Z', scheduled_check_out: '2026-10-20T23:00:00Z' },
+  { scheduled_check_in: '2026-10-20T23:00:00Z', scheduled_check_out: '2026-10-21T01:00:00Z' },
+  { scheduled_check_in: '2026-10-20T19:00:00Z', scheduled_check_out: '2026-10-20T21:00:00Z' },
+];
+assert.equal(bookings.filter((b) => bookingFn(b.scheduled_check_in, b.scheduled_check_out, now).status === 'late').length, 1);
+assert.equal(bookings.filter((b) => bookingFn(b.scheduled_check_in, b.scheduled_check_out, now).status === 'expired').length, 1);
+assert.equal(/room\.status === "dirty" \|\| room\.status === "cleaning"/.test(source), true);
+assert.equal(/result === "needs_action"/.test(source), true);
+// Tanpa akses checklist: tampilkan kosong, bukan angka nol karangan.
+assert.equal(/housekeepingChecklists\.error \? null/.test(source), true);
+
 console.log('dashboard-operational-pure-tests: PASS');

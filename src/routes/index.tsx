@@ -185,7 +185,9 @@ function Ringkasan() {
   const packages = useTable("packages");
   const activityLogs = useTable("activity_logs", peran === "owner");
   const employees = useTable("employees", peran === "owner");
-  const housekeepingHistory = useTable("housekeeping_history", peran === "owner" || ["supervisor", "housekeeping", "inspector"].includes(posisiKode ?? ""));
+  const bolehLihatHousekeeping = peran === "owner" || ["supervisor", "housekeeping", "inspector"].includes(posisiKode ?? "");
+  const housekeepingHistory = useTable("housekeeping_history", bolehLihatHousekeeping);
+  const housekeepingChecklists = useTable("housekeeping_checklists", bolehLihatHousekeeping);
   const financeExpenses = useTable(
     "finance_expenses",
     peran === "owner" || posisiKode === "supervisor",
@@ -457,6 +459,36 @@ function Ringkasan() {
     }),
     [bookingHariIni, kamarAktif, kamarTerisi, roomTypes.rows, sekarang],
   );
+
+  // Indikator: hanya memakai status/timestamp dan aturan yang sudah ada di halaman ini.
+  const indikator = useMemo(() => {
+    const checklistTerbaru = new Map<string, { result: string | null; created_at: string }>();
+    for (const checklist of housekeepingChecklists.rows) {
+      if (!checklist.room_id) continue;
+      const lama = checklistTerbaru.get(checklist.room_id);
+      if (!lama || new Date(checklist.created_at).getTime() > new Date(lama.created_at).getTime()) {
+        checklistTerbaru.set(checklist.room_id, { result: checklist.result, created_at: checklist.created_at });
+      }
+    }
+    return {
+      terisi: statusKamarBaris.filter((row) => row.terisi).length,
+      booking: bookingHariIni.length,
+      persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
+      terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in ?? "", item.scheduled_check_out ?? "", sekarang)?.status === "late").length,
+      perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
+      overtime: statusKamarBaris.filter(({ terisi }) => terisi && formatSisaWaktu(terisi.transaksi.ends_at ?? null, sekarang).status === "expired").length,
+    };
+  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris]);
+
+  const indikatorStatus = [
+    { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
+    { label: "Booking", warna: "var(--v0-info)", nilai: indikator.booking, judul: "Booking hari ini yang belum Check-in" },
+    { label: "Persiapan", warna: "var(--v0-warning)", nilai: indikator.persiapan, judul: "Kamar yang perlu atau sedang dibersihkan" },
+    { label: "Terlambat", warna: "var(--v0-ungu)", nilai: indikator.terlambat, judul: "Booking yang waktu Check-in-nya sudah lewat" },
+    { label: "Perlu Tindakan", warna: "var(--v0-oranye)", nilai: indikator.perluTindakan, judul: "Kamar dengan hasil checklist terakhir perlu tindakan" },
+    { label: "Overtime", warna: "var(--v0-danger)", nilai: indikator.overtime, judul: "Kamar terisi yang lewat waktu Check-out" },
+  ];
+
 
   const transaksiTerbaru = useMemo(() => {
     const masuk = payments.rows.map((p) => {
@@ -769,13 +801,21 @@ function Ringkasan() {
                   </table>
                 </div>
               )}
-              <div aria-label="Indikator status kamar" className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 pb-4 text-[11px] font-medium">
-                <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-v0-success" aria-hidden="true" />Terisi {statusKamarBaris.filter((row) => row.terisi).length}</span>
-                <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-terisi-foreground" aria-hidden="true" />Booking {bookingHariIni.length}</span>
-                <span className="inline-flex items-center gap-1.5 font-semibold text-bahaya-foreground" title="Penghitungan Perlu Tindakan belum tersedia"><span className="size-1.5 rounded-full bg-bahaya-foreground" aria-hidden="true" />Perlu Tindakan</span>
-                <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-bahaya-foreground" aria-hidden="true" />Overtime</span>
-                <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-v0-warning" aria-hidden="true" />Terlambat</span>
+              <div aria-label="Indikator status kamar" className="mt-auto flex flex-wrap items-center gap-1.5 px-4 pb-3 pt-1">
+                {indikatorStatus.map((status) => (
+                  <span
+                    key={status.label}
+                    title={status.judul}
+                    className="inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-md border bg-navy-deep/70 px-2 text-[10px] font-medium leading-none"
+                    style={{ borderColor: `color-mix(in oklab, ${status.warna} 32%, transparent)` }}
+                  >
+                    <span className="size-1.5 shrink-0 rounded-full" style={{ background: status.warna }} aria-hidden="true" />
+                    <span className="whitespace-nowrap text-foreground/85">{status.label}</span>
+                    <span className="font-bold tabular-nums" style={{ color: status.warna }}>{status.nilai ?? "—"}</span>
+                  </span>
+                ))}
               </div>
+
             </section>
 
             {/* Transaksi terbaru */}
