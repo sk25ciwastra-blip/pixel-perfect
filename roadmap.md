@@ -1,6 +1,7 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Revisi Dashboard saat ini
+- [x] Rapikan panel Transaksi Terbaru: nama tamu nama depan huruf awal kapital + 4 digit WA, tanpa kode paket (baris 2 = nomor • Booking), nomor pengeluaran ikut bisa diklik membuka rincian pengeluaran, baris pengeluaran = jenis • keperluan dan nomor • operator; komputer/HP, detail transaksi & pengeluaran terbuka/tertutup, tanpa publikasi.
 - [x] Ubah indikator di bawah tabel Status Kamar menjadi 6 kotak mini (Terisi hijau, Booking biru, Persiapan kuning, Terlambat ungu, Perlu Tindakan oranye, Overtime merah) dengan angka dinamis dari data nyata; tinggi panel tetap, komputer/HP terverifikasi.
 - [x] Rapikan Overtime dan ikon tabel, tampilkan nomor transaksi yang membuka detail, pindahkan indikator ke bawah, sesuaikan subjudul, ratakan kiri Aksi Cepat dan kecilkan nama Transaksi Terbaru; komputer/HP, detail transaksi asli dan formulir Check-in terverifikasi tanpa perubahan data. Perlu Tindakan ditampilkan — karena aturan penghitungannya belum tersedia.
 - [x] Tambahkan garis pemisah vertikal emas redup (1px, ±13%) antar kolom tabel Status Kamar, sejajar dari kepala sampai baris terbawah dan ikut ter-scroll; garis horizontal antar baris dipertahankan, ukuran/padding/font/urutan kolom tidak berubah; komputer/HP terverifikasi.
