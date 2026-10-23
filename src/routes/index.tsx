@@ -667,7 +667,7 @@ function Ringkasan() {
                 </div>
               ) : (
                 <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg border border-gold/15 bg-navy-deep/50">
-                  <table className="w-full min-w-[720px] table-fixed text-center text-[11px] [&_th]:text-center [&_td]:text-center xl:min-w-0">
+                  <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-[11px] [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
                       <col className="w-[44px]" />
                       <col className="w-[48px]" />
