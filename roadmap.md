@@ -1,6 +1,7 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Revisi Dashboard saat ini
+- [x] Tambahkan garis pemisah vertikal emas redup (1px, ±13%) antar kolom tabel Status Kamar, sejajar dari kepala sampai baris terbawah dan ikut ter-scroll; garis horizontal antar baris dipertahankan, ukuran/padding/font/urutan kolom tidak berubah; komputer/HP terverifikasi.
 - [x] Rapikan hanya tabel Status Kamar menjadi sembilan kolom ringkas sesuai referensi; timer bertanda, komputer/HP, pengujian dan build lulus tanpa mengubah aturan. Persiapan, Perlu Tindakan dan pembatasan khusus pemilik belum didukung; perlu pekerjaan terpisah bila diminta.
 - [x] Samakan kapsul pencarian Daftar Transaksi dengan milik Daftar Tamu ("Cari Nomor Transaksi...", teks 16px), rapikan tombol "+ Check-in Langsung", kembalikan ukuran teks pencarian Tamu, ratakan kiri nama beserta jumlah kunjungan, dan ganti tombol Tamu menjadi "+ Tambah Tamu"; komputer/HP terverifikasi.
 - [x] Sesuaikan teks aksi cepat/pencarian/sapaan, tanggal singkat, tabel rata tengah/logo WhatsApp, dan tampilan formulir pengeluaran; komputer/HP dan ketiga formulir terverifikasi tanpa menyimpan transaksi.
