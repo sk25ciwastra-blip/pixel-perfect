@@ -1254,72 +1254,104 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
 }
 
 function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sessionId: string; isTraining: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
+  // Daftar dikelola Owner (menunggu persetujuan pembaruan database). Bila belum tersedia, pakai isian teks seperti sebelumnya.
+  const opsi = useTable("finance_expense_options");
+  const daftarSiap = !opsi.loading && !opsi.error;
+  const daftarJenis = daftarSiap ? (opsi.rows as { id: string; kind: string; name: string; active: boolean }[]).filter((o) => o.active && o.kind === "jenis") : [];
+  const daftarKeperluan = daftarSiap ? (opsi.rows as { id: string; kind: string; name: string; active: boolean }[]).filter((o) => o.active && o.kind === "keperluan") : [];
   const [kategori, setKategori] = useState("");
+  const [keperluan, setKeperluan] = useState("");
+  const [untukApa, setUntukApa] = useState("");
   const [nominal, setNominal] = useState("");
-  const [metode, setMetode] = useState("CASH");
-  const [catatan, setCatatan] = useState("");
   const [pesan, setPesan] = useState("");
   const [simpan, setSimpan] = useState(false);
-  const [berhasil, setBerhasil] = useState(false);
+  const [nomor, setNomor] = useState<string | null>(null);
+  const [kunci] = useState(() => crypto.randomUUID());
 
   async function kirim(e: React.FormEvent) {
     e.preventDefault();
     if (!sessionId) { setPesan("Belum ada sesi kas terbuka. Buka sesi kas di halaman Keuangan terlebih dahulu."); return; }
-    if (!kategori.trim() || !(Number(nominal) > 0)) { setPesan("Isi jenis pengeluaran dan nominal yang benar."); return; }
+    if (!kategori.trim() || !keperluan.trim() || !untukApa.trim() || !(Number(nominal) > 0)) { setPesan("Lengkapi jenis, keperluan, untuk pembayaran apa, dan nominal."); return; }
+    if (untukApa.trim().length > 200) { setPesan("Keterangan pembayaran maksimal 200 huruf."); return; }
     setSimpan(true);
     setPesan("");
-    const { error } = await rpc(isTraining ? "record_training_finance_expense" : "record_finance_expense", {
-      _idempotency_key: crypto.randomUUID(),
+    const { data, error } = await rpc(isTraining ? "record_training_finance_expense" : "record_finance_expense", {
+      _idempotency_key: kunci,
       _session_id: sessionId,
       _amount: Number(nominal),
-      _method: metode,
+      _method: "CASH",
       _category: kategori.trim(),
-      _note: catatan,
+      _note: `${keperluan.trim()} — ${untukApa.trim()}`,
     });
+    if (error) { setSimpan(false); setPesan(`Pengeluaran gagal disimpan: ${error.message}`); return; }
+    const { data: baris } = typeof data === "string"
+      ? await supabase.from("finance_expenses").select("expense_number").eq("id", data).maybeSingle()
+      : { data: null };
     setSimpan(false);
-    if (error) { setPesan(`Pengeluaran gagal disimpan: ${error.message}`); return; }
-    setBerhasil(true);
+    setNomor(baris?.expense_number ?? "");
     await onSaved();
   }
 
   const kelasInput = "h-11 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none focus:border-primary";
+  const kelasLabel = "block text-sm";
+  const judulLabel = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm" onClick={onClose}>
-      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-background p-5 shadow-lembut">
+      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "max-w-3xl"}`}>
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Uang keluar</p>
-            <h2 id="judul-pengeluaran" className="mt-1 text-lg font-bold">Catat Pengeluaran</h2>
+            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Kas Keluar</p>
+            <h2 id="judul-pengeluaran" className="mt-1 text-lg font-bold">Form Pengeluaran</h2>
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Tutup"><X className="size-4" /></Button>
         </div>
-        {berhasil ? (
-          <div className="mt-6 text-center">
+        {nomor !== null ? (
+          <div className="mt-4 text-center">
             <p className="font-semibold text-siap-foreground">Pengeluaran tersimpan.</p>
+            {nomor && <p className="mt-2 font-mono text-sm text-primary">{nomor}</p>}
             <Button type="button" onClick={onClose} className="mt-4">Selesai</Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <label className="block text-sm">Jenis pengeluaran
-              <input value={kategori} onChange={(e) => setKategori(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Contoh: Listrik, Laundry" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className={kelasLabel}><span className={judulLabel}>Nomor Pengeluaran</span>
+              <div className={`mt-1 ${kelasInput} flex items-center bg-secondary/60 font-mono text-xs text-muted-foreground`}>BTRDEXP-###### · dibuat otomatis saat disimpan</div>
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block text-sm">Nominal (Rp)
-                <input type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
-              </label>
-              <label className="block text-sm">Metode
-                <select value={metode} onChange={(e) => setMetode(e.target.value)} className={`mt-1 ${kelasInput}`}>
-                  <option value="CASH">Cash</option>
-                  <option value="QRIS">QRIS</option>
-                  <option value="Transfer">Transfer</option>
+            <label className={kelasLabel}><span className={judulLabel}>Metode</span>
+              <div className={`mt-1 ${kelasInput} flex items-center bg-secondary/60 font-semibold`}>CASH</div>
+            </label>
+            <label className={kelasLabel}><span className={judulLabel}>Jenis Pengeluaran</span>
+              {daftarSiap ? (
+                <select required value={kategori} onChange={(e) => setKategori(e.target.value)} className={`mt-1 ${kelasInput}`}>
+                  <option value="">{daftarJenis.length ? "Pilih jenis" : "Daftar belum dibuat Owner"}</option>
+                  {daftarJenis.map((o) => <option key={o.id} value={o.name}>{o.name}</option>)}
                 </select>
-              </label>
-            </div>
-            <label className="block text-sm">Catatan
-              <input value={catatan} onChange={(e) => setCatatan(e.target.value)} className={`mt-1 ${kelasInput}`} />
+              ) : (
+                <input required maxLength={60} value={kategori} onChange={(e) => setKategori(e.target.value)} className={`mt-1 ${kelasInput}`} />
+              )}
             </label>
-            {pesan && <p role="alert" className="rounded-xl bg-bahaya px-3 py-2 text-sm text-bahaya-foreground">{pesan}</p>}
-            <div className="flex justify-end gap-2 pt-2">
+            <label className={kelasLabel}><span className={judulLabel}>Keperluan untuk Siapa</span>
+              {daftarSiap ? (
+                <select required value={keperluan} onChange={(e) => setKeperluan(e.target.value)} className={`mt-1 ${kelasInput}`}>
+                  <option value="">{daftarKeperluan.length ? "Pilih keperluan" : "Daftar belum dibuat Owner"}</option>
+                  {daftarKeperluan.map((o) => <option key={o.id} value={o.name}>{o.name}</option>)}
+                </select>
+              ) : (
+                <input required maxLength={60} value={keperluan} onChange={(e) => setKeperluan(e.target.value)} className={`mt-1 ${kelasInput}`} />
+              )}
+            </label>
+            <label className={`${kelasLabel} sm:col-span-2`}><span className={judulLabel}>Untuk Pembayaran Apa?</span>
+              <input required maxLength={200} value={untukApa} onChange={(e) => setUntukApa(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Contoh: beli seblak, bayar air mineral" />
+            </label>
+            <label className={kelasLabel}><span className={judulLabel}>Nominal Pengeluaran (Rp)</span>
+              <input required type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
+            </label>
+            <div className="rounded-xl border border-gold/25 bg-secondary/50 px-4 py-2 text-sm">
+              <p className={judulLabel}>Total Kas Keluar</p>
+              <p className="mt-1 text-lg font-bold text-bahaya-foreground">{rupiah(Number(nominal) > 0 ? Number(nominal) : 0)}</p>
+            </div>
+            <p className="text-xs text-muted-foreground sm:col-span-2">Dicatat atas nama akun yang sedang masuk, pada sesi kas aktif.</p>
+            {pesan && <p role="alert" className="rounded-xl bg-bahaya px-3 py-2 text-sm text-bahaya-foreground sm:col-span-2">{pesan}</p>}
+            <div className="flex justify-end gap-2 pt-1 sm:col-span-2">
               <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
               <Button type="submit" disabled={simpan}>{simpan ? "Menyimpan…" : "Simpan"}</Button>
             </div>
