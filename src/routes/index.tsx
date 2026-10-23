@@ -875,7 +875,7 @@ function Ringkasan() {
                             {t.jenis === "masuk" ? (
                               <>{t.judul}{t.wa && <span className="font-normal tabular-nums text-muted-foreground"> • {t.wa}</span>}</>
                             ) : (
-                              <>{t.judul}{t.catatan && <span className="font-normal text-muted-foreground"> ∙ {t.catatan}</span>}</>
+                              <>{t.judul}{t.catatan && <span className="font-normal text-muted-foreground"> • {t.catatan}</span>}</>
                             )}
                           </p>
                           <p className={`shrink-0 text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
@@ -889,8 +889,8 @@ function Ringkasan() {
                             ) : (
                               <span className="font-mono">{t.nomor}</span>
                             )}
-                            {t.jenis === "masuk" && t.sub && <span> ∙ {t.sub}</span>}
-                            {t.jenis === "keluar" && t.operator && <span> ∙ {t.operator}</span>}
+                            {t.jenis === "masuk" && t.sub && <span> • {t.sub}</span>}
+                            {t.jenis === "keluar" && t.operator && <span> • {t.operator}</span>}
                           </p>
                           <div className="flex shrink-0 items-center gap-1.5">
                             <span
