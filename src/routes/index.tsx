@@ -13,6 +13,7 @@ import {
   BedDouble,
   Eye,
   FileText,
+  Megaphone,
   LogIn,
   LogOut,
   ReceiptText,
@@ -912,6 +913,24 @@ function Ringkasan() {
               )}
             </section>
           </div>
+
+          {/* Papan Informasi — tampilan saja; struktur pengumuman (sumber, isi, waktu) siap dipakai
+              begitu sistem pengumuman tersedia, tanpa data dummy. */}
+          <section className="panel-mewah mt-5 flex min-h-[100px] flex-col justify-center gap-4 p-4 sm:flex-row sm:items-center" aria-labelledby="judul-papan-informasi">
+            <div className="flex min-w-0 items-center gap-3 sm:w-[35%] sm:shrink-0">
+              <span className="ikon-bulat size-10 shrink-0 text-gold"><Megaphone className="size-5" strokeWidth={1.6} /></span>
+              <div className="min-w-0">
+                <h2 id="judul-papan-informasi" className="font-serif text-lg font-semibold">Papan Informasi</h2>
+                <p className="text-xs text-muted-foreground">Informasi dan pengumuman operasional</p>
+              </div>
+            </div>
+            <div className="grid min-w-0 flex-1 place-items-center rounded-lg border border-gold/15 bg-navy-deep/40 px-4 py-3 sm:border-l sm:border-t-0 sm:pl-6">
+              <div className="flex items-center gap-2.5 text-center sm:text-left">
+                <Megaphone className="size-4 shrink-0 text-gold/50" strokeWidth={1.5} aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">Belum ada pengumuman operasional</p>
+              </div>
+            </div>
+          </section>
 
           {/* Tiga modul analitik berjajar */}
           <div className={`mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "xl:grid-cols-3" : ""}`}>
