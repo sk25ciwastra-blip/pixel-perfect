@@ -602,7 +602,7 @@ function Ringkasan() {
             <h1 className="mt-1 font-serif text-[2.1rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
               <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">{nama || "Pengguna"}</span>
             </h1>
-            <p className="mt-3 w-fit rounded-lg bg-background/70 px-3 py-2 text-sm font-medium leading-relaxed text-foreground backdrop-blur-sm sm:text-base">Dibalik Homestay yang Ramai, ada Tim yang memiliki Visi &amp; Misi yang sama.</p>
+            <p className="mt-3 text-base font-medium leading-relaxed text-foreground sm:text-lg"><span className="rounded bg-background/70 px-2 py-1 box-decoration-clone backdrop-blur-sm">Dibalik Homestay yang Ramai, ada Tim yang memiliki Visi & Misi yang sama.</span></p>
           </header>
 
           {/* KPI + Aksi Cepat */}
