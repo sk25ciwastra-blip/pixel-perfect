@@ -57,7 +57,7 @@ const semuaMenu: Menu[] = [
     { bagian: "riwayat", label: "Riwayat Pekerjaan" },
   ] },
   { ke: "/keuangan", label: "Keuangan", ikon: Wallet, ownerSaja: true },
-  { ke: "/laporan", label: "Laporan Operasional", ikon: FileBarChart, anak: [
+  { ke: "/laporan", label: "Laporan", ikon: FileBarChart, anak: [
     { bagian: "closing", label: "Closing Shift" },
     { bagian: "riwayat", label: "Riwayat Closing" },
     { bagian: "harian", label: "Rekap Harian" },
