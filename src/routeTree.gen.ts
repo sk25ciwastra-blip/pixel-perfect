@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BookingRouteImport } from './routes/booking'
 import { Route as CheckInRouteImport } from './routes/check-in'
+import { Route as DaftarPengeluaranRouteImport } from './routes/daftar-pengeluaran'
 import { Route as HousekeepingRouteImport } from './routes/housekeeping'
 import { Route as KamarRouteImport } from './routes/kamar'
 import { Route as KaryawanRouteImport } from './routes/karyawan'
@@ -43,6 +44,11 @@ const BookingRoute = BookingRouteImport.update({
 const CheckInRoute = CheckInRouteImport.update({
   id: '/check-in',
   path: '/check-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DaftarPengeluaranRoute = DaftarPengeluaranRouteImport.update({
+  id: '/daftar-pengeluaran',
+  path: '/daftar-pengeluaran',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HousekeepingRoute = HousekeepingRouteImport.update({
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/booking': typeof BookingRoute
   '/check-in': typeof CheckInRoute
+  '/daftar-pengeluaran': typeof DaftarPengeluaranRoute
   '/housekeeping': typeof HousekeepingRoute
   '/kamar': typeof KamarRoute
   '/karyawan': typeof KaryawanRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/booking': typeof BookingRoute
   '/check-in': typeof CheckInRoute
+  '/daftar-pengeluaran': typeof DaftarPengeluaranRoute
   '/housekeeping': typeof HousekeepingRoute
   '/kamar': typeof KamarRoute
   '/karyawan': typeof KaryawanRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/booking': typeof BookingRoute
   '/check-in': typeof CheckInRoute
+  '/daftar-pengeluaran': typeof DaftarPengeluaranRoute
   '/housekeeping': typeof HousekeepingRoute
   '/kamar': typeof KamarRoute
   '/karyawan': typeof KaryawanRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/booking'
     | '/check-in'
+    | '/daftar-pengeluaran'
     | '/housekeeping'
     | '/kamar'
     | '/karyawan'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/booking'
     | '/check-in'
+    | '/daftar-pengeluaran'
     | '/housekeeping'
     | '/kamar'
     | '/karyawan'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/booking'
     | '/check-in'
+    | '/daftar-pengeluaran'
     | '/housekeeping'
     | '/kamar'
     | '/karyawan'
@@ -212,6 +224,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BookingRoute: typeof BookingRoute
   CheckInRoute: typeof CheckInRoute
+  DaftarPengeluaranRoute: typeof DaftarPengeluaranRoute
   HousekeepingRoute: typeof HousekeepingRoute
   KamarRoute: typeof KamarRoute
   KaryawanRoute: typeof KaryawanRoute
@@ -253,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/check-in'
       fullPath: '/check-in'
       preLoaderRoute: typeof CheckInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/daftar-pengeluaran': {
+      id: '/daftar-pengeluaran'
+      path: '/daftar-pengeluaran'
+      fullPath: '/daftar-pengeluaran'
+      preLoaderRoute: typeof DaftarPengeluaranRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/housekeeping': {
@@ -340,6 +360,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BookingRoute: BookingRoute,
   CheckInRoute: CheckInRoute,
+  DaftarPengeluaranRoute: DaftarPengeluaranRoute,
   HousekeepingRoute: HousekeepingRoute,
   KamarRoute: KamarRoute,
   KaryawanRoute: KaryawanRoute,
