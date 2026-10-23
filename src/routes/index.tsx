@@ -2,6 +2,7 @@ import { rpc } from "@/lib/data-live";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowDownLeft,
   ArrowUpRight,
   X,
   CalendarPlus,
@@ -420,7 +421,7 @@ function Ringkasan() {
   ];
   const isFinanceViewer = peran === "owner" || posisiKode === "supervisor";
   const pengeluaranRows = financeExpenses.rows as unknown as {
-    id: string; category: string; expense_number: string | null; amount: number; method: string; created_at: string;
+    id: string; category: string; note: string; recorded_by: string; expense_number: string | null; amount: number; method: string; created_at: string;
   }[];
   const hariIni = tanggalWib(sekarang);
   const pemasukanHariIni = payments.rows.filter((p) => tanggalWib(p.created_at) === hariIni);
@@ -501,6 +502,8 @@ function Ringkasan() {
         jenis: "masuk" as const,
         judul: guest?.full_name ?? "Tamu",
         wa: guest?.phone ? guest.phone.replace(/\D/g, "").slice(-4) : "",
+        catatan: "",
+        operator: "",
         sub: paket ? `${kodePaket(paket)} - Booking` : "Booking",
         nomor: trx?.transaction_number ?? "—",
         nominal: Number(p.amount),
@@ -509,23 +512,28 @@ function Ringkasan() {
       };
     });
     const keluar = isFinanceViewer && !financeExpenses.error
-      ? pengeluaranRows.map((e) => ({
-          id: `out-${e.id}`,
-          trxId: null,
-          jenis: "keluar" as const,
-          judul: e.category,
-          wa: "",
-          sub: "",
-          nomor: e.expense_number ?? "—",
-          nominal: Number(e.amount),
-          metode: e.method,
-          waktu: e.created_at,
-        }))
+      ? pengeluaranRows.map((e) => {
+          const operator = employees.rows.find((emp) => emp.user_id === e.recorded_by)?.name ?? "";
+          return {
+            id: `out-${e.id}`,
+            trxId: null,
+            jenis: "keluar" as const,
+            judul: e.category,
+            wa: "",
+            catatan: e.note ?? "",
+            operator,
+            sub: "",
+            nomor: e.expense_number ?? "—",
+            nominal: Number(e.amount),
+            metode: e.method,
+            waktu: e.created_at,
+          };
+        })
       : [];
     return [...masuk, ...keluar]
       .sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime())
       .slice(0, 6);
-  }, [payments.rows, transaksi, guests.rows, packages.rows, pengeluaranRows, financeExpenses.error, isFinanceViewer]);
+  }, [payments.rows, transaksi, guests.rows, packages.rows, pengeluaranRows, financeExpenses.error, isFinanceViewer, employees.rows]);
 
   const [modeGrafik, setModeGrafik] = useState<ModeGrafik>("harian");
   const dataGrafik = useMemo(() => {
@@ -840,28 +848,51 @@ function Ringkasan() {
                   </div>
                 </div>
               ) : (
-                <ol className="mt-1 max-h-[240px] overflow-y-auto divide-y divide-gold/10">
-                  {transaksiTerbaru.map((t) => (
-                    <li key={t.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 py-2.5">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold leading-snug">
-                          {t.judul}{t.wa && <span className="font-normal tabular-nums text-muted-foreground"> • {t.wa}</span>}
-                        </p>
-                        {t.sub && <p className="truncate text-xs text-muted-foreground">{t.sub}</p>}
-                        {t.trxId && t.nomor !== "—" ? (
-                          <Button variant="link" className="mt-0.5 h-auto p-0 font-mono text-[11px] leading-snug text-gold-light hover:text-gold" onClick={() => setDetailTransactionId(t.trxId)}>{t.nomor}</Button>
-                        ) : (
-                          <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">{t.nomor}</p>
-                        )}
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className={`text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
-                          {t.jenis === "masuk" ? "+ " : "− "}{rupiah(t.nominal)}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">{t.metode} · {jamWib(t.waktu)}</p>
-                      </div>
-                    </li>
-                  ))}
+                <ol className="mt-1 max-h-[240px] overflow-y-auto pr-3.5 divide-y divide-gold/10">
+                  {transaksiTerbaru.map((t) => {
+                    const metodeKode = t.metode.toLowerCase();
+                    const warnaMetode = metodeKode === "qris" ? "var(--v0-info)" : metodeKode === "transfer" ? "var(--v0-ungu)" : "var(--gold)";
+                    const labelMetode = metodeKode === "qris" ? "QRIS" : metodeKode === "transfer" ? "TRANSFER" : "CASH";
+                    return (
+                      <li key={t.id} className="grid gap-y-1 py-2.5">
+                        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+                          <span aria-hidden="true" className={`inline-flex size-6 shrink-0 items-center justify-center rounded-md border ${t.jenis === "masuk" ? "border-siap/30 bg-siap/10 text-siap-foreground" : "border-bahaya/30 bg-bahaya/10 text-bahaya-foreground"}`}>
+                            {t.jenis === "masuk" ? <ArrowDownLeft className="size-3.5" strokeWidth={2} /> : <ArrowUpRight className="size-3.5" strokeWidth={2} />}
+                          </span>
+                          <p className="truncate text-xs font-semibold leading-snug">
+                            {t.jenis === "masuk" ? (
+                              <>{t.judul}{t.wa && <span className="font-normal tabular-nums text-muted-foreground"> • {t.wa}</span>}</>
+                            ) : (
+                              <>{t.judul}{t.catatan && <span className="font-normal text-muted-foreground"> ∙ {t.catatan}</span>}</>
+                            )}
+                          </p>
+                          <p className={`shrink-0 text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
+                            {t.jenis === "masuk" ? "+ " : "− "}{rupiah(t.nominal)}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 pl-8">
+                          <p className="min-w-0 truncate text-[11px] leading-snug text-muted-foreground">
+                            {t.trxId && t.nomor !== "—" ? (
+                              <Button variant="link" className="h-auto p-0 align-baseline font-mono text-[11px] leading-snug text-gold-light hover:text-gold" onClick={() => setDetailTransactionId(t.trxId)}>{t.nomor}</Button>
+                            ) : (
+                              <span className="font-mono">{t.nomor}</span>
+                            )}
+                            {t.jenis === "masuk" && t.sub && <span> ∙ {t.sub}</span>}
+                            {t.jenis === "keluar" && t.operator && <span> ∙ {t.operator}</span>}
+                          </p>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <span
+                              className="inline-flex items-center rounded-md border px-1.5 text-[9px] font-bold tracking-[0.08em]"
+                              style={{ color: warnaMetode, borderColor: `color-mix(in oklab, ${warnaMetode} 32%, transparent)`, backgroundColor: `color-mix(in oklab, ${warnaMetode} 10%, transparent)` }}
+                            >
+                              {labelMetode}
+                            </span>
+                            <span className="text-[11px] tabular-nums text-muted-foreground">{jamWib(t.waktu)}</span>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ol>
               )}
             </section>
