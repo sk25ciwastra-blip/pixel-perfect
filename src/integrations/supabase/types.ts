@@ -980,6 +980,33 @@ export type Database = {
           },
         ]
       }
+      operational_announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: []
+      }
       operational_calendar: {
         Row: {
           calendar_date: string

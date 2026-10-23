@@ -43,6 +43,13 @@
       "when": 1790899725065,
       "tag": "0005_booking_checkin_payments_and_duration",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792769178207,
+      "tag": "0006_operational_announcements",
+      "breakpoints": true
     }
   ]
 }
