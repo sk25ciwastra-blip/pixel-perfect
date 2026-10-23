@@ -39,14 +39,20 @@ export function FormulirPemesanan({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [guestCount, setGuestCount] = useState('2');
+  const [extraGuests, setExtraGuests] = useState('0');
   const [roomId, setRoomId] = useState('');
   const [packageId, setPackageId] = useState('');
   const [dayMode, setDayMode] = useState<DayMode>('weekday');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  const [amount, setAmount] = useState('0');
-  const [method, setMethod] = useState('QRIS');
+  const [methods, setMethods] = useState<string[]>(['QRIS']);
+  const [nominal, setNominal] = useState<Record<string, string>>({});
+  const method = methods[0] ?? '';
+  const amount = nominal[method] ?? '0';
+  const setAmount = (v: string) => setNominal(n => ({ ...n, [methods[0] ?? 'QRIS']: v }));
+  function toggleMethod(m: string) {
+    setMethods(cur => cur.includes(m) ? cur.filter(x => x !== m) : cur.length >= 2 ? cur : [...cur, m]);
+  }
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedNumber, setSavedNumber] = useState('');
@@ -101,7 +107,7 @@ export function FormulirPemesanan({
   }
 
   const selectedPrice = selectedPackage ? priceForPackage(selectedPackage.id) : 0;
-  const jumlahTamu = Math.max(1, Math.floor(Number(guestCount) || 1));
+  const jumlahTamu = 2 + Math.max(0, Math.floor(Number(extraGuests) || 0));
   const extra = biayaTamuTambahan(jumlahTamu);
   const total = selectedPrice + extra.total;
 
@@ -187,6 +193,11 @@ export function FormulirPemesanan({
       !/^[0-9+]{8,16}$/.test(normalizedPhone) ||
       (!matchedGuest && (!normalizedAddress || normalizedAddress.length > 500))
     ) { setError('Periksa nama, alamat, dan nomor WA (8–16 angka).'); return; }
+    if (methods.length === 0) { setError('Pilih minimal 1 metode pembayaran.'); return; }
+    if (methods.length > 1) {
+      setError('Pembayaran 2 metode belum didukung sistem (penyimpanan hanya mencatat satu metode per transaksi). Gunakan satu metode untuk saat ini.');
+      return;
+    }
     if (extra.tambahan > 0) {
       setError('Biaya tamu tambahan belum dapat dicatat sistem. Pembaruan database menunggu persetujuan Owner; sementara isi maksimal 2 tamu.');
       return;
@@ -197,7 +208,7 @@ export function FormulirPemesanan({
     if (!selectedRoomType?.pricing_group || selectedPrice <= 0) {
       setError('Harga resmi untuk kamar dan paket ini belum tersedia.'); return;
     }
-    if (!Number.isFinite(payment) || payment < 0 || payment > selectedPrice || !['Cash', 'QRIS', 'Transfer'].includes(method)) {
+    if (!Number.isFinite(payment) || payment < 0 || payment > total || !['Cash', 'QRIS', 'Transfer'].includes(method)) {
       setError('Nominal pembayaran harus antara Rp 0 dan harga paket.'); return;
     }
     if (!sessionId || needsAssistedContext) {
@@ -297,169 +308,158 @@ export function FormulirPemesanan({
             )}
           </div>
         ) : (
-          <form onSubmit={save} className="grid gap-3 sm:grid-cols-2">
-            <Bidang label="Nomor Transaksi">
-              <div className={`${readClass} font-mono text-xs text-muted-foreground`}>BTRDTRX-###### · dibuat otomatis saat disimpan</div>
-            </Bidang>
+          <form onSubmit={save} className="space-y-4">
+            <p className="-mt-2 text-sm text-muted-foreground">
+              ID: <span className="font-mono text-primary">Otomatis setelah disimpan</span>
+            </p>
 
-            <div className="relative">
-              <Bidang label="Nama Tamu">
-                <input
-                  required={!matchedGuest}
-                  maxLength={100}
-                  value={matchedGuest?.full_name ?? name}
-                  disabled={Boolean(matchedGuest)}
-                  onFocus={() => setSearchFocus('name')}
-                  onBlur={() => setTimeout(() => setSearchFocus(null), 150)}
-                  onChange={event => setName(event.target.value)}
-                  className={fieldClass}
-                  placeholder="Ketik nama untuk mencari tamu"
-                />
-              </Bidang>
-              {searchFocus === 'name' && suggestions.length > 0 && <Saran items={suggestions} onPick={pilihTamu} />}
+            <Judul>DETAIL INFORMATION</Judul>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-3">
+                <div className="relative">
+                  <Bidang label="Nomor WhatsApp">
+                    <input required type="tel" inputMode="tel" maxLength={16} value={phone}
+                      onFocus={() => setSearchFocus('phone')}
+                      onBlur={() => setTimeout(() => setSearchFocus(null), 150)}
+                      onChange={event => setPhone(event.target.value)}
+                      className={fieldClass} placeholder="Ketik nomor untuk mencari tamu" />
+                  </Bidang>
+                  {searchFocus === 'phone' && suggestions.length > 0 && <Saran items={suggestions} onPick={pilihTamu} />}
+                </div>
+                <div className="relative">
+                  <Bidang label="Nama Tamu">
+                    <input required={!matchedGuest} maxLength={100} value={matchedGuest?.full_name ?? name}
+                      disabled={Boolean(matchedGuest)}
+                      onFocus={() => setSearchFocus('name')}
+                      onBlur={() => setTimeout(() => setSearchFocus(null), 150)}
+                      onChange={event => setName(event.target.value)}
+                      className={fieldClass} placeholder="Ketik nama untuk mencari tamu" />
+                  </Bidang>
+                  {searchFocus === 'name' && suggestions.length > 0 && <Saran items={suggestions} onPick={pilihTamu} />}
+                </div>
+                <Bidang label="Alamat">
+                  <input required={!matchedGuest} maxLength={500} value={matchedGuest?.address ?? address}
+                    disabled={Boolean(matchedGuest)} onChange={event => setAddress(event.target.value)} className={fieldClass} />
+                </Bidang>
+                {matchedGuest && (
+                  <p className="rounded-xl bg-secondary px-3 py-2 text-xs">Tamu terdaftar: <strong>{matchedGuest.full_name}</strong>. Data lama digunakan.</p>
+                )}
+              </div>
+              <div className="space-y-3">
+                <Bidang label="Pilih Kamar">
+                  <select required value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}>
+                    <option value="">Pilih kamar siap</option>
+                    {availableRooms.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}
+                  </select>
+                </Bidang>
+                <Bidang label="Pilih Paket">
+                  <select required disabled={!selectedRoomType?.pricing_group} value={packageId}
+                    onChange={event => handlePackageChange(event.target.value)} className={fieldClass}>
+                    <option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>
+                    {packages.rows.filter(pack => pack.active).map(pack => {
+                      const price = priceForPackage(pack.id);
+                      return (
+                        <option key={pack.id} value={pack.id} disabled={price <= 0}>
+                          {pack.name}{price > 0 ? ` · ${rupiah(price)}` : ' · Harga belum tersedia'}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </Bidang>
+                <Bidang label="Jumlah Tamu">
+                  <div className={readClass}>2</div>
+                </Bidang>
+                {mode === 'booking' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Bidang label="Tanggal Check-in">
+                      <input required type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} className={fieldClass} />
+                    </Bidang>
+                    <Bidang label="Jam Check-in">
+                      <input required type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)} className={fieldClass} />
+                    </Bidang>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="relative">
-              <Bidang label="Nomor WhatsApp">
-                <input
-                  required
-                  type="tel"
-                  inputMode="tel"
-                  maxLength={16}
-                  value={phone}
-                  onFocus={() => setSearchFocus('phone')}
-                  onBlur={() => setTimeout(() => setSearchFocus(null), 150)}
-                  onChange={event => setPhone(event.target.value)}
-                  className={fieldClass}
-                  placeholder="Ketik nomor untuk mencari tamu"
-                />
-              </Bidang>
-              {searchFocus === 'phone' && suggestions.length > 0 && <Saran items={suggestions} onPick={pilihTamu} />}
-            </div>
-
-            <Bidang label="Alamat">
-              <input
-                required={!matchedGuest}
-                maxLength={500}
-                value={matchedGuest?.address ?? address}
-                disabled={Boolean(matchedGuest)}
-                onChange={event => setAddress(event.target.value)}
-                className={fieldClass}
-              />
-            </Bidang>
-
-            {matchedGuest && (
-              <p className="rounded-xl bg-secondary px-3 py-2 text-sm sm:col-span-2">
-                Tamu terdaftar: <strong>{matchedGuest.full_name}</strong>. Data lama akan digunakan.
-              </p>
-            )}
-
-            <Bidang label="Jumlah Tamu">
-              <input type="number" min={1} max={20} step={1} value={guestCount} onChange={e => setGuestCount(e.target.value)} className={fieldClass} />
-            </Bidang>
-
-            <Bidang label="Pilih Kamar">
-              <select required value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}>
-                <option value="">Pilih kamar siap</option>
-                {availableRooms.map(room => (
-                  <option key={room.id} value={room.id}>Kamar {room.room_number}</option>
+            <Judul>DETAIL PAYMENT</Judul>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-3">
+                <Bidang label={`Harga Kamar (${dayMode === 'weekday' ? 'Weekday' : 'Weekend'})`}>
+                  <div className={readClass}>{selectedPrice > 0 ? rupiah(selectedPrice) : '—'}</div>
+                </Bidang>
+                <Bidang label={`Extra Guest (orang · ${rupiah(extra.tarif)}/orang)`}>
+                  <input type="number" min={0} max={18} step={1} value={extraGuests}
+                    onChange={e => setExtraGuests(e.target.value)} onFocus={e => e.currentTarget.select()} className={fieldClass} />
+                </Bidang>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metode Pembayaran (maks. 2)</span>
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    {['Cash', 'QRIS', 'Transfer'].map(m => {
+                      const aktif = methods.includes(m);
+                      return (
+                        <button key={m} type="button" aria-pressed={aktif}
+                          disabled={!aktif && methods.length >= 2}
+                          onClick={() => toggleMethod(m)}
+                          className={`h-11 rounded-xl border text-sm font-semibold uppercase transition disabled:opacity-40 ${aktif ? 'border-primary bg-primary/15 text-primary' : 'border-input text-muted-foreground'}`}>
+                          {m}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {methods.map(m => (
+                  <Bidang key={m} label={`Nominal ${m.toUpperCase()}${mode === 'booking' && minimumDp !== null && m === methods[0] ? ` (DP min. ${rupiah(minimumDp)})` : ''}`}>
+                    <input required type="number" min={0} max={total > 0 ? total : undefined} step="1"
+                      value={nominal[m] ?? '0'} readOnly={mode === 'check_in' && methods.length === 1}
+                      onChange={e => setNominal(n => ({ ...n, [m]: e.target.value }))}
+                      onFocus={e => e.currentTarget.select()} className={fieldClass} />
+                  </Bidang>
                 ))}
-              </select>
-            </Bidang>
-
-            {mode === 'booking' && (
-              <>
-                <Bidang label="Tanggal Check-in">
-                  <input required type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} className={fieldClass} />
-                </Bidang>
-                <Bidang label="Jam Check-in">
-                  <input required type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)} className={fieldClass} />
-                </Bidang>
-              </>
-            )}
-
-            <Bidang label="Pilih Paket">
-              <select
-                required
-                disabled={!selectedRoomType?.pricing_group}
-                value={packageId}
-                onChange={event => handlePackageChange(event.target.value)}
-                className={fieldClass}
-              >
-                <option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>
-                {packages.rows.filter(pack => pack.active).map(pack => {
-                  const price = priceForPackage(pack.id);
-                  return (
-                    <option key={pack.id} value={pack.id} disabled={price <= 0}>
-                      {pack.name}{price > 0 ? ` · ${rupiah(price)}` : ' · Harga belum tersedia'}
-                    </option>
-                  );
-                })}
-              </select>
-            </Bidang>
-
-            <Bidang label={`Harga Kamar (${dayMode === 'weekday' ? 'Weekday' : 'Weekend'})`}>
-              <div className={readClass}>{selectedPrice > 0 ? rupiah(selectedPrice) : '—'}</div>
-            </Bidang>
-
-            <Bidang label="Metode Pembayaran">
-              <select value={method} onChange={event => setMethod(event.target.value)} className={fieldClass}>
-                {['Cash', 'QRIS', 'Transfer'].map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </Bidang>
-
-            {mode === 'booking' && (
-              <Bidang label={minimumDp !== null ? `Nominal DP (min. ${rupiah(minimumDp)})` : 'Nominal DP'}>
-                <input
-                  required
-                  type="number"
-                  max={selectedPrice > 0 ? selectedPrice : undefined}
-                  min={0}
-                  step="1"
-                  value={amount}
-                  onChange={event => setAmount(event.target.value)}
-                  onFocus={event => event.currentTarget.select()}
-                  className={fieldClass}
-                />
-              </Bidang>
-            )}
-
-            <div className="rounded-xl border border-gold/25 bg-secondary/50 px-4 py-3 text-sm sm:col-span-2">
-              <div className="flex justify-between"><span className="text-muted-foreground">Harga kamar</span><span>{rupiah(selectedPrice)}</span></div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Extra guest ({extra.tambahan} × {rupiah(extra.tarif)})</span>
-                <span>{rupiah(extra.total)}</span>
+                {methods.length > 1 && (
+                  <p className="rounded-xl bg-perlu px-3 py-2 text-xs text-perlu-foreground">
+                    Pembayaran 2 metode belum didukung sistem; transaksi hanya bisa disimpan dengan satu metode.
+                  </p>
+                )}
               </div>
+            </div>
+
+            <Judul>PAYMENT SUMMARY</Judul>
+            <div className="rounded-xl border border-gold/25 bg-secondary/50 px-4 py-3 text-sm">
+              <Baris k="Harga kamar" v={rupiah(selectedPrice)} />
+              <Baris k={`Extra Guest (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} />
               <div className="mt-2 flex justify-between border-t border-gold/20 pt-2 font-bold">
-                <span>Total Pembayaran</span><span className="text-gold-light">{rupiah(total)}</span>
+                <span>Total Tagihan</span><span className="text-gold-light">{rupiah(total)}</span>
               </div>
+              {methods.map(m => <Baris key={m} k={`Dibayar ${m.toUpperCase()}`} v={rupiah(Math.max(0, Number(nominal[m]) || 0))} />)}
+              {mode === 'booking' && (
+                <Baris k="Sisa tagihan" v={rupiah(Math.max(0, total - methods.reduce((s, m) => s + Math.max(0, Number(nominal[m]) || 0), 0)))} />
+              )}
               {extra.tambahan > 0 && (
-                <p className="mt-2 text-xs text-perlu-foreground">Biaya tamu tambahan belum dapat disimpan sistem (menunggu persetujuan pembaruan database oleh Owner).</p>
+                <p className="mt-2 text-xs text-perlu-foreground">Biaya Extra Guest belum dapat disimpan sistem (menunggu persetujuan pembaruan database oleh Owner).</p>
               )}
             </div>
 
             {isTraining && (
-              <p className="rounded-xl bg-perlu px-3 py-2 text-sm text-perlu-foreground sm:col-span-2">
+              <p className="rounded-xl bg-perlu px-3 py-2 text-sm text-perlu-foreground">
                 Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.
               </p>
             )}
-
             {selectedPrice > 0 && (
-              <p className="rounded-xl bg-secondary px-3 py-2 text-xs sm:col-span-2">
-                {activeSession
-                  ? 'Sesi kas aktif terhubung otomatis ke pembayaran.'
-                  : needsAssistedContext
-                    ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.'
-                    : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}
+              <p className="rounded-xl bg-secondary px-3 py-2 text-xs">
+                {activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.'
+                  : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.'
+                  : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}
               </p>
             )}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
-            {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}
-
-            <div className="flex justify-end gap-2 pt-1 sm:col-span-2">
+            <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
               <Button type="submit" disabled={saving || dataLoading}>
-                {saving ? 'Menyimpan…' : mode === 'booking' ? 'Simpan Booking' : 'Check-in'}
+                {saving ? 'Menyimpan…' : mode === 'booking' ? 'Booking' : 'Check-in'}
               </Button>
             </div>
           </form>
@@ -486,4 +486,17 @@ function Saran({ items, onPick }: { items: { id: string; full_name: string; phon
       ))}
     </ul>
   );
+}
+
+function Judul({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 pt-1">
+      <span className="text-xs font-bold tracking-[0.2em] text-primary">{children}</span>
+      <span className="h-px flex-1 bg-gold/25" />
+    </div>
+  );
+}
+
+function Baris({ k, v }: { k: string; v: string }) {
+  return <div className="flex justify-between"><span className="text-muted-foreground">{k}</span><span>{v}</span></div>;
 }
