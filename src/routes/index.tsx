@@ -768,7 +768,7 @@ function Ringkasan() {
               <div aria-label="Indikator status kamar" className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 pb-4 text-[11px] font-medium">
                 <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-v0-success" aria-hidden="true" />Terisi {statusKamarBaris.filter((row) => row.terisi).length}</span>
                 <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-terisi-foreground" aria-hidden="true" />Booking {bookingHariIni.length}</span>
-                <span className="inline-flex items-center gap-1.5" title="Penghitungan Perlu Tindakan belum tersedia"><span className="size-1.5 rounded-full bg-muted-foreground" aria-hidden="true" />Perlu Tindakan —</span>
+                <span className="inline-flex items-center gap-1.5 font-semibold text-bahaya-foreground" title="Penghitungan Perlu Tindakan belum tersedia"><span className="size-1.5 rounded-full bg-bahaya-foreground" aria-hidden="true" />Perlu Tindakan</span>
                 <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-bahaya-foreground" aria-hidden="true" />Overtime</span>
                 <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-v0-warning" aria-hidden="true" />Terlambat</span>
               </div>
