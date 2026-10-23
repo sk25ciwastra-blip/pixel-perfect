@@ -39,14 +39,20 @@ export function FormulirPemesanan({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [guestCount, setGuestCount] = useState('2');
+  const [extraGuests, setExtraGuests] = useState('0');
   const [roomId, setRoomId] = useState('');
   const [packageId, setPackageId] = useState('');
   const [dayMode, setDayMode] = useState<DayMode>('weekday');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  const [amount, setAmount] = useState('0');
-  const [method, setMethod] = useState('QRIS');
+  const [methods, setMethods] = useState<string[]>(['QRIS']);
+  const [nominal, setNominal] = useState<Record<string, string>>({});
+  const method = methods[0] ?? '';
+  const amount = nominal[method] ?? '0';
+  const setAmount = (v: string) => setNominal(n => ({ ...n, [methods[0] ?? 'QRIS']: v }));
+  function toggleMethod(m: string) {
+    setMethods(cur => cur.includes(m) ? cur.filter(x => x !== m) : cur.length >= 2 ? cur : [...cur, m]);
+  }
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [savedNumber, setSavedNumber] = useState('');
