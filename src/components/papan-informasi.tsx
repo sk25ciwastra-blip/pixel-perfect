@@ -12,6 +12,7 @@ type Pengumuman = Database['public']['Tables']['operational_announcements']['Row
 const waktu = (value: string) => new Intl.DateTimeFormat('id-ID', {
   timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
 }).format(new Date(value)) + ' WIB';
+const MAKS_HURUF = 140;
 
 export function PapanInformasi() {
   const { peran, posisiKode, siap, masuk } = usePeran();
@@ -98,7 +99,7 @@ export function PapanInformasi() {
   const editing = useMemo(() => rows.find(row => row.id === editId), [rows, editId]);
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (!owner || busy || !body.trim()) return;
+    if (!owner || busy || !body.trim() || body.trim().length > MAKS_HURUF) return;
     setBusy(true); setMessage('');
     try {
       const result = editId
@@ -134,13 +135,12 @@ export function PapanInformasi() {
       {owner && <Button variant="ghost" size="icon" className="absolute right-2 top-2 z-10 size-7 text-gold" title="Kelola pengumuman" aria-label="Kelola pengumuman" onClick={() => setManage(true)}><Settings2 className="size-4" /></Button>}
       <div className="relative min-w-0 flex-1 border border-transparent px-4 py-2 sm:border-l-gold/15 sm:border-t-0 sm:pl-6">
         {current && enabled && !error ? <>
-          <div ref={content} className="pr-6">
+          <div ref={content} className="pb-5 pr-3">
             <p className="flex items-center gap-1.5 text-[12px] font-semibold tracking-wide text-gold"><Sparkles className="size-3.5 shrink-0" aria-hidden="true" />PENGUMUMAN OWNER</p>
-            <p className="line-clamp-2 whitespace-pre-wrap break-words text-[15px] leading-5 text-foreground" tabIndex={0}>{current.body.length > 110 ? `${current.body.slice(0, 109)}…` : current.body}</p>
-            <p className="text-[10px] text-muted-foreground">{waktu(current.created_at)}{current.updated_at !== current.created_at ? ` · Diubah ${waktu(current.updated_at)}` : ''}</p>
+            <p className="line-clamp-4 whitespace-pre-wrap break-words text-[14px] leading-5 text-foreground sm:line-clamp-2" tabIndex={0}>{current.body}</p>
           </div>
           <div className="absolute bottom-2 right-2">
-            <span className="text-[10px] tabular-nums text-muted-foreground" aria-label="Urutan pengumuman">{index + 1}/{rows.length}</span>
+            <p className="text-[10px] tabular-nums text-muted-foreground">{waktu(current.created_at)}{current.updated_at !== current.created_at ? ` · Diubah ${waktu(current.updated_at)}` : ''}</p>
           </div>
         </> : <div className="flex min-h-12 items-center justify-center gap-2.5 text-center sm:text-left">
           <Megaphone className="size-4 shrink-0 text-gold/50" strokeWidth={1.5} aria-hidden="true" />
@@ -153,7 +153,8 @@ export function PapanInformasi() {
           <DialogHeader><DialogTitle className="font-serif text-gold">Kelola Pengumuman</DialogTitle><DialogDescription>Pengumuman Baturaden 25 Homestay</DialogDescription></DialogHeader>
           <form onSubmit={save} className="space-y-3">
             <label htmlFor="isi-pengumuman" className="text-sm">{editing ? 'Edit pengumuman' : 'Pengumuman baru'}</label>
-            <Textarea id="isi-pengumuman" value={body} onChange={event => setBody(event.target.value)} required disabled={busy} className="min-h-24 border-gold/25 bg-navy-deep/40" />
+            <Textarea id="isi-pengumuman" value={body} onChange={event => setBody(event.target.value.replace(/\s*\n\s*/g, ' '))} required disabled={busy} maxLength={MAKS_HURUF} className="min-h-24 border-gold/25 bg-navy-deep/40" />
+            <p className={`text-[10px] ${body.length >= MAKS_HURUF - 20 ? 'text-gold' : 'text-muted-foreground'}`}>{body.length}/{MAKS_HURUF} karakter{body.length >= MAKS_HURUF ? ' — batas tercapai' : ''}</p>
             <div className="flex gap-2"><Button type="submit" disabled={busy || !body.trim()}><Plus className="size-4" />{busy ? 'Menyimpan…' : editId ? 'Simpan perubahan' : 'Tambah pengumuman'}</Button>
               {editId && <Button type="button" variant="outline" disabled={busy} onClick={() => { setEditId(null); setBody(''); }}>Batal edit</Button>}</div>
             {message && <p role="status" className="text-xs text-gold">{message}</p>}
