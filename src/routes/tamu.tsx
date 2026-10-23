@@ -112,12 +112,12 @@ function HalamanTamu() {
           <table className="w-full min-w-[780px] table-fixed border-separate border-spacing-0 text-center text-base [&_th]:text-[13px]">
             <colgroup><col className="w-[6%]" /><col className="w-[28%]" /><col className="w-[18%]" /><col className="w-[15%]" /><col className="w-[16%]" /><col className="w-[17%]" /></colgroup>
             <thead className="whitespace-nowrap bg-navy-deep/60 text-[13px] font-semibold text-gold"><tr>
-              <th className="border-b border-gold/20 px-2 py-2 normal-case">No.</th>
-              <th className="pemisah-kolom border-b border-gold/20 px-3 py-2"><Button variant="ghost" size="sm" className="h-9 px-2 text-[13px] text-gold" onClick={() => setUrutan('nama')}>NAMA TAMU</Button></th>
-              <th className="pemisah-kolom border-b border-gold/20 px-4 py-2">WHATSAPP</th>
-              <th aria-sort={urutan === 'nama' ? 'none' : urutan === 'terbanyak' ? 'descending' : 'ascending'} className="pemisah-kolom border-b border-gold/20 px-3 py-2"><Button variant="ghost" size="sm" className="h-9 gap-1.5 px-1 text-[13px] text-gold" onClick={() => setUrutan(urutan === 'terbanyak' ? 'tersedikit' : 'terbanyak')}>KUNJUNGAN<ArrowDownUp className="size-4 shrink-0" /></Button></th>
-              <th className="pemisah-kolom border-b border-gold/20 px-3 py-2">STATUS</th>
-              <th className="border-b border-gold/20 px-4 py-2">AKSI</th>
+              <th className="border-b border-gold/20 px-3 py-3 normal-case">No.</th>
+              <th className="pemisah-kolom border-b border-gold/20 px-4 py-3"><Button variant="ghost" size="sm" className="h-9 px-3 text-[13px] text-gold" onClick={() => setUrutan('nama')}>NAMA TAMU</Button></th>
+              <th className="pemisah-kolom border-b border-gold/20 px-5 py-3">WHATSAPP</th>
+              <th aria-sort={urutan === 'nama' ? 'none' : urutan === 'terbanyak' ? 'descending' : 'ascending'} className="pemisah-kolom border-b border-gold/20 px-4 py-3"><Button variant="ghost" size="sm" className="h-9 gap-1.5 px-2 text-[13px] text-gold" onClick={() => setUrutan(urutan === 'terbanyak' ? 'tersedikit' : 'terbanyak')}>KUNJUNGAN<ArrowDownUp className="size-4 shrink-0" /></Button></th>
+              <th className="pemisah-kolom border-b border-gold/20 px-5 py-3">STATUS</th>
+              <th className="border-b border-gold/20 px-5 py-3">AKSI</th>
             </tr></thead>
             <tbody>{hasil.map((t, index) => <tr key={t.id} className="h-14 transition-colors hover:bg-gold/[0.04]">
               <td className="border-b border-border/60 px-2 py-3 text-sm tabular-nums text-muted-foreground">{index + 1}</td>
@@ -137,7 +137,7 @@ function HalamanTamu() {
       </div>
       <Dialog.Root open={(!!detail || open) && !detailTransactionId} onOpenChange={value => { if (!value && !saving && !detailTransactionId) tutup(); }}>
         <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-navy-deep/75 backdrop-blur-sm" />
-          <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut">
+          <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut">
             <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
               <p className="pr-10 text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
               <Dialog.Title className="mt-1.5 pr-10 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{open ? catatanSaja ? 'Tambah Catatan' : editing ? 'Perbaharui Data' : 'Tambah Tamu' : 'Detail Tamu'}</Dialog.Title>
