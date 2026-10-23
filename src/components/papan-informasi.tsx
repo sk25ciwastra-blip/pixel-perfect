@@ -126,7 +126,7 @@ export function PapanInformasi() {
   }
 
   return (
-    <section className="panel-mewah relative mt-5 flex min-h-[100px] flex-col justify-center gap-4 p-4 sm:flex-row sm:items-center" aria-labelledby="judul-papan-informasi"
+    <section className="panel-mewah relative mt-5 flex flex-col justify-center gap-3 px-4 py-3 sm:flex-row sm:items-center" aria-labelledby="judul-papan-informasi"
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
       <div className="flex min-w-0 items-center gap-3 sm:w-[35%] sm:shrink-0">
@@ -135,13 +135,13 @@ export function PapanInformasi() {
           <p className="text-xs text-muted-foreground">Informasi dan pengumuman operasional</p></div>
       </div>
       {owner && <Button variant="ghost" size="icon" className="absolute right-2 top-2 z-10 size-7 text-gold" title="Kelola pengumuman" aria-label="Kelola pengumuman" onClick={() => setManage(true)}><Settings2 className="size-4" /></Button>}
-      <div className="relative min-w-0 flex-1 border border-transparent px-4 py-2 sm:border-l-gold/15 sm:border-t-0 sm:pl-6">
+      <div className="relative min-w-0 flex-1 border border-transparent px-1 sm:border-l-gold/15 sm:border-t-0 sm:pl-6 sm:pr-8">
         {current && enabled && !error ? <>
-          <div ref={content} className="pb-7 pr-3">
+          <div ref={content}>
             <p className="flex items-center gap-1.5 text-[12px] font-semibold tracking-wide text-gold"><Sparkles className="size-3.5 shrink-0" aria-hidden="true" />PENGUMUMAN OWNER</p>
-            <p className="line-clamp-4 whitespace-pre-wrap break-words text-[14px] leading-5 text-foreground sm:line-clamp-2" tabIndex={0}>{current.body}</p>
+            <p className="mt-0.5 line-clamp-4 min-h-10 whitespace-pre-wrap break-words text-[14px] leading-5 text-foreground sm:line-clamp-2" tabIndex={0}>{current.body}</p>
           </div>
-          <div className="absolute bottom-2 right-2">
+          <div className="mt-1.5 flex justify-end">
             <p className="text-[10px] tabular-nums text-muted-foreground">{waktu(current.created_at)}{current.updated_at !== current.created_at ? ` · Diubah ${waktu(current.updated_at)}` : ''}</p>
           </div>
         </> : <div className="flex min-h-12 items-center justify-center gap-2.5 text-center sm:text-left">
