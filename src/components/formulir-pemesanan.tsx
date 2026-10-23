@@ -107,7 +107,7 @@ export function FormulirPemesanan({
   }
 
   const selectedPrice = selectedPackage ? priceForPackage(selectedPackage.id) : 0;
-  const jumlahTamu = Math.max(1, Math.floor(Number(guestCount) || 1));
+  const jumlahTamu = 2 + Math.max(0, Math.floor(Number(extraGuests) || 0));
   const extra = biayaTamuTambahan(jumlahTamu);
   const total = selectedPrice + extra.total;
 
@@ -193,6 +193,11 @@ export function FormulirPemesanan({
       !/^[0-9+]{8,16}$/.test(normalizedPhone) ||
       (!matchedGuest && (!normalizedAddress || normalizedAddress.length > 500))
     ) { setError('Periksa nama, alamat, dan nomor WA (8–16 angka).'); return; }
+    if (methods.length === 0) { setError('Pilih minimal 1 metode pembayaran.'); return; }
+    if (methods.length > 1) {
+      setError('Pembayaran 2 metode belum didukung sistem (penyimpanan hanya mencatat satu metode per transaksi). Gunakan satu metode untuk saat ini.');
+      return;
+    }
     if (extra.tambahan > 0) {
       setError('Biaya tamu tambahan belum dapat dicatat sistem. Pembaruan database menunggu persetujuan Owner; sementara isi maksimal 2 tamu.');
       return;
