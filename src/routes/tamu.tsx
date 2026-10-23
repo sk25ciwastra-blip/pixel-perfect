@@ -139,12 +139,11 @@ function HalamanTamu() {
       <Dialog.Root open={(!!detail || open) && !detailTransactionId} onOpenChange={value => { if (!value && !saving && !detailTransactionId) tutup(); }}>
         <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-navy-deep/75 backdrop-blur-sm" />
           <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut">
-            <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-6 sm:px-7 sm:py-7">
-              <img src={gedungSate} alt="" className="pointer-events-none absolute inset-y-0 right-0 -z-20 h-full w-3/5 object-cover opacity-30" />
-              <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-navy-deep via-navy-deep/85 to-navy-deep/30" />
+            <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
+              <img src={gedungSate} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover object-[50%_40%] opacity-55 [mask-image:linear-gradient(to_top,black_35%,transparent)]" />
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-navy-deep via-navy-deep/70 to-navy-deep/20" />
               <p className="pr-10 text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
-              <Dialog.Title className="mt-2 pr-10 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{open ? catatanSaja ? 'Tambah Catatan' : editing ? 'Perbaharui Data' : 'Tambah Tamu' : 'Detail Tamu'}</Dialog.Title>
-              <p className="mt-2 break-words pr-8 text-sm text-muted-foreground">{editing ? `${editing.full_name} • ${editing.phone}` : detail ? `${detail.full_name} • ${detail.phone}` : 'Data tamu baru'}</p>
+              <Dialog.Title className="mt-1.5 pr-10 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{open ? catatanSaja ? 'Tambah Catatan' : editing ? 'Perbaharui Data' : 'Tambah Tamu' : 'Detail Tamu'}</Dialog.Title>
               <Button variant="ghost" size="icon" className="absolute right-3 top-3 text-gold-light" aria-label="Tutup detail tamu" disabled={saving} onClick={tutup}><X className="size-5" /></Button>
             </header>
             {open && !readOnly ? <form onSubmit={save}>
