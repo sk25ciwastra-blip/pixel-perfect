@@ -40,6 +40,7 @@ import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
 import { PapanInformasi } from "@/components/papan-informasi";
+import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 
 export const Route = createFileRoute("/")({
   head: () => {
@@ -999,32 +1000,25 @@ function RincianPengeluaran({ expense, operator, onClose }: {
   operator: string;
   onClose: () => void;
 }) {
-  const baris: Array<[string, string]> = [
-    ["Jenis pengeluaran", expense.category || "—"],
-    ["Keperluan", expense.note || "—"],
-    ["Nominal", rupiah(Number(expense.amount))],
-    ["Metode", expense.method],
-    ["Operator", operator || "—"],
-    ["Waktu", `${tanggalWib(expense.created_at)} · ${jamWib(expense.created_at)}`],
-  ];
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 p-4 backdrop-blur-sm">
-      <div role="dialog" aria-modal="true" aria-label="Detail pengeluaran" className="w-full max-w-sm rounded-2xl bg-background p-5 shadow-lembut">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Detail Pengeluaran</p>
-            <h2 className="mt-1 truncate font-mono text-lg font-bold text-gold-light">{expense.expense_number ?? "Pengeluaran"}</h2>
-          </div>
-          <Button type="button" variant="ghost" size="icon" aria-label="Tutup" onClick={onClose}><X className="h-4 w-4" /></Button>
+      <div role="dialog" aria-modal="true" aria-label="Detail pengeluaran" className={kelasPopupDetail}>
+        <HeaderDetail title="Detail Pengeluaran" nomor={expense.expense_number ?? "Pengeluaran"} onClose={onClose} panorama />
+        <div className="space-y-3 p-4 sm:p-5">
+          <BagianDetail title="Informasi pengeluaran" icon={ReceiptText}><div className="grid gap-3 sm:grid-cols-2">
+            <NilaiDetail label="Jenis pengeluaran" icon={Receipt}>{expense.category || "—"}</NilaiDetail>
+            <NilaiDetail label="Metode pembayaran" icon={CircleDollarSign}>{expense.method}</NilaiDetail>
+          </div></BagianDetail>
+          <BagianDetail title="Rincian pembayaran" icon={CircleDollarSign}><div className="grid gap-3 sm:grid-cols-2">
+            <NilaiDetail label="Nominal pengeluaran" icon={ReceiptText}>{rupiah(Number(expense.amount))}</NilaiDetail>
+            <NilaiDetail label="Total kas keluar" icon={ArrowUpRight} tone="keluar">− {rupiah(Number(expense.amount))}</NilaiDetail>
+          </div></BagianDetail>
+          <BagianDetail title="Audit & waktu" icon={Clock3}><div className="grid gap-3 sm:grid-cols-2">
+            <NilaiDetail label="Operator" icon={FileText}>{operator || "—"}</NilaiDetail>
+            <NilaiDetail label="Waktu pengeluaran" icon={CalendarDays}>{tanggalWib(expense.created_at)} · {jamWib(expense.created_at)}</NilaiDetail>
+          </div></BagianDetail>
+          <BagianDetail title="Keperluan / catatan" icon={FileText}><p className="whitespace-pre-wrap break-words rounded-lg border border-gold/15 bg-background/60 p-3 leading-relaxed">{expense.note || "—"}</p></BagianDetail>
         </div>
-        <dl className="mt-4 space-y-2 text-sm">
-          {baris.map(([label, nilai]) => (
-            <div key={label} className="flex items-baseline justify-between gap-3 border-b border-gold/10 pb-2 last:border-0 last:pb-0">
-              <dt className="shrink-0 text-muted-foreground">{label}</dt>
-              <dd className="min-w-0 text-right font-semibold">{nilai}</dd>
-            </div>
-          ))}
-        </dl>
       </div>
     </div>
   );
