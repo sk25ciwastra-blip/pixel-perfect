@@ -18,3 +18,4 @@
 - Dashboard room rows use an inset, scrollable fixed-layout table with a flexible guest column and reserved status/action widths; table-only presentation uses existing transaction timestamps and checkout guards without inventing operational statuses or permissions.
 - Dashboard search reads existing RLS-scoped operational rows and opens existing detail views or pages; it never uses privileged queries or changes operational records.
 - Announcements use browser RLS-scoped CRUD and an isolated Dashboard panel with paginated complete reads, cleaned-up realtime refresh, deterministic rotation, and database-authoritative actor/timestamps/audit; this keeps announcement changes independent of operational and finance modules.
+- Database changes awaiting Owner approval are prepared in `supabase/pending/` and not applied; the UI falls back gracefully until they are applied.
