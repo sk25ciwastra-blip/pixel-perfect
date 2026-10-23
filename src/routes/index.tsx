@@ -140,6 +140,16 @@ function tipeKamarRingkas(name: string | undefined) {
   return name;
 }
 
+function namaDepan(nama: string | undefined) {
+  const bersih = (nama ?? "").trim().replace(/\s+/g, " ");
+  const kata = bersih.split(" ")[0];
+  if (!kata) return "Tamu";
+  return kata
+    .split("-")
+    .map((bagian) => (bagian ? bagian.charAt(0).toUpperCase() + bagian.slice(1).toLowerCase() : bagian))
+    .join("-");
+}
+
 function kodePaket(name: string | undefined) {
   const kode: Record<string, string> = {
     "Paket 2 Jam": "P2",
@@ -205,6 +215,7 @@ function Ringkasan() {
 
   const [sekarang, setSekarang] = useState(() => Date.now());
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
+  const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
   const [checkingOutId, setCheckingOutId] = useState<string | null>(null);
   const [dashboardMessage, setDashboardMessage] = useState("");
   const [pencarian, setPencarian] = useState("");
@@ -495,16 +506,16 @@ function Ringkasan() {
     const masuk = payments.rows.map((p) => {
       const trx = transaksi.find((t) => t.id === p.transaction_id);
       const guest = guests.rows.find((g) => g.id === trx?.guest_id);
-      const paket = packages.rows.find((pkg) => pkg.id === trx?.package_id)?.name;
       return {
         id: `in-${p.id}`,
         trxId: trx?.id ?? null,
+        expenseId: null,
         jenis: "masuk" as const,
-        judul: guest?.full_name ?? "Tamu",
+        judul: namaDepan(guest?.full_name),
         wa: guest?.phone ? guest.phone.replace(/\D/g, "").slice(-4) : "",
         catatan: "",
         operator: "",
-        sub: paket ? `${kodePaket(paket)} - Booking` : "Booking",
+        sub: "Booking",
         nomor: trx?.transaction_number ?? "—",
         nominal: Number(p.amount),
         metode: p.method,
@@ -517,6 +528,7 @@ function Ringkasan() {
           return {
             id: `out-${e.id}`,
             trxId: null,
+            expenseId: e.id,
             jenis: "keluar" as const,
             judul: e.category,
             wa: "",
@@ -533,7 +545,7 @@ function Ringkasan() {
     return [...masuk, ...keluar]
       .sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime())
       .slice(0, 6);
-  }, [payments.rows, transaksi, guests.rows, packages.rows, pengeluaranRows, financeExpenses.error, isFinanceViewer, employees.rows]);
+  }, [payments.rows, transaksi, guests.rows, pengeluaranRows, financeExpenses.error, isFinanceViewer, employees.rows]);
 
   const [modeGrafik, setModeGrafik] = useState<ModeGrafik>("harian");
   const dataGrafik = useMemo(() => {
@@ -872,8 +884,8 @@ function Ringkasan() {
                         </div>
                         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 pl-8">
                           <p className="min-w-0 truncate text-[11px] leading-snug text-muted-foreground">
-                            {t.trxId && t.nomor !== "—" ? (
-                              <Button variant="link" className="h-auto p-0 align-baseline font-mono text-[11px] leading-snug text-gold-light hover:text-gold" onClick={() => setDetailTransactionId(t.trxId)}>{t.nomor}</Button>
+                            {t.nomor !== "—" && (t.trxId || t.expenseId) ? (
+                              <Button variant="link" className="h-auto p-0 align-baseline font-mono text-[11px] leading-snug text-gold-light hover:text-gold" onClick={() => (t.trxId ? setDetailTransactionId(t.trxId) : t.expenseId ? setDetailExpenseId(t.expenseId) : undefined)}>{t.nomor}</Button>
                             ) : (
                               <span className="font-mono">{t.nomor}</span>
                             )}
