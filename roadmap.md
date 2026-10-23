@@ -1,6 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Halaman Tamu — rancangan final Owner
+- [x] Revisi enam kolom, ikon catatan 21px rapat, tombol pada header sesuai Transaksi, detail Gedung Sate/informasi berikon/catatan dan riwayat bertumpuk; screenshot 1440px/390px tanpa overflow, build dan lima tes lulus; dua catatan tersimpan melalui tombol baru dan bertahan setelah reload, data pengujian dibersihkan.
+- [ ] Lampu Active/Blocked menunggu sumber status tamu resmi: kolom saat ini menampilkan Belum tersedia, tanpa status rekaan atau perubahan skema.
 - [x] Koreksi komposisi desktop: panel memenuhi konten, kolom 34/27/22/17%, toolbar sejajar, nama panjang tooltip, body 16px dan baris 57px; modal informasi dua kolom compact serta catatan/riwayat sejajar. Pemeriksaan screenshot 1440px/390px dan lima helper tests tanpa perubahan data.
 - [x] Revisi visual tujuh poin: SVG WhatsApp Dashboard, header WHATSAPP, format xxxx+empat digit, tabel mengikuti isi, font satu tingkat lebih besar, modal navy-gold dua kolom dengan edit inline; lima tes aturan dan build otomatis lulus, pemeriksaan komputer/HP tanpa perubahan data.
 - [x] Rapikan tabel empat kolom, urutan nama/kunjungan, modal tengah dan formulir inline.
