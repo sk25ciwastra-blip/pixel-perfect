@@ -18,6 +18,7 @@ import {
   ReceiptText,
   Sparkles,
   ChevronRight,
+  ChevronDown,
   Receipt,
   BarChart3,
   Target,
@@ -206,6 +207,7 @@ function Ringkasan() {
   );
   const {
     sessionId: checkoutSessionId,
+    activeSession: checkoutActiveSession,
     isTraining: isCheckoutTraining,
     loading: checkoutSessionLoading,
     error: checkoutSessionError,
@@ -962,6 +964,7 @@ function Ringkasan() {
       {modal === "pengeluaran" && (
         <FormulirPengeluaran
           sessionId={checkoutSessionId}
+          namaSesi={employees.rows.find((emp) => emp.user_id === checkoutActiveSession?.opened_by)?.name ?? ""}
           isTraining={isCheckoutTraining}
           onClose={() => setModal(null)}
           onSaved={async () => { await Promise.all([financeExpenses.refresh(), refreshSemua()]); }}
@@ -1253,7 +1256,7 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
   );
 }
 
-function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sessionId: string; isTraining: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
+function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved }: { sessionId: string; namaSesi: string; isTraining: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
   // Daftar dikelola Owner (menunggu persetujuan pembaruan database). Bila belum tersedia, pakai isian teks seperti sebelumnya.
   const opsi = useTable("finance_expense_options");
   const daftarSiap = !opsi.loading && !opsi.error;
@@ -1293,67 +1296,69 @@ function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sess
   }
 
   const kelasInput = "h-11 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none focus:border-primary";
+  const kelasKunci = `mt-1 ${kelasInput} flex items-center bg-secondary/60`;
   const kelasLabel = "block text-sm";
   const judulLabel = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+  const pesanBelum = "Daftar belum tersedia: pembaruan database untuk pilihan ini menunggu persetujuan Owner.";
+  const Pilih = ({ nilai, ubah, daftar, kosong }: { nilai: string; ubah: (v: string) => void; daftar: { id: string; name: string }[]; kosong: string }) => (
+    <div className="relative mt-1">
+      <select required disabled={!daftarSiap || daftar.length === 0} value={nilai} onChange={(e) => ubah(e.target.value)} className={`${kelasInput} appearance-none pr-10 disabled:opacity-60`}>
+        <option value="">{!daftarSiap ? (opsi.loading ? "Memuat…" : "Belum tersedia") : daftar.length ? kosong : "Daftar belum dibuat Owner"}</option>
+        {daftar.map((o) => <option key={o.id} value={o.name}>{o.name}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm" onClick={onClose}>
       <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "max-w-3xl"}`}>
         <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Kas Keluar</p>
-            <h2 id="judul-pengeluaran" className="mt-1 text-lg font-bold">Form Pengeluaran</h2>
-          </div>
+          <h2 id="judul-pengeluaran" className="text-lg font-bold">Form Kas Keluar</h2>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Tutup"><X className="size-4" /></Button>
         </div>
         {nomor !== null ? (
           <div className="mt-4 text-center">
             <p className="font-semibold text-siap-foreground">Pengeluaran tersimpan.</p>
-            {nomor && <p className="mt-2 font-mono text-sm text-primary">{nomor}</p>}
+            {nomor && <p className="mt-2 font-mono text-sm text-primary">ID: {nomor}</p>}
             <Button type="button" onClick={onClose} className="mt-4">Selesai</Button>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className={kelasLabel}><span className={judulLabel}>Nomor Pengeluaran</span>
-              <div className={`mt-1 ${kelasInput} flex items-center bg-secondary/60 font-mono text-xs text-muted-foreground`}>BTRDEXP-###### · dibuat otomatis saat disimpan</div>
-            </label>
-            <label className={kelasLabel}><span className={judulLabel}>Metode</span>
-              <div className={`mt-1 ${kelasInput} flex items-center bg-secondary/60 font-semibold`}>CASH</div>
-            </label>
-            <label className={kelasLabel}><span className={judulLabel}>Jenis Pengeluaran</span>
-              {daftarSiap ? (
-                <select required value={kategori} onChange={(e) => setKategori(e.target.value)} className={`mt-1 ${kelasInput}`}>
-                  <option value="">{daftarJenis.length ? "Pilih jenis" : "Daftar belum dibuat Owner"}</option>
-                  {daftarJenis.map((o) => <option key={o.id} value={o.name}>{o.name}</option>)}
-                </select>
-              ) : (
-                <input required maxLength={60} value={kategori} onChange={(e) => setKategori(e.target.value)} className={`mt-1 ${kelasInput}`} />
-              )}
-            </label>
-            <label className={kelasLabel}><span className={judulLabel}>Keperluan untuk Siapa</span>
-              {daftarSiap ? (
-                <select required value={keperluan} onChange={(e) => setKeperluan(e.target.value)} className={`mt-1 ${kelasInput}`}>
-                  <option value="">{daftarKeperluan.length ? "Pilih keperluan" : "Daftar belum dibuat Owner"}</option>
-                  {daftarKeperluan.map((o) => <option key={o.id} value={o.name}>{o.name}</option>)}
-                </select>
-              ) : (
-                <input required maxLength={60} value={keperluan} onChange={(e) => setKeperluan(e.target.value)} className={`mt-1 ${kelasInput}`} />
-              )}
-            </label>
-            <label className={`${kelasLabel} sm:col-span-2`}><span className={judulLabel}>Untuk Pembayaran Apa?</span>
+          <div className="space-y-4">
+            <p className="-mt-2 text-sm text-muted-foreground">ID: <span className="font-mono text-primary">Otomatis setelah disimpan</span></p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-3">
+                <label className={kelasLabel}><span className={judulLabel}>Jenis Pengeluaran</span>
+                  <Pilih nilai={kategori} ubah={setKategori} daftar={daftarJenis} kosong="Pilih jenis" />
+                </label>
+                <label className={kelasLabel}><span className={judulLabel}>Keperluan Siapa</span>
+                  <Pilih nilai={keperluan} ubah={setKeperluan} daftar={daftarKeperluan} kosong="Pilih keperluan" />
+                </label>
+              </div>
+              <div className="space-y-3">
+                <div className={kelasLabel}><span className={judulLabel}>Metode Pembayaran</span>
+                  <div className={`${kelasKunci} font-semibold`} aria-readonly="true">CASH</div>
+                </div>
+                <div className={kelasLabel}><span className={judulLabel}>Nama Sesi Kas Aktif</span>
+                  <div className={`${kelasKunci} truncate`} aria-readonly="true">{!sessionId ? "Belum ada sesi kas aktif" : namaSesi || "Sesi kas aktif"}</div>
+                </div>
+              </div>
+            </div>
+            {!daftarSiap && !opsi.loading && <p className="rounded-xl bg-perlu px-3 py-2 text-xs text-perlu-foreground">{pesanBelum}</p>}
+            <label className={kelasLabel}><span className={judulLabel}>Untuk Pembayaran Apa?</span>
               <input required maxLength={200} value={untukApa} onChange={(e) => setUntukApa(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Contoh: beli seblak, bayar air mineral" />
             </label>
-            <label className={kelasLabel}><span className={judulLabel}>Nominal Pengeluaran (Rp)</span>
-              <input required type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
-            </label>
-            <div className="rounded-xl border border-gold/25 bg-secondary/50 px-4 py-2 text-sm">
-              <p className={judulLabel}>Total Kas Keluar</p>
-              <p className="mt-1 text-lg font-bold text-bahaya-foreground">{rupiah(Number(nominal) > 0 ? Number(nominal) : 0)}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={kelasLabel}><span className={judulLabel}>Nominal Pengeluaran (Rp)</span>
+                <input required type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
+              </label>
+              <div className={kelasLabel}><span className={judulLabel}>Total Kas Keluar</span>
+                <div className={`${kelasKunci} font-bold text-bahaya-foreground`} aria-readonly="true">{rupiah(Number(nominal) > 0 ? Number(nominal) : 0)}</div>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground sm:col-span-2">Dicatat atas nama akun yang sedang masuk, pada sesi kas aktif.</p>
-            {pesan && <p role="alert" className="rounded-xl bg-bahaya px-3 py-2 text-sm text-bahaya-foreground sm:col-span-2">{pesan}</p>}
-            <div className="flex justify-end gap-2 pt-1 sm:col-span-2">
+            {pesan && <p role="alert" className="rounded-xl bg-bahaya px-3 py-2 text-sm text-bahaya-foreground">{pesan}</p>}
+            <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
-              <Button type="submit" disabled={simpan}>{simpan ? "Menyimpan…" : "Simpan"}</Button>
+              <Button type="submit" disabled={simpan || !daftarSiap}>{simpan ? "Menyimpan…" : "Simpan Pengeluaran"}</Button>
             </div>
           </div>
         )}
