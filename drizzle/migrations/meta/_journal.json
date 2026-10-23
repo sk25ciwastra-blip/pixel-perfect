@@ -50,6 +50,13 @@
       "when": 1792769178207,
       "tag": "0006_operational_announcements",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792791432980,
+      "tag": "0007_guest_notes_append_only",
+      "breakpoints": true
     }
   ]
 }

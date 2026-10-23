@@ -630,6 +630,47 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_notes: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          author_role: string | null
+          body: string
+          created_at: string | null
+          guest_id: string
+          id: string
+          legacy: boolean
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          author_role?: string | null
+          body: string
+          created_at?: string | null
+          guest_id: string
+          id?: string
+          legacy?: boolean
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          author_role?: string | null
+          body?: string
+          created_at?: string | null
+          guest_id?: string
+          id?: string
+          legacy?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_notes_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guests: {
         Row: {
           address: string
