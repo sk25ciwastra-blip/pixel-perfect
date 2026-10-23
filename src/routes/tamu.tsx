@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { Eye, X, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, History, MapPin, CalendarDays, Users, ChevronRight } from 'lucide-react';
+import { Eye, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, History, MapPin, CalendarDays, Users, ChevronRight } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,21 @@ function waktuWib(value: string) {
   return new Date(value).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
 }
 const statusTransaksi: Record<string, string> = { booking: 'BOOKING', check_in: 'CHECK-IN', check_out: 'SELESAI', cancelled: 'DIBATALKAN' };
+function pembuatCatatan(role: string | null, name: string | null) {
+  const jabatan: Record<string, string> = { owner: 'Owner', own: 'Owner', pemilik: 'Owner', supervisor: 'SPV', spv: 'SPV', receptionist: 'RCP', resepsionis: 'RCP', rcp: 'RCP', housekeeping: 'HK', hk: 'HK' };
+  const label = jabatan[role?.trim().toLowerCase() ?? ''];
+  const nama = name?.trim();
+  const hanyaLabelOwner = label === 'Owner' && (!nama || ['pemilik', 'owner', 'own'].includes(nama.toLowerCase()));
+  if (hanyaLabelOwner) return 'Owner · Nama tidak tersedia';
+  if (!nama) return 'Tidak diketahui';
+  return label ? `${label} · ${nama}` : nama;
+}
+function waktuCatatanWib(value: string) {
+  const date = new Date(value);
+  const tanggal = date.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric' });
+  const jam = date.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).replace(':', '.');
+  return `${tanggal} · ${jam} WIB`;
+}
 
 function IkonWhatsApp({ className = "size-5" }: { className?: string }) {
   return <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.05 0C5.46 0 .1 5.36.1 11.95c0 2.1.55 4.16 1.6 5.98L0 24l6.23-1.63a11.96 11.96 0 0 0 5.82 1.49h.01c6.58 0 11.94-5.36 11.94-11.95 0-3.2-1.24-6.2-3.48-8.43ZM12.05 21.85a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.7.97.99-3.61-.24-.37a9.87 9.87 0 0 1-1.51-5.3c0-5.48 4.46-9.94 9.94-9.94a9.87 9.87 0 0 1 7.03 2.91 9.87 9.87 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94Zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.2 5.08 4.49.71.31 1.27.5 1.7.64.71.22 1.36.19 1.87.12.57-.09 1.77-.73 2.02-1.43.25-.7.25-1.3.17-1.43-.07-.12-.27-.2-.57-.35Z" /></svg>;
@@ -139,9 +154,11 @@ function HalamanTamu() {
         <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-navy-deep/75 backdrop-blur-sm" />
           <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut">
             <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
-              <p className="pr-10 text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
-              <Dialog.Title className="mt-1.5 pr-10 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{open ? catatanSaja ? 'Tambah Catatan' : editing ? 'Perbaharui Data' : 'Tambah Tamu' : 'Detail Tamu'}</Dialog.Title>
-              <Button variant="ghost" size="icon" className="absolute right-3 top-3 text-gold-light" aria-label="Tutup detail tamu" disabled={saving} onClick={tutup}><X className="size-5" /></Button>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0"><p className="text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
+                <Dialog.Title className="mt-1.5 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{open ? catatanSaja ? 'Tambah Catatan' : editing ? 'Perbarui Data' : 'Tambah Tamu' : 'Detail Tamu'}</Dialog.Title></div>
+                {!open && detail && !readOnly && <Button className="h-11 shrink-0 gap-2 px-3 text-sm" onClick={() => edit(detail)}><Pencil className="size-4" />Perbarui Data</Button>}
+              </div>
             </header>
             {open && !readOnly ? <form onSubmit={save}>
               <div className="space-y-5 p-5 sm:p-7">
@@ -168,7 +185,7 @@ function HalamanTamu() {
                 <div className="grid min-w-0 gap-3">
                   <section className="min-w-0 rounded-xl border border-gold/30 bg-navy-deep/35 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-gold/20 pb-3"><h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gold"><NotebookPen className="size-5" />Catatan Tamu</h3>{daftarCatatan.length > 1 && <Button variant="ghost" size="sm" className="h-8 px-2 text-sm text-gold-light" onClick={() => setSemuaCatatan(!semuaCatatan)}>{semuaCatatan ? 'Ringkas' : 'Lihat Semua'}</Button>}</div>
                     {notes.error && <p className="mt-3 text-sm text-muted-foreground">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
-                    <ul className={`mt-1 divide-y divide-border/60 ${semuaCatatan ? 'max-h-56 overflow-y-auto pr-3' : ''}`}>{(semuaCatatan ? daftarCatatan : daftarCatatan.slice(0, 1)).map(note => <li key={note.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_190px] sm:items-center"><p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{note.body}</p><p className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs sm:border-l sm:border-gold/20 sm:pl-3 leading-relaxed text-muted-foreground">{note.author_role && <span className="rounded border border-gold/25 px-1.5 py-0.5 text-gold">{note.author_role}</span>}<span className="break-words">{note.author_name ?? 'Pembuat tidak diketahui'}</span><span>•</span><span>{note.created_at ? waktuWib(note.created_at) : 'Waktu tidak diketahui'}</span></p></li>)}</ul>
+                    <ul className={`mt-1 divide-y divide-border/60 ${semuaCatatan ? 'max-h-56 overflow-y-auto pr-3' : ''}`}>{(semuaCatatan ? daftarCatatan : daftarCatatan.slice(0, 1)).map(note => <li key={note.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_210px] sm:items-center"><p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{note.body}</p><p className="text-right text-xs sm:border-l sm:border-gold/20 sm:pl-3 leading-relaxed text-muted-foreground"><span className="block break-words">{pembuatCatatan(note.author_role, note.author_name)}</span><span className="block">{note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</span></p></li>)}</ul>
                     {!daftarCatatan.length && <p className="mt-3 text-base text-muted-foreground">Belum ada catatan tamu</p>}
                   </section>
                   <section className="min-w-0 rounded-xl border border-gold/30 bg-navy-deep/35 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-gold/20 pb-3"><h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gold"><History className="size-5" />Riwayat Transaksi</h3>{riwayat.length > 2 && <Button variant="ghost" size="sm" className="h-8 px-2 text-sm text-gold-light" onClick={() => setSemuaTransaksi(!semuaTransaksi)}>{semuaTransaksi ? 'Ringkas' : 'Lihat Semua'}</Button>}</div>
@@ -178,7 +195,7 @@ function HalamanTamu() {
                   </section>
                 </div>
               </div>
-              <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gold/20 bg-navy-deep/50 px-4 py-4 sm:px-5">{!readOnly && <><Button variant="outline" className="h-11 gap-2 text-sm text-gold-light" onClick={() => openWhatsApp(detail.phone)}><IkonWhatsApp />WhatsApp</Button><Button className="h-11 gap-2 text-sm" onClick={() => edit(detail)}><Pencil className="size-4" />Perbaharui Data</Button></>}</footer>
+              <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gold/20 bg-navy-deep/50 px-4 py-4 sm:px-5"><Button variant="outline" className="h-11 text-sm text-gold-light" onClick={tutup}>Tutup</Button>{!readOnly && <Button className="h-11 gap-2 text-sm" onClick={() => openWhatsApp(detail.phone)}><IkonWhatsApp />Hubungi</Button>}</footer>
             </>}
           </Dialog.Content>
         </Dialog.Portal>
