@@ -2,7 +2,6 @@ import { rpc } from "@/lib/data-live";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDownLeft,
   ArrowUpRight,
   X,
   CalendarPlus,
