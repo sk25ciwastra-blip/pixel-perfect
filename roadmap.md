@@ -1,6 +1,7 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Halaman Tamu — rancangan final Owner
+- [x] Revisi visual tujuh poin: SVG WhatsApp Dashboard, header WHATSAPP, format xxxx+empat digit, tabel mengikuti isi, font satu tingkat lebih besar, modal navy-gold dua kolom dengan edit inline; lima tes aturan dan build otomatis lulus, pemeriksaan komputer/HP tanpa perubahan data.
 - [x] Rapikan tabel empat kolom, urutan nama/kunjungan, modal tengah dan formulir inline.
 - [x] Riwayat guest_notes append-only diterapkan dengan baca mengikuti izin guests, tanpa hak tulis langsung staf; trigger atomik menyimpan metadata aktual dan backfill legacy tetap tidak diketahui.
 - [x] Uji komputer/HP, tambah tamu sementara, dua catatan persisten setelah reload, pembaruan inline, pencarian WA penuh dan DetailTransaksi existing; lima tes aturan serta build otomatis lulus. Data sementara dihapus; tanpa publikasi. Akun inspector tidak diuji langsung.
