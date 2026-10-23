@@ -1,5 +1,5 @@
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BedDouble, UserRound, MapPin, Package, CalendarDays, Clock3, ReceiptText, CreditCard, History, CircleDollarSign, NotebookPen } from 'lucide-react';
+import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 
@@ -70,84 +70,25 @@ export function DetailTransaksi({
   if (restricted) {
     return (
       <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4">
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Riwayat housekeeping"
-          className="w-full max-w-lg rounded-2xl bg-background p-5 shadow-lembut"
-        >
-          <div className="mb-5 flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                Riwayat Housekeeping
-              </p>
-              <h2 className="mt-1 text-lg font-bold">
-                {transaction.transaction_number}
-              </h2>
-            </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Tutup"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="space-y-3 text-sm">
-            <p>
-              <span className="text-muted-foreground">Kamar: </span>
-              <strong>{room?.room_number ?? '—'}</strong>
-            </p>
-            <p>
-              <span className="text-muted-foreground">Status kamar: </span>
-              <strong>{room?.status ?? '—'}</strong>
-            </p>
-            <p>
-              <span className="text-muted-foreground">Check-out: </span>
-              <strong>{waktuWib(transaction.checked_out_at)}</strong>
-            </p>
-            <p>
-              <span className="text-muted-foreground">Catatan kamar: </span>
-              <strong>{room?.notes || 'Tidak ada catatan.'}</strong>
-            </p>
-
-            <div className="border-t border-border pt-3">
-              <p className="font-semibold">Riwayat pekerjaan</p>
-              {housekeepingHistory.rows
-                .filter(
-                  (item) =>
-                    item.room_id === transaction.room_id &&
-                    (!item.transaction_id ||
-                      item.transaction_id === transaction.id),
-                )
-                .sort(
-                  (a, b) =>
-                    new Date(b.created_at).getTime() -
-                    new Date(a.created_at).getTime(),
-                )
-                .map((item) => (
-                  <div key={item.id} className="mt-2 rounded-xl bg-secondary px-3 py-2 text-xs">
-                    <p className="font-semibold">
-                      {item.action === 'start_cleaning'
-                        ? 'Mulai dibersihkan'
-                        : item.action === 'finish_cleaning'
-                          ? 'Selesai dibersihkan'
-                          : 'Override menjadi siap'}
-                    </p>
-                    <p className="text-muted-foreground">
-                      {item.performed_by_name} ·{' '}
-                      {new Date(item.created_at).toLocaleString('id-ID', {
-                        timeZone: 'Asia/Jakarta',
-                      })}
-                    </p>
-                    {item.note && <p>{item.note}</p>}
-                  </div>
-                ))}
-            </div>
+        <div role="dialog" aria-modal="true" aria-label="Riwayat housekeeping" className={kelasPopupDetail}>
+          <HeaderDetail title="Riwayat Housekeeping" nomor={transaction.transaction_number} onClose={onClose} panorama />
+          <div className="space-y-3 p-4 sm:p-5">
+            <BagianDetail title="Informasi kamar" icon={BedDouble}><div className="grid gap-3 sm:grid-cols-2">
+              <NilaiDetail label="Kamar" icon={BedDouble}>{room?.room_number ?? '—'}</NilaiDetail>
+              <NilaiDetail label="Status kamar" icon={ReceiptText}>{room?.status ?? '—'}</NilaiDetail>
+              <NilaiDetail label="Check-out" icon={CalendarDays}>{waktuWib(transaction.checked_out_at)}</NilaiDetail>
+              <NilaiDetail label="Catatan kamar" icon={NotebookPen}>{room?.notes || 'Tidak ada catatan.'}</NilaiDetail>
+            </div></BagianDetail>
+            <BagianDetail title="Riwayat pekerjaan" icon={History}>
+              <div className="space-y-2">{housekeepingHistory.rows
+                .filter(item => item.room_id === transaction.room_id && (!item.transaction_id || item.transaction_id === transaction.id))
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .map(item => <div key={item.id} className="rounded-lg border border-gold/15 bg-background/60 p-3">
+                  <p className="font-semibold text-gold-light">{item.action === 'start_cleaning' ? 'Mulai dibersihkan' : item.action === 'finish_cleaning' ? 'Selesai dibersihkan' : 'Override menjadi siap'}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{item.performed_by_name} · {new Date(item.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</p>
+                  {item.note && <p className="mt-2 break-words">{item.note}</p>}
+                </div>)}</div>
+            </BagianDetail>
           </div>
         </div>
       </div>
@@ -184,191 +125,49 @@ export function DetailTransaksi({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Detail transaksi"
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-background p-5 shadow-lembut"
-      >
-        <div className="mb-5 flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              Detail Transaksi
-            </p>
-            <h2 className="mt-1 text-lg font-bold">
-              {transaction.transaction_number}
-            </h2>
-            <p className="text-sm font-semibold">
-              {guest?.full_name ?? 'Tamu'}
-              {guest?.phone
-                ? ` · ${guest.phone.replace(/\D/g, '').slice(-4)}`
-                : ''}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-bold uppercase">
-              {transaction.status === 'booking'
-                ? 'Booking'
-                : transaction.status === 'check_in'
-                  ? 'In Room'
-                  : transaction.status === 'check_out'
-                    ? 'Selesai'
-                    : 'Dibatalkan'}
-            </span>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Tutup"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-5 text-sm">
-          <section className="rounded-2xl border border-border p-4">
-            <h3 className="mb-3 font-bold">Reservasi</h3>
-
-            <div className="space-y-2">
-              <p>
-                <span className="text-muted-foreground">Room: </span>
-                <strong>
-                  {(roomType?.name ?? 'Room').toUpperCase()} ·{' '}
-                  {room?.room_number ?? '-'}
-                </strong>
-              </p>
-
-              <p>
-                <span className="text-muted-foreground">Paket: </span>
-                <strong>{kodePaket(packageItem?.name)}</strong>
-              </p>
-
-              <p>
-                <span className="text-muted-foreground">Jenis hari: </span>
-                <strong>
-                  {transaction.day_mode?.toUpperCase() ?? '—'}
-                </strong>
-              </p>
-
-              <p>
-                <span className="text-muted-foreground">
-                  Jadwal Check-in:{' '}
-                </span>
-                <strong>{waktuWib(transaction.scheduled_check_in)}</strong>
-              </p>
-
-              <p>
-                <span className="text-muted-foreground">
-                  Jadwal Check-out:{' '}
-                </span>
-                <strong>{waktuWib(transaction.scheduled_check_out)}</strong>
-              </p>
-
-              <p>
-                <span className="text-muted-foreground">
-                  Check-in aktual:{' '}
-                </span>
-                <strong>{waktuWib(transaction.started_at)}</strong>
-              </p>
-
-              <p>
-                <span className="text-muted-foreground">
-                  Check-out aktual:{' '}
-                </span>
-                <strong>{waktuWib(transaction.checked_out_at)}</strong>
-              </p>
+      <div role="dialog" aria-modal="true" aria-label="Detail transaksi" className={kelasPopupDetail}>
+        <HeaderDetail title="Detail Transaksi" nomor={transaction.transaction_number} onClose={onClose} />
+        <div className="space-y-3 p-4 sm:p-5">
+          <BagianDetail title="Detail tamu & kamar" icon={UserRound}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <NilaiDetail label="Nama tamu" icon={UserRound}>{guest?.full_name ?? 'Tamu'}</NilaiDetail>
+              <NilaiDetail label="Kamar" icon={BedDouble}>{room?.room_number ?? '—'}</NilaiDetail>
+              <NilaiDetail label="Nomor WhatsApp" icon={UserRound}>{guest?.phone ?? '—'}</NilaiDetail>
+              <NilaiDetail label="Tipe kamar" icon={BedDouble}>{roomType?.name ?? '—'}</NilaiDetail>
+              <NilaiDetail label="Alamat" icon={MapPin}>{guest?.address || '—'}</NilaiDetail>
+              <NilaiDetail label="Paket" icon={Package}>{kodePaket(packageItem?.name)}</NilaiDetail>
+              <NilaiDetail label="Jenis hari" icon={CalendarDays}>{transaction.day_mode?.toUpperCase() ?? '—'}</NilaiDetail>
             </div>
-          </section>
-
-          <section className="rounded-2xl border border-border p-4">
-  <h3 className="mb-3 font-bold">Pembayaran</h3>
-
-  <div className="space-y-2">
-    <div className="flex justify-between gap-4">
-      <span className="text-muted-foreground">Harga Awal</span>
-      <strong>{rupiah(total)}</strong>
-    </div>
-
-    <div className="flex justify-between gap-4">
-      <span className="font-semibold">Total Transaksi</span>
-      <strong>{rupiah(total)}</strong>
-    </div>
-
-    <div className="flex justify-between gap-4">
-      <span className="text-muted-foreground">Total Dibayar</span>
-      <strong>{rupiah(totalPaid)}</strong>
-    </div>
-
-    <div className="flex justify-between gap-4">
-      <span className="text-muted-foreground">Sisa</span>
-      <strong>{rupiah(remaining)}</strong>
-    </div>
-
-    <div className="flex justify-between gap-4">
-      <span className="text-muted-foreground">Status Pembayaran</span>
-      <strong>{remaining === 0 ? 'LUNAS' : 'BELUM LUNAS'}</strong>
-    </div>
-  </div>
-</section>
-
-<section className="rounded-2xl border border-border p-4">
-  <h3 className="mb-3 font-bold">Riwayat Pembayaran</h3>
-
-            {transactionPayments.length === 0 ? (
-              <p className="text-muted-foreground">
-                Belum ada pembayaran tercatat.
-              </p>
-            ) : (
-              <div className="divide-y divide-border">
-                {transactionPayments.map((payment) => {
-                  const recorder = employees.rows.find(
-                    (item) => item.user_id === payment.recorded_by,
-                  );
-
-                  return (
-                    <div
-                      key={payment.id}
-                      className="flex justify-between gap-4 py-3 first:pt-0 last:pb-0"
-                    >
-                      <div>
-                        <p className="font-semibold uppercase">
-                          {payment.kind} · {payment.method}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {waktuWib(payment.created_at)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Dicatat oleh {recorder?.name ?? '—'}
-                        </p>
-                      </div>
-
-                      <strong>{rupiah(Number(payment.amount))}</strong>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-2xl border border-border p-4">
-            <h3 className="mb-3 font-bold">Informasi Transaksi</h3>
-
-            <div className="space-y-2">
-              <p>
-                <span className="text-muted-foreground">Dibuat: </span>
-                <strong>{waktuWib(transaction.created_at)}</strong>
-              </p>
-
-              <p>
-                <span className="text-muted-foreground">Dibuat oleh: </span>
-                <strong>{creator?.name ?? '—'}</strong>
-              </p>
+          </BagianDetail>
+          <BagianDetail title="Ringkasan pembayaran" icon={CircleDollarSign}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <NilaiDetail label="Harga awal" icon={BedDouble}>{rupiah(total)}</NilaiDetail>
+              <NilaiDetail label="Total dibayar" icon={CreditCard} tone="masuk">{rupiah(totalPaid)}</NilaiDetail>
+              <NilaiDetail label="Total transaksi" icon={ReceiptText} tone="total">{rupiah(total)}</NilaiDetail>
+              <NilaiDetail label="Sisa pembayaran" icon={Clock3} tone="total">{rupiah(remaining)}</NilaiDetail>
             </div>
-          </section>
+            <p className="mt-3 text-right text-xs font-semibold text-gold-light">Status pembayaran: {remaining === 0 ? 'LUNAS' : 'BELUM LUNAS'}</p>
+          </BagianDetail>
+          <BagianDetail title="Riwayat pembayaran" icon={History}>
+            {transactionPayments.length === 0 ? <p className="text-muted-foreground">Belum ada pembayaran tercatat.</p> :
+              <div className="space-y-2">{transactionPayments.map(payment => {
+                const recorder = employees.rows.find(item => item.user_id === payment.recorded_by);
+                return <div key={payment.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-gold/20 bg-background/60 p-3">
+                  <CreditCard className="size-5 shrink-0 text-gold" />
+                  <div className="min-w-0"><p className="break-words font-semibold uppercase">{payment.kind} · {payment.method}</p><p className="mt-1 text-xs text-muted-foreground">{waktuWib(payment.created_at)}</p><p className="text-xs text-muted-foreground">Dicatat oleh {recorder?.name ?? '—'}</p></div>
+                  <strong className="text-right text-siap-foreground">{rupiah(Number(payment.amount))}</strong>
+                </div>;
+              })}</div>}
+          </BagianDetail>
+          <BagianDetail title="Status & waktu" icon={Clock3}><div className="grid gap-3 sm:grid-cols-2">
+            <NilaiDetail label="Status transaksi" icon={ReceiptText}>{transaction.status === 'booking' ? 'Booking' : transaction.status === 'check_in' ? 'Terisi' : transaction.status === 'check_out' ? 'Selesai' : 'Dibatalkan'}</NilaiDetail>
+            <NilaiDetail label="Dibuat oleh" icon={UserRound}>{creator?.name ?? '—'}</NilaiDetail>
+            <NilaiDetail label="Jadwal check-in" icon={CalendarDays}>{waktuWib(transaction.scheduled_check_in)}</NilaiDetail>
+            <NilaiDetail label="Jadwal check-out" icon={CalendarDays}>{waktuWib(transaction.scheduled_check_out)}</NilaiDetail>
+            <NilaiDetail label="Check-in aktual" icon={Clock3}>{waktuWib(transaction.started_at)}</NilaiDetail>
+            <NilaiDetail label="Check-out aktual" icon={Clock3}>{waktuWib(transaction.checked_out_at)}</NilaiDetail>
+            <NilaiDetail label="Dibuat" icon={CalendarDays}>{waktuWib(transaction.created_at)}</NilaiDetail>
+          </div></BagianDetail>
         </div>
       </div>
     </div>

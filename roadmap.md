@@ -1,5 +1,10 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Tiga popup detail — referensi Owner 24 Oktober
+- [x] Selaraskan Detail Transaksi, Detail Housekeeping, dan Detail Pengeluaran ke hitam–emas dengan bagian dua kolom berikon, judul serif, nominal semantik dan modal tengah 720px bergulir; sumber data, tindakan, dan formulir tetap.
+- [x] Build otomatis lulus; Transaksi dan Pengeluaran diperiksa dengan akun Owner dan data tersimpan pada 1440px/390px, gulir dan Tutup berjalan tanpa overflow atau kesalahan runtime; lima tes tampilan serta tiga tes biaya lulus, tanpa publikasi.
+- [ ] Screenshot Detail Housekeeping dengan data asli menunggu nomor pekerjaan HK tersimpan pada kamar; seluruh kamar yang tersedia saat pemeriksaan menampilkan HK belum tercatat. Tidak membuat pekerjaan atau memalsukan data untuk pemeriksaan.
+
 ## Halaman Tamu — rancangan final Owner
 - [x] Revisi enam kolom, ikon catatan 21px rapat, tombol pada header sesuai Transaksi, detail Gedung Sate/informasi berikon/catatan dan riwayat bertumpuk; screenshot 1440px/390px tanpa overflow, build dan lima tes lulus; dua catatan tersimpan melalui tombol baru dan bertahan setelah reload, data pengujian dibersihkan.
 - [ ] Lampu Active/Blocked menunggu sumber status tamu resmi: kolom saat ini menampilkan Belum tersedia, tanpa status rekaan atau perubahan skema.

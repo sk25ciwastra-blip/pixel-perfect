@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
-import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil } from "lucide-react";
+import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen } from "lucide-react";
+import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { Kerangka } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
@@ -431,50 +432,30 @@ function HalamanKamar() {
           onClick={() => setDetailHousekeeping(null)}
         >
           <section
-            className="w-full max-w-md rounded-2xl bg-background p-5 shadow-lembut"
+            role="dialog" aria-modal="true" aria-label="Detail Housekeeping"
+            className={kelasPopupDetail}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Detail pekerjaan Housekeeping</p>
-                <h2 className="text-lg font-bold">Kamar {detailHousekeeping.roomNumber}</h2>
-              </div>
-              <Button type="button" variant="outline" onClick={() => setDetailHousekeeping(null)}>
-                Tutup
-              </Button>
-            </div>
-            <div className="mt-4 space-y-2 text-sm">
-              <p>
-                <span className="text-muted-foreground">HK:</span>{" "}
-                <span className="font-mono font-semibold">{detailHousekeeping.jobNumber}</span>
-              </p>
-              <p>
-                <span className="text-muted-foreground">Aksi:</span> {detailHousekeeping.action}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Petugas:</span>{" "}
-                {detailHousekeeping.performedBy}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Waktu:</span>{" "}
-                {new Date(detailHousekeeping.createdAt).toLocaleString("id-ID", {
-                  timeZone: "Asia/Jakarta",
-                })}
-              </p>
+            <HeaderDetail title="Detail Housekeeping" nomor={detailHousekeeping.jobNumber} onClose={() => setDetailHousekeeping(null)} panorama />
+            <div className="space-y-3 p-4 sm:p-5">
+              <BagianDetail title="Informasi kamar & pekerjaan" icon={BedDouble}><div className="grid gap-3 sm:grid-cols-2">
+                <NilaiDetail label="Kamar" icon={BedDouble}>Kamar {detailHousekeeping.roomNumber}</NilaiDetail>
+                <NilaiDetail label="Aksi pekerjaan" icon={Brush}>{detailHousekeeping.action}</NilaiDetail>
+                <NilaiDetail label="Petugas" icon={UserRound}>{detailHousekeeping.performedBy}</NilaiDetail>
+                <NilaiDetail label="Nomor pekerjaan" icon={NotebookPen}>{detailHousekeeping.jobNumber}</NilaiDetail>
+              </div></BagianDetail>
+              <BagianDetail title="Riwayat waktu" icon={Clock3}><NilaiDetail label="Waktu pekerjaan" icon={CalendarDays}>{new Date(detailHousekeeping.createdAt).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB</NilaiDetail></BagianDetail>
               {detailHousekeeping.note && (
-                <p>
-                  <span className="text-muted-foreground">Catatan:</span> {detailHousekeeping.note}
-                </p>
+                <BagianDetail title="Catatan Housekeeping" icon={NotebookPen}><p className="whitespace-pre-wrap break-words rounded-lg border border-gold/15 bg-background/60 p-3 leading-relaxed">{detailHousekeeping.note}</p></BagianDetail>
               )}
               {detailHousekeeping.issues.length > 0 && (
-                <div className="rounded-xl bg-bahaya p-3 text-bahaya-foreground">
-                  <p className="font-semibold">❌ Kekurangan/kerusakan</p>
-                  <ul className="mt-1 list-disc pl-5">
+                <BagianDetail title="Kekurangan / kerusakan" icon={Brush}>
+                  <ul className="list-disc space-y-2 rounded-lg border border-bahaya-foreground/25 bg-bahaya/30 py-3 pl-8 pr-3 text-bahaya-foreground">
                     {detailHousekeeping.issues.map((issue) => (
                       <li key={issue}>{issue}</li>
                     ))}
                   </ul>
-                </div>
+                </BagianDetail>
               )}
             </div>
           </section>
