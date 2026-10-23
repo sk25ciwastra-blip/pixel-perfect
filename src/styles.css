@@ -269,6 +269,22 @@
   background: linear-gradient(90deg, transparent, oklch(0.76 0.115 82 / 0.45), transparent);
 }
 
+/* Pemisah kolom tabel operasional: garis emas redup sejajar kepala sampai baris, ikut ter-scroll.
+   Dipakai pada <table> ber-model border-separate, jadi garis dibuat lewat inset box-shadow
+   (border pada <tr> tidak dilukis pada model tersebut). */
+@utility pemisah-kolom {
+  --garis-kolom: inset 1px 0 0 oklch(0.76 0.115 82 / 0.13);
+  --garis-baris: inset 0 -1px 0 oklch(0.76 0.115 82 / 0.1);
+  --garis-kepala: inset 0 -1px 0 oklch(0.76 0.115 82 / 0.2);
+  & th { box-shadow: var(--garis-kolom), var(--garis-kepala); }
+  & th:first-child { box-shadow: var(--garis-kepala); }
+  & td { box-shadow: var(--garis-kolom), var(--garis-baris); }
+  & td:first-child { box-shadow: var(--garis-baris); }
+  & tbody tr:last-child td { box-shadow: var(--garis-kolom); }
+  & tbody tr:last-child td:first-child { box-shadow: none; }
+}
+
+
 @layer base {
   .font-serif { font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
   h1, h2, h3 { text-wrap: balance; }
