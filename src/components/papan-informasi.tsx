@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ROTATION_MS, TRANSITION_MS, urutPengumuman, indeksBerikut, bolehBerputar } from '@/lib/pengumuman-rotasi.mjs';
+import { MAKS_HURUF, rapikanTeks, bolehDisimpan } from '@/lib/pengumuman-batas.mjs';
 
 type Pengumuman = Database['public']['Tables']['operational_announcements']['Row'];
 const waktu = (value: string) => new Intl.DateTimeFormat('id-ID', {
   timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
 }).format(new Date(value)) + ' WIB';
-const MAKS_HURUF = 140;
+
 
 export function PapanInformasi() {
   const { peran, posisiKode, siap, masuk } = usePeran();
@@ -99,12 +100,13 @@ export function PapanInformasi() {
   const editing = useMemo(() => rows.find(row => row.id === editId), [rows, editId]);
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (!owner || busy || !body.trim() || body.trim().length > MAKS_HURUF) return;
+    if (!owner || busy || !bolehDisimpan(body)) return;
     setBusy(true); setMessage('');
     try {
+      const bersih = rapikanTeks(body).trim();
       const result = editId
-        ? await supabase.from('operational_announcements').update({ body: body.trim() }).eq('id', editId).select('id').single()
-        : await supabase.from('operational_announcements').insert({ body: body.trim() }).select('id').single();
+        ? await supabase.from('operational_announcements').update({ body: bersih }).eq('id', editId).select('id').single()
+        : await supabase.from('operational_announcements').insert({ body: bersih }).select('id').single();
       if (result.error) throw result.error;
       setEditId(null); setBody(''); setMessage('Pengumuman tersimpan.');
       await refresh();
@@ -153,9 +155,9 @@ export function PapanInformasi() {
           <DialogHeader><DialogTitle className="font-serif text-gold">Kelola Pengumuman</DialogTitle><DialogDescription>Pengumuman Baturaden 25 Homestay</DialogDescription></DialogHeader>
           <form onSubmit={save} className="space-y-3">
             <label htmlFor="isi-pengumuman" className="text-sm">{editing ? 'Edit pengumuman' : 'Pengumuman baru'}</label>
-            <Textarea id="isi-pengumuman" value={body} onChange={event => setBody(event.target.value.replace(/\s*\n\s*/g, ' '))} required disabled={busy} maxLength={MAKS_HURUF} className="min-h-24 border-gold/25 bg-navy-deep/40" />
+            <Textarea id="isi-pengumuman" value={body} onChange={event => setBody(rapikanTeks(event.target.value))} required disabled={busy} maxLength={MAKS_HURUF} className="min-h-24 border-gold/25 bg-navy-deep/40" />
             <p className={`text-[10px] ${body.length >= MAKS_HURUF - 20 ? 'text-gold' : 'text-muted-foreground'}`}>{body.length}/{MAKS_HURUF} karakter{body.length >= MAKS_HURUF ? ' — batas tercapai' : ''}</p>
-            <div className="flex gap-2"><Button type="submit" disabled={busy || !body.trim()}><Plus className="size-4" />{busy ? 'Menyimpan…' : editId ? 'Simpan perubahan' : 'Tambah pengumuman'}</Button>
+            <div className="flex gap-2"><Button type="submit" disabled={busy || !bolehDisimpan(body)}><Plus className="size-4" />{busy ? 'Menyimpan…' : editId ? 'Simpan perubahan' : 'Tambah pengumuman'}</Button>
               {editId && <Button type="button" variant="outline" disabled={busy} onClick={() => { setEditId(null); setBody(''); }}>Batal edit</Button>}</div>
             {message && <p role="status" className="text-xs text-gold">{message}</p>}
           </form>
