@@ -460,6 +460,36 @@ function Ringkasan() {
     [bookingHariIni, kamarAktif, kamarTerisi, roomTypes.rows, sekarang],
   );
 
+  // Indikator: hanya memakai status/timestamp dan aturan yang sudah ada di halaman ini.
+  const indikator = useMemo(() => {
+    const checklistTerbaru = new Map<string, { result: string | null; created_at: string }>();
+    for (const checklist of housekeepingChecklists.rows) {
+      if (!checklist.room_id) continue;
+      const lama = checklistTerbaru.get(checklist.room_id);
+      if (!lama || new Date(checklist.created_at).getTime() > new Date(lama.created_at).getTime()) {
+        checklistTerbaru.set(checklist.room_id, { result: checklist.result, created_at: checklist.created_at });
+      }
+    }
+    return {
+      terisi: statusKamarBaris.filter((row) => row.terisi).length,
+      booking: bookingHariIni.length,
+      persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
+      terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in, item.scheduled_check_out, sekarang)?.status === "late").length,
+      perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
+      overtime: statusKamarBaris.filter(({ terisi }) => terisi && formatSisaWaktu(terisi.transaksi.ends_at ?? null, sekarang).status === "expired").length,
+    };
+  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris]);
+
+  const indikatorStatus = [
+    { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
+    { label: "Booking", warna: "var(--v0-info)", nilai: indikator.booking, judul: "Booking hari ini yang belum Check-in" },
+    { label: "Persiapan", warna: "var(--v0-warning)", nilai: indikator.persiapan, judul: "Kamar yang perlu atau sedang dibersihkan" },
+    { label: "Terlambat", warna: "var(--v0-ungu)", nilai: indikator.terlambat, judul: "Booking yang waktu Check-in-nya sudah lewat" },
+    { label: "Perlu Tindakan", warna: "var(--v0-oranye)", nilai: indikator.perluTindakan, judul: "Kamar dengan hasil checklist terakhir perlu tindakan" },
+    { label: "Overtime", warna: "var(--v0-danger)", nilai: indikator.overtime, judul: "Kamar terisi yang lewat waktu Check-out" },
+  ];
+
+
   const transaksiTerbaru = useMemo(() => {
     const masuk = payments.rows.map((p) => {
       const trx = transaksi.find((t) => t.id === p.transaction_id);
