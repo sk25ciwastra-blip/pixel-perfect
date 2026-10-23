@@ -90,8 +90,8 @@ function HalamanTamu() {
     if (catatan.trim() && (notes.loading || notes.error)) { setMessage('Riwayat catatan belum dapat diakses. Kosongkan catatan baru untuk menyimpan data tamu saja.'); return; }
     setSaving(true); setMessage('');
     try {
-      const payload = catatanSaja ? { notes: catatan.trim() } : { full_name: nama.trim(), address: alamat.trim(), phone: telepon.trim(), ...(!editing ? { notes: catatan.trim() } : catatan.trim() ? { notes: catatan.trim() } : {}) };
-      const result = editing ? await supabase.from('guests').update(payload).eq('id', editing.id).select().single() : await supabase.from('guests').insert(payload).select().single();
+      const payload = { full_name: nama.trim(), address: alamat.trim(), phone: telepon.trim(), ...(!editing ? { notes: catatan.trim() } : catatan.trim() ? { notes: catatan.trim() } : {}) };
+      const result = editing ? await supabase.from('guests').update(catatanSaja ? { notes: catatan.trim() } : payload).eq('id', editing.id).select().single() : await supabase.from('guests').insert(payload).select().single();
       if (result.error) setMessage(result.error.code === '23505' ? 'Nomor HP sudah tercatat. Gunakan data tamu tersebut.' : result.error.message);
       else { if (detailTamu && result.data) setDetailTamu(result.data); setOpen(false); setEditing(null); await Promise.all([refresh(), notes.refresh()]); }
     } catch { setMessage('Data belum tersimpan. Silakan coba kembali.'); } finally { setSaving(false); }
@@ -127,9 +127,9 @@ function HalamanTamu() {
               <td className="pemisah-kolom border-b border-border/60 px-4 py-3 tabular-nums">{transactions.loading ? '—' : jumlahKunjungan(t.id)}</td>
               <td className="pemisah-kolom border-b border-border/60 px-2 py-3"><span className="text-xs text-muted-foreground" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span></td>
               <td className="border-b border-border/60 px-2 py-2"><div className="flex justify-center gap-0">
-                <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Lihat detail ${t.full_name}`} aria-label={`Lihat detail ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setOpen(false); setDetailTamu(t); }}><Eye className="size-[21px]" /></Button>
-                {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-siap-foreground" title={`WhatsApp ${t.full_name}`} aria-label={`WhatsApp ${t.full_name}`} onClick={() => openWhatsApp(t.phone)}><IkonWhatsApp className="size-[21px]" /></Button>}
-                 {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Tambah catatan ${t.full_name}`} aria-label={`Tambah catatan ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setDetailTamu(t); edit(t, true); }}><NotebookPen className="size-[21px]" /></Button>}
+                <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Lihat detail ${t.full_name}`} aria-label={`Lihat detail ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setOpen(false); setDetailTamu(t); }}><Eye className="size-[21px]!" /></Button>
+                {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-siap-foreground" title={`WhatsApp ${t.full_name}`} aria-label={`WhatsApp ${t.full_name}`} onClick={() => openWhatsApp(t.phone)}><IkonWhatsApp className="size-[21px]!" /></Button>}
+                 {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Tambah catatan ${t.full_name}`} aria-label={`Tambah catatan ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setDetailTamu(t); edit(t, true); }}><NotebookPen className="size-[21px]!" /></Button>}
               </div></td>
             </tr>)}</tbody>
           </table>
