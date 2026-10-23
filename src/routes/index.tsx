@@ -610,8 +610,8 @@ function Ringkasan() {
             <section className="panel-mewah min-w-0 p-4" aria-labelledby="judul-aksi-cepat">
               <h2 id="judul-aksi-cepat" className="font-serif text-xl font-semibold">Aksi Cepat</h2>
               {bolehAksiTransaksi ? (
-                <div className="mt-4 grid grid-cols-3 gap-2.5">
-                  <TombolAksi ikon={LogIn} judul="Check-in Langsung" utama onClick={() => setModal("check_in")} />
+                <div className="mt-4 grid grid-cols-3 gap-1.5">
+                  <TombolAksi ikon={LogIn} judul={"Check-in\nLangsung"} utama onClick={() => setModal("check_in")} />
                   <TombolAksi ikon={CalendarPlus} judul="Tambah Booking" onClick={() => setModal("booking")} />
                   <TombolAksi ikon={ReceiptText} judul={"Kas\nKeluar"} onClick={() => setModal("pengeluaran")} />
                 </div>
@@ -639,13 +639,10 @@ function Ringkasan() {
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
                   <div>
                     <h2 id="judul-status-kamar" className="font-serif text-lg font-semibold">Status Kamar <span className="text-gold-light">(Real-time)</span></h2>
-                    <p className="text-xs text-muted-foreground">Kamar terisi dan Booking hari ini.</p>
+                    <p className="text-xs text-muted-foreground">Kamar Terisi dan Booking Hari ini</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-2 py-1.5 text-[11px] font-semibold">
-                  <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Terisi {statusKamarBaris.filter((row) => row.terisi).length} Kamar · Booking {bookingHariIni.length}
-                </span>
                 <Link to="/kamar" search={{ bagian: "terisi" } as never} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
                   Lihat semua <ChevronRight className="size-3.5" />
                 </Link>
@@ -714,9 +711,10 @@ function Ringkasan() {
                             <td className="px-1 py-2">
                               {guest ? (
                                 <>
-                                  <p className="truncate font-medium" title={`${guest.full_name} · ${item?.transaction_number ?? ""}`}>{guest.full_name}</p>
+                                  <p className="truncate text-xs font-medium" title={guest.full_name}>{guest.full_name}</p>
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
+                              {item && <Button variant="link" className="mt-0.5 h-auto max-w-full whitespace-normal break-all p-0 font-mono text-[10px] leading-snug text-gold-light" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>}
                             </td>
                             <td className="px-1 py-2">
                               {item ? (
@@ -729,7 +727,7 @@ function Ringkasan() {
                             <td className="px-1 py-2">
                               <span className={`inline-flex max-w-full items-center justify-center gap-1.5 leading-tight ${kelasStatus}`}>
                                 <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
-                                <span>{labelStatus}</span>
+                                <span className={labelStatus === "Overtime" ? "text-xs font-medium" : undefined}>{labelStatus}</span>
                               </span>
                             </td>
                             <td className="px-1 py-2 whitespace-nowrap tabular-nums">{terisi ? item?.started_at ? jamWib(item.started_at) : "—" : item?.scheduled_check_in ? jamWib(item.scheduled_check_in) : "—"}</td>
@@ -767,6 +765,13 @@ function Ringkasan() {
                   </table>
                 </div>
               )}
+              <div aria-label="Indikator status kamar" className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 pb-4 text-[11px] font-medium">
+                <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-v0-success" aria-hidden="true" />Terisi {statusKamarBaris.filter((row) => row.terisi).length}</span>
+                <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-terisi-foreground" aria-hidden="true" />Booking {bookingHariIni.length}</span>
+                <span className="inline-flex items-center gap-1.5" title="Penghitungan Perlu Tindakan belum tersedia"><span className="size-1.5 rounded-full bg-muted-foreground" aria-hidden="true" />Perlu Tindakan —</span>
+                <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-bahaya-foreground" aria-hidden="true" />Overtime</span>
+                <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-v0-warning" aria-hidden="true" />Terlambat</span>
+              </div>
             </section>
 
             {/* Transaksi terbaru */}
@@ -798,7 +803,7 @@ function Ringkasan() {
                         {t.jenis === "masuk" ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">
+                        <p className="break-words text-xs font-semibold leading-snug">
                           {t.judul}{t.sub && <span className="ml-1.5 font-normal text-muted-foreground">({t.sub})</span>}
                         </p>
                         <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">{t.nomor}</p>
@@ -953,10 +958,10 @@ function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; j
       variant="ghost"
       type="button"
       onClick={onClick}
-      className={`flex h-auto min-h-12 whitespace-pre-line flex-row items-center justify-center gap-1.5 rounded-lg border px-2 py-2.5 text-left text-[0.65rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
+      className={`flex h-auto min-h-12 min-w-0 whitespace-pre-line flex-row items-center justify-start gap-1 rounded-lg border px-1.5 py-2.5 text-left text-[0.65rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
-      <Ikon className={`h-5 w-5 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
-      <span className="min-w-0">{judul}</span>
+      <Ikon className={`size-3.5 shrink-0 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
+      <span className="min-w-0 whitespace-pre-line">{judul}</span>
     </Button>
   );
 }
@@ -971,7 +976,7 @@ function IkonAksi({ label, disabled, kelas = "text-gold-light", onClick, childre
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`grid size-8 shrink-0 place-items-center rounded-full border border-gold/25 bg-secondary/80 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${kelas}`}
+      className={`grid size-7 shrink-0 place-items-center rounded-full border border-gold/25 bg-secondary/80 [&_svg]:size-3.5 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${kelas}`}
     >
       {children}
     </Button>
