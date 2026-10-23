@@ -103,7 +103,7 @@ function HalamanTamu() {
       {error && <p role="alert" className="mt-4 text-base text-destructive">{error}</p>}
       <div className="panel-mewah mt-6 w-full min-w-0 overflow-hidden p-2 sm:p-3">
         <div className="max-w-full overflow-x-auto">
-          <table className="w-full min-w-[640px] table-fixed border-separate border-spacing-0 text-center text-base">
+          <table className="w-full min-w-[640px] table-fixed border-separate border-spacing-0 text-center text-base [&_th]:text-[13px]">
             <colgroup><col className="w-[34%]" /><col className="w-[27%]" /><col className="w-[22%]" /><col className="w-[17%]" /></colgroup>
             <thead className="whitespace-nowrap bg-navy-deep/60 text-[13px] font-semibold text-gold"><tr>
               <th className="pemisah-kolom border-b border-gold/20 px-3 py-2"><Button variant="ghost" size="sm" className="h-9 px-2 text-[13px] text-gold" onClick={() => setUrutan('nama')}>NAMA TAMU</Button></th>
@@ -146,7 +146,7 @@ function HalamanTamu() {
               <div className="space-y-5 p-5 sm:p-6">
                 <section className="min-w-0 self-start rounded-lg border border-gold/20 bg-navy-deep/35 p-4 sm:p-5">
                   <h3 className="flex min-w-0 items-center gap-2 border-b border-gold/20 pb-3 text-base font-semibold text-gold"><ContactRound className="size-5" />Informasi Tamu</h3>
-                  <dl className="mt-4 grid gap-x-6 gap-y-4 text-base sm:grid-cols-2">{[['Nomor WhatsApp', detail.phone], ['Alamat', detail.address || '—'], ['Tanggal terdaftar', tanggalWib(detail.created_at)], ['Kunjungan terakhir', terakhir ? tanggalWib(terakhir) : jumlahKunjungan(detail.id) ? 'Waktu check-in tidak tersedia' : 'Belum ada kunjungan'], ['Jumlah kunjungan', transactions.loading ? 'Memuat…' : `${jumlahKunjungan(detail.id)} kali`]].map(([label, value]) => <div key={label} className={`min-w-0 ${label === 'Alamat' ? 'sm:col-span-2' : ''}`}><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-1.5 break-words font-semibold leading-relaxed">{value}</dd></div>)}</dl>
+                  <dl className="mt-4 grid gap-x-6 gap-y-4 text-base sm:grid-cols-2">{[['Nomor WhatsApp', detail.phone], ['Alamat', detail.address || '—'], ['Tanggal terdaftar', tanggalWib(detail.created_at)], ['Kunjungan terakhir', terakhir ? tanggalWib(terakhir) : jumlahKunjungan(detail.id) ? 'Waktu check-in tidak tersedia' : 'Belum ada kunjungan'], ['Jumlah kunjungan', transactions.loading ? 'Memuat…' : `${jumlahKunjungan(detail.id)} kali`]].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-1.5 break-words font-semibold leading-relaxed">{value}</dd></div>)}</dl>
                 </section>
                 <div className="grid min-w-0 items-start gap-5 md:grid-cols-2">
                   <section className="min-w-0 rounded-lg border border-gold/20 bg-navy-deep/35 p-4 sm:p-5"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-gold/20 pb-3"><h3 className="flex min-w-0 items-center gap-2 text-base font-semibold text-gold"><NotebookPen className="size-5" />Catatan Tamu</h3>{daftarCatatan.length > 1 && <Button variant="ghost" size="sm" className="h-8 px-2 text-sm text-gold-light" onClick={() => setSemuaCatatan(!semuaCatatan)}>{semuaCatatan ? 'Ringkas' : 'Lihat Semua'}</Button>}</div>
