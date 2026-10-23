@@ -57,6 +57,13 @@
       "when": 1792791432980,
       "tag": "0007_guest_notes_append_only",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792791812094,
+      "tag": "0008_guest_notes_explicit_read_only_grants",
+      "breakpoints": true
     }
   ]
 }
