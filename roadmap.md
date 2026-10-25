@@ -2,7 +2,7 @@
 
 ## Latar sembilan header — referensi final Owner
 - [x] Buat dan pasang sembilan latar ilustratif sesuai referensi, dengan overlay hitam–emas dalam area header existing saja; Dashboard, sidebar, isi, popup, form, aksi dan data tidak diubah.
-- [ ] Verifikasi sembilan halaman desktop/HP, gambar termuat, judul terbaca, build otomatis dan checksum Dashboard tetap.
+- [x] Sembilan halaman diperiksa dengan sesi Owner pada desktop 1440px dan HP 390px: semua gambar termuat, judul terbaca, tanpa overflow/kesalahan runtime; build otomatis OK dan checksum Dashboard identik sebelum/sesudah. Tidak ada publikasi atau perubahan data.
 
 ## Paket final Owner — Kamar, Transaksi, header Priangan
 - [x] Pindahkan Check-in resmi ke Kamar dengan izin dan refresh existing; tombol Kamar tetap Owner saja.
