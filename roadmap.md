@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Latar sembilan header — referensi final Owner
+- [x] Buat dan pasang sembilan latar ilustratif sesuai referensi, dengan overlay hitam–emas dalam area header existing saja; Dashboard, sidebar, isi, popup, form, aksi dan data tidak diubah.
+- [ ] Verifikasi sembilan halaman desktop/HP, gambar termuat, judul terbaca, build otomatis dan checksum Dashboard tetap.
+
 ## Paket final Owner — Kamar, Transaksi, header Priangan
 - [x] Pindahkan Check-in resmi ke Kamar dengan izin dan refresh existing; tombol Kamar tetap Owner saja.
 - [x] Ganti panah detail daftar Transaksi dengan WhatsApp resmi berizin/validasi nomor, nomorator tetap pembuka detail tunggal.
