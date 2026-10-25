@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
-import { LatarHeader } from "@/components/latar-header";
+import panorama from "@/assets/panorama-kota-malam.png.asset.json";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
@@ -621,7 +621,11 @@ function Ringkasan() {
       <div className="relative isolate">
         {/* Panorama kota malam selebar layar, menyatu ke latar */}
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[440px] overflow-hidden sm:h-[520px]" aria-hidden="true">
-          <LatarHeader path="/" dashboard />
+          <img src={panorama.url} alt="" width={1672} height={941} className="h-full w-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/45 to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_55%_at_72%_62%,oklch(0.76_0.115_82/0.22),transparent_70%)] mix-blend-screen" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent via-background/70 to-background" />
         </div>
 
         <div className="px-4 pb-10 pt-5 sm:px-6 lg:px-8 2xl:px-10">
