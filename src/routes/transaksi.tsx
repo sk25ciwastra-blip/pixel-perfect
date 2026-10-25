@@ -18,11 +18,11 @@ import { transaksiQuery, tahunTransaksiQuery } from '@/lib/transaksi-query';
 export const Route = createFileRoute('/transaksi')({
   ssr: false,
   head: () => meta('Daftar Transaksi', 'Penelusuran transaksi Baturaden 25 Homestay berdasarkan bulan, tahun, dan nomor transaksi.'),
-  validateSearch: (s: Record<string, unknown>) => ({
-    bulan: typeof s.bulan === 'number' ? s.bulan : undefined,
-    tahun: typeof s.tahun === 'number' ? s.tahun : undefined,
-    cari: typeof s.cari === 'string' ? s.cari : '',
-    halaman: typeof s.halaman === 'number' ? s.halaman : 1,
+  validateSearch: (s: Record<string, unknown>): { bulan?: number | undefined; tahun?: number | undefined; cari?: string | undefined; halaman?: number | undefined } => ({
+    bulan: typeof s['bulan'] === 'number' ? s['bulan'] : undefined,
+    tahun: typeof s['tahun'] === 'number' ? s['tahun'] : undefined,
+    cari: typeof s['cari'] === 'string' ? s['cari'] : '',
+    halaman: typeof s['halaman'] === 'number' ? s['halaman'] : 1,
   }),
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps }) => {
@@ -36,12 +36,12 @@ export const Route = createFileRoute('/transaksi')({
   component: Halaman,
 });
 
-function normalisasi(s: { bulan?: number; tahun?: number; cari: string; halaman: number }, kini: { bulan: number; tahun: number }) {
+function normalisasi(s: { bulan?: number | undefined; tahun?: number | undefined; cari?: string | undefined; halaman?: number | undefined }, kini: { bulan: number; tahun: number }) {
   return {
     bulan: s.bulan !== undefined && Number.isInteger(s.bulan) && s.bulan >= 0 && s.bulan <= 12 ? s.bulan : kini.bulan,
     tahun: s.tahun !== undefined && Number.isInteger(s.tahun) && s.tahun >= 1 && s.tahun <= 9998 ? s.tahun : kini.tahun,
-    cari: s.cari.trim(),
-    halaman: Number.isFinite(s.halaman) ? Math.max(1, Math.floor(s.halaman)) : 1,
+    cari: (s.cari ?? '').trim(),
+    halaman: s.halaman !== undefined && Number.isFinite(s.halaman) ? Math.max(1, Math.floor(s.halaman)) : 1,
   };
 }
 const labels = { booking: 'BOOKING', check_in: 'CHECK-IN', check_out: 'SELESAI', cancelled: 'DIBATALKAN' };
@@ -59,9 +59,9 @@ function Halaman() {
   const { posisiKode } = usePeran();
   const canCheckIn = ['owner', 'supervisor', 'receptionist'].includes(posisiKode ?? '');
   const [open, setOpen] = useState(false);
-  const [cari, setCari] = useState(search.cari);
+  const [cari, setCari] = useState(search.cari ?? '');
   const [detail, setDetail] = useState<string | null>(null);
-  useEffect(() => setCari(search.cari), [search.cari]);
+  useEffect(() => setCari(search.cari ?? ''), [search.cari]);
   useEffect(() => {
     const channel = supabase.channel('daftar-transaksi-paginasi').on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
       void queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] });
@@ -109,7 +109,7 @@ function Halaman() {
       })}</ul>
     </section>)}</div>
     <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground"><span>{data.total ? `${(data.halaman - 1) * 20 + 1}–${Math.min(data.halaman * 20, data.total)} dari ${data.total} transaksi` : '0 transaksi'} · 20 per halaman</span>{paginasi(true)}</footer>
-    {open && canCheckIn && <FormulirPemesanan mode="check_in" onClose={() => setOpen(false)} onSaved={() => { void queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }); void queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] }); }} />}
+    {open && canCheckIn && <FormulirPemesanan mode="check_in" onClose={() => setOpen(false)} onSaved={async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }), queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] })]); }} />}
     {detail && <DetailTransaksi transactionId={detail} onClose={() => setDetail(null)} />}
   </Kerangka>;
 }
