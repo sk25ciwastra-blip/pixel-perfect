@@ -11,7 +11,10 @@ export function filterTransaksi(bulan: number, tahun: number, pencarian: string)
   if (term) {
     // Only numeral characters enter PostgREST patterns; text searches are passed as a single ilike value.
     if (/^\d+$/.test(term)) {
-      if (term.length === 1) return { nomor: `transaction_number.ilike.BTRDTRX-*${term}*,transaction_number.ilike.BTRD25-TRX-*${term}*-__,transaction_number.ilike.BTRD25-*${term}*` };
+      if (term.length === 1) {
+        const legacy = Array.from({ length: 6 }, (_, i) => `transaction_number.ilike.BTRD25-${'_'.repeat(i)}${term}${'_'.repeat(5 - i)}`);
+        return { nomor: [`transaction_number.ilike.BTRDTRX-*${term}*`, `transaction_number.ilike.BTRD25-TRX-*${term}*-__`, ...legacy].join(',') };
+      }
       const sequence = term.replace(/^0+/, '') || '0';
       const padded = sequence.padStart(6, '0');
       return { nomor: `transaction_number.eq.BTRDTRX-${padded},transaction_number.eq.BTRDTRX-${sequence},transaction_number.ilike.BTRD25-TRX-${padded}-__,transaction_number.ilike.BTRD25-TRX-${sequence}-__,transaction_number.eq.BTRD25-${padded},transaction_number.eq.BTRD25-${sequence}` };
