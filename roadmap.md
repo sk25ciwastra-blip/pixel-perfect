@@ -1,5 +1,11 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Paket final Owner — Kamar, Transaksi, header Priangan
+- [ ] Pindahkan Check-in resmi ke Kamar dengan izin dan refresh existing; tombol Kamar tetap Owner saja.
+- [ ] Ganti panah detail daftar Transaksi dengan WhatsApp resmi berizin/validasi nomor, nomorator tetap pembuka detail tunggal.
+- [ ] Variasi latar header melalui mapping bersama, Gedung Sate existing Dashboard dan pola lokal halus untuk tema lain; form/konten tetap.
+- [ ] Periksa preview desktop/HP, tes relevan, dan build otomatis; tanpa perubahan database atau publikasi.
+
 ## Daftar Transaksi — referensi Owner 26 Oktober
 - [x] Susun daftar hitam–emas berdasarkan tanggal, filter bulan/tahun berjalan WIB, pencarian nomor seluruh periode, pagination 20 transaksi melalui query seluruh data berizin, dan sidebar Transaksi tanpa submenu.
 - [x] Uji filter/pencarian/detail dengan akun Owner dan 11 transaksi asli di desktop 1440px/HP 390px tanpa overflow atau kesalahan runtime; build otomatis lulus. Pagination di atas batas 1000 baris diuji dengan mock query, karena data asli hanya 11 transaksi; tanpa data rekaan, publikasi atau perubahan database/form/Finance.
