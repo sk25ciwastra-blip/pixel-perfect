@@ -43,12 +43,7 @@ const semuaMenu: Menu[] = [
     { bagian: "besok", label: "Besok" },
     { bagian: "mendatang", label: "Mendatang (mulai lusa)" },
   ] },
-  { ke: "/transaksi", label: "Transaksi", ikon: Receipt, anak: [
-    { bagian: "semua", label: "Semua Transaksi" },
-    { bagian: "hari-ini", label: "Hari Ini" },
-    { bagian: "kemarin", label: "Kemarin" },
-    { bagian: "riwayat", label: "Riwayat" },
-  ] },
+  { ke: "/transaksi", label: "Transaksi", ikon: Receipt },
   { ke: "/tamu", label: "Tamu", ikon: Users },
   { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles, anak: [
     { bagian: "status", label: "Status" },
