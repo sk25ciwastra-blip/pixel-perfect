@@ -5,7 +5,7 @@ import {
   IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
-import skyline from "@/assets/skyline-malam.jpg";
+import { LatarHeader } from "@/components/latar-header";
 import gedungSate from "@/assets/gedung-sate-malam.jpg";
 
 type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean; anak?: { bagian: string; label: string }[] };
@@ -207,8 +207,7 @@ export function Kerangka({
           </div>
           {!tanpaJudul && (
             <div className="relative -mx-4 mb-6 overflow-hidden px-4 lg:-mx-10 lg:px-10 lg:pt-2">
-              <img src={skyline} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover object-[center_70%] opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/30" />
+              <LatarHeader path={lokasi.path} />
               <div className="relative mx-auto flex max-w-[1480px] flex-wrap items-end justify-between gap-3 pb-6">
                 <div className="min-w-0">
                   <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-gold">BATURADEN 25 HOMESTAY</p>

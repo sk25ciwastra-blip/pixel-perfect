@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
-import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen } from "lucide-react";
+import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen, Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { FormulirPemesanan } from "@/components/formulir-pemesanan";
+import { bolehCheckIn } from "@/lib/aksi-operasional";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { Kerangka } from "@/components/kerangka";
@@ -84,6 +87,9 @@ function formatIssueDetails(checklist: ChecklistRow) {
 
 function HalamanKamar() {
   const { peran, posisiKode } = usePeran();
+  const queryClient = useQueryClient();
+  const canCheckIn = bolehCheckIn(posisiKode);
+  const [checkInOpen, setCheckInOpen] = useState(false);
   const rooms = useTable("rooms");
   const types = useTable("room_types");
   const transactions = useTable("transactions");
@@ -200,11 +206,10 @@ function HalamanKamar() {
       judul="Status Kamar"
       keterangan={`${rooms.rows.length} kamar`}
       aksi={
-        peran === "owner" && (
-          <Button className="h-11 rounded-xl" onClick={() => edit()}>
-            Tambah
-          </Button>
-        )
+        <div className="flex flex-wrap items-center gap-2">
+          {canCheckIn && <Button className="h-11 gap-2 px-5" onClick={() => setCheckInOpen(true)}><Plus className="size-4" />Check-in</Button>}
+          {peran === "owner" && <Button variant="outline" className="h-11 gap-2 px-4" onClick={() => edit()}><Plus className="size-4" />Kamar</Button>}
+        </div>
       }
     >
       <div>
@@ -352,6 +357,10 @@ function HalamanKamar() {
           <p className="mt-8 text-center text-sm text-muted-foreground">Kamar tidak ditemukan.</p>
         )}
       </div>
+
+      {checkInOpen && canCheckIn && <FormulirPemesanan mode="check_in" onClose={() => setCheckInOpen(false)} onSaved={async () => {
+        await Promise.all([rooms.refresh(), transactions.refresh(), queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }), queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] })]);
+      }} />}
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4">
