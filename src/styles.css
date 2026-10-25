@@ -157,6 +157,7 @@
   --header-veil: linear-gradient(90deg, var(--background), color-mix(in oklab, var(--background) 82%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 60%, transparent)), linear-gradient(0deg, var(--background), transparent 75%);
   --header-ink: color-mix(in oklab, var(--gold) 16%, transparent);
   --header-thread: color-mix(in oklab, var(--gold) 9%, transparent);
+  --header-photo-veil: linear-gradient(90deg, color-mix(in oklab, var(--background) 90%, transparent), color-mix(in oklab, var(--background) 68%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 26%, transparent)), linear-gradient(0deg, var(--background), transparent 55%);
 }
 
 .dark {
@@ -325,6 +326,7 @@
 /* Header-only heritage motifs, not photographs of the property or real landmarks. */
 .latar-priangan { background: var(--navy-deep); }
 .selubung-priangan { background: var(--header-veil); }
+.latar-priangan-foto .selubung-priangan { background: var(--header-photo-veil); }
 .latar-priangan-dashboard .selubung-priangan {
   background: linear-gradient(90deg, var(--background), color-mix(in oklab, var(--background) 72%, transparent) 45%, color-mix(in oklab, var(--navy-deep) 52%, transparent)), linear-gradient(0deg, var(--background), transparent 70%);
 }
