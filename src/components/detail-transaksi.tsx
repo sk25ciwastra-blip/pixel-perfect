@@ -41,19 +41,16 @@ export function DetailTransaksi({
   onClose,
   mode = 'full',
 }: DetailTransaksiProps) {
-  const transactions = useTable('transactions');
+  const transactions = useTable('transactions', true, { column: 'id', value: transactionId });
   const restricted = mode === 'housekeeping';
-  const payments = useTable('payments', !restricted);
-  const guests = useTable('guests', !restricted);
+  const transaction = transactions.rows.find(item => item.id === transactionId);
+  const payments = useTable('payments', !restricted, { column: 'transaction_id', value: transactionId });
+  const guests = useTable('guests', !restricted && !!transaction?.guest_id, { column: 'id', value: transaction?.guest_id ?? '' });
   const rooms = useTable('rooms');
   const roomTypes = useTable('room_types');
   const packages = useTable('packages');
   const employees = useTable('employees', !restricted);
   const housekeepingHistory = useTable('housekeeping_history', restricted);
-
-  const transaction = transactions.rows.find(
-    (item) => item.id === transactionId,
-  );
 
   if (!transaction) {
     return null;

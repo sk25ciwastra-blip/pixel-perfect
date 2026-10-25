@@ -23,3 +23,4 @@
 - Guest-page WhatsApp controls share a local SVG renderer using the Dashboard's official path; this keeps both guest controls consistent without modifying the approved Dashboard.
 - Guest note shortcuts reuse the guest-save trigger with a notes-only update; guest status remains unavailable until an authoritative stored field exists, preventing fabricated eligibility labels.
 - Operational detail popups reuse presentation-only primitives in `detail-premium.tsx`; data reads, permission gates, calculations, and actions remain in their existing feature files so visual consistency cannot change operational rules.
+- The transaction list uses URL-backed filters and browser RLS-scoped Query reads with exact counts, stable ordering, database date/search filters and 20-row ranges; transaction detail scopes transaction, guest and payment reads to the selected record so API row caps cannot hide an older selection. No privileged reads or new database rules are needed.

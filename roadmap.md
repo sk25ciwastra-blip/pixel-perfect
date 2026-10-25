@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Daftar Transaksi — referensi Owner 26 Oktober
+- [x] Susun daftar hitam–emas berdasarkan tanggal, filter bulan/tahun berjalan WIB, pencarian nomor seluruh periode, pagination 20 transaksi melalui query seluruh data berizin, dan sidebar Transaksi tanpa submenu.
+- [x] Uji filter/pencarian/detail dengan akun Owner dan 11 transaksi asli di desktop 1440px/HP 390px tanpa overflow atau kesalahan runtime; build otomatis lulus. Pagination di atas batas 1000 baris diuji dengan mock query, karena data asli hanya 11 transaksi; tanpa data rekaan, publikasi atau perubahan database/form/Finance.
+
 ## Tiga popup detail — referensi Owner 24 Oktober
 - [x] Selaraskan Detail Transaksi, Detail Housekeeping, dan Detail Pengeluaran ke hitam–emas dengan bagian dua kolom berikon, judul serif, nominal semantik dan modal tengah 720px bergulir; sumber data, tindakan, dan formulir tetap.
 - [x] Build otomatis lulus; Transaksi dan Pengeluaran diperiksa dengan akun Owner dan data tersimpan pada 1440px/390px, gulir dan Tutup berjalan tanpa overflow atau kesalahan runtime; lima tes tampilan serta tiga tes biaya lulus, tanpa publikasi.
