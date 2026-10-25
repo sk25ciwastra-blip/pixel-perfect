@@ -1,9 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, ReceiptText, Search } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, ReceiptText, Search } from 'lucide-react';
 import { DetailTransaksi } from '@/components/detail-transaksi';
-import { FormulirPemesanan } from '@/components/formulir-pemesanan';
+import { IkonWhatsApp } from '@/components/ikon-whatsapp';
+import { bolehHubungiTamu } from '@/lib/aksi-operasional';
+import { openWhatsApp } from '@/lib/whatsapp';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -57,8 +59,6 @@ function Halaman() {
   const { data: tahunTersedia } = useSuspenseQuery(tahunTransaksiQuery);
   const queryClient = useQueryClient();
   const { posisiKode } = usePeran();
-  const canCheckIn = ['owner', 'supervisor', 'receptionist'].includes(posisiKode ?? '');
-  const [open, setOpen] = useState(false);
   const [cari, setCari] = useState(search.cari ?? '');
   const [detail, setDetail] = useState<string | null>(null);
   useEffect(() => setCari(search.cari ?? ''), [search.cari]);
@@ -84,7 +84,7 @@ function Halaman() {
     {ringkas && <span className="min-w-8 text-center text-sm font-semibold text-gold-light">{data.halaman} / {pages}</span>}
     <Button size="icon" variant="outline" className="size-8 rounded-md" aria-label="Halaman berikutnya" disabled={data.halaman >= pages} onClick={() => ubah({ halaman: data.halaman + 1 })}><ChevronRight /></Button>
   </div>;
-  return <Kerangka judul="Daftar Transaksi" keterangan="Pemantauan dan penelusuran transaksi" aksi={canCheckIn && <Button className="h-11 gap-2 px-5" onClick={() => setOpen(true)}><Plus />Check-in Langsung</Button>}>
+  return <Kerangka judul="Daftar Transaksi" keterangan="Pemantauan dan penelusuran transaksi">
     <div className="grid grid-cols-2 items-end gap-3 rounded-lg border border-gold/25 bg-card/70 p-3 sm:p-4 lg:grid-cols-[minmax(140px,.7fr)_minmax(130px,.6fr)_minmax(240px,1.5fr)]">
       <div className="space-y-2"><label className="text-xs text-muted-foreground" htmlFor="bulan-transaksi">Bulan</label><Select value={String(filter.bulan)} onValueChange={v => ubah({ bulan: Number(v) })}><SelectTrigger id="bulan-transaksi" className="h-11 bg-background/70 [&>span]:flex [&>span]:items-center"><span className="flex items-center gap-2"><CalendarDays className="size-4 text-gold" /><SelectValue /></span></SelectTrigger><SelectContent><SelectItem value="0">Semua Bulan</SelectItem>{NAMA_BULAN.map((b, i) => <SelectItem key={b} value={String(i + 1)}>{b}</SelectItem>)}</SelectContent></Select></div>
       <div className="space-y-2"><label className="text-xs text-muted-foreground" htmlFor="tahun-transaksi">Tahun</label><Select value={String(filter.tahun)} onValueChange={v => ubah({ tahun: Number(v) })}><SelectTrigger id="tahun-transaksi" className="h-11 bg-background/70 [&>span]:flex [&>span]:items-center"><span className="flex items-center gap-2"><CalendarDays className="size-4 text-gold" /><SelectValue /></span></SelectTrigger><SelectContent>{tahun.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent></Select></div>
@@ -104,12 +104,14 @@ function Halaman() {
           <div className="col-start-2 row-start-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground sm:col-start-auto sm:row-start-auto sm:text-xs"><span>Check-in <strong className="ml-1 font-mono text-foreground">{jam(tr.started_at)}</strong></span><span className="border-l border-gold/20 pl-3">Check-out <strong className="ml-1 font-mono text-foreground">{jam(tr.checked_out_at)}</strong></span></div>
           <div className="col-start-3 row-start-1 justify-self-end sm:col-start-auto sm:row-start-auto sm:justify-self-center"><Lencana kelas={labelClasses[tr.status]}>{labels[tr.status]}</Lencana></div>
           <strong className="col-start-3 row-start-2 whitespace-nowrap text-right text-sm sm:col-start-auto sm:row-start-auto">{tr.price_snapshot === null ? '—' : rupiah(Number(tr.price_snapshot))}</strong>
-          <Button variant="ghost" size="icon" className="hidden size-8 border-l border-gold/20 sm:flex" aria-label={`Detail ${tr.transaction_number}`} onClick={() => setDetail(tr.id)}><ChevronRight /></Button>
+          <Button variant="ghost" size="icon" className="col-start-2 row-start-3 size-8 border-l border-gold/20 text-siap-foreground sm:col-start-auto sm:row-start-auto" aria-label="Hubungi tamu via WhatsApp" title="Hubungi tamu via WhatsApp" disabled={!bolehHubungiTamu(posisiKode, tr.guests?.phone)} onClick={() => {
+            if (!bolehHubungiTamu(posisiKode, tr.guests?.phone) || !tr.guests?.phone) return;
+            openWhatsApp(tr.guests.phone);
+          }}><IkonWhatsApp /></Button>
         </li>;
       })}</ul>
     </section>)}</div>
     <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground"><span>{data.total ? `${(data.halaman - 1) * 20 + 1}–${Math.min(data.halaman * 20, data.total)} dari ${data.total} transaksi` : '0 transaksi'} · 20 per halaman</span>{paginasi(true)}</footer>
-    {open && canCheckIn && <FormulirPemesanan mode="check_in" onClose={() => setOpen(false)} onSaved={async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }), queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] })]); }} />}
     {detail && <DetailTransaksi transactionId={detail} onClose={() => setDetail(null)} />}
   </Kerangka>;
 }
