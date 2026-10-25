@@ -22,4 +22,11 @@ describe('Filter daftar transaksi', () => {
     expect(rentangTransaksi(2)).toEqual({ awal: 20, akhir: 39 });
     expect(rentangTransaksi(51)).toEqual({ awal: 1000, akhir: 1019 });
   });
+  it('pencarian numerik mempertahankan nomor resmi dan legacy tanpa mencocokkan prefix BTRD25', () => {
+    expect(filterTransaksi(10, 2026, '20').nomor).toContain('transaction_number.eq.BTRDTRX-000020');
+    expect(filterTransaksi(10, 2026, '000019').nomor).toContain('transaction_number.eq.BTRD25-000019');
+    const single = filterTransaksi(10, 2026, '2').nomor ?? '';
+    expect(single).not.toContain('transaction_number.ilike.BTRD25-*2*');
+    expect(single).toContain('transaction_number.ilike.BTRD25-_____2');
+  });
 });
