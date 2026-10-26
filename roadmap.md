@@ -1,8 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Revisi header final 26 Oktober
-- [ ] Perbaiki framing lima gambar existing; ganti Tamu, Housekeeping, Laporan, Pengaturan dengan komposisi horizontal dan subjek utuh, tanpa perubahan Dashboard atau elemen lain.
-- [ ] Verifikasi sembilan header desktop/HP, gambar termuat, build otomatis dan checksum Dashboard.
+- [x] Perbaiki framing lima gambar existing tanpa crop; ganti Tamu (Jaipong dan penonton), Housekeeping (merapikan kasur), Laporan (meja analisis operasional), Pengaturan (ruang meeting/workflow) dengan komposisi horizontal dan subjek utuh, tanpa perubahan Dashboard atau elemen lain.
+- [x] Sembilan header diverifikasi dengan sesi Owner desktop 1440px/HP 390px: gambar termuat, framing contain, judul terbaca, tanpa overflow atau runtime error; build otomatis OK, checksum Dashboard identik. Tidak publish atau mengubah data.
 
 ## Latar sembilan header — referensi final Owner
 - [x] Buat dan pasang sembilan latar ilustratif sesuai referensi, dengan overlay hitam–emas dalam area header existing saja; Dashboard, sidebar, isi, popup, form, aksi dan data tidak diubah.
