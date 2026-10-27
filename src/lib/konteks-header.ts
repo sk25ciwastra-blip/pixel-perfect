@@ -1,14 +1,14 @@
-// Teks konteks singkat (maks. dua baris) yang tampil di sisi kanan header halaman.
-// Hanya presentasi: tidak memengaruhi data, izin, maupun aturan bisnis.
-// Dashboard sengaja tidak disertakan agar tampilannya tetap sama persis.
+// Kutipan singkat yang inspiratif dan elegan (maks. dua baris) yang tampil di sisi
+// kanan header halaman. Hanya presentasi: tidak memengaruhi data, izin, maupun
+// aturan bisnis. Dashboard sengaja tidak disertakan agar tampilannya tetap sama persis.
 export const konteksHeader: Record<string, string> = {
-  "/kamar": "Kondisi seluruh kamar hari ini, dari tersedia hingga perlu dibersihkan.",
-  "/booking": "Pemesanan yang sudah masuk dan menunggu tanggal check-in.",
-  "/transaksi": "Telusuri transaksi per bulan dan tahun, dari terbaru hingga arsip.",
-  "/tamu": "Data tamu, riwayat kunjungan, dan catatan pelayanan tersimpan di sini.",
-  "/housekeeping": "Kebersihan dan kerapian kamar menjadi kenyamanan pertama bagi tamu.",
-  "/keuangan": "Penerimaan, pengeluaran, dan sesi kas terpantau tertib dan akurat.",
-  "/laporan": "Rekap operasional dan pendapatan sebagai dasar keputusan harian.",
-  "/karyawan": "Kelola anggota tim serta hak akses sesuai tanggung jawab masing-masing.",
-  "/pengaturan": "Aturan operasional dan preferensi aplikasi ditetapkan di sini.",
+  "/kamar": "Kamar yang siap adalah janji kecil yang ditepati sebelum tamu tiba di depan pintu.",
+  "/booking": "Di balik setiap pemesanan, ada rencana indah yang menunggu terwujud di hari yang dinanti.",
+  "/transaksi": "Setiap angka menyimpan cerita tentang usaha, kejujuran, dan kepercayaan yang dijaga bersama.",
+  "/tamu": "Nama yang diingat adalah awal dari sambutan yang membuat tamu betah dan ingin kembali.",
+  "/housekeeping": "Kebersihan bukan sekadar pekerjaan, tetapi bentuk kepedulian terhadap kenyamanan setiap tamu.",
+  "/keuangan": "Kas yang tertib adalah nafas panjang bagi usaha yang ingin tumbuh dengan sehat.",
+  "/laporan": "Catatan hari ini adalah cermin yang menuntun keputusan esok agar lebih tepat.",
+  "/karyawan": "Tim yang tepat di posisi yang tepat membuat pelayanan terasa ringan dan tulus.",
+  "/pengaturan": "Aturan yang jelas membuat pekerjaan tenang dan pelayanan tetap konsisten dari hari ke hari.",
 };
