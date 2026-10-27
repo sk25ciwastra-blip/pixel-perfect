@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Housekeeping — sketsa Owner 27 Oktober
+- [x] Rapikan header tanpa foto, kutipan, navigasi empat bagian, ringkasan nyata, tabel kamar dan Perawatan Berkala tanpa perubahan aturan atau halaman lain.
+- [ ] Periksa tampilan desktop/HP dan build otomatis.
+
 ## Koreksi skala header — cover
 - [x] Kembalikan gambar sembilan header ke cover dengan fokus per halaman; ukuran header, overlay dan Dashboard tetap.
 - [x] Sembilan header diperiksa dengan sesi Owner pada desktop 1440px/HP 390px: cover memenuhi area, judul terbaca, tanpa overflow atau runtime error; build otomatis OK dan checksum Dashboard identik. Tidak publish.
