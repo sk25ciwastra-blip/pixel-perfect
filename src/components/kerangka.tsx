@@ -136,6 +136,7 @@ export function Kerangka({
   const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname, bagian: (r.location.search as { bagian?: string }).bagian }) });
   const menu = semuaMenu.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
+  const teksKonteks = konteksHeader[lokasi.path];
 
   return (
     <div className={`min-h-screen bg-background text-foreground`}>
