@@ -2,7 +2,7 @@
 
 ## Housekeeping — sketsa Owner 27 Oktober
 - [x] Rapikan header tanpa foto, kutipan, navigasi empat bagian, ringkasan nyata, tabel kamar dan Perawatan Berkala tanpa perubahan aturan atau halaman lain.
-- [ ] Periksa tampilan desktop/HP dan build otomatis.
+- [x] Empat bagian diperiksa dengan sesi Owner desktop 1440px/HP 390px tanpa overflow; pencarian kamar dan riwayat terbuka memakai data asli. Build otomatis OK dan tes pembatasan training PASS; tanpa perubahan data atau publikasi.
 
 ## Koreksi skala header — cover
 - [x] Kembalikan gambar sembilan header ke cover dengan fokus per halaman; ukuran header, overlay dan Dashboard tetap.
