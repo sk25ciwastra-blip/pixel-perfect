@@ -7,6 +7,7 @@ import {
 import { usePeran } from "@/lib/peran";
 import { LatarHeader } from "@/components/latar-header";
 import gedungSate from "@/assets/gedung-sate-malam.jpg";
+import { konteksHeader } from "@/lib/konteks-header";
 
 type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean; anak?: { bagian: string; label: string }[] };
 
@@ -135,6 +136,7 @@ export function Kerangka({
   const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname, bagian: (r.location.search as { bagian?: string }).bagian }) });
   const menu = semuaMenu.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
+  const teksKonteks = konteksHeader[lokasi.path];
 
   return (
     <div className={`min-h-screen bg-background text-foreground`}>
@@ -209,13 +211,18 @@ export function Kerangka({
             <div className="relative -mx-4 mb-6 overflow-hidden px-4 lg:-mx-10 lg:px-10 lg:pt-2">
               <LatarHeader path={lokasi.path} />
               <div className="relative mx-auto flex max-w-[1480px] flex-wrap items-end justify-between gap-3 pb-6">
-                <div className="min-w-0">
+                <div className="order-1 min-w-0">
                   <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-gold">BATURADEN 25 HOMESTAY</p>
                   <h1 className="mt-1 font-serif text-3xl tracking-tight text-foreground lg:text-[2.4rem]">{judul}</h1>
                   <div className="mt-2 h-px w-20 bg-gradient-to-r from-gold to-transparent" />
                   {keterangan && <p className="mt-2 text-sm text-muted-foreground">{keterangan}</p>}
                 </div>
-                {aksi}
+                {teksKonteks && (
+                  <p className="order-3 w-full text-left font-serif text-[0.86rem] italic leading-snug text-foreground/80 lg:order-2 lg:ml-auto lg:w-auto lg:max-w-[40ch] lg:text-right">{teksKonteks}</p>
+                )}
+                {aksi ? (
+                  <div className="order-2 flex flex-wrap items-center justify-end gap-2 lg:order-3">{aksi}</div>
+                ) : null}
               </div>
             </div>
           )}
