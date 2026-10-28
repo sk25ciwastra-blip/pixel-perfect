@@ -1,6 +1,6 @@
 import { rpc } from "@/lib/data-live";
 import { useEffect, useState, type FormEvent } from 'react';
-import { X } from 'lucide-react';
+import { Minus, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { rupiah } from '@/lib/data-contoh';
 import { useTable } from '@/lib/data-live';
@@ -35,6 +35,7 @@ export function FormulirPemesanan({
 const [scheduledDate, setScheduledDate] = useState('');
 const [scheduledTime, setScheduledTime] = useState('');
 const [amount, setAmount] = useState('0');
+const [guestCount, setGuestCount] = useState(2);
   const [method, setMethod] = useState('QRIS');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -86,6 +87,10 @@ const [amount, setAmount] = useState('0');
   const selectedPrice = selectedPackage
     ? priceForPackage(selectedPackage.id)
     : 0;
+
+  const extraGuestCount = Math.max(guestCount - 2, 0);
+  const extraGuestCharge = extraGuestCount * 50000;
+  const totalBill = selectedPrice + extraGuestCharge;
 
   const availableRooms = rooms.rows.filter(
   room =>
@@ -236,10 +241,10 @@ if (mode === 'booking' && !scheduledCheckIn) {
     if (
       !Number.isFinite(payment) ||
       payment < 0 ||
-      payment > selectedPrice ||
+      payment > totalBill ||
       !['Cash', 'QRIS', 'Transfer'].includes(method)
     ) {
-      setError('Nominal pembayaran harus antara Rp 0 dan harga paket.');
+      setError('Nominal pembayaran harus antara Rp 0 dan total tagihan.');
       return;
     }
 
@@ -250,8 +255,8 @@ if (mode === 'booking' && !scheduledCheckIn) {
       return;
     }
 
-    if (mode === 'check_in' && payment !== selectedPrice) {
-      setError('Pembayaran check-in langsung harus sama dengan harga resmi.');
+    if (mode === 'check_in' && payment !== totalBill) {
+      setError('Pembayaran check-in langsung harus sama dengan total tagihan.');
       return;
     }
 
@@ -263,6 +268,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
       normalizedPhone,
       normalizedAddress,
       payment,
+      guestCount,
       method,
       dayMode,
       scheduledCheckIn,
@@ -287,6 +293,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
       _phone: normalizedPhone,
       _address: normalizedAddress,
       _amount: payment,
+      _guest_count: guestCount,
       _method: method,
       _day_mode: dayMode,
       _idempotency_key: requestKey,
@@ -506,10 +513,12 @@ if (mode === 'booking' && !scheduledCheckIn) {
             </label>
 
             {selectedPackage && selectedPrice > 0 && (
-              <p className="rounded-xl bg-secondary px-3 py-2 text-sm">
-                Harga resmi:{' '}
-                <strong>{rupiah(selectedPrice)}</strong>
-              </p>
+              <div className="space-y-2 rounded-xl bg-secondary px-3 py-3 text-sm">
+                <div className="flex items-center justify-between gap-3"><span>Jumlah Tamu</span><div className="flex items-center gap-2"><Button type="button" variant="outline" size="icon" aria-label="Kurangi jumlah tamu" disabled={guestCount <= 1} onClick={() => setGuestCount(value => Math.max(1, value - 1))}><Minus className="size-4" /></Button><strong className="min-w-8 text-center tabular-nums">{guestCount}</strong><Button type="button" variant="outline" size="icon" aria-label="Tambah jumlah tamu" onClick={() => setGuestCount(value => value + 1)}><Plus className="size-4" /></Button></div></div>
+                <div className="flex justify-between"><span>Harga kamar</span><strong>{rupiah(selectedPrice)}</strong></div>
+                <div className="flex justify-between"><span>Extra Guest ({extraGuestCount} × Rp50.000)</span><strong>{rupiah(extraGuestCharge)}</strong></div>
+                <div className="flex justify-between border-t border-border pt-2"><span className="font-semibold">Total tagihan</span><strong>{rupiah(totalBill)}</strong></div>
+              </div>
             )}
 
             {isTraining && (
@@ -538,12 +547,12 @@ if (mode === 'booking' && !scheduledCheckIn) {
                 type="number"
                 max={
                   selectedPrice > 0
-                    ? selectedPrice
+                    ? totalBill
                     : undefined
                 }
                 min={
                   mode === 'check_in' && selectedPrice > 0
-                    ? selectedPrice
+                    ? totalBill
                     : 0
                 }
                 step="1"
