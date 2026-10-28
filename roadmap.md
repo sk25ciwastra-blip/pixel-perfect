@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Detail Transaksi — susun ulang mengikuti referensi Owner 28 Oktober
+- [x] Popup ditata jadi tiga kolom (kiri: Informasi Tamu, Detail Kamar & Paket, Jadwal & Status; tengah: Rincian Harga, Pembayaran, Riwayat Pembayaran; kanan: Informasi Tambahan + pita status) dengan kepala berisi logo, judul, REG nomor dan tombol tutup; lebar dibatasi 960px agar tidak terlalu besar.
+- [x] Desktop 1440px dan HP 390px diperiksa dengan sesi Owner: tidak ada teks terpotong, popup HP dapat digulir penuh, tanpa kesalahan konsol; typecheck dan build OK; popup Housekeeping/Keuangan/Kamar, form, data dan aturan bisnis tidak diubah; tidak dipublikasikan.
+
 ## Keuangan — tujuh kotak ringkasan tanpa teks terpotong 28 Oktober
 - [x] Kotak ringkasan disusun ulang menjadi tumpukan (ikon di atas, teks di bawah) sehingga judul dan nominal selalu satu baris; nilai besar sekalipun tetap utuh.
 - [x] Diukur pada isi desktop 1582px dan HP 390px: tidak ada baris ganda atau terpotong untuk nilai riil maupun Rp 125.000.000; teks terbaca penuh; typecheck dan build OK; tanpa publikasi.

@@ -1,5 +1,15 @@
-import { BedDouble, UserRound, MapPin, Package, CalendarDays, Clock3, ReceiptText, CreditCard, History, CircleDollarSign, NotebookPen } from 'lucide-react';
+import type { ReactNode } from 'react';
+import {
+  UserRound, Phone, NotebookPen, BedDouble, DoorOpen, Package, Users,
+  CalendarDays, Clock3, Timer, ReceiptText, CircleDollarSign, History,
+  Info, X, Car, CalendarPlus, Stamp, type LucideIcon,
+} from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
+import { LambangTeratai } from '@/components/kerangka';
+import { IkonWhatsApp } from '@/components/ikon-whatsapp';
+import { bolehHubungiTamu } from '@/lib/aksi-operasional';
+import { openWhatsApp } from '@/lib/whatsapp';
+import { usePeran } from '@/lib/peran';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 
@@ -8,6 +18,7 @@ type DetailTransaksiProps = {
   onClose: () => void;
   mode?: 'full' | 'housekeeping';
 };
+
 function kodePaket(name: string | undefined) {
   const kode: Record<string, string> = {
     'Paket 2 Jam': 'P2',
@@ -23,6 +34,7 @@ function kodePaket(name: string | undefined) {
 
   return name ? (kode[name] ?? name) : '—';
 }
+
 function waktuWib(value: string | null) {
   if (!value) return '—';
 
@@ -34,6 +46,114 @@ function waktuWib(value: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function tanggalWib(value: string | null) {
+  if (!value) return '—';
+
+  return new Date(value).toLocaleDateString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function jamWib(value: string | null) {
+  if (!value) return '—';
+
+  return new Date(value).toLocaleTimeString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function durasiWib(awal: string | null, akhir: string | null) {
+  if (!awal || !akhir) return '—';
+
+  const menit = Math.round((new Date(akhir).getTime() - new Date(awal).getTime()) / 60000);
+
+  if (!Number.isFinite(menit) || menit < 0) return '—';
+
+  const jam = Math.floor(menit / 60);
+
+  if (jam === 0) return `${menit % 60} menit`;
+
+  return `${jam} jam ${menit % 60} menit`;
+}
+
+const labelStatusTransaksi: Record<string, string> = {
+  booking: 'Booking',
+  check_in: 'Terisi',
+  check_out: 'Selesai',
+  cancelled: 'Dibatalkan',
+};
+
+const warnaTitikStatus: Record<string, string> = {
+  booking: 'bg-perlu-foreground',
+  check_in: 'bg-terisi-foreground',
+  check_out: 'bg-siap-foreground',
+  cancelled: 'bg-bahaya-foreground',
+};
+
+const labelJenisPembayaran: Record<string, string> = {
+  dp: 'Uang Muka',
+  payment: 'Pembayaran',
+};
+
+const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[960px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
+
+function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIcon; children: ReactNode }) {
+  return (
+    <section className="min-w-0">
+      <h3 className="mb-2 flex items-center gap-2 border-b border-gold/25 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-gold-light">
+        <Ikon className="size-4 shrink-0 text-gold" strokeWidth={1.6} />
+        <span className="min-w-0 truncate">{judul}</span>
+      </h3>
+      <div className="space-y-1.5">{children}</div>
+    </section>
+  );
+}
+
+function Baris({ label, ikon: Ikon, nada = '', children }: { label: string; ikon: LucideIcon; nada?: string; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 items-baseline gap-1.5 text-[13px] leading-snug">
+      <Ikon className="size-3.5 shrink-0 self-center text-gold/60" strokeWidth={1.6} />
+      <span className="w-[6.1rem] shrink-0 text-muted-foreground">{label}</span>
+      <span className="shrink-0 text-muted-foreground/50">:</span>
+      <span className={`min-w-0 flex-1 break-words font-medium ${nada || 'text-foreground'}`}>{children}</span>
+    </div>
+  );
+}
+
+function Kepala({ nomor, onClose }: { nomor: string; onClose: () => void }) {
+  return (
+    <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 border-b border-gold/25 bg-navy-deep px-4 py-3 sm:px-5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <LambangTeratai className="h-8 w-11 shrink-0 text-gold" />
+        <div className="min-w-0 leading-tight">
+          <p className="truncate font-serif text-[15px] text-foreground">
+            Baturaden <span className="text-gold-light">25</span> Homestay
+          </p>
+          <p className="mt-0.5 text-[9px] font-semibold tracking-[0.3em] text-gold">MANAJEMEN</p>
+        </div>
+      </div>
+      <span className="hidden h-9 w-px shrink-0 bg-gold/30 sm:block" aria-hidden="true" />
+      <div className="order-last min-w-0 basis-full sm:order-none sm:basis-auto sm:flex-1">
+        <h2 className="font-serif text-xl leading-tight sm:text-[22px]">Detail Transaksi</h2>
+        <p className="mt-0.5 font-mono text-[11px] tracking-[0.14em] text-gold">REG: {nomor}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Tutup"
+        className="ml-auto grid size-9 shrink-0 place-items-center rounded-lg border border-gold/30 bg-background/60 text-gold-light transition-colors hover:border-gold/60 hover:text-gold sm:ml-0"
+      >
+        <X className="size-4" />
+      </button>
+    </header>
+  );
 }
 
 export function DetailTransaksi({
@@ -50,7 +170,9 @@ export function DetailTransaksi({
   const roomTypes = useTable('room_types');
   const packages = useTable('packages');
   const employees = useTable('employees', !restricted);
+  const cashSessions = useTable('finance_cash_sessions', !restricted);
   const housekeepingHistory = useTable('housekeeping_history', restricted);
+  const { posisiKode } = usePeran();
 
   if (!transaction) {
     return null;
@@ -117,54 +239,173 @@ export function DetailTransaksi({
     0,
   );
 
+  const uangMuka = transactionPayments
+    .filter((item) => item.kind === 'dp')
+    .reduce((total, item) => total + Number(item.amount), 0);
+
   const total = Number(transaction.price_snapshot ?? 0);
   const remaining = Math.max(total - totalPaid, 0);
 
+  const sesiKasTerakhir = [...transactionPayments].reverse().find((item) => item.cash_session_id);
+  const sesiKas = cashSessions.rows.find((item) => item.id === sesiKasTerakhir?.cash_session_id);
+
+  const bolehHubungi = bolehHubungiTamu(posisiKode, guest?.phone);
+
+  const ringkasan = [
+    { label: 'Total Harga', nilai: rupiah(total), nada: 'text-gold-light' },
+    { label: 'Uang Muka', nilai: rupiah(uangMuka), nada: 'text-siap-foreground' },
+    { label: 'Sisa Pembayaran', nilai: rupiah(remaining), nada: 'text-bahaya-foreground' },
+  ];
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4">
-      <div role="dialog" aria-modal="true" aria-label="Detail transaksi" className={kelasPopupDetail}>
-        <HeaderDetail title="Detail Transaksi" nomor={transaction.transaction_number} onClose={onClose} />
-        <div className="space-y-3 p-4 sm:p-5">
-          <BagianDetail title="Detail tamu & kamar" icon={UserRound}>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <NilaiDetail label="Nama tamu" icon={UserRound}>{guest?.full_name ?? 'Tamu'}</NilaiDetail>
-              <NilaiDetail label="Kamar" icon={BedDouble}>{room?.room_number ?? '—'}</NilaiDetail>
-              <NilaiDetail label="Nomor WhatsApp" icon={UserRound}>{guest?.phone ?? '—'}</NilaiDetail>
-              <NilaiDetail label="Tipe kamar" icon={BedDouble}>{roomType?.name ?? '—'}</NilaiDetail>
-              <NilaiDetail label="Alamat" icon={MapPin}>{guest?.address || '—'}</NilaiDetail>
-              <NilaiDetail label="Paket" icon={Package}>{kodePaket(packageItem?.name)}</NilaiDetail>
-              <NilaiDetail label="Jenis hari" icon={CalendarDays}>{transaction.day_mode?.toUpperCase() ?? '—'}</NilaiDetail>
+      <div role="dialog" aria-modal="true" aria-label="Detail transaksi" className={kelasPopup}>
+        <Kepala nomor={transaction.transaction_number} onClose={onClose} />
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+          <div className="grid items-start gap-x-5 gap-y-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)_minmax(0,0.85fr)]">
+            <div className="space-y-5">
+              <Seksi judul="Informasi Tamu" ikon={UserRound}>
+                <Baris label="Nama" ikon={UserRound}>{guest?.full_name ?? 'Tamu'}</Baris>
+                <Baris label="No. HP" ikon={Phone}>
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="tabular-nums">{guest?.phone ?? '—'}</span>
+                    <button
+                      type="button"
+                      disabled={!bolehHubungi}
+                      aria-label="Hubungi tamu via WhatsApp"
+                      title={guest?.phone ? 'Hubungi tamu via WhatsApp' : 'Nomor WhatsApp belum lengkap'}
+                      onClick={() => guest?.phone && openWhatsApp(guest.phone)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-siap-foreground/35 bg-siap/25 px-2.5 py-0.5 text-[11px] font-semibold text-siap-foreground transition-colors hover:border-siap-foreground/70 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <IkonWhatsApp className="size-3" />
+                      Hubungi
+                    </button>
+                  </span>
+                </Baris>
+                <Baris label="Catatan" ikon={NotebookPen}>{guest?.notes || '—'}</Baris>
+              </Seksi>
+
+              <Seksi judul="Detail Kamar & Paket" ikon={BedDouble}>
+                <Baris label="Kamar" ikon={BedDouble}>{room?.room_number ?? '—'}</Baris>
+                <Baris label="Tipe Kamar" ikon={DoorOpen}>{roomType?.name ?? '—'}</Baris>
+                <Baris label="Paket" ikon={Package}>{kodePaket(packageItem?.name)}</Baris>
+                <Baris label="Jenis Hari" ikon={CalendarDays}>{transaction.day_mode?.toUpperCase() ?? '—'}</Baris>
+                <Baris label="Jumlah Tamu" ikon={Users}>Belum tersedia</Baris>
+              </Seksi>
+
+              <Seksi judul="Jadwal & Status" ikon={Clock3}>
+                <Baris label="Check-in" ikon={Car}>{waktuWib(transaction.scheduled_check_in)}</Baris>
+                <Baris label="Check-out" ikon={CalendarDays}>{waktuWib(transaction.scheduled_check_out)}</Baris>
+                <Baris label="Durasi" ikon={Timer}>{durasiWib(transaction.scheduled_check_in, transaction.scheduled_check_out)}</Baris>
+                <Baris label="Status" ikon={Stamp}>
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-gold/30 bg-gold/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gold-light">
+                    <span className={`size-1.5 rounded-full ${warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}`} />
+                    {labelStatusTransaksi[transaction.status] ?? transaction.status}
+                  </span>
+                </Baris>
+                <Baris label="Dibuat pada" ikon={CalendarPlus}>{waktuWib(transaction.created_at)}</Baris>
+                <Baris label="Dibuat oleh" ikon={UserRound}>{creator?.name ?? '—'}</Baris>
+              </Seksi>
             </div>
-          </BagianDetail>
-          <BagianDetail title="Ringkasan pembayaran" icon={CircleDollarSign}>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <NilaiDetail label="Harga awal" icon={BedDouble}>{rupiah(total)}</NilaiDetail>
-              <NilaiDetail label="Total dibayar" icon={CreditCard} tone="masuk">{rupiah(totalPaid)}</NilaiDetail>
-              <NilaiDetail label="Total transaksi" icon={ReceiptText} tone="total">{rupiah(total)}</NilaiDetail>
-              <NilaiDetail label="Sisa pembayaran" icon={Clock3} tone="total">{rupiah(remaining)}</NilaiDetail>
+
+            <div className="space-y-5">
+              <Seksi judul="Rincian Harga" ikon={ReceiptText}>
+                <table className="w-full text-[12px]">
+                  <thead>
+                    <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <th className="py-1 text-left font-medium">Deskripsi</th>
+                      <th className="py-1 text-center font-medium">Qty</th>
+                      <th className="py-1 text-right font-medium">Harga</th>
+                      <th className="py-1 text-right font-medium">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-gold/15">
+                      <td className="py-1.5 pr-2">Paket {kodePaket(packageItem?.name)}</td>
+                      <td className="py-1.5 text-center tabular-nums">1</td>
+                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(total)}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(total)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-gold/35 bg-gold/10 px-3 py-2">
+                  <span className="text-[12px] font-semibold uppercase tracking-wide text-gold-light">Total Harga</span>
+                  <strong className="whitespace-nowrap text-[15px] font-semibold tabular-nums text-gold-light">{rupiah(total)}</strong>
+                </div>
+              </Seksi>
+
+              <Seksi judul="Pembayaran" ikon={CircleDollarSign}>
+                <div className="divide-y divide-gold/15 rounded-xl border border-gold/25 bg-navy-deep/40 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                  {ringkasan.map(item => (
+                    <div key={item.label} className="flex min-w-0 items-baseline justify-between gap-2 px-3 py-2 sm:block sm:px-2 sm:text-center">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                      <p className={`text-[14px] font-semibold tabular-nums sm:mt-1 sm:whitespace-nowrap ${item.nada}`}>{item.nilai}</p>
+                    </div>
+                  ))}
+                </div>
+              </Seksi>
+
+              <Seksi judul="Riwayat Pembayaran" ikon={History}>
+                {transactionPayments.length === 0 ? (
+                  <p className="text-[12.5px] text-muted-foreground">Belum ada pembayaran tercatat.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[330px] text-[11.5px]">
+                      <thead>
+                        <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          <th className="py-1 pr-1 text-left font-medium">#</th>
+                          <th className="py-1 pr-1 text-left font-medium">Tanggal</th>
+                          <th className="py-1 pr-1 text-right font-medium">Jumlah</th>
+                          <th className="py-1 pr-1 text-left font-medium">Metode</th>
+                          <th className="py-1 pr-1 text-left font-medium">Oleh</th>
+                          <th className="py-1 text-left font-medium">Jenis</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactionPayments.map((payment, index) => {
+                          const recorder = employees.rows.find(item => item.user_id === payment.recorded_by);
+                          return (
+                            <tr key={payment.id} className="border-t border-gold/15 align-top">
+                              <td className="py-1.5 pr-1 tabular-nums text-muted-foreground">{index + 1}</td>
+                              <td className="py-1.5 pr-1 whitespace-nowrap">
+                                <span className="block">{tanggalWib(payment.created_at)}</span>
+                                <span className="block text-muted-foreground">{jamWib(payment.created_at)}</span>
+                              </td>
+                              <td className="py-1.5 pr-1 text-right whitespace-nowrap font-semibold tabular-nums text-siap-foreground">{rupiah(Number(payment.amount))}</td>
+                              <td className="py-1.5 pr-1 whitespace-nowrap">{payment.method}</td>
+                              <td className="max-w-[74px] py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
+                              <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Seksi>
             </div>
-            <p className="mt-3 text-right text-xs font-semibold text-gold-light">Status pembayaran: {remaining === 0 ? 'LUNAS' : 'BELUM LUNAS'}</p>
-          </BagianDetail>
-          <BagianDetail title="Riwayat pembayaran" icon={History}>
-            {transactionPayments.length === 0 ? <p className="text-muted-foreground">Belum ada pembayaran tercatat.</p> :
-              <div className="space-y-2">{transactionPayments.map(payment => {
-                const recorder = employees.rows.find(item => item.user_id === payment.recorded_by);
-                return <div key={payment.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-gold/20 bg-background/60 p-3">
-                  <CreditCard className="size-5 shrink-0 text-gold" />
-                  <div className="min-w-0"><p className="break-words font-semibold uppercase">{payment.kind} · {payment.method}</p><p className="mt-1 text-xs text-muted-foreground">{waktuWib(payment.created_at)}</p><p className="text-xs text-muted-foreground">Dicatat oleh {recorder?.name ?? '—'}</p></div>
-                  <strong className="text-right text-siap-foreground">{rupiah(Number(payment.amount))}</strong>
-                </div>;
-              })}</div>}
-          </BagianDetail>
-          <BagianDetail title="Status & waktu" icon={Clock3}><div className="grid gap-3 sm:grid-cols-2">
-            <NilaiDetail label="Status transaksi" icon={ReceiptText}>{transaction.status === 'booking' ? 'Booking' : transaction.status === 'check_in' ? 'Terisi' : transaction.status === 'check_out' ? 'Selesai' : 'Dibatalkan'}</NilaiDetail>
-            <NilaiDetail label="Dibuat oleh" icon={UserRound}>{creator?.name ?? '—'}</NilaiDetail>
-            <NilaiDetail label="Jadwal check-in" icon={CalendarDays}>{waktuWib(transaction.scheduled_check_in)}</NilaiDetail>
-            <NilaiDetail label="Jadwal check-out" icon={CalendarDays}>{waktuWib(transaction.scheduled_check_out)}</NilaiDetail>
-            <NilaiDetail label="Check-in aktual" icon={Clock3}>{waktuWib(transaction.started_at)}</NilaiDetail>
-            <NilaiDetail label="Check-out aktual" icon={Clock3}>{waktuWib(transaction.checked_out_at)}</NilaiDetail>
-            <NilaiDetail label="Dibuat" icon={CalendarDays}>{waktuWib(transaction.created_at)}</NilaiDetail>
-          </div></BagianDetail>
+
+            <div className="flex min-w-0 flex-col gap-5 lg:self-stretch">
+              <Seksi judul="Informasi Tambahan" ikon={Info}>
+                <Baris label="Sesi Kas" ikon={ReceiptText}>
+                  {sesiKas
+                    ? `${sesiKas.status === 'open' ? 'Terbuka' : 'Ditutup'} · ${tanggalWib(`${sesiKas.operational_date}T00:00:00+07:00`)}`
+                    : '—'}
+                </Baris>
+                <Baris label="Terakhir diubah" ikon={Clock3}>{waktuWib(transaction.updated_at)}</Baris>
+              </Seksi>
+
+              <div className="mt-auto flex w-full items-center justify-center gap-2.5 rounded-xl border border-gold/25 bg-navy-deep/40 px-4 py-3">
+                <span className={`size-2 shrink-0 rounded-full ${warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}`} />
+                <span className="text-[12px] font-semibold uppercase tracking-[0.18em] text-foreground">
+                  {transaction.status === 'booking'
+                    ? 'Menunggu Check-in'
+                    : labelStatusTransaksi[transaction.status] ?? transaction.status}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

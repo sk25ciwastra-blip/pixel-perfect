@@ -80,7 +80,7 @@ function tanggalHariIni() {
   return new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date());
 }
 
-function LambangTeratai({ className = "" }: { className?: string }) {
+export function LambangTeratai({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 40" className={className} fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
       <path d="M32 4c5 6 6 14 0 24C26 18 27 10 32 4Z" />
