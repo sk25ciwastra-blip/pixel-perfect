@@ -283,7 +283,7 @@ export function DetailTransaksi({
                     </button>
                   </span>
                 </Baris>
-                <Baris label="Alamat" ikon={MapPin}>{guest?.address || '—'}</Baris>
+                <Baris label="Alamat" ikon={MapPin} rataAtas>{guest?.address || '—'}</Baris>
                 <Baris label="Catatan" ikon={NotebookPen}>{guest?.notes || '—'}</Baris>
               </Seksi>
 
