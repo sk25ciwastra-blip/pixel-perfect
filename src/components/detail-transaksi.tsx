@@ -150,8 +150,6 @@ function Kepala({ nomor, onClose }: { nomor: string; onClose: () => void }) {
         aria-label="Tutup"
         className="ml-auto grid size-9 shrink-0 place-items-center rounded-lg border border-gold/30 bg-background/60 text-gold-light transition-colors hover:border-gold/60 hover:text-gold sm:ml-0"
       >
-        className="grid size-9 shrink-0 place-items-center rounded-lg border border-gold/30 bg-background/60 text-gold-light transition-colors hover:border-gold/60 hover:text-gold"
-      >
         <X className="size-4" />
       </button>
     </header>
