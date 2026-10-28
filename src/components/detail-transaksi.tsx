@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ReceiptHistoryButton, ReceiptPrintButton } from '@/components/receipt-actions';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 
@@ -316,7 +317,7 @@ export function DetailTransaksi({
 </section>
 
 <section className="rounded-2xl border border-border p-4">
-  <h3 className="mb-3 font-bold">Riwayat Pembayaran</h3>
+  <div className="mb-3 flex items-center justify-between gap-2"><h3 className="font-bold">Riwayat Pembayaran</h3><ReceiptHistoryButton paymentIds={transactionPayments.map((payment) => payment.id)} /></div>
 
             {transactionPayments.length === 0 ? (
               <p className="text-muted-foreground">
@@ -346,7 +347,7 @@ export function DetailTransaksi({
                         </p>
                       </div>
 
-                      <strong>{rupiah(Number(payment.amount))}</strong>
+                      <div className="flex flex-col items-end gap-2"><strong>{rupiah(Number(payment.amount))}</strong><ReceiptPrintButton paymentId={payment.id} label="Cetak Struk" /></div>
                     </div>
                   );
                 })}

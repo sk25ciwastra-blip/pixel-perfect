@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
 import { setSesiKasKonteks } from '@/lib/sesi-kas';
+import { ReceiptTemplateEditor } from '@/components/receipt-template-editor';
 
 export const Route = createFileRoute('/keuangan')({
   head: () => meta('Keuangan', 'Sesi kas, penerimaan, closing, dan pengawasan keuangan.'),
@@ -302,6 +303,7 @@ function HalamanKeuangan() {
   return (
     <Kerangka judul="Keuangan" keterangan="Penerimaan, sesi kas, closing, dan pengawasan Owner">
       {message && <p role="alert" className="mb-4 rounded-xl bg-secondary px-3 py-2 text-sm">{message}</p>}
+      {isOwner && <div className="mb-6"><ReceiptTemplateEditor /></div>}
       {isTraining && (
         <p className="mb-4 rounded-xl bg-perlu px-3 py-2 text-sm text-perlu-foreground">
           Training aktif sampai {training.ends_on ?? 'tanggal selesai'}; sesi kas milik Supervisor/Owner ditentukan otomatis. Peserta tidak dapat membuka atau menutup sesi.
