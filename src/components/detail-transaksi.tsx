@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import {
   UserRound, Phone, NotebookPen, BedDouble, DoorOpen, Package, Users,
   CalendarDays, Clock3, Timer, ReceiptText, CircleDollarSign, History,
-  Info, Car, CalendarPlus, Stamp, type LucideIcon,
+  Info, Car, CalendarPlus, Stamp, MapPin, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
 import { LambangTeratai } from '@/components/kerangka';
@@ -283,6 +283,7 @@ export function DetailTransaksi({
                     </button>
                   </span>
                 </Baris>
+                <Baris label="Alamat" ikon={MapPin}>{guest?.address || '—'}</Baris>
                 <Baris label="Catatan" ikon={NotebookPen}>{guest?.notes || '—'}</Baris>
               </Seksi>
 
