@@ -379,6 +379,7 @@ export function DetailTransaksi({
                           <th className="py-1 pr-1 text-left font-medium">Oleh</th>
                           <th className="py-1 pr-1 text-left font-medium">Jenis</th>
                           <th className="py-1 text-left font-medium">Catatan</th>
+                          <th className="py-1 text-right font-medium">Struk</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -395,7 +396,8 @@ export function DetailTransaksi({
                               <td className="py-1.5 pr-1 whitespace-nowrap">{payment.method}</td>
                               <td className="py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
                               <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
-                              <td className="py-1.5 text-muted-foreground"><ReceiptPrintButton paymentId={payment.id} label="Print Receipt" /></td>
+                              <td className="py-1.5 text-muted-foreground">—</td>
+                              <td className="py-1.5 text-right"><ReceiptPrintButton paymentId={payment.id} label="Print Receipt" /></td>
                             </tr>
                           );
                         })}
