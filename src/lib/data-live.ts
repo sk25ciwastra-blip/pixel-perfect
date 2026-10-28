@@ -26,7 +26,10 @@ export const rpc = ((fn: string, args?: Record<string, unknown>) =>
 export function useTable<T extends string>(
   table: T,
   enabled = true,
+  scope?: { column: string; value: string },
 ) {
+  const scopeColumn = scope?.column;
+  const scopeValue = scope?.value;
   const [rows, setRows] = useState<
     Baris<T>[]
   >([]);
@@ -41,17 +44,19 @@ export function useTable<T extends string>(
       return;
     }
 
-    const { data, error: failure } = await supabase
+    let query = supabase
       .from(table as keyof Tabel)
       .select('*')
       .order('created_at', { ascending: true });
+    if (scopeColumn && scopeValue) query = query.eq(scopeColumn, scopeValue);
+    const { data, error: failure } = await query;
 
     setRows(
       (data ?? []) as unknown as Baris<T>[],
     );
     setError(failure?.message ?? '');
     setLoading(false);
-  }, [table, enabled]);
+  }, [table, enabled, scopeColumn, scopeValue]);
 
   useEffect(() => {
     if (!enabled) {
