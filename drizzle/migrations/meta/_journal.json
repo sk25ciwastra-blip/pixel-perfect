@@ -43,6 +43,27 @@
       "when": 1790899725065,
       "tag": "0005_booking_checkin_payments_and_duration",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792769178207,
+      "tag": "0006_operational_announcements",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792791432980,
+      "tag": "0007_guest_notes_append_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792791812094,
+      "tag": "0008_guest_notes_explicit_read_only_grants",
+      "breakpoints": true
     }
   ]
 }
