@@ -21,6 +21,7 @@ import { Route as KeuanganRouteImport } from './routes/keuangan'
 import { Route as LaporanRouteImport } from './routes/laporan'
 import { Route as PaketRouteImport } from './routes/paket'
 import { Route as PengaturanRouteImport } from './routes/pengaturan'
+import { Route as PengaturanKeuanganRouteImport } from './routes/pengaturan-keuangan'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TamuRouteImport } from './routes/tamu'
 import { Route as TipeKamarRouteImport } from './routes/tipe-kamar'
@@ -86,6 +87,11 @@ const PengaturanRoute = PengaturanRouteImport.update({
   path: '/pengaturan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PengaturanKeuanganRoute = PengaturanKeuanganRouteImport.update({
+  id: '/pengaturan-keuangan',
+  path: '/pengaturan-keuangan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/laporan': typeof LaporanRoute
   '/paket': typeof PaketRoute
   '/pengaturan': typeof PengaturanRoute
+  '/pengaturan-keuangan': typeof PengaturanKeuanganRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tamu': typeof TamuRoute
   '/tipe-kamar': typeof TipeKamarRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/laporan': typeof LaporanRoute
   '/paket': typeof PaketRoute
   '/pengaturan': typeof PengaturanRoute
+  '/pengaturan-keuangan': typeof PengaturanKeuanganRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tamu': typeof TamuRoute
   '/tipe-kamar': typeof TipeKamarRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/laporan': typeof LaporanRoute
   '/paket': typeof PaketRoute
   '/pengaturan': typeof PengaturanRoute
+  '/pengaturan-keuangan': typeof PengaturanKeuanganRoute
   '/reset-password': typeof ResetPasswordRoute
   '/tamu': typeof TamuRoute
   '/tipe-kamar': typeof TipeKamarRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/laporan'
     | '/paket'
     | '/pengaturan'
+    | '/pengaturan-keuangan'
     | '/reset-password'
     | '/tamu'
     | '/tipe-kamar'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/laporan'
     | '/paket'
     | '/pengaturan'
+    | '/pengaturan-keuangan'
     | '/reset-password'
     | '/tamu'
     | '/tipe-kamar'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/laporan'
     | '/paket'
     | '/pengaturan'
+    | '/pengaturan-keuangan'
     | '/reset-password'
     | '/tamu'
     | '/tipe-kamar'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   LaporanRoute: typeof LaporanRoute
   PaketRoute: typeof PaketRoute
   PengaturanRoute: typeof PengaturanRoute
+  PengaturanKeuanganRoute: typeof PengaturanKeuanganRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TamuRoute: typeof TamuRoute
   TipeKamarRoute: typeof TipeKamarRoute
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PengaturanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pengaturan-keuangan': {
+      id: '/pengaturan-keuangan'
+      path: '/pengaturan-keuangan'
+      fullPath: '/pengaturan-keuangan'
+      preLoaderRoute: typeof PengaturanKeuanganRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   LaporanRoute: LaporanRoute,
   PaketRoute: PaketRoute,
   PengaturanRoute: PengaturanRoute,
+  PengaturanKeuanganRoute: PengaturanKeuanganRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TamuRoute: TamuRoute,
   TipeKamarRoute: TipeKamarRoute,
