@@ -259,7 +259,7 @@ export function DetailTransaksi({
           statusDot={warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-4 [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.28_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.48_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-4 text-foreground [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.28_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.48_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
           <div className="grid items-start gap-x-5 gap-y-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)_minmax(0,0.85fr)]">
             <div className="space-y-4">
               <Seksi judul="Informasi Tamu" ikon={UserRound}>
