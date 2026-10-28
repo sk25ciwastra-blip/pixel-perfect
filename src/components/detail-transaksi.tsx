@@ -104,25 +104,25 @@ const labelJenisPembayaran: Record<string, string> = {
 
 const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[960px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
 
-function Seksi({ judul, ikon: Ikon, anak }: { judul: string; ikon: LucideIcon; anak: ReactNode }) {
+function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIcon; children: ReactNode }) {
   return (
     <section className="min-w-0">
       <h3 className="mb-2 flex items-center gap-2 border-b border-gold/25 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-gold-light">
         <Ikon className="size-4 shrink-0 text-gold" strokeWidth={1.6} />
         <span className="min-w-0 truncate">{judul}</span>
       </h3>
-      <div className="space-y-1.5">{anak}</div>
+      <div className="space-y-1.5">{children}</div>
     </section>
   );
 }
 
-function Baris({ label, ikon: Ikon, anak, nada = '' }: { label: string; ikon: LucideIcon; anak: ReactNode; nada?: string }) {
+function Baris({ label, ikon: Ikon, nada = '', children }: { label: string; ikon: LucideIcon; nada?: string; children: ReactNode }) {
   return (
     <div className="flex min-w-0 items-baseline gap-1.5 text-[13px] leading-snug">
       <Ikon className="size-3.5 shrink-0 self-center text-gold/60" strokeWidth={1.6} />
       <span className="w-[6.1rem] shrink-0 text-muted-foreground">{label}</span>
       <span className="shrink-0 text-muted-foreground/50">:</span>
-      <span className={`min-w-0 flex-1 break-words font-medium ${nada || 'text-foreground'}`}>{anak}</span>
+      <span className={`min-w-0 flex-1 break-words font-medium ${nada || 'text-foreground'}`}>{children}</span>
     </div>
   );
 }
