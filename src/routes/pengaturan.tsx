@@ -14,7 +14,8 @@ const menu = [
   { ikon: Package, label: "Paket & Harga", ket: "Durasi dan tarif", ke: "/paket" },
   { ikon: CreditCard, label: "Metode Pembayaran", ket: "Cash, QRIS, Transfer" },
   { ikon: Receipt, label: "Daftar Pengeluaran", ket: "Jenis dan keperluan (khusus Owner)", ke: "/daftar-pengeluaran" },
-  { ikon: Percent, label: "Komisi", ket: "Besaran komisi karyawan" },
+  { ikon: Percent, label: "Minimum DP & Komisi", ket: "Ketentuan DP dan komisi (khusus Owner)", ke: "/pengaturan-keuangan" },
+  { ikon: CreditCard, label: "Rekening Owner", ket: "Rekening tujuan transfer (khusus Owner)", ke: "/pengaturan-keuangan" },
   { ikon: KeyRound, label: "Keamanan", ket: "Kata sandi dan PIN" },
 ];
 
