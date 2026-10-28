@@ -37,7 +37,7 @@ function angka(value: string) {
 }
 
 const panelIcons: Record<string, LucideIcon> = {
-  'Sesi kas': Wallet, 'Closing sesi kas': ClipboardCheck, 'Pengeluaran sesi': ReceiptText,
+  'Sesi kas': Wallet, 'Closing sesi kas': ClipboardCheck, 'Closing Sesi Kas': ClipboardCheck, 'Pengeluaran sesi': ReceiptText,
   'Aktivitas Keuangan': ReceiptText, 'Ringkasan Hari Ini': Banknote,
   'Setoran': ArrowUpRight, 'Setoran menunggu konfirmasi Owner': HandCoins,
   'Serah terima DI LACI': Wallet, 'Refund Owner': RotateCcw,
