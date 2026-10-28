@@ -51,7 +51,7 @@ function Panel({ judul, sub, children }: { judul: string; sub?: string; children
     <section className="panel-mewah min-w-0 overflow-hidden p-0">
       <div className="flex items-center gap-3 border-b border-gold/15 px-4 py-4 sm:px-5">
         <span className="ikon-bulat h-10 w-10 shrink-0 text-gold"><Icon size={21} aria-hidden="true" /></span>
-        <h2 className="min-w-0 font-serif text-xl leading-tight text-foreground">{judul}</h2>
+        <div className="min-w-0"><h2 className="font-serif text-xl leading-tight text-foreground">{judul}</h2>{sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}</div>
       </div>
       <div className="p-4 sm:p-5">{children}</div>
     </section>
