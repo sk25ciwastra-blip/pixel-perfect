@@ -102,7 +102,7 @@ const labelJenisPembayaran: Record<string, string> = {
   payment: 'Pembayaran',
 };
 
-const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[960px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
+const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[1100px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
 
 function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIcon; children: ReactNode }) {
   return (
@@ -262,9 +262,9 @@ export function DetailTransaksi({
           statusDot={warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-4 text-foreground [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.22_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.4_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
-          <div className="grid items-start gap-x-5 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,0.9fr)]">
-            <div className="space-y-4">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-5 sm:px-7 text-foreground [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.22_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.4_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
+          <div className="grid items-start gap-y-4 lg:grid-cols-3 lg:divide-x lg:divide-gold/20 lg:[&>*]:px-5 lg:[&>*:first-child]:pl-0 lg:[&>*:last-child]:pr-0">
+            <div className="min-w-0">
               <Seksi judul="Informasi Tamu" ikon={UserRound}>
                 <Baris label="Nama" ikon={UserRound}>{guest?.full_name ?? 'Tamu'}</Baris>
                 <Baris label="No. HP" ikon={Phone}>
@@ -286,6 +286,8 @@ export function DetailTransaksi({
                 <Baris label="Catatan" ikon={NotebookPen}>{guest?.notes || '—'}</Baris>
               </Seksi>
 
+            </div>
+            <div className="min-w-0">
               <Seksi judul="Detail Kamar & Paket" ikon={BedDouble}>
                 <Baris label="Kamar" ikon={BedDouble}>{room?.room_number ?? '—'}</Baris>
                 <Baris label="Tipe Kamar" ikon={DoorOpen}>{roomType?.name ?? '—'}</Baris>
@@ -294,6 +296,8 @@ export function DetailTransaksi({
                 <Baris label="Jumlah Tamu" ikon={Users}>Belum tersedia</Baris>
               </Seksi>
 
+            </div>
+            <div className="min-w-0">
               <Seksi judul="Jadwal & Status" ikon={Clock3}>
                 <Baris label="Check-in" ikon={Car}>{waktuWib(transaction.scheduled_check_in)}</Baris>
                 <Baris label="Check-out" ikon={CalendarDays}>{waktuWib(transaction.scheduled_check_out)}</Baris>
@@ -308,12 +312,15 @@ export function DetailTransaksi({
                 <Baris label="Dibuat oleh" ikon={UserRound}>{creator?.name ?? '—'}</Baris>
               </Seksi>
             </div>
-
-            <div className="space-y-4">
+          </div>
+          <div className="my-4 h-px bg-gold/25" aria-hidden="true" />
+          <div className="grid items-start gap-y-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:divide-x lg:divide-gold/20">
+            <div className="min-w-0 lg:pr-6">
               <Seksi judul="Rincian Harga" ikon={ReceiptText}>
-                <table className="w-full text-[12px]">
+                <div className="overflow-hidden rounded-xl border border-gold/25 bg-white/70">
+                <table className="w-full text-[12.5px] [&_td:first-child]:pl-3 [&_th:first-child]:pl-3 [&_td:last-child]:pr-3 [&_th:last-child]:pr-3">
                   <thead>
-                    <tr className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <tr className="bg-gold/10 text-[11px] font-semibold uppercase tracking-wide text-gold-light">
                       <th className="py-1 text-left font-medium">Deskripsi</th>
                       <th className="py-1 text-center font-medium">Qty</th>
                       <th className="py-1 text-right font-medium">Harga</th>
@@ -329,29 +336,37 @@ export function DetailTransaksi({
                     </tr>
                   </tbody>
                 </table>
-                <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-gold/35 bg-gold/10 px-3 py-2">
+                <div className="flex items-center justify-between gap-3 border-t border-gold/30 bg-gold/15 px-3 py-2">
                   <span className="text-[12px] font-semibold uppercase tracking-wide text-gold-light">Total Harga</span>
-                  <strong className="whitespace-nowrap text-[15px] font-semibold tabular-nums text-gold-light">{rupiah(total)}</strong>
+                  <strong className="whitespace-nowrap text-[17px] font-bold tabular-nums text-foreground">{rupiah(total)}</strong>
+                </div>
                 </div>
               </Seksi>
 
+            </div>
+            <div className="min-w-0 lg:pl-6">
               <Seksi judul="Pembayaran" ikon={CircleDollarSign}>
                 <div className="divide-y divide-gold/25 rounded-xl border border-gold/30 bg-white/60 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                   {ringkasan.map(item => (
-                    <div key={item.label} className="flex min-w-0 items-baseline justify-between gap-2 px-3 py-2 sm:block sm:px-2 sm:text-center">
+                    <div key={item.label} className="flex min-w-0 items-baseline justify-between gap-2 px-3 py-3 sm:block sm:px-2 sm:text-center">
                       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</p>
-                      <p className={`text-[14px] font-semibold tabular-nums sm:mt-1 sm:whitespace-nowrap ${item.nada}`}>{item.nilai}</p>
+                      <p className={`text-[17px] font-bold tabular-nums sm:mt-1.5 sm:whitespace-nowrap ${item.nada}`}>{item.nilai}</p>
                     </div>
                   ))}
                 </div>
               </Seksi>
 
+            </div>
+          </div>
+          <div className="my-4 h-px bg-gold/25" aria-hidden="true" />
+          <div className="grid items-start gap-y-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)] lg:divide-x lg:divide-gold/20">
+            <div className="min-w-0 lg:pr-6">
               <Seksi judul="Riwayat Pembayaran" ikon={History}>
                 {transactionPayments.length === 0 ? (
                   <p className="text-[12.5px] text-muted-foreground">Belum ada pembayaran tercatat.</p>
                 ) : (
-                  <div>
-                    <table className="w-full text-[12px]">
+                  <div className="overflow-hidden rounded-xl border border-gold/25 bg-white/70 px-3">
+                    <table className="w-full text-[12.5px]">
                       <thead>
                         <tr className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           <th className="py-1 pr-1 text-left font-medium">#</th>
@@ -359,7 +374,8 @@ export function DetailTransaksi({
                           <th className="py-1 pr-2 text-right font-medium">Jumlah</th>
                           <th className="py-1 pr-1 text-left font-medium">Metode</th>
                           <th className="py-1 pr-1 text-left font-medium">Oleh</th>
-                          <th className="py-1 text-left font-medium">Jenis</th>
+                          <th className="py-1 pr-1 text-left font-medium">Jenis</th>
+                          <th className="py-1 text-left font-medium">Catatan</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -376,6 +392,7 @@ export function DetailTransaksi({
                               <td className="py-1.5 pr-1 whitespace-nowrap">{payment.method}</td>
                               <td className="py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
                               <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
+                              <td className="py-1.5 text-muted-foreground">—</td>
                             </tr>
                           );
                         })}
@@ -385,9 +402,8 @@ export function DetailTransaksi({
                 )}
               </Seksi>
             </div>
-
-            <div className="flex min-w-0 flex-col gap-4 lg:self-stretch">
-              <Seksi judul="Informasi Tambahan" ikon={Info}>
+            <div className="flex min-w-0 flex-col gap-4 lg:self-stretch lg:pl-6">
+              <Seksi judul="Sesi Kas & Perubahan" ikon={Info}>
                 <Baris label="Sesi Kas" ikon={ReceiptText}>
                   {sesiKas
                     ? `${sesiKas.status === 'open' ? 'Terbuka' : 'Ditutup'} · ${tanggalWib(`${sesiKas.operational_date}T00:00:00+07:00`)}`
@@ -399,7 +415,7 @@ export function DetailTransaksi({
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-auto inline-flex w-full items-center justify-center rounded-xl border border-gold/50 bg-navy-deep px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#F2D184] transition-colors hover:bg-navy"
+                className="mt-auto inline-flex w-full items-center justify-center rounded-full border border-gold/50 bg-navy-deep px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#F2D184] transition-colors hover:bg-navy"
               >
                 Tutup
               </button>
