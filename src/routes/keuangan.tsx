@@ -401,6 +401,50 @@ function HalamanKeuangan() {
 
         </div>
       </div>
+      {selectedSession && (
+        <div className="mt-5 grid items-start gap-5 xl:grid-cols-[1.5fr_1fr]">
+          <Panel judul="Aktivitas Keuangan">
+            <p className="mb-3 text-xs text-muted-foreground">Catat Pengeluaran</p>
+            <div className="grid gap-3 sm:grid-cols-2"><label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Nominal</span><input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} type="number" min="1" className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Nominal" /></label><label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Metode pembayaran</span><select value={expenseMethod} onChange={(e) => setExpenseMethod(e.target.value)} className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm"><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select></label><label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Kategori</span><input value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Kategori" /></label><label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Catatan</span><input value={expenseNote} onChange={(e) => setExpenseNote(e.target.value)} className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Catatan" /></label></div>
+            <Button className="mt-4 w-full gap-2" disabled={busy} onClick={() => void recordExpense()}>Catat Pengeluaran</Button>
+            <div className="mt-5 border-t border-border pt-4">
+              <input value={expenseSearch} onChange={(e) => setExpenseSearch(e.target.value)} className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Cari nomor pengeluaran, kategori, atau catatan" />
+              <div className="mt-4 flex items-center gap-2 text-gold"><ReceiptText size={18} aria-hidden="true" /><h3 className="font-serif text-lg text-foreground">Daftar Pengeluaran</h3></div>
+              <div className="mt-3 max-h-80 overflow-auto rounded-md border border-gold/15">
+                <table className="w-full min-w-[520px] text-left text-sm">
+                  <thead className="bg-secondary text-xs text-gold"><tr><th className="px-3 py-3 font-medium">Tanggal / Nomor</th><th className="px-3 py-3 font-medium">Keterangan</th><th className="px-3 py-3 font-medium">Metode</th><th className="px-3 py-3 text-right font-medium">Nominal</th></tr></thead>
+                  <tbody>
+                    {visibleExpenses.map((expense) => (
+                      <tr key={expense.id} className="border-t border-gold/10">
+                        <td className="px-3 py-3 align-top"><p className="text-xs text-muted-foreground">{new Date(expense.created_at).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' })}</p><p className="mt-1 font-mono text-xs font-semibold">{expense.expense_number ?? 'Pengeluaran lama tanpa nomor baru'}</p></td>
+                        <td className="max-w-56 px-3 py-3 align-top"><p>{expense.category}</p>{expense.note && <p className="mt-1 break-words text-xs text-muted-foreground">{expense.note}</p>}</td>
+                        <td className="px-3 py-3 align-top"><span className="rounded border border-gold/15 px-2 py-1 text-xs">{expense.method}</span></td>
+                        <td className="whitespace-nowrap px-3 py-3 text-right align-top font-semibold tabular-nums text-bahaya-foreground">{rupiah(Number(expense.amount))}</td>
+                      </tr>
+                    ))}
+                    {visibleExpenses.length === 0 && <tr><td colSpan={4} className="px-4 py-6 text-center text-sm text-muted-foreground">Belum ada pengeluaran yang sesuai.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </Panel>
+          <Panel judul="Ringkasan Hari Ini">
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Tanggal operasional</span><span className="font-semibold">{selectedSession.operational_date}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Status sesi</span><span className="font-semibold">{selectedSession.status}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Petugas sesi</span><span className="min-w-0 truncate text-right font-semibold">{selectedSession.opened_by}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Saldo awal</span><span className="font-semibold tabular-nums">{rupiah(Number(summary['opening_cash'] ?? selectedSession.opening_cash))}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Penerimaan sesi</span><span className="font-semibold tabular-nums text-siap-foreground">{rupiah(Number(summary['payments_total'] ?? 0))}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Saldo CASH sesi</span><span className={`font-semibold tabular-nums ${cashDeficit ? 'text-bahaya-foreground' : 'text-gold'}`}>{hasExpectedCash ? rupiah(expectedCash) : 'Memuat saldo...'}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Pengeluaran</span><span className="font-semibold tabular-nums text-bahaya-foreground">{rupiah(Number(summary['expenses'] ?? 0))}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Refund</span><span className="font-semibold tabular-nums text-bahaya-foreground">{rupiah(Number(summary['refunds'] ?? 0))}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Komisi</span><span className="font-semibold tabular-nums">{rupiah(Number(summary['commission'] ?? 0))}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Catatan pengeluaran</span><span className="font-semibold tabular-nums">{expenses.rows.filter((expense) => expense.session_id === selectedSession.id).length}</span></li>
+              <li className="flex items-baseline justify-between gap-3"><span className="text-muted-foreground">Setoran menunggu</span><span className="font-semibold tabular-nums">{deposits.rows.filter((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER').length}</span></li>
+            </ul>
+          </Panel>
+        </div>
+      )}
       {isOwner && (
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <p className="col-span-full text-xs font-semibold uppercase tracking-[0.22em] text-gold">Pengaturan Owner</p>
