@@ -140,14 +140,16 @@ function Kepala({ nomor, onClose }: { nomor: string; onClose: () => void }) {
         </div>
       </div>
       <span className="hidden h-9 w-px shrink-0 bg-gold/30 sm:block" aria-hidden="true" />
-      <div className="min-w-0 flex-1">
-        <h2 className="truncate font-serif text-xl leading-tight sm:text-[22px]">Detail Transaksi</h2>
-        <p className="mt-0.5 truncate font-mono text-[11px] tracking-[0.14em] text-gold">REG: {nomor}</p>
+      <div className="order-last min-w-0 basis-full sm:order-none sm:basis-auto sm:flex-1">
+        <h2 className="font-serif text-xl leading-tight sm:text-[22px]">Detail Transaksi</h2>
+        <p className="mt-0.5 font-mono text-[11px] tracking-[0.14em] text-gold">REG: {nomor}</p>
       </div>
       <button
         type="button"
         onClick={onClose}
         aria-label="Tutup"
+        className="ml-auto grid size-9 shrink-0 place-items-center rounded-lg border border-gold/30 bg-background/60 text-gold-light transition-colors hover:border-gold/60 hover:text-gold sm:ml-0"
+      >
         className="grid size-9 shrink-0 place-items-center rounded-lg border border-gold/30 bg-background/60 text-gold-light transition-colors hover:border-gold/60 hover:text-gold"
       >
         <X className="size-4" />
