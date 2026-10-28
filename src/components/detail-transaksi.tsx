@@ -5,7 +5,7 @@ import {
   Info, Car, CalendarPlus, Stamp, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
-import { LambangTeratai, Logo } from '@/components/kerangka';
+import { LambangTeratai } from '@/components/kerangka';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
 import { openWhatsApp } from '@/lib/whatsapp';
