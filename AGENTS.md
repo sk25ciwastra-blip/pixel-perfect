@@ -28,3 +28,5 @@
 - Short per-page header context lines live in `src/lib/konteks-header.ts` and are rendered only by the shared page header in `kerangka.tsx` (Dashboard is excluded because it renders full-bleed), so context copy stays presentation-only and can never resize a header or touch a background.
 - The Kamar check-in entry reuses FormulirPemesanan and the prior transaction-list permission plus refresh invalidations; contact availability uses the existing Dashboard number format, preserving operational restrictions.
 - Housekeeping renders its own photo-free presentation header inside Kerangka with tanpaJudul and reuses the shared quote mapping; its room table retains existing sections, permission gates, history and operational callbacks to isolate visual revisions from other pages.
+
+- Finance presentation stays page-local in `keuangan.tsx`, retaining existing summary sources, form handlers and permission gates so visual refinements cannot change cash workflows.

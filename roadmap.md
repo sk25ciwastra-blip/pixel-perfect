@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Keuangan — penyempurnaan sketsa Owner 28 Oktober
+- [x] Rapikan ringkasan, sesi kas, closing, setoran, refund, pengeluaran dan pengaturan existing; header/sidebar/kutipan serta seluruh perhitungan, aksi dan izin dipertahankan.
+- [ ] Periksa desktop/HP, isian lokal tanpa menyimpan kas, build otomatis dan tes keuangan/training.
+
 ## Housekeeping — sketsa Owner 27 Oktober
 - [x] Rapikan header tanpa foto, kutipan, navigasi empat bagian, ringkasan nyata, tabel kamar dan Perawatan Berkala tanpa perubahan aturan atau halaman lain.
 - [x] Empat bagian diperiksa dengan sesi Owner desktop 1440px/HP 390px tanpa overflow; pencarian kamar dan riwayat terbuka memakai data asli. Build otomatis OK dan tes pembatasan training PASS; tanpa perubahan data atau publikasi.
