@@ -1307,6 +1307,7 @@ export type Database = {
       }
       transactions: {
         Row: {
+          base_price_snapshot: number | null
           checked_out_at: string | null
           commission_mode_snapshot: string | null
           commission_per_room_amount_snapshot: number | null
@@ -1316,6 +1317,10 @@ export type Database = {
           created_by: string
           day_mode: string | null
           ends_at: string | null
+          extra_guest_charge: number
+          extra_guest_count: number
+          extra_guest_unit_price: number
+          guest_count: number
           guest_id: string
           id: string
           minimum_dp_amount_snapshot: number | null
@@ -1332,6 +1337,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          base_price_snapshot?: number | null
           checked_out_at?: string | null
           commission_mode_snapshot?: string | null
           commission_per_room_amount_snapshot?: number | null
@@ -1341,6 +1347,10 @@ export type Database = {
           created_by?: string
           day_mode?: string | null
           ends_at?: string | null
+          extra_guest_charge?: number
+          extra_guest_count?: number
+          extra_guest_unit_price?: number
+          guest_count?: number
           guest_id: string
           id?: string
           minimum_dp_amount_snapshot?: number | null
@@ -1357,6 +1367,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          base_price_snapshot?: number | null
           checked_out_at?: string | null
           commission_mode_snapshot?: string | null
           commission_per_room_amount_snapshot?: number | null
@@ -1366,6 +1377,10 @@ export type Database = {
           created_by?: string
           day_mode?: string | null
           ends_at?: string | null
+          extra_guest_charge?: number
+          extra_guest_count?: number
+          extra_guest_unit_price?: number
+          guest_count?: number
           guest_id?: string
           id?: string
           minimum_dp_amount_snapshot?: number | null
@@ -1401,6 +1416,183 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipt_template_versions: {
+        Row: {
+          id: string
+          template_kind: string
+          version: number
+          preset: string
+          language: string
+          paper_width_mm: number
+          blocks: Json
+          header_config: Json
+          footer_config: Json
+          status: string
+          created_by: string | null
+          created_at: string
+          published_at: string | null
+        }
+        Insert: {
+          id?: string
+          template_kind: string
+          version: number
+          preset: string
+          language?: string
+          paper_width_mm?: number
+          blocks: Json
+          header_config?: Json
+          footer_config?: Json
+          status?: string
+          created_by?: string | null
+          created_at?: string
+          published_at?: string | null
+        }
+        Update: {
+          id?: string
+          template_kind?: string
+          version?: number
+          preset?: string
+          language?: string
+          paper_width_mm?: number
+          blocks?: Json
+          header_config?: Json
+          footer_config?: Json
+          status?: string
+          created_by?: string | null
+          created_at?: string
+          published_at?: string | null
+        }
+        Relationships: []
+      }
+      payment_receipts: {
+        Row: {
+          id: string
+          payment_id: string
+          transaction_id: string
+          receipt_kind: string
+          template_version_id: string | null
+          template_snapshot: Json
+          receipt_snapshot: Json
+          payment_amount: number
+          total_paid_at_issue: number
+          outstanding_at_issue: number
+          payment_status_at_issue: string
+          served_by: string
+          issued_at: string
+          schema_version: number
+          snapshot_hash: string | null
+        }
+        Insert: {
+          id?: string
+          payment_id: string
+          transaction_id: string
+          receipt_kind: string
+          template_version_id?: string | null
+          template_snapshot: Json
+          receipt_snapshot: Json
+          payment_amount: number
+          total_paid_at_issue: number
+          outstanding_at_issue: number
+          payment_status_at_issue: string
+          served_by: string
+          issued_at?: string
+          schema_version?: number
+          snapshot_hash?: string | null
+        }
+        Update: {
+          id?: string
+          payment_id?: string
+          transaction_id?: string
+          receipt_kind?: string
+          template_version_id?: string | null
+          template_snapshot?: Json
+          receipt_snapshot?: Json
+          payment_amount?: number
+          total_paid_at_issue?: number
+          outstanding_at_issue?: number
+          payment_status_at_issue?: string
+          served_by?: string
+          issued_at?: string
+          schema_version?: number
+          snapshot_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_receipts_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_receipts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_receipts_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "receipt_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipt_print_requests: {
+        Row: {
+          id: string
+          receipt_id: string
+          print_no: number
+          copy_label: string
+          requested_by: string
+          requested_at: string
+          status: string
+          idempotency_key: string
+          printer_target: string | null
+          physical_confirmed_at: string | null
+          error_code: string | null
+          error_message: string | null
+        }
+        Insert: {
+          id?: string
+          receipt_id: string
+          print_no: number
+          copy_label?: string
+          requested_by: string
+          requested_at?: string
+          status?: string
+          idempotency_key: string
+          printer_target?: string | null
+          physical_confirmed_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+        }
+        Update: {
+          id?: string
+          receipt_id?: string
+          print_no?: number
+          copy_label?: string
+          requested_by?: string
+          requested_at?: string
+          status?: string
+          idempotency_key?: string
+          printer_target?: string | null
+          physical_confirmed_at?: string | null
+          error_code?: string | null
+          error_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_print_requests_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "payment_receipts"
             referencedColumns: ["id"]
           },
         ]
@@ -1554,6 +1746,42 @@ export type Database = {
               _room_id: string
               _scheduled_check_in: string
               _session_id: string
+              _guest_count: number
+            }
+            Returns: string
+          }
+      create_training_reservation: {
+        Args: {
+          _address: string
+          _amount: number
+          _day_mode: string
+          _idempotency_key: string
+          _method: string
+          _mode: string
+          _name: string
+          _package_id: string
+          _phone: string
+          _room_id: string
+          _scheduled_check_in?: string
+          _session_id: string
+          _guest_count: number
+        }
+        Returns: string
+      }
+        | {
+            Args: {
+              _address: string
+              _amount: number
+              _day_mode: string
+              _idempotency_key: string
+              _method: string
+              _mode: string
+              _name: string
+              _package_id: string
+              _phone: string
+              _room_id: string
+              _scheduled_check_in: string
+              _session_id: string
             }
             Returns: string
           }
@@ -1601,6 +1829,10 @@ export type Database = {
         Returns: boolean
       }
       is_receptionist: { Args: { _user_id: string }; Returns: boolean }
+      issue_payment_receipt: {
+        Args: { _payment_id: string }
+        Returns: string
+      }
       next_expense_number: { Args: never; Returns: string }
       next_housekeeping_number: { Args: never; Returns: string }
       next_transaction_number: { Args: never; Returns: string }
@@ -1648,6 +1880,20 @@ export type Database = {
             Args: { _amount: number; _method: string; _transaction_id: string }
             Returns: string
           }
+      record_receipt_print_result: {
+        Args: {
+          _error_code?: string
+          _error_message?: string
+          _physical_confirmed?: boolean
+          _print_request_id: string
+          _status: string
+        }
+        Returns: undefined
+      }
+      request_receipt_print: {
+        Args: { _idempotency_key: string; _receipt_id: string }
+        Returns: Json
+      }
         | {
             Args: {
               _amount: number
@@ -1677,6 +1923,20 @@ export type Database = {
       }
       set_finance_settings: {
         Args: { _minimum_dp_mode: string; _minimum_dp_value: number }
+        Returns: undefined
+      }
+      save_receipt_template_version: {
+        Args: {
+          _blocks: Json
+          _footer_config: Json
+          _header_config: Json
+          _preset: string
+          _template_kind: string
+        }
+        Returns: string
+      }
+      activate_receipt_template_version: {
+        Args: { _template_id: string }
         Returns: undefined
       }
       update_package: {
