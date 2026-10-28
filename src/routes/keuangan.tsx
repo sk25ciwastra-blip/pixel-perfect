@@ -353,6 +353,7 @@ function HalamanKeuangan() {
                 </div>
               </div>
             ))}
+          </div>
         </>
       )}
       <div className="grid items-start gap-5 xl:grid-cols-[1.45fr_1fr]">
@@ -445,7 +446,6 @@ function HalamanKeuangan() {
       )}
         </div>
       </div>
-      )}
       {isOwner && (
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <p className="col-span-full text-xs font-semibold uppercase tracking-[0.22em] text-gold">Pengaturan Owner</p>
