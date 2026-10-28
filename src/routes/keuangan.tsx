@@ -38,6 +38,7 @@ function angka(value: string) {
 
 const panelIcons: Record<string, LucideIcon> = {
   'Sesi kas': Wallet, 'Closing sesi kas': ClipboardCheck, 'Pengeluaran sesi': ReceiptText,
+  'Aktivitas Keuangan': ReceiptText, 'Ringkasan Hari Ini': Banknote,
   'Setoran': ArrowUpRight, 'Setoran menunggu konfirmasi Owner': HandCoins,
   'Serah terima DI LACI': Wallet, 'Refund Owner': RotateCcw,
   'Pengaturan minimum DP dan komisi': Settings2, 'Rekening Owner untuk Transfer': Landmark,
@@ -367,7 +368,7 @@ function HalamanKeuangan() {
           </section>
         </>
       )}
-      <div className="grid items-start gap-5 xl:grid-cols-[1.5fr_1fr]">
+      <div className="grid items-start gap-5 xl:grid-cols-2">
         <div className="min-w-0 space-y-5">
       {selectedSession && (
         <Panel judul="Closing sesi kas">
@@ -381,32 +382,6 @@ function HalamanKeuangan() {
           {angka(diLaci) > 0 && <label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Penerima di laci</span><select value={recipientUserId} onChange={(e) => setRecipientUserId(e.target.value)} className="mt-3 h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm"><option value="">Pilih penerima DI LACI</option>{employees.rows.filter((employee) => employee.active).map((employee) => <option key={employee.user_id} value={employee.user_id}>{employee.name}</option>)}</select></label>}
           <label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Alasan closing khusus bila diperlukan</span><input value={closingReason} onChange={(e) => setClosingReason(e.target.value)} className="mt-3 h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Alasan closing khusus bila diperlukan" /></label>
           {!isTraining && <Button className="mt-4 w-full gap-2" disabled={busy || !hasExpectedCash} onClick={() => void closeSession()}>Finalkan Closing</Button>}
-        </Panel>
-      )}
-      {selectedSession && (
-        <Panel judul="Pengeluaran sesi">
-          <div className="grid gap-3 sm:grid-cols-2"><label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Nominal</span><input value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} type="number" min="1" className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Nominal" /></label><label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Metode pembayaran</span><select value={expenseMethod} onChange={(e) => setExpenseMethod(e.target.value)} className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm"><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select></label><label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Kategori</span><input value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Kategori" /></label><label className="block min-w-0 text-xs text-muted-foreground"><span className="mb-1.5 block">Catatan</span><input value={expenseNote} onChange={(e) => setExpenseNote(e.target.value)} className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Catatan" /></label></div>
-          <Button className="mt-4 w-full gap-2" disabled={busy} onClick={() => void recordExpense()}>Catat Pengeluaran</Button>
-          <div className="mt-5 border-t border-border pt-4">
-            <input value={expenseSearch} onChange={(e) => setExpenseSearch(e.target.value)} className="h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm" placeholder="Cari nomor pengeluaran, kategori, atau catatan" />
-            <div className="mt-4 flex items-center gap-2 text-gold"><ReceiptText size={18} aria-hidden="true" /><h3 className="font-serif text-lg text-foreground">Aktivitas Pengeluaran</h3></div>
-            <div className="mt-3 max-h-80 overflow-auto rounded-md border border-gold/15">
-              <table className="w-full min-w-[520px] text-left text-sm">
-                <thead className="bg-secondary text-xs text-gold"><tr><th className="px-3 py-3 font-medium">Tanggal / Nomor</th><th className="px-3 py-3 font-medium">Keterangan</th><th className="px-3 py-3 font-medium">Metode</th><th className="px-3 py-3 text-right font-medium">Nominal</th></tr></thead>
-                <tbody>
-                  {visibleExpenses.map((expense) => (
-                    <tr key={expense.id} className="border-t border-gold/10">
-                      <td className="px-3 py-3 align-top"><p className="text-xs text-muted-foreground">{new Date(expense.created_at).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta' })}</p><p className="mt-1 font-mono text-xs font-semibold">{expense.expense_number ?? 'Pengeluaran lama tanpa nomor baru'}</p></td>
-                      <td className="max-w-56 px-3 py-3 align-top"><p>{expense.category}</p>{expense.note && <p className="mt-1 break-words text-xs text-muted-foreground">{expense.note}</p>}</td>
-                      <td className="px-3 py-3 align-top"><span className="rounded border border-gold/15 px-2 py-1 text-xs">{expense.method}</span></td>
-                      <td className="whitespace-nowrap px-3 py-3 text-right align-top font-semibold tabular-nums text-bahaya-foreground">{rupiah(Number(expense.amount))}</td>
-                    </tr>
-                  ))}
-                  {visibleExpenses.length === 0 && <tr><td colSpan={4} className="px-4 py-6 text-center text-sm text-muted-foreground">Belum ada pengeluaran yang sesuai.</td></tr>}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </Panel>
       )}
         </div>
