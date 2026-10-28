@@ -5,6 +5,7 @@ import {
   Info, Car, CalendarPlus, Stamp, MapPin, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
+import { ReceiptHistoryButton, ReceiptPrintButton } from '@/components/receipt-actions';
 import { LambangTeratai } from '@/components/kerangka';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
@@ -363,6 +364,7 @@ export function DetailTransaksi({
           <div className="grid items-start gap-y-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)] lg:divide-x lg:divide-gold/20">
             <div className="min-w-0 lg:pr-6">
               <Seksi judul="Riwayat Pembayaran" ikon={History}>
+                <div className="mb-2 flex justify-end"><ReceiptHistoryButton paymentIds={transactionPayments.map((payment) => payment.id)} /></div>
                 {transactionPayments.length === 0 ? (
                   <p className="text-[12.5px] text-muted-foreground">Belum ada pembayaran tercatat.</p>
                 ) : (
@@ -393,7 +395,7 @@ export function DetailTransaksi({
                               <td className="py-1.5 pr-1 whitespace-nowrap">{payment.method}</td>
                               <td className="py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
                               <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
-                              <td className="py-1.5 text-muted-foreground">—</td>
+                              <td className="py-1.5 text-muted-foreground"><ReceiptPrintButton paymentId={payment.id} label="Print Receipt" /></td>
                             </tr>
                           );
                         })}
