@@ -311,11 +311,11 @@ function HalamanKeuangan() {
             ['Refund', summary['refunds'], sessionRefunds.length, RotateCcw, 'bg-bahaya text-bahaya-foreground'],
             ['Pengeluaran', summary['expenses'], sessionExpenses.length, ArrowUpRight, 'bg-bahaya text-bahaya-foreground'],
           ] as const).map(([judul, nilai, jumlah, Icon, warna]) => (
-            <div key={judul} className="panel-mewah flex min-w-0 items-center gap-3 p-3.5">
-              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${warna}`}><Icon size={20} aria-hidden="true" /></span>
+            <div key={judul} className="panel-mewah flex min-w-0 flex-col gap-2 p-3.5">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${warna}`}><Icon size={18} aria-hidden="true" /></span>
               <div className="min-w-0">
-                <p className="text-sm leading-snug text-foreground">{judul}</p>
-                <p className="mt-0.5 break-words text-lg font-semibold leading-snug tabular-nums">{rupiah(Number(nilai ?? 0))}</p>
+                <p className="truncate text-sm leading-snug text-foreground">{judul}</p>
+                <p className="mt-1 whitespace-nowrap text-lg font-semibold leading-snug tabular-nums">{rupiah(Number(nilai ?? 0))}</p>
                 <p className="text-xs text-muted-foreground">{jumlah} transaksi</p>
               </div>
             </div>

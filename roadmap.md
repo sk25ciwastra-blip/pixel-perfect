@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Keuangan — tujuh kotak ringkasan tanpa teks terpotong 28 Oktober
+- [x] Kotak ringkasan disusun ulang menjadi tumpukan (ikon di atas, teks di bawah) sehingga judul dan nominal selalu satu baris; nilai besar sekalipun tetap utuh.
+- [x] Diukur pada isi desktop 1582px dan HP 390px: tidak ada baris ganda atau terpotong untuk nilai riil maupun Rp 125.000.000; teks terbaca penuh; typecheck dan build OK; tanpa publikasi.
+
 ## Keuangan — penyempurnaan sketsa Owner 28 Oktober
 - [x] Rapikan ringkasan, sesi kas, closing, setoran, refund, pengeluaran dan pengaturan existing; header/sidebar/kutipan serta seluruh perhitungan, aksi dan izin dipertahankan.
 - [x] Desktop 1440px/HP 390px diperiksa dengan sesi Owner tanpa overflow atau kesalahan; isian refund dan pencarian pengeluaran diuji tanpa menyimpan data. Tes keuangan/training PASS; tanpa publikasi.
