@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import {
   UserRound, Phone, NotebookPen, BedDouble, DoorOpen, Package, Users,
   CalendarDays, Clock3, Timer, ReceiptText, CircleDollarSign, History,
-  Info, X, Car, CalendarPlus, Stamp, type LucideIcon,
+  Info, Car, CalendarPlus, Stamp, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
 import { LambangTeratai } from '@/components/kerangka';
@@ -102,16 +102,16 @@ const labelJenisPembayaran: Record<string, string> = {
   payment: 'Pembayaran',
 };
 
-const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[960px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
+const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[880px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
 
 function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIcon; children: ReactNode }) {
   return (
     <section className="min-w-0">
-      <h3 className="mb-2 flex items-center gap-2 border-b border-gold/25 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-gold-light">
+      <h3 className="mb-1.5 flex items-center gap-2 border-b border-gold/25 pb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-gold-light">
         <Ikon className="size-4 shrink-0 text-gold" strokeWidth={1.6} />
         <span className="min-w-0 truncate">{judul}</span>
       </h3>
-      <div className="space-y-1.5">{children}</div>
+      <div className="space-y-1">{children}</div>
     </section>
   );
 }
@@ -127,31 +127,24 @@ function Baris({ label, ikon: Ikon, nada = '', children }: { label: string; ikon
   );
 }
 
-function Kepala({ nomor, onClose }: { nomor: string; onClose: () => void }) {
+function Kepala({ nomor, statusLabel, statusDot }: { nomor: string; statusLabel: string; statusDot: string }) {
   return (
     <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 border-b border-gold/25 bg-navy-deep px-4 py-3 sm:px-5">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <LambangTeratai className="h-8 w-11 shrink-0 text-gold" />
-        <div className="min-w-0 leading-tight">
-          <p className="truncate font-serif text-[15px] text-foreground">
-            Baturaden <span className="text-gold-light">25</span> Homestay
-          </p>
-          <p className="mt-0.5 text-[9px] font-semibold tracking-[0.3em] text-gold">MANAJEMEN</p>
-        </div>
+      <div className="flex min-w-0 items-center gap-2">
+        <LambangTeratai className="h-6 w-9 shrink-0 text-gold" />
+        <p className="truncate font-serif text-lg leading-none text-foreground">
+          Baturaden <span className="text-gold-light">25</span> Homestay
+        </p>
       </div>
       <span className="hidden h-9 w-px shrink-0 bg-gold/30 sm:block" aria-hidden="true" />
       <div className="order-last min-w-0 basis-full sm:order-none sm:basis-auto sm:flex-1">
         <h2 className="font-serif text-xl leading-tight sm:text-[22px]">Detail Transaksi</h2>
         <p className="mt-0.5 font-mono text-[11px] tracking-[0.14em] text-gold">REG: {nomor}</p>
       </div>
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Tutup"
-        className="ml-auto grid size-9 shrink-0 place-items-center rounded-lg border border-gold/30 bg-background/60 text-gold-light transition-colors hover:border-gold/60 hover:text-gold sm:ml-0"
-      >
-        <X className="size-4" />
-      </button>
+      <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gold-light sm:ml-0">
+        <span className={`size-1.5 rounded-full ${statusDot}`} />
+        {statusLabel}
+      </span>
     </header>
   );
 }
@@ -260,15 +253,19 @@ export function DetailTransaksi({
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4">
       <div role="dialog" aria-modal="true" aria-label="Detail transaksi" className={kelasPopup}>
-        <Kepala nomor={transaction.transaction_number} onClose={onClose} />
+        <Kepala
+          nomor={transaction.transaction_number}
+          statusLabel={transaction.status === 'booking' ? 'Menunggu Check-in' : labelStatusTransaksi[transaction.status] ?? transaction.status}
+          statusDot={warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}
+        />
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
-          <div className="grid items-start gap-x-5 gap-y-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)_minmax(0,0.85fr)]">
-            <div className="space-y-5">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-4 [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.28_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.48_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
+          <div className="grid items-start gap-x-5 gap-y-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)_minmax(0,0.85fr)]">
+            <div className="space-y-4">
               <Seksi judul="Informasi Tamu" ikon={UserRound}>
                 <Baris label="Nama" ikon={UserRound}>{guest?.full_name ?? 'Tamu'}</Baris>
                 <Baris label="No. HP" ikon={Phone}>
-                  <span className="flex flex-wrap items-center gap-2">
+                  <span className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
                     <span className="tabular-nums">{guest?.phone ?? '—'}</span>
                     <button
                       type="button"
@@ -309,7 +306,7 @@ export function DetailTransaksi({
               </Seksi>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-4">
               <Seksi judul="Rincian Harga" ikon={ReceiptText}>
                 <table className="w-full text-[12px]">
                   <thead>
@@ -336,7 +333,7 @@ export function DetailTransaksi({
               </Seksi>
 
               <Seksi judul="Pembayaran" ikon={CircleDollarSign}>
-                <div className="divide-y divide-gold/15 rounded-xl border border-gold/25 bg-navy-deep/40 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                <div className="divide-y divide-gold/25 rounded-xl border border-gold/30 bg-white/60 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                   {ringkasan.map(item => (
                     <div key={item.label} className="flex min-w-0 items-baseline justify-between gap-2 px-3 py-2 sm:block sm:px-2 sm:text-center">
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{item.label}</p>
@@ -386,7 +383,7 @@ export function DetailTransaksi({
               </Seksi>
             </div>
 
-            <div className="flex min-w-0 flex-col gap-5 lg:self-stretch">
+            <div className="flex min-w-0 flex-col gap-4 lg:self-stretch">
               <Seksi judul="Informasi Tambahan" ikon={Info}>
                 <Baris label="Sesi Kas" ikon={ReceiptText}>
                   {sesiKas
@@ -396,14 +393,13 @@ export function DetailTransaksi({
                 <Baris label="Terakhir diubah" ikon={Clock3}>{waktuWib(transaction.updated_at)}</Baris>
               </Seksi>
 
-              <div className="mt-auto flex w-full items-center justify-center gap-2.5 rounded-xl border border-gold/25 bg-navy-deep/40 px-4 py-3">
-                <span className={`size-2 shrink-0 rounded-full ${warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}`} />
-                <span className="text-[12px] font-semibold uppercase tracking-[0.18em] text-foreground">
-                  {transaction.status === 'booking'
-                    ? 'Menunggu Check-in'
-                    : labelStatusTransaksi[transaction.status] ?? transaction.status}
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-auto inline-flex w-full items-center justify-center rounded-xl border border-gold/50 bg-navy-deep px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#F2D184] transition-colors hover:bg-navy"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>
