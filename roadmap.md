@@ -89,3 +89,6 @@
 - [ ] Tahap 2: Dashboard (menunggu persetujuan Owner).
 - [ ] Tahap 3: Kamar (hapus 4 kartu ringkasan di Semua Kamar), Booking, Transaksi, Tamu.
 - [ ] Tahap 4: Housekeeping, Keuangan, Laporan, Tim & Akses, detail.
+
+# Revisi lanjutan (di luar tahapan)
+- [x] Keuangan: susun ulang layout — KPI → Sesi Kas → dua kolom (Closing | Setoran/Refund) → Aktivitas Keuangan & Ringkasan Hari Ini → Pengaturan Owner; seluruh field, konfirmasi setoran, dan aturan closing dipertahankan.
