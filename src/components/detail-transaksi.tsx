@@ -338,11 +338,11 @@ export function DetailTransaksi({
               </Seksi>
 
               <Seksi judul="Pembayaran" ikon={CircleDollarSign}>
-                <div className="grid grid-cols-3 divide-x divide-gold/15 rounded-xl border border-gold/25 bg-navy-deep/40">
+                <div className="divide-y divide-gold/15 rounded-xl border border-gold/25 bg-navy-deep/40 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                   {ringkasan.map(item => (
-                    <div key={item.label} className="min-w-0 px-2 py-2 text-center">
-                      <p className="truncate text-[10px] uppercase tracking-wide text-muted-foreground">{item.label}</p>
-                      <p className={`mt-1 whitespace-nowrap text-[14px] font-semibold tabular-nums ${item.nada}`}>{item.nilai}</p>
+                    <div key={item.label} className="flex min-w-0 items-baseline justify-between gap-2 px-3 py-2 sm:block sm:px-2 sm:text-center">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                      <p className={`text-[14px] font-semibold tabular-nums sm:mt-1 sm:whitespace-nowrap ${item.nada}`}>{item.nilai}</p>
                     </div>
                   ))}
                 </div>
