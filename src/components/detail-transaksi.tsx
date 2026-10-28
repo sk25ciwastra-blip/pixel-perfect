@@ -117,10 +117,10 @@ function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIco
   );
 }
 
-function Baris({ label, ikon: Ikon, nada = '', children }: { label: string; ikon: LucideIcon; nada?: string; children: ReactNode }) {
+function Baris({ label, ikon: Ikon, nada = '', rataAtas = false, children }: { label: string; ikon: LucideIcon; nada?: string; rataAtas?: boolean; children: ReactNode }) {
   return (
-    <div className="flex min-w-0 items-baseline gap-1.5 text-[13px] leading-snug">
-      <Ikon className="size-3.5 shrink-0 self-center text-gold" strokeWidth={1.6} />
+    <div className={`flex min-w-0 gap-1.5 text-[13px] leading-snug ${rataAtas ? 'items-start' : 'items-baseline'}`}>
+      <Ikon className={`size-3.5 shrink-0 text-gold ${rataAtas ? 'mt-[2px]' : 'self-center'}`} strokeWidth={1.6} />
       <span className="w-[5.6rem] shrink-0 text-muted-foreground">{label}</span>
       <span className="shrink-0 text-muted-foreground">:</span>
       <span className={`min-w-0 flex-1 break-words font-medium ${nada || 'text-foreground'}`}>{children}</span>
@@ -284,7 +284,7 @@ export function DetailTransaksi({
                     </button>
                   </span>
                 </Baris>
-                <Baris label="Alamat" ikon={MapPin}>{guest?.address || '—'}</Baris>
+                <Baris label="Alamat" ikon={MapPin} rataAtas>{guest?.address || '—'}</Baris>
                 <Baris label="Catatan" ikon={NotebookPen}>{guest?.notes || '—'}</Baris>
               </Seksi>
 
