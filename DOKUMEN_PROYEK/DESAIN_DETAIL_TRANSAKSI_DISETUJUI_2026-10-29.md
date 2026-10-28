@@ -1,8 +1,8 @@
 # Desain Detail Transaksi — DISETUJUI OWNER (29 Oktober 2026)
 
-**Status: DISETUJUI SEBAGAI REFERENSI VISUAL; BELUM DIIMPLEMENTASIKAN DI LOVABLE.**
+**Status: SUDAH DIKERJAKAN DI LOVABLE DAN DISETUJUI OWNER SECARA VISUAL (29 Oktober 2026).** Bukan sekadar sketsa/referensi; screenshot menunjukkan hasil implementasi Lovable yang sudah sesuai ekspektasi Owner. Belum berarti fitur lokal Codex dan migrasi Cloud sudah terintegrasi.
 
-Referensi utama: screenshot yang Owner unggah pada percakapan 29 Oktober 2026 sekitar 02:16 WIB, berjudul `Cuplikan layar 2026-10-29 021653.png`. Jangan membuat layout baru berdasarkan imajinasi. Bila gambar referensi tidak tersedia bagi pelaksana, minta lampiran gambar ini sebelum mengerjakan UI.
+Bukti hasil yang telah disetujui: screenshot Lovable yang Owner unggah pada 29 Oktober 2026 sekitar 02:16 WIB, `Cuplikan layar 2026-10-29 021653.png`. Tampilan ini **sudah dikerjakan di Lovable**, bukan desain konseptual untuk dikerjakan ulang. **Jangan mengulang atau mengubah tampilannya tanpa instruksi baru Owner.**
 
 ## Struktur final disetujui
 - Modal Detail Transaksi **di tengah**, lebar kompak, target seluruh informasi terlihat tanpa scroll pada desktop dengan data normal; tidak ada ruang kosong besar.
@@ -19,7 +19,7 @@ Referensi utama: screenshot yang Owner unggah pada percakapan 29 Oktober 2026 se
 ## Ruang lingkup
 - Desain hanya untuk popup Detail Transaksi. Jangan mengganti header/sidebar/halaman lain, fungsi bisnis, RPC, database, maupun komponen yang sudah PASS.
 - **Codex mengerjakan fungsi; Lovable desain.**
-- Baru kirim instruksi implementasi saat Owner memintanya. Implementasi belum dinyatakan selesai.
+- **Implementasi visual Lovable dinyatakan sesuai ekspektasi oleh Owner.** Tidak perlu mengirim ulang instruksi desain atau implementasi. Status integrasi fungsi dan aktivasi Cloud tetap pekerjaan terpisah.
 
 ## Checkpoint integrasi terkait
 - Commit lokal patch RPC `38511e8` sudah dibuat dan worktree bersih menurut laporan Codex; **belum push/merge/deploy/migrasi Cloud**. Ini terpisah dari desain popup.
