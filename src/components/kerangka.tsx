@@ -92,7 +92,7 @@ export function LambangTeratai({ className = "" }: { className?: string }) {
   );
 }
 
-function Logo({ ringkas }: { ringkas?: boolean }) {
+export function Logo({ ringkas }: { ringkas?: boolean }) {
   if (ringkas) {
     return (
       <div className="flex min-w-0 items-center gap-2">

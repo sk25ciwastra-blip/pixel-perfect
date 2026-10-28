@@ -5,7 +5,7 @@ import {
   Info, Car, CalendarPlus, Stamp, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
-import { LambangTeratai } from '@/components/kerangka';
+import { LambangTeratai, Logo } from '@/components/kerangka';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
 import { openWhatsApp } from '@/lib/whatsapp';
@@ -102,12 +102,12 @@ const labelJenisPembayaran: Record<string, string> = {
   payment: 'Pembayaran',
 };
 
-const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[880px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
+const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[960px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
 
 function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIcon; children: ReactNode }) {
   return (
     <section className="min-w-0">
-      <h3 className="mb-1.5 flex items-center gap-2 border-b border-gold/25 pb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-gold-light">
+      <h3 className="mb-1.5 flex items-center gap-2 border-b border-gold/25 pb-1 text-[12px] font-bold uppercase tracking-[0.16em] text-gold-light">
         <Ikon className="size-4 shrink-0 text-gold" strokeWidth={1.6} />
         <span className="min-w-0 truncate">{judul}</span>
       </h3>
@@ -119,9 +119,9 @@ function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIco
 function Baris({ label, ikon: Ikon, nada = '', children }: { label: string; ikon: LucideIcon; nada?: string; children: ReactNode }) {
   return (
     <div className="flex min-w-0 items-baseline gap-1.5 text-[13px] leading-snug">
-      <Ikon className="size-3.5 shrink-0 self-center text-gold/60" strokeWidth={1.6} />
-      <span className="w-[6.1rem] shrink-0 text-muted-foreground">{label}</span>
-      <span className="shrink-0 text-muted-foreground/50">:</span>
+      <Ikon className="size-3.5 shrink-0 self-center text-gold" strokeWidth={1.6} />
+      <span className="w-[5.6rem] shrink-0 text-muted-foreground">{label}</span>
+      <span className="shrink-0 text-muted-foreground">:</span>
       <span className={`min-w-0 flex-1 break-words font-medium ${nada || 'text-foreground'}`}>{children}</span>
     </div>
   );
@@ -130,13 +130,10 @@ function Baris({ label, ikon: Ikon, nada = '', children }: { label: string; ikon
 function Kepala({ nomor, statusLabel, statusDot }: { nomor: string; statusLabel: string; statusDot: string }) {
   return (
     <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 border-b border-gold/25 bg-navy-deep px-4 py-3 sm:px-5">
-      <div className="flex min-w-0 items-center gap-2">
-        <LambangTeratai className="h-6 w-9 shrink-0 text-gold" />
-        <p className="truncate font-serif text-lg leading-none text-foreground">
-          Baturaden <span className="text-gold-light">25</span> Homestay
-        </p>
+      <div className="shrink-0">
+        <Logo />
       </div>
-      <span className="hidden h-9 w-px shrink-0 bg-gold/30 sm:block" aria-hidden="true" />
+      <span className="hidden h-20 w-px shrink-0 bg-gold/30 sm:block" aria-hidden="true" />
       <div className="order-last min-w-0 basis-full sm:order-none sm:basis-auto sm:flex-1">
         <h2 className="font-serif text-xl leading-tight sm:text-[22px]">Detail Transaksi</h2>
         <p className="mt-0.5 font-mono text-[11px] tracking-[0.14em] text-gold">REG: {nomor}</p>
@@ -259,13 +256,13 @@ export function DetailTransaksi({
           statusDot={warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-4 text-foreground [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.28_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.48_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
-          <div className="grid items-start gap-x-5 gap-y-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)_minmax(0,0.85fr)]">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-4 text-foreground [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.22_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.4_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
+          <div className="grid items-start gap-x-5 gap-y-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.45fr)_minmax(0,0.7fr)]">
             <div className="space-y-4">
               <Seksi judul="Informasi Tamu" ikon={UserRound}>
                 <Baris label="Nama" ikon={UserRound}>{guest?.full_name ?? 'Tamu'}</Baris>
                 <Baris label="No. HP" ikon={Phone}>
-                  <span className="flex flex-nowrap items-center gap-2 whitespace-nowrap">
+                  <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="tabular-nums">{guest?.phone ?? '—'}</span>
                     <button
                       type="button"
@@ -273,7 +270,7 @@ export function DetailTransaksi({
                       aria-label="Hubungi tamu via WhatsApp"
                       title={guest?.phone ? 'Hubungi tamu via WhatsApp' : 'Nomor WhatsApp belum lengkap'}
                       onClick={() => guest?.phone && openWhatsApp(guest.phone)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-siap-foreground/35 bg-siap/25 px-2.5 py-0.5 text-[11px] font-semibold text-siap-foreground transition-colors hover:border-siap-foreground/70 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-siap-foreground/35 bg-siap/25 px-2.5 py-0.5 text-[11px] font-semibold text-siap-foreground transition-colors hover:border-siap-foreground/70 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <IkonWhatsApp className="size-3" />
                       Hubungi
@@ -310,7 +307,7 @@ export function DetailTransaksi({
               <Seksi judul="Rincian Harga" ikon={ReceiptText}>
                 <table className="w-full text-[12px]">
                   <thead>
-                    <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <tr className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       <th className="py-1 text-left font-medium">Deskripsi</th>
                       <th className="py-1 text-center font-medium">Qty</th>
                       <th className="py-1 text-right font-medium">Harga</th>
@@ -336,7 +333,7 @@ export function DetailTransaksi({
                 <div className="divide-y divide-gold/25 rounded-xl border border-gold/30 bg-white/60 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                   {ringkasan.map(item => (
                     <div key={item.label} className="flex min-w-0 items-baseline justify-between gap-2 px-3 py-2 sm:block sm:px-2 sm:text-center">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</p>
                       <p className={`text-[14px] font-semibold tabular-nums sm:mt-1 sm:whitespace-nowrap ${item.nada}`}>{item.nilai}</p>
                     </div>
                   ))}
@@ -347,10 +344,10 @@ export function DetailTransaksi({
                 {transactionPayments.length === 0 ? (
                   <p className="text-[12.5px] text-muted-foreground">Belum ada pembayaran tercatat.</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[330px] text-[11.5px]">
+                  <div>
+                    <table className="w-full text-[12px]">
                       <thead>
-                        <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        <tr className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           <th className="py-1 pr-1 text-left font-medium">#</th>
                           <th className="py-1 pr-1 text-left font-medium">Tanggal</th>
                           <th className="py-1 pr-1 text-right font-medium">Jumlah</th>
@@ -371,7 +368,7 @@ export function DetailTransaksi({
                               </td>
                               <td className="py-1.5 pr-1 text-right whitespace-nowrap font-semibold tabular-nums text-siap-foreground">{rupiah(Number(payment.amount))}</td>
                               <td className="py-1.5 pr-1 whitespace-nowrap">{payment.method}</td>
-                              <td className="max-w-[74px] py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
+                              <td className="py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
                               <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
                             </tr>
                           );
