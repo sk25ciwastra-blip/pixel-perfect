@@ -257,7 +257,7 @@ export function DetailTransaksi({
         />
 
         <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-4 text-foreground [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.22_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.4_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
-          <div className="grid items-start gap-x-5 gap-y-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.45fr)_minmax(0,0.7fr)]">
+          <div className="grid items-start gap-x-5 gap-y-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,0.9fr)]">
             <div className="space-y-4">
               <Seksi judul="Informasi Tamu" ikon={UserRound}>
                 <Baris label="Nama" ikon={UserRound}>{guest?.full_name ?? 'Tamu'}</Baris>
@@ -350,7 +350,7 @@ export function DetailTransaksi({
                         <tr className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           <th className="py-1 pr-1 text-left font-medium">#</th>
                           <th className="py-1 pr-1 text-left font-medium">Tanggal</th>
-                          <th className="py-1 pr-1 text-right font-medium">Jumlah</th>
+                          <th className="py-1 pr-2 text-right font-medium">Jumlah</th>
                           <th className="py-1 pr-1 text-left font-medium">Metode</th>
                           <th className="py-1 pr-1 text-left font-medium">Oleh</th>
                           <th className="py-1 text-left font-medium">Jenis</th>
@@ -366,7 +366,7 @@ export function DetailTransaksi({
                                 <span className="block">{tanggalWib(payment.created_at)}</span>
                                 <span className="block text-muted-foreground">{jamWib(payment.created_at)}</span>
                               </td>
-                              <td className="py-1.5 pr-1 text-right whitespace-nowrap font-semibold tabular-nums text-siap-foreground">{rupiah(Number(payment.amount))}</td>
+                              <td className="py-1.5 pr-2 text-right whitespace-nowrap font-semibold tabular-nums text-siap-foreground">{rupiah(Number(payment.amount))}</td>
                               <td className="py-1.5 pr-1 whitespace-nowrap">{payment.method}</td>
                               <td className="py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
                               <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
