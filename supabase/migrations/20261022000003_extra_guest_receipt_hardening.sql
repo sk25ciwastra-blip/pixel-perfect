@@ -1,8 +1,10 @@
 -- Extra Guest / Receipt activation hardening.
 --
 -- This forward-only patch does not backfill or rewrite historical amounts.
--- It closes the PUBLIC EXECUTE gap left by the older Training wrappers and
--- refuses activation while legacy Booking/Payment signatures remain active.
+-- It closes the PUBLIC EXECUTE gap left by the older Training wrappers.
+-- Legacy Booking/Payment signatures are intentionally preserved here; the
+-- separate 20261022000004 transition migration revokes their app access only
+-- after the new contract and external-caller preflight have passed.
 
 BEGIN;
 
@@ -26,12 +28,12 @@ BEGIN
   END IF;
 
   IF to_regprocedure('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz)') IS NOT NULL THEN
-    RAISE EXCEPTION 'Legacy 10-parameter create_reservation remains active; reconcile it before activation';
+    RAISE NOTICE 'Legacy 10-parameter create_reservation remains active; defer revocation to the approved transition migration';
   END IF;
 
   IF to_regprocedure('public.record_transaction_payment(uuid,numeric,text)') IS NOT NULL
      OR to_regprocedure('public.record_transaction_payment(uuid,numeric,text,uuid)') IS NOT NULL THEN
-    RAISE EXCEPTION 'Legacy payment RPC signature remains active; reconcile it before activation';
+    RAISE NOTICE 'Legacy payment RPC signature remains active; defer revocation to the approved transition migration';
   END IF;
 
   IF EXISTS (
