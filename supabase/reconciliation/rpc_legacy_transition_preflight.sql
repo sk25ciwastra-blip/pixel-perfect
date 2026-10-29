@@ -37,6 +37,45 @@ SELECT
 FROM legacy
 ORDER BY contract;
 
+-- Effective EXECUTE privileges, including privileges inherited through PUBLIC.
+-- Report both legacy and replacement signatures without invoking any RPC.
+-- A missing function is reported as MISSING, never cast to regprocedure.
+WITH signatures(signature, contract, generation) AS (
+  VALUES
+    ('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz)'::text, 'reservation_10', 'LEGACY'),
+    ('public.record_transaction_payment(uuid,numeric,text)'::text, 'payment_3', 'LEGACY'),
+    ('public.record_transaction_payment(uuid,numeric,text,uuid)'::text, 'payment_4', 'LEGACY'),
+    ('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid)'::text, 'reservation_12', 'REPLACEMENT'),
+    ('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid,integer)'::text, 'reservation_13', 'REPLACEMENT'),
+    ('public.record_transaction_payment(uuid,numeric,text,uuid,uuid)'::text, 'payment_5', 'REPLACEMENT'),
+    ('public.create_training_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid)'::text, 'training_reservation_12', 'REPLACEMENT'),
+    ('public.create_training_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid,integer)'::text, 'training_reservation_13', 'REPLACEMENT'),
+    ('public.record_training_transaction_payment(uuid,numeric,text,uuid,uuid)'::text, 'training_payment_5', 'REPLACEMENT')
+), roles(role_name) AS (
+  VALUES ('PUBLIC'::text), ('anon'::text), ('authenticated'::text)
+)
+SELECT
+  s.generation,
+  s.contract,
+  s.signature,
+  r.role_name,
+  CASE
+    WHEN p.oid IS NULL THEN 'MISSING'
+    WHEN r.role_name = 'PUBLIC' AND EXISTS (
+      SELECT 1
+      FROM aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) grant_entry
+      WHERE grant_entry.grantee = 0
+        AND grant_entry.privilege_type = 'EXECUTE'
+    ) THEN 'EXECUTE_GRANTED'
+    WHEN r.role_name = 'PUBLIC' THEN 'EXECUTE_DENIED'
+    WHEN has_function_privilege(r.role_name, p.oid, 'EXECUTE') THEN 'EXECUTE_GRANTED'
+    ELSE 'EXECUTE_DENIED'
+  END AS effective_execute
+FROM signatures s
+CROSS JOIN roles r
+LEFT JOIN pg_proc p ON p.oid = to_regprocedure(s.signature)
+ORDER BY s.generation, s.contract, r.role_name;
+
 SELECT
   p.oid::regprocedure AS signature,
   p.proname,
