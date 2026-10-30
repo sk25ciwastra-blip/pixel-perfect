@@ -212,4 +212,28 @@ for (const marker of [
 assert.match(migration, /BEFORE INSERT OR UPDATE OR DELETE ON public\.finance_cash_sessions/);
 assert.doesNotMatch(migration, /app\.finance_training_assignment_id/);
 
+// Prevent a Training migration from revoking the approved Owner/Supervisor
+// Bantu Sesi Aktif payment path while enforcing the trainee session binding.
+const paymentTrigger = migration.match(
+  /CREATE OR REPLACE FUNCTION public\\.finance_prepare_payment\\(\\)[\\s\\S]*?\\$function\\$;/,
+)?.[0];
+assert.ok(paymentTrigger, "finance_prepare_payment trigger must exist");
+assert.match(
+  paymentTrigger,
+  /NOT public\\.finance_training_is_restricted\\(NEW\\.recorded_by\\)[\\s\\S]*?public\\.finance_is_owner_or_supervisor\\(NEW\\.recorded_by\\)/,
+);
+assert.match(
+  paymentTrigger,
+  /public\\.finance_training_context_matches_session\\([\\s\\S]*?auth\\.uid\\(\\), selected_session\\.id/,
+);
+
+function mayAssistSession({ ownerMatchesOperator, elevated, restrictedTrainee, trainingContext }) {
+  return ownerMatchesOperator || (elevated && !restrictedTrainee) || trainingContext;
+}
+assert.equal(mayAssistSession({ ownerMatchesOperator: true, elevated: false, restrictedTrainee: false, trainingContext: false }), true);
+assert.equal(mayAssistSession({ ownerMatchesOperator: false, elevated: true, restrictedTrainee: false, trainingContext: false }), true);
+assert.equal(mayAssistSession({ ownerMatchesOperator: false, elevated: false, restrictedTrainee: true, trainingContext: true }), true);
+assert.equal(mayAssistSession({ ownerMatchesOperator: false, elevated: false, restrictedTrainee: true, trainingContext: false }), false);
+assert.equal(mayAssistSession({ ownerMatchesOperator: false, elevated: false, restrictedTrainee: false, trainingContext: false }), false);
+
 console.log("training-enforcement-pure-tests: PASS");
