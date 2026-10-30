@@ -525,14 +525,22 @@ BEGIN
     FOR UPDATE;
   END IF;
 
-  IF NOT FOUND OR selected_session.status <> 'OPEN'
-     OR (
-       selected_session.opened_by <> NEW.recorded_by
-       AND NOT public.finance_training_context_matches_session(
-         auth.uid(), selected_session.id
-       )
-     ) THEN
+  IF NOT FOUND OR selected_session.status <> 'OPEN' THEN
     RAISE EXCEPTION 'Sesi kas aktif penerima pembayaran tidak ditemukan';
+  END IF;
+
+  -- Preserve the approved Owner/Supervisor assisted-session path while
+  -- allowing an assigned trainee only through a validated Training context.
+  -- Restricted trainees must not inherit the Owner/Supervisor shortcut.
+  IF selected_session.opened_by <> NEW.recorded_by
+     AND NOT (
+       NOT public.finance_training_is_restricted(NEW.recorded_by)
+       AND public.finance_is_owner_or_supervisor(NEW.recorded_by)
+     )
+     AND NOT public.finance_training_context_matches_session(
+       auth.uid(), selected_session.id
+     ) THEN
+    RAISE EXCEPTION 'Operator tidak berwenang membantu sesi kas ini';
   END IF;
 
   NEW.cash_session_id := selected_session.id;
