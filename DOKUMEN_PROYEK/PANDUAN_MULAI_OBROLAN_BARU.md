@@ -1,8 +1,17 @@
 # PANDUAN MULAI OBROLAN BARU — Baturaden 25 Homestay
 
-**Checkpoint:** 28 Oktober 2026, malam WIB  
+**Checkpoint terbaru:** 30 Oktober 2026, WIB (riwayat 28 Oktober dipertahankan)  
 **Status:** Panduan kelanjutan proyek; bukan bukti bahwa fitur telah dideploy.  
 **Sumber keputusan resmi:** dokumen dalam folder `DOKUMEN_PROYEK/`, terutama `01_BUKU_INDUK.md` dan dokumen aturan bisnis terkait. Jika ada ketidaksesuaian, periksa commit terbaru dan minta keputusan Owner; jangan diam-diam menimpa keputusan resmi.
+
+## Checkpoint terbaru — 30 Oktober 2026 (melengkapi riwayat 28 Okt di bawah)
+
+- **PR #17 merged** ke `main`, squash commit `62c45dca586f62015d849ff596f66968bfc7184f`. Perbaikan `finance_prepare_payment()` mempertahankan Owner/Supervisor **Bantu Sesi Aktif** dan jalur Training terikat penugasan. Source pure tests PASS; Codex/Owner melaporkan PostgreSQL runtime PASS pada PostgreSQL 17.11 port lokal 55437: Owner/Supervisor bantu sesi OPEN, trainee sah, trainee tidak sah ditolak, Receptionist tidak sah ditolak, sesi CLOSED ditolak, operator/audit benar, snapshot harga terjaga, checkout setelah lunas PASS. **PASS lokal, belum aktif Cloud.**
+- **PR #15 merged**: `CHECKPOINT_RESTORE_LOKAL_2026-10-30.md`. Export Lovable diuji pada PostgreSQL lokal 17.11: 11 transaksi, 15 pembayaran, 12 kamar, 14 tamu, 11 `auth.users`, **59/59 foreign key public valid**. Server lab dihentikan. Pemulihan seluruh stack Supabase **BELUM PASS** karena extension khusus `supabase_vault` tidak tersedia dalam PostgreSQL biasa; jangan menyamakan PASS data aplikasi dengan disaster recovery Supabase penuh.
+- **PR #16 merged**: `RENCANA_GATE_AKTIVASI_TRAINING_CLOUD_2026-10-30.md`. Migration Training memiliki 29 fungsi `CREATE OR REPLACE`, enam mengganti fungsi Cloud aktif (termasuk `finance_prepare_payment`); butuh review/approval write produksi dan verifikasi per tahap. Source frontend `main` memakai kontrak RPC baru, tetapi pemanggil eksternal belum terbukti nol.
+- Cloud Lovable masih **NO-GO** untuk migration/revoke legacy. `authenticated` tetap dapat mengeksekusi signature RPC lama 10/3/4; metadata statistik SQL tidak cukup untuk membuktikan caller signature. **Jangan menjalankan `20261022000004_revoke_legacy_rpc_execute.sql`** tanpa preflight caller dan approval Owner. Aktivasi Training → Extra Guest/Receipt 58 mm → Booking time → hardening harus bertahap, tidak otomatis.
+- Worktree Windows `pixel-perfect-sync` mungkin berisi perubahan lokal; **jangan reset/overwrite**. Codex untuk fungsi, Lovable untuk desain, ChatGPT mengerjakan GitHub/Cloud read-only langsung bila akses tersedia. JANGAN mengulang tes PASS di atas tanpa bukti regresi.
+- **Posisi berikut:** Gate produksi: konfirmasi kesiapan rollback/pemulihan Supabase penuh atau risk acceptance Owner, verifikasi build/frontend yang benar-benar deployed beserta pemanggil eksternal, lalu minta persetujuan khusus sebelum migrasi Cloud. Tidak ada deploy dari checkpoint ini.
 
 ## Cara memulai chat baru
 
