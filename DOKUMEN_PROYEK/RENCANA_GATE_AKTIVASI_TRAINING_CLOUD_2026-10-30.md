@@ -23,6 +23,22 @@
 
 Guard offline `npm run test:cloud-order` dari PR #14 sudah PASS pada checkpoint sebelumnya; tidak perlu diulang tanpa perubahan.
 
+
+## Dampak konkret migration Training terhadap fungsi Cloud aktif (read-only 30 Okt)
+
+Migration mendefinisikan 29 fungsi `CREATE OR REPLACE FUNCTION`. Dari nama fungsi tersebut, **6 sudah ada** di Lovable Cloud dengan signature yang sama dan karena itu akan menerima penggantian body; **23 nama belum ada** pada katalog Cloud yang diperiksa:
+
+| Fungsi yang sudah aktif | Signature Cloud | Return | Security |
+| --- | --- | --- | --- |
+| `can_frontdesk` | `(_user_id uuid)` | boolean | DEFINER, stable |
+| `is_receptionist` | `(_user_id uuid)` | boolean | DEFINER, stable |
+| `finance_is_owner_or_supervisor` | `(_user_id uuid)` | boolean | DEFINER, stable |
+| `finance_is_booking_operator` | `(_user_id uuid)` | boolean | DEFINER, stable |
+| `finance_prepare_payment` | `()` | trigger | DEFINER, volatile |
+| `get_finance_session_summary` | `(_session_id uuid)` | jsonb | DEFINER, volatile |
+
+Semua enam fungsi memiliki EXECUTE untuk `authenticated` saat diperiksa. File migrasi juga mendefinisikan dua tabel Training dan 17 `CREATE TRIGGER`; ini adalah area perubahan perilaku aktif, bukan operasi penambahan kolom sederhana. Signature/return pada definisi pengganti enam fungsi sesuai jenis yang terlihat di katalog, tetapi **kesetaraan perilaku body belum dinyatakan PASS**. Audit hak akses lengkap dan integrasi setelah migrasi tetap menjadi gate terpisah.
+
 ## Stop conditions sebelum write Lovable Cloud
 
 - Persetujuan Owner yang **spesifik** untuk migrasi produksi, setelah review SQL dan dampak `CREATE OR REPLACE`.
