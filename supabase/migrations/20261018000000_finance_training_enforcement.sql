@@ -1093,6 +1093,21 @@ REVOKE ALL ON FUNCTION public.finance_training_audit_row() FROM PUBLIC, authenti
 
 REVOKE ALL ON FUNCTION public.finance_training_current_user_is_restricted() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.finance_training_current_user_can_read_session(uuid) FROM PUBLIC;
+
+-- New Training API functions must not inherit PostgreSQL's default PUBLIC
+-- EXECUTE grant. Authenticated operators use the explicit grants below;
+-- anon has no Training API access.
+REVOKE ALL ON FUNCTION public.get_finance_training_context() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.create_finance_training_assignment(uuid, uuid, date) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.resolve_finance_training_assignment(uuid, text, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.create_training_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamptz, uuid, uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.record_training_transaction_payment(uuid, numeric, text, uuid, uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.check_in_training_booking(uuid, uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.check_out_training_transaction(uuid, uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.record_training_finance_expense(uuid, uuid, numeric, text, text, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.create_training_finance_deposit(uuid, uuid, text, numeric, uuid, text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.get_training_finance_session_summary(uuid) FROM PUBLIC, anon;
+
 GRANT EXECUTE ON FUNCTION public.finance_training_current_user_is_restricted() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.finance_training_current_user_can_read_session(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_finance_training_context() TO authenticated;
