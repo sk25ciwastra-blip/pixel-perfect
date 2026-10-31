@@ -1029,6 +1029,15 @@ BEGIN
 
   SELECT jsonb_build_object(
     'opening_cash', s.opening_cash,
+    -- Preserve the deployed Finance contract: cash-only expected balance
+    -- can be negative; QRIS/Transfer must not inflate physical cash.
+    'expected_cash', s.opening_cash
+      + COALESCE((SELECT SUM(amount) FROM public.payments
+                  WHERE cash_session_id = _session_id AND method = 'Cash'), 0)
+      - COALESCE((SELECT SUM(amount) FROM public.finance_expenses
+                  WHERE session_id = _session_id AND method = 'CASH'), 0)
+      - COALESCE((SELECT SUM(amount) FROM public.finance_refunds
+                  WHERE source_session_id = _session_id AND refund_method = 'CASH'), 0),
     'payments_total', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id), 0),
     'cash', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'Cash'), 0),
     'qris', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'QRIS'), 0),
