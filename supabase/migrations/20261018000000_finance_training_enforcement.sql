@@ -1023,6 +1023,7 @@ BEGIN
        s.opened_by <> auth.uid()
        AND NOT public.finance_is_owner_or_supervisor(auth.uid())
        AND NOT public.has_role(auth.uid(), 'owner')
+       AND NOT public.finance_training_context_matches_session(auth.uid(), _session_id)
      ) THEN
     RAISE EXCEPTION 'Akses sesi ditolak';
   END IF;
