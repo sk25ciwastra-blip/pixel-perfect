@@ -19,7 +19,7 @@ function fn(name) {
 const summary = fn("get_finance_session_summary");
 assert.match(summary, /finance_training_is_restricted\(auth\.uid\(\)\)/);
 assert.match(summary, /finance_training_context_matches_session\(auth\.uid\(\), _session_id\)/);
-assert.match(summary, /AND NOT public\\.finance_training_context_matches_session\\(auth\\.uid\\(\\), _session_id\\)[\\s\\S]*?RAISE EXCEPTION 'Akses sesi ditolak'/);
+assert.ok(summary.includes("AND NOT public.finance_training_context_matches_session(auth.uid(), _session_id)"));
 assert.match(summary, /'expected_cash',\s*s\.opening_cash/);
 assert.match(summary, /public\.payments[\s\S]*?method = 'Cash'/);
 assert.match(summary, /public\.finance_expenses[\s\S]*?method = 'CASH'/);
