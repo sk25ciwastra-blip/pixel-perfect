@@ -29,14 +29,13 @@ function row(label: string, value: unknown) {
     '<div class="row"><span>' + esc(label) + "</span><strong>" + esc(value) + "</strong></div>"
   );
 }
-function paymentRow(payment: JsonRecord) {
+function paymentRow(payment: JsonRecord, showMethod = true) {
   const kind =
     payment.kind === "dp" ? "Deposit" : payment.kind === "payment" ? "Payment" : payment.kind;
   return (
     '<div class="payment"><span>' +
     esc(kind) +
-    " · " +
-    esc(payment.method) +
+    (showMethod && payment.method ? " · " + esc(payment.method) : "") +
     "</span><strong>" +
     money(payment.amount) +
     "</strong><small>" +
@@ -86,7 +85,7 @@ export function receiptHtml(data: ReceiptPrintData) {
       "Extra Guest",
       String(s.extra_guest_count) + " × " + money(50000) + " = " + money(s.extra_guest_charge),
     );
-  if (hasHistory) html += "<h2>PAYMENT HISTORY</h2>" + history.map(paymentRow).join("");
+  if (hasHistory) html += "<h2>PAYMENT HISTORY</h2>" + history.map((payment: JsonRecord) => paymentRow(payment, false)).join("");
   html +=
     "<h2>" +
     (hasHistory ? "CURRENT PAYMENT" : "PAYMENT") +
@@ -105,9 +104,18 @@ export function receiptHtml(data: ReceiptPrintData) {
     "</small></footer></article>";
   return html;
 }
-export function openReceiptPrintPreview(receipts: ReceiptPrintData[]) {
-  const popup = window.open("", "_blank", "noopener,noreferrer,width=420,height=720");
+export function openReceiptPrintWindow() {
+  // Open synchronously on the user click, before any asynchronous RPC.
+  // A blocked popup must not consume a receipt print-request number.
+  const popup = window.open("", "_blank", "width=420,height=720");
   if (!popup) throw new Error("Print preview was blocked by the browser");
+  popup.opener = null;
+  popup.document.write("<!doctype html><title>Preparing receipt…</title><p>Preparing receipt…</p>");
+  popup.document.close();
+  return popup;
+}
+export function openReceiptPrintPreview(receipts: ReceiptPrintData[], popup: Window) {
+  if (popup.closed) throw new Error("Print preview was closed before it was ready");
   const css =
     "@page{size:58mm auto;margin:0}*{box-sizing:border-box}body{margin:0;background:#fff;color:#000;font:10px/1.3 Arial,sans-serif}.receipt{width:58mm;max-width:58mm;padding:3mm 2.5mm;page-break-after:always}.receipt:last-child{page-break-after:auto}header{text-align:center;display:grid;gap:1px}header strong{font-size:13px}header span{font-size:9px}.copy{margin-top:2mm;font-size:11px}.row{display:flex;justify-content:space-between;gap:6px;margin:1.5mm 0}.row span{min-width:0}.row strong{text-align:right;overflow-wrap:anywhere}h1,h2{font-size:10px;margin:2mm 0 1mm}h1{text-align:center}hr{border:0;border-top:1px dashed #000;margin:2mm 0}.payment{display:grid;grid-template-columns:1fr auto;gap:1px;margin:2mm 0}.payment small{grid-column:1/3;font-size:8px}footer{text-align:center;margin-top:3mm}";
   popup.document.write(
