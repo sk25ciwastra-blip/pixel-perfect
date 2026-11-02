@@ -398,24 +398,24 @@ Terima kasih.`;
                       <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-xs font-medium text-primary hover:underline">
                         {booking.transaction_number}
                       </button>
-                      <p className="flex items-center gap-2 truncate text-sm uppercase"><User className="size-3.5 shrink-0" />{guest?.full_name ?? '—'}</p>
-                      <p className="flex items-center gap-2 truncate text-sm"><Phone className="size-3.5 shrink-0" />{guest?.phone ?? '—'}</p>
+                      <p className="flex items-center gap-1.5 truncate text-xs uppercase"><User className="size-3 shrink-0" />{guest?.full_name ?? '—'}</p>
+                      <p className="flex items-center gap-1.5 truncate text-xs"><Phone className="size-3 shrink-0" />{guest?.phone ?? '—'}</p>
                     </div>
                   </div>
 
                   {[['Check-in', booking.scheduled_check_in], ['Check-out', booking.scheduled_check_out]].map(([label, v]) => (
-                    <div key={label} className="space-y-1 border-gold/30 lg:border-l lg:px-5">
-                      <p className="flex items-center gap-2 text-sm"><CalendarDays className="size-4 shrink-0" /><span><span className="block text-[11px] text-muted-foreground">{label}</span><span className="font-semibold">{tgl(v)}</span></span></p>
-                      <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="size-4 shrink-0" />{jam(v)}</p>
+                    <div key={label} className="space-y-0.5 border-gold/30 lg:border-l lg:px-4">
+                      <p className="flex items-center gap-1.5 text-xs"><CalendarDays className="size-3.5 shrink-0" /><span><span className="block text-[10px] leading-tight text-muted-foreground">{label}</span><span className="text-xs font-semibold">{tgl(v)}</span></span></p>
+                      <p className="flex items-center gap-1.5 text-xs font-semibold"><Clock className="size-3.5 shrink-0" />{jam(v)}</p>
                     </div>
                   ))}
 
-                  <div className="space-y-1 border-gold/30 lg:border-l lg:px-5">
-                    <span className={`inline-block rounded-full px-3 py-0.5 text-[11px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
-                    <p className="flex items-center gap-2 text-sm"><User className="size-3.5" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
+                  <div className="space-y-1 border-gold/30 lg:border-l lg:px-4">
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
+                    <p className="flex items-center gap-1.5 text-xs"><User className="size-3" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-end gap-2 border-gold/30 lg:border-l lg:pl-4">
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 border-gold/30 lg:border-l lg:pl-3">
                     {booking.status === 'booking' && !readOnly && (
                       <>
                         <button type="button" className={tombolOutline} onClick={hubungi}><Phone className="size-4" />Hubungi</button>
