@@ -343,13 +343,13 @@ function judulTanggal(value: string) {
     <div className="space-y-5">
       {groups.map((group) => (
         <section key={group.dateKey}>
-          <p className="mb-2 flex items-center gap-2 text-[15px] font-bold capitalize">
-            <CalendarDays className="size-4 text-foreground/80" />
+          <p className="mb-2 flex items-center gap-2 text-sm font-bold capitalize">
+            <CalendarDays className="size-3.5 text-foreground/80" />
             {judulTanggal(group.dateValue)} · {group.bookings.length}{' '}
             {group.bookings.length === 1 ? 'Room' : 'Rooms'}
           </p>
 
-          <ul className="divide-y divide-gold/25 overflow-hidden rounded-2xl border border-gold/30 bg-[#F7F6F3] text-foreground shadow-[0_10px_30px_-18px_var(--gold)] [--foreground:oklch(0.22_0.02_75)] [--muted-foreground:oklch(0.4_0.02_75)] [--primary:oklch(0.55_0.11_70)] [--gold:oklch(0.6_0.1_78)] [--gold-light:oklch(0.5_0.1_78)]">
+          <ul className="divide-y divide-gold/25 overflow-hidden rounded-xl border border-gold/30 bg-[#F7F6F3] text-foreground shadow-[0_10px_30px_-18px_var(--gold)] [--foreground:oklch(0.22_0.02_75)] [--muted-foreground:oklch(0.4_0.02_75)] [--primary:oklch(0.55_0.11_70)] [--gold:oklch(0.6_0.1_78)] [--gold-light:oklch(0.5_0.1_78)]">
             {group.bookings.map((booking) => {
               const guest = guests.rows.find((item) => item.id === booking.guest_id);
               const room = rooms.rows.find((item) => item.id === booking.room_id);
@@ -383,46 +383,46 @@ Terima kasih.`;
                 openWhatsApp(guest.phone, pesan);
               };
 
-              const tombolOutline = 'inline-flex h-11 items-center gap-2 rounded-lg border border-foreground/20 bg-white px-4 text-sm font-semibold text-foreground shadow-sm transition hover:border-gold';
-              const tombolEmas = 'inline-flex h-11 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[oklch(0.72_0.11_75)] to-[oklch(0.58_0.11_70)] px-5 text-sm font-semibold text-[oklch(0.98_0.01_80)] shadow transition hover:brightness-105';
+              const tombolOutline = 'inline-flex h-8 items-center gap-1.5 rounded-lg border border-foreground/20 bg-white px-3 text-xs font-semibold text-foreground shadow-sm transition hover:border-gold';
+              const tombolEmas = 'inline-flex h-8 items-center gap-1 rounded-lg bg-gradient-to-b from-[oklch(0.72_0.11_75)] to-[oklch(0.58_0.11_70)] px-3 text-xs font-semibold text-[oklch(0.98_0.01_80)] shadow transition hover:brightness-105';
 
               return (
-                <li key={booking.id} className="grid grid-cols-1 items-center gap-4 px-4 py-3 lg:grid-cols-[minmax(0,1.7fr)_auto_auto_auto_auto] lg:gap-0">
-                  <div className="flex min-w-0 items-center gap-4 lg:pr-4">
-                    <div className="flex h-[76px] w-28 shrink-0 flex-col items-center justify-center rounded-xl bg-[oklch(0.93_0.04_80)] text-center">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-[oklch(0.45_0.08_70)]">{roomType?.name ?? 'ROOM'}</p>
-                      <p className="font-serif text-3xl font-semibold leading-tight text-[oklch(0.5_0.1_70)]">{room?.room_number ?? '-'}</p>
+                <li key={booking.id} className="grid grid-cols-1 items-center gap-3 px-3 py-2.5 lg:grid-cols-[minmax(0,1.7fr)_auto_auto_auto_auto] lg:gap-0">
+                  <div className="flex min-w-0 items-center gap-3 lg:pr-3">
+                    <div className="flex h-12 w-[72px] shrink-0 flex-col items-center justify-center rounded-lg bg-[oklch(0.93_0.04_80)] text-center">
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-[oklch(0.45_0.08_70)]">{roomType?.name ?? 'ROOM'}</p>
+                      <p className="font-serif text-lg font-semibold leading-tight text-[oklch(0.5_0.1_70)]">{room?.room_number ?? '-'}</p>
                     </div>
                     <div className="min-w-0 space-y-0.5">
-                      <p className="truncate text-base font-bold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
-                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-sm font-medium text-primary hover:underline">
+                      <p className="truncate text-sm font-bold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
+                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-xs font-medium text-primary hover:underline">
                         {booking.transaction_number}
                       </button>
-                      <p className="flex items-center gap-2 truncate text-sm uppercase"><User className="size-3.5 shrink-0" />{guest?.full_name ?? '—'}</p>
-                      <p className="flex items-center gap-2 truncate text-sm"><Phone className="size-3.5 shrink-0" />{guest?.phone ?? '—'}</p>
+                      <p className="flex items-center gap-1.5 truncate text-xs uppercase"><User className="size-3 shrink-0" />{guest?.full_name ?? '—'}</p>
+                      <p className="flex items-center gap-1.5 truncate text-xs"><Phone className="size-3 shrink-0" />{guest?.phone ?? '—'}</p>
                     </div>
                   </div>
 
                   {[['Check-in', booking.scheduled_check_in], ['Check-out', booking.scheduled_check_out]].map(([label, v]) => (
-                    <div key={label} className="space-y-1 border-gold/30 lg:border-l lg:px-5">
-                      <p className="flex items-center gap-2 text-sm"><CalendarDays className="size-4 shrink-0" /><span><span className="block text-[11px] text-muted-foreground">{label}</span><span className="font-semibold">{tgl(v)}</span></span></p>
-                      <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="size-4 shrink-0" />{jam(v)}</p>
+                    <div key={label} className="space-y-0.5 border-gold/30 lg:border-l lg:px-4">
+                      <p className="flex items-center gap-1.5 text-xs"><CalendarDays className="size-3.5 shrink-0" /><span><span className="block text-[10px] leading-tight text-muted-foreground">{label}</span><span className="text-xs font-semibold">{tgl(v)}</span></span></p>
+                      <p className="flex items-center gap-1.5 text-xs font-semibold"><Clock className="size-3.5 shrink-0" />{jam(v)}</p>
                     </div>
                   ))}
 
-                  <div className="space-y-1 border-gold/30 lg:border-l lg:px-5">
-                    <span className={`inline-block rounded-full px-3 py-0.5 text-[11px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
-                    <p className="flex items-center gap-2 text-sm"><User className="size-3.5" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
+                  <div className="space-y-1 border-gold/30 lg:border-l lg:px-4">
+                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
+                    <p className="flex items-center gap-1.5 text-xs"><User className="size-3" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-end gap-2 border-gold/30 lg:border-l lg:pl-4">
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 border-gold/30 lg:border-l lg:pl-3">
                     {booking.status === 'booking' && !readOnly && (
                       <>
-                        <button type="button" className={tombolOutline} onClick={hubungi}><Phone className="size-4" />Hubungi</button>
-                        <button type="button" className={tombolOutline} onClick={() => openCheckIn(booking.id)}><Circle className="size-4" />Check-in</button>
+                        <button type="button" className={tombolOutline} onClick={hubungi}><Phone className="size-3.5" />Hubungi</button>
+                        <button type="button" className={tombolOutline} onClick={() => openCheckIn(booking.id)}><Circle className="size-3.5" />Check-in</button>
                       </>
                     )}
-                    <button type="button" className={tombolEmas} onClick={() => setDetailBookingId(booking.id)}><ChevronRight className="size-4" />Lihat Detail</button>
+                    <button type="button" className={tombolEmas} onClick={() => setDetailBookingId(booking.id)}><ChevronRight className="size-3.5" />Lihat Detail</button>
                   </div>
                 </li>
               );
@@ -477,9 +477,9 @@ Terima kasih.`;
         <p role="alert">{payments.error}</p>
       )}
 
-      <div className="mb-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_240px]">
-        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
-          <Search className="size-4 shrink-0 text-gold" />
+      <div className="mb-4 grid gap-2.5 md:grid-cols-[minmax(0,1fr)_200px_220px]">
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <Search className="size-3.5 shrink-0 text-gold" />
           <input
             value={cari}
             onChange={(e) => setCari(e.target.value)}
@@ -487,8 +487,8 @@ Terima kasih.`;
             className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </label>
-        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
-          <CalendarDays className="size-4 shrink-0 text-gold" />
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <CalendarDays className="size-3.5 shrink-0 text-gold" />
           <input
             type="date"
             aria-label="Pilih Tanggal"
@@ -497,8 +497,8 @@ Terima kasih.`;
             className="h-full w-full bg-transparent text-sm outline-none [color-scheme:dark]"
           />
         </label>
-        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
-          <ArrowUpDown className="size-4 shrink-0 text-gold" />
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <ArrowUpDown className="size-3.5 shrink-0 text-gold" />
           <select
             aria-label="Urutkan"
             value={urut}
@@ -716,9 +716,9 @@ Terima kasih.`;
 
 function JudulJumlah({ label, jumlah }: { label: string; jumlah: number }) {
   return (
-    <div className="mb-3 flex items-center gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-gold">{label}</h2>
-      <span className="grid h-6 min-w-6 place-items-center rounded-full bg-gold px-2 text-xs font-bold text-navy-deep">{jumlah}</span>
+    <div className="mb-2.5 flex items-center gap-2.5">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{label}</h2>
+      <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1.5 text-[11px] font-bold text-navy-deep">{jumlah}</span>
       <span className="h-px flex-1 bg-gradient-to-r from-gold/40 to-transparent" aria-hidden="true" />
     </div>
   );
