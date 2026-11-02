@@ -178,6 +178,8 @@ try {
   Invoke-LoggedPsql '31-finance-compatibility' (Join-Path $migrationDir $financeCompatibility)
   Invoke-LoggedPsql '32-finance-supervisor-alignment' (Join-Path $migrationDir $supervisorAlignment)
   Invoke-LoggedPsql '33-booking-reference-read-privileges' (Join-Path $migrationDir $referencePrivileges)
+  # Explicitly apply Owner-final Standard P4 correction to isolated lab only.
+  Invoke-LoggedPsql '34-owner-final-standard-p4' (Join-Path $migrationDir '20261103000000_owner_final_standard_p4_prices.sql')
 
   $testSql = @'
 \set ON_ERROR_STOP on
