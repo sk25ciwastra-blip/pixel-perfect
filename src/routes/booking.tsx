@@ -496,23 +496,48 @@ Terima kasih.`;
         <p role="alert">{payments.error}</p>
       )}
 
-      <Judul>Akan Datang</Judul>
-
-      {baris(
-        transactions.rows.filter(
-          (booking) => booking.status === 'booking' && cocokJadwal(booking),
-        ),
-      )}
-
-      <div className="mt-8">
-        <Judul>Riwayat</Judul>
+      <div className="mb-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_240px]">
+        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
+          <Search className="size-4 shrink-0 text-gold" />
+          <input
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+            placeholder="Cari nomor transaksi, nama tamu, atau nomor kamar..."
+            className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </label>
+        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
+          <CalendarDays className="size-4 shrink-0 text-gold" />
+          <input
+            type="date"
+            aria-label="Pilih Tanggal"
+            value={tanggalPilih}
+            onChange={(e) => setTanggalPilih(e.target.value)}
+            className="h-full w-full bg-transparent text-sm outline-none [color-scheme:dark]"
+          />
+        </label>
+        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
+          <ArrowUpDown className="size-4 shrink-0 text-gold" />
+          <select
+            aria-label="Urutkan"
+            value={urut}
+            onChange={(e) => setUrut(e.target.value as 'dekat' | 'jauh')}
+            className="h-full w-full bg-transparent text-sm outline-none [&>option]:bg-navy-deep"
+          >
+            <option value="dekat">Urutkan: Tanggal (Terdekat)</option>
+            <option value="jauh">Urutkan: Tanggal (Terjauh)</option>
+          </select>
+        </label>
       </div>
 
-      {baris(
-        transactions.rows.filter(
-          (booking) => booking.status !== 'booking' && cocokJadwal(booking),
-        ),
-      )}
+      <JudulJumlah label="Akan Datang" jumlah={akanDatang.length} />
+      {baris(akanDatang)}
+
+      <div className="mt-8">
+        <JudulJumlah label="Riwayat" jumlah={riwayat.length} />
+      </div>
+      {baris(riwayat)}
+
 
       {open && !readOnly && (
         <FormulirPemesanan
