@@ -1,9 +1,15 @@
 [CmdletBinding()]
-param()
+param([string]$PostgresBin = '')
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
-$pgBin = Join-Path $repo '.tools\postgresql-test\runtime\pgsql\bin'
+$pgBin = if ($PostgresBin) { $PostgresBin } else { Join-Path $repo '.tools\postgresql-test\runtime\pgsql\bin' }
+$requiredTools = @('initdb.exe', 'pg_ctl.exe', 'pg_isready.exe', 'psql.exe', 'createdb.exe', 'postgres.exe')
+foreach ($tool in $requiredTools) {
+  if (-not (Test-Path -LiteralPath (Join-Path $pgBin $tool) -PathType Leaf)) {
+    throw "PostgreSQL executable missing: $tool in '$pgBin'. Supply -PostgresBin with the PostgreSQL 17.11 bin folder."
+  }
+}
 $drizzleDir = Join-Path $repo 'drizzle\migrations'
 $migrationDir = Join-Path $repo 'supabase\migrations'
 $port = 55433
