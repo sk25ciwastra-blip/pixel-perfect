@@ -1,54 +1,40 @@
-# Konsultasi Redesain Total Identitas Visual — Baturaden 25 Homestay
+# Integrasi Extra Guest dan Receipt 58 mm (OFF secara default)
 
-## 1. Apakah redesain total aman?
-Bisa, asalkan yang diubah hanya tampilan: warna, huruf, tata letak, kartu, sidebar, ikon, form/modal, dan versi HP. Data live, aturan bisnis, peran/izin, penomoran, transaksi, booking/check-in/check-out, keuangan, training, housekeeping, harga, dan laporan tetap tidak disentuh. Tidak ada perubahan database atau backend.
+## Kondisi saat ini (sudah dicek)
+- `src/components/receipt-actions.tsx` dan `src/lib/receipt-print.ts` belum ada di source Lovable.
+- `formulir-pemesanan.tsx` memanggil `create_reservation` tanpa `_guest_count`; tipe database hanya mengenal versi tanpa jumlah tamu.
+- Extra Guest dan split payment saat ini diblokir di formulir (desain disetujui tetap tampil).
+- Migrasi kategori/extra guest ada di `supabase/pending/` dan belum diterapkan.
 
-Batasannya:
-- Struktur informasi Booking yang sudah disetujui tetap sama (kotak kamar di kiri, identitas/TRX di tengah, tindakan di kanan, pengelompokan). Yang boleh diubah hanya tampilannya.
-- Isi popup aksi cepat tetap sama; hanya warna dan huruf yang mengikuti tema baru, tanpa menyusun ulang isinya.
-- Isi Dashboard yang wajib tetap ada: tabel Kamar Terisi dengan hitung mundur, Transaksi Terbaru, diagram Cash/QRIS/Transfer/Pengeluaran, grafik dengan skala Owner, dan target omzet.
-- Kamar tetap tanpa foto dan tanpa harga.
-- Halaman yang perlu login hanya bisa saya potret jika sesi Owner disetujui. Jika tidak, saya akan menyampaikannya dengan jujur.
+## Prinsip
+- Desain Lovable menang: file UI tidak ditimpa dari GitHub; hanya disisipkan potongan kecil.
+- Semua fitur baru OFF bila sakelar mati; saat OFF, tampilan dan perilaku identik dengan sekarang (tidak ada tombol baru yang tampil).
+- Tidak menyentuh harga/katalog, RLS, login, keuangan, database, migrasi, secrets, publish/deploy.
 
-## 2. Pemilihan tiga konsep bawaan
-Fitur pemilihan tiga konsep di awal pembuatan proyek tidak tersedia untuk proyek yang sudah berjalan. Ada dua cara pengganti:
-- **A. Hemat:** Owner memilih dari deskripsi tiga arah desain di bawah. Ini tidak memerlukan pembangunan apa pun dan hanya memakai kredit pesan ini.
-- **B. Draf paralel:** Lovable bisa membuat **draf**, yaitu salinan proyek terpisah yang tidak mengubah proyek utama. Saya bisa membuat tiga draf, masing-masing hanya berisi **halaman Masuk + Dashboard** dengan satu arah desain. Owner melihatnya lewat tombol draf di kiri atas, di sebelah nama proyek (di HP: menu `...` kanan bawah → Drafts). Setelah itu Owner menekan **Accept** pada draf yang dipilih. Biaya kredit kira-kira tiga kali satu putaran pembangunan. Jumlah pastinya tidak bisa saya perkirakan karena tergantung tingkat kerumitan.
+## File yang diubah
+1. **Baru `src/lib/fitur.ts`** — sakelar tunggal, nilai default `false`:
+   - `extraGuest` dan `receipt58mm`, dibaca dari `import.meta.env.VITE_FITUR_EXTRA_GUEST === 'aktif'` / `VITE_FITUR_RECEIPT === 'aktif'`; selain nilai persis itu = OFF.
+2. **Baru `src/lib/receipt-print.ts`** — disalin dari GitHub apa adanya (logika format 58 mm saja, tanpa UI).
+3. **Baru `src/components/receipt-actions.tsx`** — disalin dari GitHub, lalu dibungkus: bila `receipt58mm` OFF, komponen mengembalikan `null`. Pemanggilan RPC (`issue_payment_receipt`, `request_receipt_print`, `record_receipt_print_result`) memakai pemanggil longgar yang sudah dipakai formulir (`rpc(...)`), sehingga tipe database tidak perlu diubah.
+4. **`src/components/detail-transaksi.tsx`** — patch kecil sesuai petunjuk sebelumnya: prop opsional `aksi` pada `Seksi`, tombol Print History di judul Riwayat Pembayaran, dan sel/kolom Print Receipt per baris — kolom tambahan hanya dirender bila sakelar ON. Saat OFF, tabel tetap 6 kolom persis.
+5. **`src/components/formulir-pemesanan.tsx`** — patch kecil: `_guest_count` hanya dikirim bila `extraGuest` ON; blokir Extra Guest yang ada sekarang tetap berlaku saat OFF. Hitungan Rp50.000/tamu di atas 2 diambil dari GitHub hanya untuk mode ON, tidak mengubah harga paket.
 
-## 3. Tiga arah identitas visual
+Tidak diubah: `booking.tsx`, Dashboard, Keuangan, sidebar, `types.ts`, migrasi, kebijakan akses.
 
-**Opsi 1 — "Malam Keemasan Modern" (penyempurnaan arah sekarang)**
-Latar hitam pekat, emas champagne yang dipakai lebih hemat, huruf serif elegan untuk judul, dan banyak ruang kosong. Panorama kota hanya dipakai sebagai lapisan halus. Kesan: hotel bintang lima di malam hari. Risiko terkecil karena paling dekat dengan tampilan yang sudah disetujui.
+## Menghindari regresi tampilan
+- Bandingkan diff GitHub vs Lovable per file; ambil hanya hunk fungsi, buang hunk className/struktur.
+- Screenshot Detail Transaksi dan formulir Check-in/Booking sebelum dan sesudah (desktop 1440px, HP 390px) dengan sakelar OFF — harus identik.
+- Satu kali uji lokal dengan sakelar ON untuk memastikan tombol rapi (ukuran kecil, outline emas) tanpa menekan aksi ke database.
 
-**Opsi 2 — "Batu & Hutan Baturaden" (alam pegunungan mewah)**
-Latar arang hangat dengan aksen hijau lumut tua dan perunggu, sentuhan tekstur batu, dan sudut yang lebih membulat. Kesan: resort pegunungan yang tenang dan sesuai identitas Baturaden. Warna hijau, merah, dan amber untuk status tetap dipertahankan dan dibuat lebih mudah dibedakan dari aksen.
+## Aktivasi (nanti, butuh persetujuan Owner)
+1. Backend menerapkan RPC 13 parameter dan tiga RPC receipt (di luar rencana ini).
+2. Verifikasi RPC ada di database.
+3. Owner menyetujui, lalu sakelar diubah ke `aktif`.
 
-**Opsi 3 — "Meja Konsierge" (terang, rapi, fokus kerja)**
-Latar gading dan krem, aksen emas tua, garis tipis, kartu datar dengan kontras tinggi, dan tabel yang padat. Kesan: buku tamu hotel klasik versi digital. Paling nyaman dibaca di siang hari dan di HP. Opsi ini meninggalkan tema hitam, sehingga aturan tema "hitam + champagne gold" harus dicabut oleh Owner.
+## Uji
+- Typecheck dan build harus lulus.
+- Tes yang ada (`bunx vitest run`) lulus; tambah tes kecil untuk `fitur.ts`: tanpa variabel = OFF, nilai selain `aktif` = OFF.
+- Tes biaya extra guest: 2 tamu = Rp0, 3 tamu = Rp50.000, 4 tamu = Rp100.000.
 
-| | Opsi 1 | Opsi 2 | Opsi 3 |
-|---|---|---|---|
-| Perubahan dari sekarang | Kecil–sedang | Besar | Sangat besar |
-| Keterbacaan siang/HP | Baik | Baik | Terbaik |
-| Kesan mewah | Tinggi | Tinggi, khas lokal | Klasik |
-| Perlu mencabut aturan tema | Tidak | Sebagian (aksen emas → perunggu) | Ya |
-
-## 4. Tahapan paling hemat kredit
-1. Owner memilih satu opsi (cara A), atau memilih cara B dengan tiga draf Masuk + Dashboard.
-2. **Tahap 1:** fondasi tema (warna, huruf, kartu, tombol, form/modal) + sidebar + halaman Masuk. **Titik kontrol Owner.**
-3. **Tahap 2:** Dashboard. **Titik kontrol Owner.**
-4. **Tahap 3:** Kamar (empat kartu ringkasan status di Semua Kamar dihilangkan, submenu tetap), Booking, Daftar Transaksi, Daftar Tamu.
-5. **Tahap 4:** Housekeeping, Keuangan, Laporan Operasional, Tim & Akses, serta tampilan detail. Pemeriksaan akhir di desktop dan HP.
-
-Karena tahap 1 menyiapkan fondasi yang dipakai ulang, tahap berikutnya jauh lebih murah.
-
-## 5. Yang membutuhkan persetujuan Owner
-- Pilihan opsi desain, dan cara A atau B.
-- Mencabut atau mengubah aturan tema hitam + emas (wajib untuk Opsi 3, sebagian untuk Opsi 2).
-- Mengizinkan popup aksi cepat ikut berganti warna dan huruf tanpa menyusun ulang isinya.
-- Mengizinkan tampilan Booking berubah tanpa mengubah strukturnya.
-- Menyetujui sesi Owner untuk pemeriksaan visual halaman yang perlu login.
-- Persetujuan di setiap titik kontrol sebelum lanjut ke tahap berikutnya.
-
-## Catatan teknis
-Perubahan hanya di `src/styles.css` (token), `src/components/kerangka.tsx`, komponen tampilan, dan berkas tampilan di `src/routes/*`. Data live dan logika tetap dari `data-live.ts` dan fungsi yang ada. Opsi yang dipilih dan keputusan penghapusan kartu ringkasan Kamar akan disimpan ke memori proyek saat implementasi.
+## Catatan
+Isi file GitHub belum bisa saya baca dari sini; saat eksekusi, Anda perlu menempelkan isi dua file receipt dan diff formulir/detail, atau menyambungkan repositori.
