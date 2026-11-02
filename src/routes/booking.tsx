@@ -3,8 +3,8 @@ import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
-import { Plus, X } from 'lucide-react';
-import { Kerangka, Judul, Daftar } from '@/components/kerangka';
+import { Plus, X, Search, CalendarDays, ArrowUpDown, User, Phone, Clock, Circle, ChevronRight } from 'lucide-react';
+import { Kerangka } from '@/components/kerangka';
 import { FormulirPemesanan } from '@/components/formulir-pemesanan';
 import { Button } from '@/components/ui/button';
 import { LencanaTeks } from '@/components/status-kamar';
@@ -61,6 +61,9 @@ function Halaman() {
     if (bagian === 'besok') return d === kunciWib(1);
     return d >= kunciWib(2);
   };
+  const [cari, setCari] = useState('');
+  const [tanggalPilih, setTanggalPilih] = useState('');
+  const [urut, setUrut] = useState<'dekat' | 'jauh'>('dekat');
   const { posisiKode } = usePeran();
   const readOnly = posisiKode === 'inspector';
 
@@ -300,7 +303,7 @@ function judulTanggal(value: string) {
     ).getTime();
 
     if (waktuA !== waktuB) {
-      return waktuA - waktuB;
+      return urut === 'dekat' ? waktuA - waktuB : waktuB - waktuA;
     }
 
     return a.transaction_number.localeCompare(b.transaction_number);
@@ -409,8 +412,7 @@ Terima kasih.`;
 
                   <div className="space-y-1 border-gold/30 lg:border-l lg:px-5">
                     <span className={`inline-block rounded-full px-3 py-0.5 text-[11px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
-                    <p className="flex items-center gap-2 text-sm"><User className="size-3.5" />{kodePaket(packageItem?.name)}{packageItem?.duration_hours ? ` · ${packageItem.duration_hours} Jam` : ''}</p>
-                    <p className="flex items-center gap-2 text-sm"><Users className="size-3.5" />{booking.guest_count ?? 2} Tamu</p>
+                    <p className="flex items-center gap-2 text-sm"><User className="size-3.5" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
                   </div>
 
                   <div className="flex flex-wrap items-center justify-end gap-2 border-gold/30 lg:border-l lg:pl-4">
@@ -431,6 +433,17 @@ Terima kasih.`;
     </div>
   );
 }
+
+  const cocokFilter = (t: (typeof transactions.rows)[number]) => {
+    if (tanggalPilih && tanggalWib(t.scheduled_check_in ?? t.created_at) !== tanggalPilih) return false;
+    const q = cari.trim().toLowerCase();
+    if (!q) return true;
+    const g = guests.rows.find((x) => x.id === t.guest_id);
+    const r = rooms.rows.find((x) => x.id === t.room_id);
+    return [t.transaction_number, g?.full_name, g?.phone, r?.room_number].some((v) => String(v ?? '').toLowerCase().includes(q));
+  };
+  const akanDatang = transactions.rows.filter((b) => b.status === 'booking' && cocokJadwal(b) && cocokFilter(b));
+  const riwayat = transactions.rows.filter((b) => b.status !== 'booking' && cocokJadwal(b) && cocokFilter(b));
 
   return (
   <>
@@ -699,4 +712,14 @@ Terima kasih.`;
       </Kerangka>
   </>
 );
+}
+
+function JudulJumlah({ label, jumlah }: { label: string; jumlah: number }) {
+  return (
+    <div className="mb-3 flex items-center gap-3">
+      <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-gold">{label}</h2>
+      <span className="grid h-6 min-w-6 place-items-center rounded-full bg-gold px-2 text-xs font-bold text-navy-deep">{jumlah}</span>
+      <span className="h-px flex-1 bg-gradient-to-r from-gold/40 to-transparent" aria-hidden="true" />
+    </div>
+  );
 }
