@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$PostgresBin = '')
+param([string]$PostgresBin = '', [string]$TestAssetsDir = '')
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
@@ -12,6 +12,13 @@ foreach ($tool in $requiredTools) {
 }
 $drizzleDir = Join-Path $repo 'drizzle\migrations'
 $migrationDir = Join-Path $repo 'supabase\migrations'
+$assetsDir = if ($TestAssetsDir) { $TestAssetsDir } else { Join-Path $repo '.tools\postgresql-test' }
+$requiredAssets = @('bootstrap-supabase-stubs.sql', 'seed-master-data.sql', 'seed-receptionists.sql')
+foreach ($asset in $requiredAssets) {
+  if (-not (Test-Path -LiteralPath (Join-Path $assetsDir $asset) -PathType Leaf)) {
+    throw "Finance150 test asset missing: $asset in '$assetsDir'. Supply -TestAssetsDir with the existing PostgreSQL test fixture folder."
+  }
+}
 $port = 55433
 $hostAddress = '127.0.0.1'
 $dbName = 'baturaden25_finance150_test'
@@ -136,7 +143,7 @@ try {
   Add-Record '03-readiness' 'PASS' '' "log=$readyLog"
   Invoke-LoggedTool '04-create-database' $Createdb @('-h', $hostAddress, '-p', $port, '-U', 'postgres', $dbName)
 
-  $bootstrap = Join-Path $repo '.tools\postgresql-test\bootstrap-supabase-stubs.sql'
+  $bootstrap = Join-Path $assetsDir 'bootstrap-supabase-stubs.sql'
   Invoke-LoggedPsql '05-bootstrap-supabase-stubs' $bootstrap
 
   $drizzleBaseline = Get-ChildItem -LiteralPath $drizzleDir -Filter '*.sql' |
@@ -162,8 +169,8 @@ try {
     Invoke-LoggedPsql ("10-baseline-" + $migration.BaseName) $migration.FullName
   }
 
-  Invoke-LoggedPsql '20-seed-master-data' (Join-Path $repo '.tools\postgresql-test\seed-master-data.sql')
-  Invoke-LoggedPsql '21-seed-receptionists' (Join-Path $repo '.tools\postgresql-test\seed-receptionists.sql')
+  Invoke-LoggedPsql '20-seed-master-data' (Join-Path $assetsDir 'seed-master-data.sql')
+  Invoke-LoggedPsql '21-seed-receptionists' (Join-Path $assetsDir 'seed-receptionists.sql')
   foreach ($migration in $postSeedBaseline) {
     Invoke-LoggedPsql ("11-baseline-post-seed-" + $migration.BaseName) $migration.FullName
   }
