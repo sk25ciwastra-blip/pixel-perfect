@@ -332,92 +332,44 @@ function judulTanggal(value: string) {
     return hasil;
   }, []);
 
+  if (groups.length === 0) {
+    return <p className="rounded-xl border border-gold/15 px-4 py-6 text-center text-sm text-muted-foreground">Tidak ada data.</p>;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {groups.map((group) => (
         <section key={group.dateKey}>
-          <p className="mb-2 text-sm font-bold capitalize">
-  {judulTanggal(group.dateValue)} · {group.bookings.length}{' '}
-{group.bookings.length === 1 ? 'Room' : 'Rooms'}
-</p>
+          <p className="mb-2 flex items-center gap-2 text-[15px] font-bold capitalize">
+            <CalendarDays className="size-4 text-foreground/80" />
+            {judulTanggal(group.dateValue)} · {group.bookings.length}{' '}
+            {group.bookings.length === 1 ? 'Room' : 'Rooms'}
+          </p>
 
-          <Daftar>
-            {group.bookings.map((booking, index) => {
-              const paid = totalPaid(booking.id);
-              const total = Number(booking.price_snapshot ?? 0);
-              const remaining = Math.max(total - paid, 0);
+          <ul className="divide-y divide-gold/25 overflow-hidden rounded-2xl border border-gold/30 bg-[#F7F6F3] text-foreground shadow-[0_10px_30px_-18px_var(--gold)] [--foreground:oklch(0.22_0.02_75)] [--muted-foreground:oklch(0.4_0.02_75)] [--primary:oklch(0.55_0.11_70)] [--gold:oklch(0.6_0.1_78)] [--gold-light:oklch(0.5_0.1_78)]">
+            {group.bookings.map((booking) => {
+              const guest = guests.rows.find((item) => item.id === booking.guest_id);
+              const room = rooms.rows.find((item) => item.id === booking.room_id);
+              const roomType = roomTypes.rows.find((item) => item.id === room?.room_type_id);
+              const packageItem = packages.rows.find((item) => item.id === booking.package_id);
+              const phoneLast4 = guest?.phone ? guest.phone.replace(/\D/g, '').slice(-4) : '';
+              const tgl = (v: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(v)) : '—';
+              const jam = (v: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(v)).replace('.', ':') : '—';
+              const statusLabel = booking.status === 'booking' ? 'Akan Datang' : booking.status === 'check_in' ? 'Check-in' : booking.status === 'check_out' ? 'Selesai' : 'Dibatalkan';
+              const statusKelas = booking.status === 'booking'
+                ? 'bg-[oklch(0.86_0.06_240)] text-[oklch(0.35_0.1_250)]'
+                : booking.status === 'check_out' || booking.status === 'check_in'
+                  ? 'bg-[oklch(0.85_0.1_150)] text-[oklch(0.33_0.1_150)]'
+                  : 'bg-[oklch(0.86_0.07_25)] text-[oklch(0.4_0.13_25)]';
 
-              const guest = guests.rows.find(
-                (item) => item.id === booking.guest_id,
-              );
-
-              const room = rooms.rows.find(
-                (item) => item.id === booking.room_id,
-              );
-
-              const roomType = roomTypes.rows.find(
-                (item) => item.id === room?.room_type_id,
-              );
-
-              const phoneLast4 = guest?.phone
-                ? guest.phone.replace(/\D/g, '').slice(-4)
-                : '';
-
-              return (
-                <li key={booking.id} className="flex items-center gap-4 px-4 py-4 transition hover:bg-gold/[0.04] sm:px-6">
-                  <div className="flex w-24 shrink-0 self-center flex-col items-center justify-center rounded-xl border border-gold/30 bg-gradient-to-b from-navy-soft to-navy-deep px-2 py-2.5 text-center shadow-[0_0_18px_-8px_var(--gold)]">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-gold/80">
-                      {roomType?.name ?? 'ROOM'}
-                    </p>
-                    <p className="mt-1 font-serif text-xl font-semibold leading-none text-gold-light">
-                      {room?.room_number ?? '-'}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold">
-                      {guest?.full_name ?? 'Tamu'}
-                      {phoneLast4 ? ` · ${phoneLast4}` : ''}
-                    </p>
-                    <button
-                      type="button"
-                      className="mt-0.5 block max-w-full truncate text-left font-mono text-sm font-semibold text-primary hover:underline"
-                      onClick={() => setDetailBookingId(booking.id)}
-                    >
-                      {booking.transaction_number}
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-  {booking.status === 'booking' && !readOnly && (
-    <>
-      <Button
-  size="sm"
-  variant="outline"
-  onClick={() => {
-    if (!guest?.phone) return;
-
-    const packageItem = packages.rows.find(
-      (item) => item.id === booking.package_id,
-    );
-
-    const formatJadwal = (value: string | null) => {
-      if (!value) return '—';
-
-      return new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Jakarta',
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      })
-        .format(new Date(value))
-        .replace(' pukul ', ', ');
-    };
-
-    const pesan = `Halo Kak ${guest.full_name}, kami dari Baturaden 25 Homestay.
+              const hubungi = () => {
+                if (!guest?.phone) return;
+                const formatJadwal = (value: string | null) => {
+                  if (!value) return '—';
+                  return new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                    .format(new Date(value)).replace(' pukul ', ', ');
+                };
+                const pesan = `Halo Kak ${guest.full_name}, kami dari Baturaden 25 Homestay.
 Kami mengingatkan reservasi Anda:
 Room: ${(roomType?.name ?? '—').toUpperCase()} · ${room?.room_number ?? '—'}
 Paket: ${kodePaket(packageItem?.name)}
@@ -425,39 +377,55 @@ Check-in: ${formatJadwal(booking.scheduled_check_in)}
 Check-out: ${formatJadwal(booking.scheduled_check_out)}
 No. Transaksi: ${booking.transaction_number}
 Terima kasih.`;
+                openWhatsApp(guest.phone, pesan);
+              };
 
-    openWhatsApp(guest.phone, pesan);
-  }}
->
-  Hubungi
-</Button>
+              const tombolOutline = 'inline-flex h-11 items-center gap-2 rounded-lg border border-foreground/20 bg-white px-4 text-sm font-semibold text-foreground shadow-sm transition hover:border-gold';
+              const tombolEmas = 'inline-flex h-11 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[oklch(0.72_0.11_75)] to-[oklch(0.58_0.11_70)] px-5 text-sm font-semibold text-[oklch(0.98_0.01_80)] shadow transition hover:brightness-105';
 
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => openCheckIn(booking.id)}
-      >
-        Check-in
-      </Button>
-    </>
-  )}
+              return (
+                <li key={booking.id} className="grid grid-cols-1 items-center gap-4 px-4 py-3 lg:grid-cols-[minmax(0,1.7fr)_auto_auto_auto_auto] lg:gap-0">
+                  <div className="flex min-w-0 items-center gap-4 lg:pr-4">
+                    <div className="flex h-[76px] w-28 shrink-0 flex-col items-center justify-center rounded-xl bg-[oklch(0.93_0.04_80)] text-center">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[oklch(0.45_0.08_70)]">{roomType?.name ?? 'ROOM'}</p>
+                      <p className="font-serif text-3xl font-semibold leading-tight text-[oklch(0.5_0.1_70)]">{room?.room_number ?? '-'}</p>
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="truncate text-base font-bold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
+                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-sm font-medium text-primary hover:underline">
+                        {booking.transaction_number}
+                      </button>
+                      <p className="flex items-center gap-2 truncate text-sm uppercase"><User className="size-3.5 shrink-0" />{guest?.full_name ?? '—'}</p>
+                      <p className="flex items-center gap-2 truncate text-sm"><Phone className="size-3.5 shrink-0" />{guest?.phone ?? '—'}</p>
+                    </div>
+                  </div>
 
-  <LencanaTeks
-    status={
-      booking.status === 'booking'
-        ? 'Booking'
-        : booking.status === 'check_in'
-          ? 'Check-in'
-          : booking.status === 'check_out'
-            ? 'Check-out'
-            : 'Dibatalkan'
-    }
-  />
-</div>
+                  {[['Check-in', booking.scheduled_check_in], ['Check-out', booking.scheduled_check_out]].map(([label, v]) => (
+                    <div key={label} className="space-y-1 border-gold/30 lg:border-l lg:px-5">
+                      <p className="flex items-center gap-2 text-sm"><CalendarDays className="size-4 shrink-0" /><span><span className="block text-[11px] text-muted-foreground">{label}</span><span className="font-semibold">{tgl(v)}</span></span></p>
+                      <p className="flex items-center gap-2 text-sm font-semibold"><Clock className="size-4 shrink-0" />{jam(v)}</p>
+                    </div>
+                  ))}
+
+                  <div className="space-y-1 border-gold/30 lg:border-l lg:px-5">
+                    <span className={`inline-block rounded-full px-3 py-0.5 text-[11px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
+                    <p className="flex items-center gap-2 text-sm"><User className="size-3.5" />{kodePaket(packageItem?.name)}{packageItem?.duration_hours ? ` · ${packageItem.duration_hours} Jam` : ''}</p>
+                    <p className="flex items-center gap-2 text-sm"><Users className="size-3.5" />{booking.guest_count ?? 2} Tamu</p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-end gap-2 border-gold/30 lg:border-l lg:pl-4">
+                    {booking.status === 'booking' && !readOnly && (
+                      <>
+                        <button type="button" className={tombolOutline} onClick={hubungi}><Phone className="size-4" />Hubungi</button>
+                        <button type="button" className={tombolOutline} onClick={() => openCheckIn(booking.id)}><Circle className="size-4" />Check-in</button>
+                      </>
+                    )}
+                    <button type="button" className={tombolEmas} onClick={() => setDetailBookingId(booking.id)}><ChevronRight className="size-4" />Lihat Detail</button>
+                  </div>
                 </li>
               );
             })}
-          </Daftar>
+          </ul>
         </section>
       ))}
     </div>
