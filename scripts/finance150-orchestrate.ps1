@@ -249,12 +249,12 @@ BEGIN
   FROM public.payments p JOIN public.transactions t ON t.id = p.transaction_id
   JOIN public.guests g ON g.id = t.guest_id
   WHERE g.phone = '081250000102';
-  -- Paket 4 Jam standard weekday price is 80000 in the official catalog.
-  IF weekday_price <> 80000 OR weekday_mode <> 'weekday' THEN
+  -- Paket 4 Jam Standard weekday price is 90000 per Owner-approved catalog.
+  IF weekday_price <> 90000 OR weekday_mode <> 'weekday' THEN
     RAISE EXCEPTION 'FAIL authoritative weekday mode/price: %, %', weekday_mode, weekday_price;
   END IF;
-  -- Paket 4 Jam standard weekend price is 90000 in the official catalog.
-  IF weekend_price <> 90000 OR weekend_mode <> 'weekend' THEN
+  -- Paket 4 Jam Standard weekend price is 100000 per Owner-approved catalog.
+  IF weekend_price <> 100000 OR weekend_mode <> 'weekend' THEN
     RAISE EXCEPTION 'FAIL authoritative weekend mode/price: %, %', weekend_mode, weekend_price;
   END IF;
   SELECT COUNT(*) INTO payment_count FROM public.payments p
