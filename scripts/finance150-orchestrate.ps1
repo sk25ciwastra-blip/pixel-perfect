@@ -249,10 +249,12 @@ BEGIN
   FROM public.payments p JOIN public.transactions t ON t.id = p.transaction_id
   JOIN public.guests g ON g.id = t.guest_id
   WHERE g.phone = '081250000102';
-  IF weekday_price <> 90000 OR weekday_mode <> 'weekday' THEN
+  -- Paket 4 Jam standard weekday price is 80000 in the official catalog.
+  IF weekday_price <> 80000 OR weekday_mode <> 'weekday' THEN
     RAISE EXCEPTION 'FAIL authoritative weekday mode/price: %, %', weekday_mode, weekday_price;
   END IF;
-  IF weekend_price <> 100000 OR weekend_mode <> 'weekend' THEN
+  -- Paket 4 Jam standard weekend price is 90000 in the official catalog.
+  IF weekend_price <> 90000 OR weekend_mode <> 'weekend' THEN
     RAISE EXCEPTION 'FAIL authoritative weekend mode/price: %, %', weekend_mode, weekend_price;
   END IF;
   SELECT COUNT(*) INTO payment_count FROM public.payments p
@@ -698,13 +700,14 @@ SELECT public.create_reservation(
   (SELECT id FROM public.rooms WHERE room_number = '12'),
   (SELECT id FROM public.packages WHERE name = 'Paket 24 Jam'),
   'Supervisor Direct Checkin', '081250000203', 'Alamat Role Test',
-  (SELECT pr.weekday_price
+  (SELECT CASE WHEN public.get_operational_day_mode(CURRENT_DATE) = 'weekday'
+              THEN pr.weekday_price ELSE pr.weekend_price END
    FROM public.rooms r
    JOIN public.room_types rt ON rt.id = r.room_type_id
    JOIN public.packages p ON p.name = 'Paket 24 Jam'
    JOIN public.package_room_type_prices pr ON pr.package_id = p.id AND pr.pricing_group = rt.pricing_group
    WHERE r.room_number = '12'),
-  'Cash', 'weekday', NULL,
+  'Cash', (SELECT public.get_operational_day_mode(CURRENT_DATE)), NULL,
   '60606060-6060-4606-8606-606060606060'::uuid,
   (SELECT id FROM public.finance_cash_sessions WHERE opened_by = '44444444-4444-4444-8444-444444444444'::uuid AND status = 'OPEN' ORDER BY opened_at DESC LIMIT 1)
 );
