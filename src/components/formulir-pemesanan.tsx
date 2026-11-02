@@ -6,6 +6,7 @@ import { rupiah } from '@/lib/data-contoh';
 import { useTable } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
 import { useSesiKasKonteks } from '@/lib/sesi-kas';
+import { featureFlags } from '@/lib/feature-flags';
 
 type Mode = 'booking' | 'check_in';
 type DayMode = 'weekday' | 'weekend';
@@ -88,9 +89,13 @@ const [guestCount, setGuestCount] = useState(2);
     ? priceForPackage(selectedPackage.id)
     : 0;
 
-  const extraGuestCount = Math.max(guestCount - 2, 0);
+  const activeGuestCount = featureFlags.extraGuest ? guestCount : 2;
+  const extraGuestCount = featureFlags.extraGuest
+    ? Math.max(activeGuestCount - 2, 0)
+    : 0;
   const extraGuestCharge = extraGuestCount * 50000;
   const totalBill = selectedPrice + extraGuestCharge;
+  const minimumDp = Math.ceil(totalBill * 0.4);
 
   const availableRooms = rooms.rows.filter(
   room =>
@@ -248,6 +253,11 @@ if (mode === 'booking' && !scheduledCheckIn) {
       return;
     }
 
+    if (featureFlags.extraGuest && mode === 'booking' && payment < minimumDp) {
+      setError(`DP minimum adalah ${rupiah(minimumDp)} (40% dari total tagihan).`);
+      return;
+    }
+
     if (!sessionId || needsAssistedContext) {
       setError(needsAssistedContext
         ? 'Pilih sesi bantuan aktif di halaman Keuangan sebelum menyimpan transaksi.'
@@ -268,7 +278,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
       normalizedPhone,
       normalizedAddress,
       payment,
-      guestCount,
+      guestCount: activeGuestCount,
       method,
       dayMode,
       scheduledCheckIn,
@@ -293,7 +303,7 @@ if (mode === 'booking' && !scheduledCheckIn) {
       _phone: normalizedPhone,
       _address: normalizedAddress,
       _amount: payment,
-      _guest_count: guestCount,
+      ...(featureFlags.extraGuest ? { _guest_count: activeGuestCount } : {}),
       _method: method,
       _day_mode: dayMode,
       _idempotency_key: requestKey,
@@ -514,9 +524,13 @@ if (mode === 'booking' && !scheduledCheckIn) {
 
             {selectedPackage && selectedPrice > 0 && (
               <div className="space-y-2 rounded-xl bg-secondary px-3 py-3 text-sm">
-                <div className="flex items-center justify-between gap-3"><span>Jumlah Tamu</span><div className="flex items-center gap-2"><Button type="button" variant="outline" size="icon" aria-label="Kurangi jumlah tamu" disabled={guestCount <= 1} onClick={() => setGuestCount(value => Math.max(1, value - 1))}><Minus className="size-4" /></Button><strong className="min-w-8 text-center tabular-nums">{guestCount}</strong><Button type="button" variant="outline" size="icon" aria-label="Tambah jumlah tamu" onClick={() => setGuestCount(value => value + 1)}><Plus className="size-4" /></Button></div></div>
+                {featureFlags.extraGuest && (
+                  <div className="flex items-center justify-between gap-3"><span>Jumlah Tamu</span><div className="flex items-center gap-2"><Button type="button" variant="outline" size="icon" aria-label="Kurangi jumlah tamu" disabled={guestCount <= 1} onClick={() => setGuestCount(value => Math.max(1, value - 1))}><Minus className="size-4" /></Button><strong className="min-w-8 text-center tabular-nums">{guestCount}</strong><Button type="button" variant="outline" size="icon" aria-label="Tambah jumlah tamu" onClick={() => setGuestCount(value => value + 1)}><Plus className="size-4" /></Button></div></div>
+                )}
                 <div className="flex justify-between"><span>Harga kamar</span><strong>{rupiah(selectedPrice)}</strong></div>
-                <div className="flex justify-between"><span>Extra Guest ({extraGuestCount} × Rp50.000)</span><strong>{rupiah(extraGuestCharge)}</strong></div>
+                {featureFlags.extraGuest && (
+                  <div className="flex justify-between"><span>Extra Guest ({extraGuestCount} × Rp50.000)</span><strong>{rupiah(extraGuestCharge)}</strong></div>
+                )}
                 <div className="flex justify-between border-t border-border pt-2"><span className="font-semibold">Total tagihan</span><strong>{rupiah(totalBill)}</strong></div>
               </div>
             )}
@@ -553,7 +567,9 @@ if (mode === 'booking' && !scheduledCheckIn) {
                 min={
                   mode === 'check_in' && selectedPrice > 0
                     ? totalBill
-                    : 0
+                    : mode === 'booking' && featureFlags.extraGuest && selectedPrice > 0
+                      ? minimumDp
+                      : 0
                 }
                 step="1"
                 value={amount}
@@ -567,6 +583,10 @@ onFocus={event => event.currentTarget.select()}
                 className={fieldClass}
               />
             </label>
+
+            {featureFlags.extraGuest && mode === 'booking' && selectedPrice > 0 && (
+              <p className="text-xs text-muted-foreground">Minimum DP 40%: {rupiah(minimumDp)}</p>
+            )}
 
             <label className="block text-sm">
               Metode Pembayaran
