@@ -343,13 +343,13 @@ function judulTanggal(value: string) {
     <div className="space-y-5">
       {groups.map((group) => (
         <section key={group.dateKey}>
-          <p className="mb-2 flex items-center gap-2 text-[15px] font-bold capitalize">
-            <CalendarDays className="size-4 text-foreground/80" />
+          <p className="mb-2 flex items-center gap-2 text-sm font-bold capitalize">
+            <CalendarDays className="size-3.5 text-foreground/80" />
             {judulTanggal(group.dateValue)} · {group.bookings.length}{' '}
             {group.bookings.length === 1 ? 'Room' : 'Rooms'}
           </p>
 
-          <ul className="divide-y divide-gold/25 overflow-hidden rounded-2xl border border-gold/30 bg-[#F7F6F3] text-foreground shadow-[0_10px_30px_-18px_var(--gold)] [--foreground:oklch(0.22_0.02_75)] [--muted-foreground:oklch(0.4_0.02_75)] [--primary:oklch(0.55_0.11_70)] [--gold:oklch(0.6_0.1_78)] [--gold-light:oklch(0.5_0.1_78)]">
+          <ul className="divide-y divide-gold/25 overflow-hidden rounded-xl border border-gold/30 bg-[#F7F6F3] text-foreground shadow-[0_10px_30px_-18px_var(--gold)] [--foreground:oklch(0.22_0.02_75)] [--muted-foreground:oklch(0.4_0.02_75)] [--primary:oklch(0.55_0.11_70)] [--gold:oklch(0.6_0.1_78)] [--gold-light:oklch(0.5_0.1_78)]">
             {group.bookings.map((booking) => {
               const guest = guests.rows.find((item) => item.id === booking.guest_id);
               const room = rooms.rows.find((item) => item.id === booking.room_id);
@@ -418,11 +418,11 @@ Terima kasih.`;
                   <div className="flex flex-wrap items-center justify-end gap-1.5 border-gold/30 lg:border-l lg:pl-3">
                     {booking.status === 'booking' && !readOnly && (
                       <>
-                        <button type="button" className={tombolOutline} onClick={hubungi}><Phone className="size-4" />Hubungi</button>
-                        <button type="button" className={tombolOutline} onClick={() => openCheckIn(booking.id)}><Circle className="size-4" />Check-in</button>
+                        <button type="button" className={tombolOutline} onClick={hubungi}><Phone className="size-3.5" />Hubungi</button>
+                        <button type="button" className={tombolOutline} onClick={() => openCheckIn(booking.id)}><Circle className="size-3.5" />Check-in</button>
                       </>
                     )}
-                    <button type="button" className={tombolEmas} onClick={() => setDetailBookingId(booking.id)}><ChevronRight className="size-4" />Lihat Detail</button>
+                    <button type="button" className={tombolEmas} onClick={() => setDetailBookingId(booking.id)}><ChevronRight className="size-3.5" />Lihat Detail</button>
                   </div>
                 </li>
               );
