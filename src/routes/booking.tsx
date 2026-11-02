@@ -356,8 +356,8 @@ function judulTanggal(value: string) {
               const roomType = roomTypes.rows.find((item) => item.id === room?.room_type_id);
               const packageItem = packages.rows.find((item) => item.id === booking.package_id);
               const phoneLast4 = guest?.phone ? guest.phone.replace(/\D/g, '').slice(-4) : '';
-              const tgl = (v: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(v)) : '—';
-              const jam = (v: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(v)).replace('.', ':') : '—';
+              const tgl = (v?: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(v)) : '—';
+              const jam = (v?: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(v)).replace('.', ':') : '—';
               const statusLabel = booking.status === 'booking' ? 'Akan Datang' : booking.status === 'check_in' ? 'Check-in' : booking.status === 'check_out' ? 'Selesai' : 'Dibatalkan';
               const statusKelas = booking.status === 'booking'
                 ? 'bg-[oklch(0.86_0.06_240)] text-[oklch(0.35_0.1_250)]'
