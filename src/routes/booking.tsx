@@ -383,19 +383,19 @@ Terima kasih.`;
                 openWhatsApp(guest.phone, pesan);
               };
 
-              const tombolOutline = 'inline-flex h-11 items-center gap-2 rounded-lg border border-foreground/20 bg-white px-4 text-sm font-semibold text-foreground shadow-sm transition hover:border-gold';
-              const tombolEmas = 'inline-flex h-11 items-center gap-1.5 rounded-lg bg-gradient-to-b from-[oklch(0.72_0.11_75)] to-[oklch(0.58_0.11_70)] px-5 text-sm font-semibold text-[oklch(0.98_0.01_80)] shadow transition hover:brightness-105';
+              const tombolOutline = 'inline-flex h-8 items-center gap-1.5 rounded-lg border border-foreground/20 bg-white px-3 text-xs font-semibold text-foreground shadow-sm transition hover:border-gold';
+              const tombolEmas = 'inline-flex h-8 items-center gap-1 rounded-lg bg-gradient-to-b from-[oklch(0.72_0.11_75)] to-[oklch(0.58_0.11_70)] px-3 text-xs font-semibold text-[oklch(0.98_0.01_80)] shadow transition hover:brightness-105';
 
               return (
-                <li key={booking.id} className="grid grid-cols-1 items-center gap-4 px-4 py-3 lg:grid-cols-[minmax(0,1.7fr)_auto_auto_auto_auto] lg:gap-0">
-                  <div className="flex min-w-0 items-center gap-4 lg:pr-4">
-                    <div className="flex h-[76px] w-28 shrink-0 flex-col items-center justify-center rounded-xl bg-[oklch(0.93_0.04_80)] text-center">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-[oklch(0.45_0.08_70)]">{roomType?.name ?? 'ROOM'}</p>
-                      <p className="font-serif text-3xl font-semibold leading-tight text-[oklch(0.5_0.1_70)]">{room?.room_number ?? '-'}</p>
+                <li key={booking.id} className="grid grid-cols-1 items-center gap-3 px-3 py-2.5 lg:grid-cols-[minmax(0,1.7fr)_auto_auto_auto_auto] lg:gap-0">
+                  <div className="flex min-w-0 items-center gap-3 lg:pr-3">
+                    <div className="flex h-12 w-[72px] shrink-0 flex-col items-center justify-center rounded-lg bg-[oklch(0.93_0.04_80)] text-center">
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-[oklch(0.45_0.08_70)]">{roomType?.name ?? 'ROOM'}</p>
+                      <p className="font-serif text-lg font-semibold leading-tight text-[oklch(0.5_0.1_70)]">{room?.room_number ?? '-'}</p>
                     </div>
                     <div className="min-w-0 space-y-0.5">
-                      <p className="truncate text-base font-bold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
-                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-sm font-medium text-primary hover:underline">
+                      <p className="truncate text-sm font-bold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
+                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-xs font-medium text-primary hover:underline">
                         {booking.transaction_number}
                       </button>
                       <p className="flex items-center gap-2 truncate text-sm uppercase"><User className="size-3.5 shrink-0" />{guest?.full_name ?? '—'}</p>
