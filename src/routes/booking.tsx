@@ -477,9 +477,9 @@ Terima kasih.`;
         <p role="alert">{payments.error}</p>
       )}
 
-      <div className="mb-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_240px]">
-        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
-          <Search className="size-4 shrink-0 text-gold" />
+      <div className="mb-4 grid gap-2.5 md:grid-cols-[minmax(0,1fr)_200px_220px]">
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <Search className="size-3.5 shrink-0 text-gold" />
           <input
             value={cari}
             onChange={(e) => setCari(e.target.value)}
@@ -487,8 +487,8 @@ Terima kasih.`;
             className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </label>
-        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
-          <CalendarDays className="size-4 shrink-0 text-gold" />
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <CalendarDays className="size-3.5 shrink-0 text-gold" />
           <input
             type="date"
             aria-label="Pilih Tanggal"
@@ -497,8 +497,8 @@ Terima kasih.`;
             className="h-full w-full bg-transparent text-sm outline-none [color-scheme:dark]"
           />
         </label>
-        <label className="flex h-12 items-center gap-3 rounded-xl border border-gold/25 bg-navy-deep/60 px-4">
-          <ArrowUpDown className="size-4 shrink-0 text-gold" />
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <ArrowUpDown className="size-3.5 shrink-0 text-gold" />
           <select
             aria-label="Urutkan"
             value={urut}
@@ -716,9 +716,9 @@ Terima kasih.`;
 
 function JudulJumlah({ label, jumlah }: { label: string; jumlah: number }) {
   return (
-    <div className="mb-3 flex items-center gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-gold">{label}</h2>
-      <span className="grid h-6 min-w-6 place-items-center rounded-full bg-gold px-2 text-xs font-bold text-navy-deep">{jumlah}</span>
+    <div className="mb-2.5 flex items-center gap-2.5">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{label}</h2>
+      <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1.5 text-[11px] font-bold text-navy-deep">{jumlah}</span>
       <span className="h-px flex-1 bg-gradient-to-r from-gold/40 to-transparent" aria-hidden="true" />
     </div>
   );
