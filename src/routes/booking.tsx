@@ -464,7 +464,7 @@ Terima kasih.`;
             onClick={() => setOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Buat Booking Baru
+            Booking
           </Button>
         )
       }
