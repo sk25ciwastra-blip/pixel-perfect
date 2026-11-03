@@ -387,7 +387,7 @@ Terima kasih.`;
               const tombolEmas = 'inline-flex h-8 items-center gap-1 rounded-lg bg-gradient-to-b from-[oklch(0.72_0.11_75)] to-[oklch(0.58_0.11_70)] px-3 text-xs font-semibold text-[oklch(0.98_0.01_80)] shadow transition hover:brightness-105';
 
               return (
-                <li key={booking.id} className="grid grid-cols-1 items-center gap-3 px-3 py-2.5 lg:grid-cols-[minmax(0,1.7fr)_auto_auto_auto_auto] lg:gap-0">
+                <li key={booking.id} className="grid grid-cols-1 items-center gap-3 px-3 py-2.5 lg:grid-cols-[minmax(0,1fr)_140px_140px_130px_320px] lg:gap-0">
                   <div className="flex min-w-0 items-center gap-3 lg:pr-3">
                     <div className="flex h-12 w-[72px] shrink-0 flex-col items-center justify-center rounded-lg border border-[oklch(0.5_0.09_75)] bg-[oklch(0.17_0.012_60)] text-center shadow-[0_8px_18px_-12px_var(--gold)]">
                       <p className="text-[9px] font-semibold uppercase tracking-wide text-[oklch(0.78_0.1_80)]">{roomType?.name ?? 'ROOM'}</p>
