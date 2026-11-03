@@ -18,6 +18,7 @@ import {
   ReceiptText,
   Sparkles,
   ChevronRight,
+  ChevronDown,
   Receipt,
   BarChart3,
   Target,
@@ -38,11 +39,13 @@ import { meta } from "@/lib/meta";
 import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
+import { PapanInformasi } from "@/components/papan-informasi";
+import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 
 export const Route = createFileRoute("/")({
   head: () => {
     const metadata = meta("Ringkasan", "Ringkasan harian Baturaden 25 Homestay: pendapatan, kamar, booking, dan housekeeping.");
-    return { ...metadata, meta: [...metadata.meta, { property: "og:image", content: panorama.url }, { name: "twitter:image", content: panorama.url }] };
+    return metadata;
   },
   component: Ringkasan,
 });
@@ -140,6 +143,16 @@ function tipeKamarRingkas(name: string | undefined) {
   return name;
 }
 
+function namaDepan(nama: string | undefined) {
+  const bersih = (nama ?? "").trim().replace(/\s+/g, " ");
+  const kata = bersih.split(" ")[0];
+  if (!kata) return "Tamu";
+  return kata
+    .split("-")
+    .map((bagian) => (bagian ? bagian.charAt(0).toUpperCase() + bagian.slice(1).toLowerCase() : bagian))
+    .join("-");
+}
+
 function kodePaket(name: string | undefined) {
   const kode: Record<string, string> = {
     "Paket 2 Jam": "P2",
@@ -186,13 +199,16 @@ function Ringkasan() {
   const packages = useTable("packages");
   const activityLogs = useTable("activity_logs", peran === "owner");
   const employees = useTable("employees", peran === "owner");
-  const housekeepingHistory = useTable("housekeeping_history", peran === "owner" || ["supervisor", "housekeeping", "inspector"].includes(posisiKode ?? ""));
+  const bolehLihatHousekeeping = peran === "owner" || ["supervisor", "housekeeping", "inspector"].includes(posisiKode ?? "");
+  const housekeepingHistory = useTable("housekeeping_history", bolehLihatHousekeeping);
+  const housekeepingChecklists = useTable("housekeeping_checklists", bolehLihatHousekeeping);
   const financeExpenses = useTable(
     "finance_expenses",
     peran === "owner" || posisiKode === "supervisor",
   );
   const {
     sessionId: checkoutSessionId,
+    activeSession: checkoutActiveSession,
     isTraining: isCheckoutTraining,
     loading: checkoutSessionLoading,
     error: checkoutSessionError,
@@ -203,6 +219,7 @@ function Ringkasan() {
 
   const [sekarang, setSekarang] = useState(() => Date.now());
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
+  const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
   const [checkingOutId, setCheckingOutId] = useState<string | null>(null);
   const [dashboardMessage, setDashboardMessage] = useState("");
   const [pencarian, setPencarian] = useState("");
@@ -419,7 +436,7 @@ function Ringkasan() {
   ];
   const isFinanceViewer = peran === "owner" || posisiKode === "supervisor";
   const pengeluaranRows = financeExpenses.rows as unknown as {
-    id: string; category: string; expense_number: string | null; amount: number; method: string; created_at: string;
+    id: string; category: string; note: string; recorded_by: string; expense_number: string | null; amount: number; method: string; created_at: string;
   }[];
   const hariIni = tanggalWib(sekarang);
   const pemasukanHariIni = payments.rows.filter((p) => tanggalWib(p.created_at) === hariIni);
@@ -459,15 +476,50 @@ function Ringkasan() {
     [bookingHariIni, kamarAktif, kamarTerisi, roomTypes.rows, sekarang],
   );
 
+  // Indikator: hanya memakai status/timestamp dan aturan yang sudah ada di halaman ini.
+  const indikator = useMemo(() => {
+    const checklistTerbaru = new Map<string, { result: string | null; created_at: string }>();
+    for (const checklist of housekeepingChecklists.rows) {
+      if (!checklist.room_id) continue;
+      const lama = checklistTerbaru.get(checklist.room_id);
+      if (!lama || new Date(checklist.created_at).getTime() > new Date(lama.created_at).getTime()) {
+        checklistTerbaru.set(checklist.room_id, { result: checklist.result, created_at: checklist.created_at });
+      }
+    }
+    return {
+      terisi: statusKamarBaris.filter((row) => row.terisi).length,
+      booking: bookingHariIni.length,
+      persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
+      terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in ?? "", item.scheduled_check_out ?? "", sekarang)?.status === "late").length,
+      perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
+      overtime: statusKamarBaris.filter(({ terisi }) => terisi && formatSisaWaktu(terisi.transaksi.ends_at ?? null, sekarang).status === "expired").length,
+    };
+  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris]);
+
+  const indikatorStatus = [
+    { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
+    { label: "Booking", warna: "var(--v0-info)", nilai: indikator.booking, judul: "Booking hari ini yang belum Check-in" },
+    { label: "Persiapan", warna: "var(--v0-warning)", nilai: indikator.persiapan, judul: "Kamar yang perlu atau sedang dibersihkan" },
+    { label: "Terlambat", warna: "var(--v0-ungu)", nilai: indikator.terlambat, judul: "Booking yang waktu Check-in-nya sudah lewat" },
+    { label: "Perlu Tindakan", warna: "var(--v0-oranye)", nilai: indikator.perluTindakan, judul: "Kamar dengan hasil checklist terakhir perlu tindakan" },
+    { label: "Overtime", warna: "var(--v0-danger)", nilai: indikator.overtime, judul: "Kamar terisi yang lewat waktu Check-out" },
+  ];
+
+
   const transaksiTerbaru = useMemo(() => {
     const masuk = payments.rows.map((p) => {
       const trx = transaksi.find((t) => t.id === p.transaction_id);
       const guest = guests.rows.find((g) => g.id === trx?.guest_id);
       return {
         id: `in-${p.id}`,
+        trxId: trx?.id ?? null,
+        expenseId: null,
         jenis: "masuk" as const,
-        judul: guest?.full_name ?? "Tamu",
-        sub: guest?.phone ? `••••${guest.phone.replace(/\D/g, "").slice(-4)}` : "",
+        judul: namaDepan(guest?.full_name),
+        wa: guest?.phone ? guest.phone.replace(/\D/g, "").slice(-4) : "",
+        catatan: "",
+        operator: "",
+        sub: "Booking",
         nomor: trx?.transaction_number ?? "—",
         nominal: Number(p.amount),
         metode: p.method,
@@ -475,21 +527,29 @@ function Ringkasan() {
       };
     });
     const keluar = isFinanceViewer && !financeExpenses.error
-      ? pengeluaranRows.map((e) => ({
-          id: `out-${e.id}`,
-          jenis: "keluar" as const,
-          judul: e.category,
-          sub: "",
-          nomor: e.expense_number ?? "—",
-          nominal: Number(e.amount),
-          metode: e.method,
-          waktu: e.created_at,
-        }))
+      ? pengeluaranRows.map((e) => {
+          const operator = employees.rows.find((emp) => emp.user_id === e.recorded_by)?.name ?? "";
+          return {
+            id: `out-${e.id}`,
+            trxId: null,
+            expenseId: e.id,
+            jenis: "keluar" as const,
+            judul: e.category,
+            wa: "",
+            catatan: e.note ?? "",
+            operator,
+            sub: "",
+            nomor: e.expense_number ?? "—",
+            nominal: Number(e.amount),
+            metode: e.method,
+            waktu: e.created_at,
+          };
+        })
       : [];
     return [...masuk, ...keluar]
       .sort((a, b) => new Date(b.waktu).getTime() - new Date(a.waktu).getTime())
       .slice(0, 6);
-  }, [payments.rows, transaksi, guests.rows, pengeluaranRows, financeExpenses.error, isFinanceViewer]);
+  }, [payments.rows, transaksi, guests.rows, pengeluaranRows, financeExpenses.error, isFinanceViewer, employees.rows]);
 
   const [modeGrafik, setModeGrafik] = useState<ModeGrafik>("harian");
   const dataGrafik = useMemo(() => {
@@ -602,7 +662,7 @@ function Ringkasan() {
             <h1 className="mt-1 font-serif text-[2.1rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
               <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">{nama || "Pengguna"}</span>
             </h1>
-            <p className="mt-3 w-fit rounded-lg bg-background/70 px-3 py-2 text-sm font-medium leading-relaxed text-foreground backdrop-blur-sm sm:text-base">Dibalik Homestay yang Ramai, ada Tim yang memiliki Visi &amp; Misi yang sama.</p>
+            <p className="mt-3 text-xs font-medium leading-relaxed text-foreground sm:text-sm"><span className="rounded bg-background/70 px-2 py-1 box-decoration-clone backdrop-blur-sm">Dibalik Homestay yang Ramai, ada Tim yang memiliki Visi & Misi yang sama.</span></p>
           </header>
 
           {/* KPI + Aksi Cepat */}
@@ -610,8 +670,8 @@ function Ringkasan() {
             <section className="panel-mewah min-w-0 p-4" aria-labelledby="judul-aksi-cepat">
               <h2 id="judul-aksi-cepat" className="font-serif text-xl font-semibold">Aksi Cepat</h2>
               {bolehAksiTransaksi ? (
-                <div className="mt-4 grid grid-cols-3 gap-2.5">
-                  <TombolAksi ikon={LogIn} judul="Check-in Langsung" utama onClick={() => setModal("check_in")} />
+                <div className="mt-4 grid grid-cols-3 gap-1.5">
+                  <TombolAksi ikon={LogIn} judul={"Check-in\nLangsung"} utama onClick={() => setModal("check_in")} />
                   <TombolAksi ikon={CalendarPlus} judul="Tambah Booking" onClick={() => setModal("booking")} />
                   <TombolAksi ikon={ReceiptText} judul={"Kas\nKeluar"} onClick={() => setModal("pengeluaran")} />
                 </div>
@@ -639,13 +699,10 @@ function Ringkasan() {
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
                   <div>
                     <h2 id="judul-status-kamar" className="font-serif text-lg font-semibold">Status Kamar <span className="text-gold-light">(Real-time)</span></h2>
-                    <p className="text-xs text-muted-foreground">Kamar terisi dan Booking hari ini.</p>
+                    <p className="text-xs text-muted-foreground">Kamar Terisi dan Booking Hari ini</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 px-2 py-1.5 text-[11px] font-semibold">
-                  <span className="size-2 animate-pulse rounded-full bg-v0-success" /> Terisi {statusKamarBaris.filter((row) => row.terisi).length} Kamar · Booking {bookingHariIni.length}
-                </span>
                 <Link to="/kamar" search={{ bagian: "terisi" } as never} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
                   Lihat semua <ChevronRight className="size-3.5" />
                 </Link>
@@ -714,9 +771,10 @@ function Ringkasan() {
                             <td className="px-1 py-2">
                               {guest ? (
                                 <>
-                                  <p className="truncate font-medium" title={`${guest.full_name} · ${item?.transaction_number ?? ""}`}>{guest.full_name}</p>
+                                  <p className="truncate text-xs font-medium" title={guest.full_name}>{guest.full_name}</p>
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
+                              {item && <Button variant="link" className="mt-0.5 h-auto max-w-full whitespace-normal break-all p-0 font-mono text-[10px] leading-snug text-gold-light" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>}
                             </td>
                             <td className="px-1 py-2">
                               {item ? (
@@ -729,7 +787,7 @@ function Ringkasan() {
                             <td className="px-1 py-2">
                               <span className={`inline-flex max-w-full items-center justify-center gap-1.5 leading-tight ${kelasStatus}`}>
                                 <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
-                                <span>{labelStatus}</span>
+                                <span className={labelStatus === "Overtime" ? "text-xs font-medium" : undefined}>{labelStatus}</span>
                               </span>
                             </td>
                             <td className="px-1 py-2 whitespace-nowrap tabular-nums">{terisi ? item?.started_at ? jamWib(item.started_at) : "—" : item?.scheduled_check_in ? jamWib(item.scheduled_check_in) : "—"}</td>
@@ -767,6 +825,21 @@ function Ringkasan() {
                   </table>
                 </div>
               )}
+              <div aria-label="Indikator status kamar" className="mt-auto flex flex-wrap items-center justify-center gap-1.5 px-4 pb-3 pt-1">
+                {indikatorStatus.map((status) => (
+                  <span
+                    key={status.label}
+                    title={status.judul}
+                    className="inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-md border bg-navy-deep/70 px-2 text-[10px] font-medium leading-none"
+                    style={{ borderColor: `color-mix(in oklab, ${status.warna} 32%, transparent)` }}
+                  >
+                    <span className="size-1.5 shrink-0 rounded-full" style={{ background: status.warna }} aria-hidden="true" />
+                    <span className="whitespace-nowrap text-foreground/85">{status.label}</span>
+                    <span className="font-bold tabular-nums" style={{ color: status.warna }}>{status.nilai ?? "—"}</span>
+                  </span>
+                ))}
+              </div>
+
             </section>
 
             {/* Transaksi terbaru */}
@@ -774,7 +847,10 @@ function Ringkasan() {
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><FileText className="size-5" strokeWidth={1.6} /></span>
-                  <h2 id="judul-trx-terbaru" className="font-serif text-lg font-semibold">Transaksi Terbaru</h2>
+                  <div>
+                    <h2 id="judul-trx-terbaru" className="font-serif text-lg font-semibold">Transaksi Terbaru</h2>
+                    <p className="text-xs text-muted-foreground">Aktivitas Cash Flow Terkini</p>
+                  </div>
                 </div>
                 {bolehAksiTransaksi && (
                   <Link to="/transaksi" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-gold hover:text-gold-light">
@@ -791,30 +867,57 @@ function Ringkasan() {
                   </div>
                 </div>
               ) : (
-                <ol className="mt-1 max-h-[240px] overflow-y-auto divide-y divide-gold/10">
-                  {transaksiTerbaru.map((t) => (
-                    <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 py-2.5">
-                      <span className={`grid size-8 shrink-0 place-items-center rounded-full border ${t.jenis === "masuk" ? "border-v0-success/40 bg-siap text-siap-foreground" : "border-v0-danger/40 bg-bahaya text-bahaya-foreground"}`}>
-                        {t.jenis === "masuk" ? <ArrowDownLeft className="size-4" /> : <ArrowUpRight className="size-4" />}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">
-                          {t.judul}{t.sub && <span className="ml-1.5 font-normal text-muted-foreground">({t.sub})</span>}
-                        </p>
-                        <p className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">{t.nomor}</p>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className={`text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
-                          {t.jenis === "masuk" ? "+ " : "− "}{rupiah(t.nominal)}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">{t.metode} · {jamWib(t.waktu)}</p>
-                      </div>
-                    </li>
-                  ))}
+                <ol className="mt-1 max-h-[240px] overflow-y-auto pr-3.5 divide-y divide-gold/10">
+                  {transaksiTerbaru.map((t) => {
+                    const metodeKode = t.metode.toLowerCase();
+                    const warnaMetode = metodeKode === "qris" ? "var(--v0-info)" : metodeKode === "transfer" ? "var(--v0-ungu)" : "var(--gold)";
+                    const labelMetode = metodeKode === "qris" ? "QRIS" : metodeKode === "transfer" ? "TRANSFER" : "CASH";
+                    return (
+                      <li key={t.id} className="grid gap-y-1 py-2.5">
+                        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
+                          <span aria-hidden="true" className={`inline-flex size-6 shrink-0 items-center justify-center rounded-md border ${t.jenis === "masuk" ? "border-siap/30 bg-siap/10 text-siap-foreground" : "border-bahaya/30 bg-bahaya/10 text-bahaya-foreground"}`}>
+                            {t.jenis === "masuk" ? <ArrowDownLeft className="size-3.5" strokeWidth={2} /> : <ArrowUpRight className="size-3.5" strokeWidth={2} />}
+                          </span>
+                          <p className="truncate text-xs font-semibold leading-snug">
+                            {t.jenis === "masuk" ? (
+                              <>{t.judul}{t.wa && <span className="font-normal tabular-nums text-muted-foreground"> • {t.wa}</span>}</>
+                            ) : (
+                              <>{t.judul}{t.catatan && <span className="font-normal text-muted-foreground"> • {t.catatan}</span>}</>
+                            )}
+                          </p>
+                          <p className={`shrink-0 text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
+                            {t.jenis === "masuk" ? "+ " : "− "}{rupiah(t.nominal)}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 pl-8">
+                          <p className="min-w-0 truncate text-[11px] leading-snug text-muted-foreground">
+                            {t.nomor !== "—" && (t.trxId || t.expenseId) ? (
+                              <Button variant="link" className="h-auto p-0 align-baseline font-mono text-[11px] leading-snug text-gold-light hover:text-gold" onClick={() => (t.trxId ? setDetailTransactionId(t.trxId) : t.expenseId ? setDetailExpenseId(t.expenseId) : undefined)}>{t.nomor}</Button>
+                            ) : (
+                              <span className="font-mono">{t.nomor}</span>
+                            )}
+                            {t.jenis === "masuk" && t.sub && <span> • {t.sub}</span>}
+                            {t.jenis === "keluar" && t.operator && <span> • {t.operator}</span>}
+                          </p>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <span
+                              className="inline-flex items-center rounded-md border px-1.5 text-[9px] font-bold tracking-[0.08em]"
+                              style={{ color: warnaMetode, borderColor: `color-mix(in oklab, ${warnaMetode} 32%, transparent)`, backgroundColor: `color-mix(in oklab, ${warnaMetode} 10%, transparent)` }}
+                            >
+                              {labelMetode}
+                            </span>
+                            <span className="text-[11px] tabular-nums text-muted-foreground">{jamWib(t.waktu)}</span>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ol>
               )}
             </section>
           </div>
+
+          <PapanInformasi />
 
           {/* Tiga modul analitik berjajar */}
           <div className={`mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "xl:grid-cols-3" : ""}`}>
@@ -862,6 +965,7 @@ function Ringkasan() {
       {modal === "pengeluaran" && (
         <FormulirPengeluaran
           sessionId={checkoutSessionId}
+          namaSesi={employees.rows.find((emp) => emp.user_id === checkoutActiveSession?.opened_by)?.name ?? ""}
           isTraining={isCheckoutTraining}
           onClose={() => setModal(null)}
           onSaved={async () => { await Promise.all([financeExpenses.refresh(), refreshSemua()]); }}
@@ -875,7 +979,48 @@ function Ringkasan() {
           onClose={() => setDetailTransactionId(null)}
         />
       )}
+
+      {detailExpenseId && (() => {
+        const pengeluaran = pengeluaranRows.find((e) => e.id === detailExpenseId);
+        if (!pengeluaran) return null;
+        return (
+          <RincianPengeluaran
+            expense={pengeluaran}
+            operator={employees.rows.find((emp) => emp.user_id === pengeluaran.recorded_by)?.name ?? ""}
+            onClose={() => setDetailExpenseId(null)}
+          />
+        );
+      })()}
     </Kerangka>
+  );
+}
+
+function RincianPengeluaran({ expense, operator, onClose }: {
+  expense: { category: string; note: string; expense_number: string | null; amount: number; method: string; created_at: string };
+  operator: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 p-4 backdrop-blur-sm">
+      <div role="dialog" aria-modal="true" aria-label="Detail pengeluaran" className={kelasPopupDetail}>
+        <HeaderDetail title="Detail Pengeluaran" nomor={expense.expense_number ?? "Pengeluaran"} onClose={onClose} panorama />
+        <div className="space-y-3 p-4 sm:p-5">
+          <BagianDetail title="Informasi pengeluaran" icon={ReceiptText}><div className="grid gap-3 sm:grid-cols-2">
+            <NilaiDetail label="Jenis pengeluaran" icon={Receipt}>{expense.category || "—"}</NilaiDetail>
+            <NilaiDetail label="Metode pembayaran" icon={CircleDollarSign}>{expense.method}</NilaiDetail>
+          </div></BagianDetail>
+          <BagianDetail title="Rincian pembayaran" icon={CircleDollarSign}><div className="grid gap-3 sm:grid-cols-2">
+            <NilaiDetail label="Nominal pengeluaran" icon={ReceiptText}>{rupiah(Number(expense.amount))}</NilaiDetail>
+            <NilaiDetail label="Total kas keluar" icon={ArrowUpRight} tone="keluar">− {rupiah(Number(expense.amount))}</NilaiDetail>
+          </div></BagianDetail>
+          <BagianDetail title="Audit & waktu" icon={Clock3}><div className="grid gap-3 sm:grid-cols-2">
+            <NilaiDetail label="Operator" icon={FileText}>{operator || "—"}</NilaiDetail>
+            <NilaiDetail label="Waktu pengeluaran" icon={CalendarDays}>{tanggalWib(expense.created_at)} · {jamWib(expense.created_at)}</NilaiDetail>
+          </div></BagianDetail>
+          <BagianDetail title="Keperluan / catatan" icon={FileText}><p className="whitespace-pre-wrap break-words rounded-lg border border-gold/15 bg-background/60 p-3 leading-relaxed">{expense.note || "—"}</p></BagianDetail>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -953,10 +1098,10 @@ function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; j
       variant="ghost"
       type="button"
       onClick={onClick}
-      className={`flex h-auto min-h-12 whitespace-pre-line flex-row items-center justify-center gap-1.5 rounded-lg border px-2 py-2.5 text-left text-[0.65rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
+      className={`flex h-auto min-h-12 min-w-0 whitespace-pre-line flex-row items-center justify-start gap-1 rounded-lg border px-1.5 py-2.5 text-left text-[0.65rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
-      <Ikon className={`h-5 w-5 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
-      <span className="min-w-0">{judul}</span>
+      <Ikon className={`size-3.5 shrink-0 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
+      <span className="min-w-0 whitespace-pre-line">{judul}</span>
     </Button>
   );
 }
@@ -971,7 +1116,7 @@ function IkonAksi({ label, disabled, kelas = "text-gold-light", onClick, childre
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`grid size-8 shrink-0 place-items-center rounded-full border border-gold/25 bg-secondary/80 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${kelas}`}
+      className={`grid size-7 shrink-0 place-items-center rounded-full border border-gold/25 bg-secondary/80 [&_svg]:size-3.5 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${kelas}`}
     >
       {children}
     </Button>
@@ -1105,75 +1250,109 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
   );
 }
 
-function FormulirPengeluaran({ sessionId, isTraining, onClose, onSaved }: { sessionId: string; isTraining: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
+function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved }: { sessionId: string; namaSesi: string; isTraining: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
+  // Daftar dikelola Owner (menunggu persetujuan pembaruan database). Bila belum tersedia, pakai isian teks seperti sebelumnya.
+  const opsi = useTable("finance_expense_options");
+  const daftarSiap = !opsi.loading && !opsi.error;
+  const daftarJenis = daftarSiap ? (opsi.rows as { id: string; kind: string; name: string; active: boolean }[]).filter((o) => o.active && o.kind === "jenis") : [];
+  const daftarKeperluan = daftarSiap ? (opsi.rows as { id: string; kind: string; name: string; active: boolean }[]).filter((o) => o.active && o.kind === "keperluan") : [];
   const [kategori, setKategori] = useState("");
+  const [keperluan, setKeperluan] = useState("");
+  const [untukApa, setUntukApa] = useState("");
   const [nominal, setNominal] = useState("");
-  const [metode, setMetode] = useState("CASH");
-  const [catatan, setCatatan] = useState("");
   const [pesan, setPesan] = useState("");
   const [simpan, setSimpan] = useState(false);
-  const [berhasil, setBerhasil] = useState(false);
+  const [nomor, setNomor] = useState<string | null>(null);
+  const [kunci] = useState(() => crypto.randomUUID());
 
   async function kirim(e: React.FormEvent) {
     e.preventDefault();
     if (!sessionId) { setPesan("Belum ada sesi kas terbuka. Buka sesi kas di halaman Keuangan terlebih dahulu."); return; }
-    if (!kategori.trim() || !(Number(nominal) > 0)) { setPesan("Isi jenis pengeluaran dan nominal yang benar."); return; }
+    if (!kategori.trim() || !keperluan.trim() || !untukApa.trim() || !(Number(nominal) > 0)) { setPesan("Lengkapi jenis, keperluan, untuk pembayaran apa, dan nominal."); return; }
+    if (untukApa.trim().length > 200) { setPesan("Keterangan pembayaran maksimal 200 huruf."); return; }
     setSimpan(true);
     setPesan("");
-    const { error } = await rpc(isTraining ? "record_training_finance_expense" : "record_finance_expense", {
-      _idempotency_key: crypto.randomUUID(),
+    const { data, error } = await rpc(isTraining ? "record_training_finance_expense" : "record_finance_expense", {
+      _idempotency_key: kunci,
       _session_id: sessionId,
       _amount: Number(nominal),
-      _method: metode,
+      _method: "CASH",
       _category: kategori.trim(),
-      _note: catatan,
+      _note: `${keperluan.trim()} — ${untukApa.trim()}`,
     });
+    if (error) { setSimpan(false); setPesan(`Pengeluaran gagal disimpan: ${error.message}`); return; }
+    const { data: baris } = typeof data === "string"
+      ? await supabase.from("finance_expenses").select("expense_number").eq("id", data).maybeSingle()
+      : { data: null };
     setSimpan(false);
-    if (error) { setPesan(`Pengeluaran gagal disimpan: ${error.message}`); return; }
-    setBerhasil(true);
+    setNomor(baris?.expense_number ?? "");
     await onSaved();
   }
 
   const kelasInput = "h-11 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none focus:border-primary";
+  const kelasKunci = `mt-1 ${kelasInput} flex items-center bg-secondary/60`;
+  const kelasLabel = "block text-sm";
+  const judulLabel = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+  const pesanBelum = "Daftar belum tersedia: pembaruan database untuk pilihan ini menunggu persetujuan Owner.";
+  const Pilih = ({ nilai, ubah, daftar, kosong }: { nilai: string; ubah: (v: string) => void; daftar: { id: string; name: string }[]; kosong: string }) => (
+    <div className="relative mt-1">
+      <select required disabled={!daftarSiap || daftar.length === 0} value={nilai} onChange={(e) => ubah(e.target.value)} className={`${kelasInput} appearance-none pr-10 disabled:opacity-60`}>
+        <option value="">{!daftarSiap ? (opsi.loading ? "Memuat…" : "Belum tersedia") : daftar.length ? kosong : "Daftar belum dibuat Owner"}</option>
+        {daftar.map((o) => <option key={o.id} value={o.name}>{o.name}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm" onClick={onClose}>
-      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-background p-5 shadow-lembut">
+      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "max-w-3xl"}`}>
         <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Uang keluar</p>
-            <h2 id="judul-pengeluaran" className="mt-1 text-lg font-bold">Catat Pengeluaran</h2>
-          </div>
+          <h2 id="judul-pengeluaran" className="text-lg font-bold">Form Kas Keluar</h2>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Tutup"><X className="size-4" /></Button>
         </div>
-        {berhasil ? (
-          <div className="mt-6 text-center">
+        {nomor !== null ? (
+          <div className="mt-4 text-center">
             <p className="font-semibold text-siap-foreground">Pengeluaran tersimpan.</p>
+            {nomor && <p className="mt-2 font-mono text-sm text-primary">ID: {nomor}</p>}
             <Button type="button" onClick={onClose} className="mt-4">Selesai</Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <label className="block text-sm">Jenis pengeluaran
-              <input value={kategori} onChange={(e) => setKategori(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Contoh: Listrik, Laundry" />
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block text-sm">Nominal (Rp)
-                <input type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
-              </label>
-              <label className="block text-sm">Metode
-                <select value={metode} onChange={(e) => setMetode(e.target.value)} className={`mt-1 ${kelasInput}`}>
-                  <option value="CASH">Cash</option>
-                  <option value="QRIS">QRIS</option>
-                  <option value="Transfer">Transfer</option>
-                </select>
-              </label>
+          <div className="space-y-4">
+            <p className="-mt-2 text-sm text-muted-foreground">ID: <span className="font-mono text-primary">Otomatis setelah disimpan</span></p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-3">
+                <label className={kelasLabel}><span className={judulLabel}>Jenis Pengeluaran</span>
+                  <Pilih nilai={kategori} ubah={setKategori} daftar={daftarJenis} kosong="Pilih jenis" />
+                </label>
+                <label className={kelasLabel}><span className={judulLabel}>Keperluan Siapa</span>
+                  <Pilih nilai={keperluan} ubah={setKeperluan} daftar={daftarKeperluan} kosong="Pilih keperluan" />
+                </label>
+              </div>
+              <div className="space-y-3">
+                <div className={kelasLabel}><span className={judulLabel}>Metode Pembayaran</span>
+                  <div className={`${kelasKunci} font-semibold`} aria-readonly="true">CASH</div>
+                </div>
+                <div className={kelasLabel}><span className={judulLabel}>Nama Sesi Kas Aktif</span>
+                  <div className={`${kelasKunci} truncate`} aria-readonly="true">{!sessionId ? "Belum ada sesi kas aktif" : namaSesi || "Sesi kas aktif"}</div>
+                </div>
+              </div>
             </div>
-            <label className="block text-sm">Catatan
-              <input value={catatan} onChange={(e) => setCatatan(e.target.value)} className={`mt-1 ${kelasInput}`} />
+            {!daftarSiap && !opsi.loading && <p className="rounded-xl bg-perlu px-3 py-2 text-xs text-perlu-foreground">{pesanBelum}</p>}
+            <label className={kelasLabel}><span className={judulLabel}>Untuk Pembayaran Apa?</span>
+              <input required maxLength={200} value={untukApa} onChange={(e) => setUntukApa(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Contoh: beli seblak, bayar air mineral" />
             </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className={kelasLabel}><span className={judulLabel}>Nominal Pengeluaran (Rp)</span>
+                <input required type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
+              </label>
+              <div className={kelasLabel}><span className={judulLabel}>Total Kas Keluar</span>
+                <div className={`${kelasKunci} font-bold text-bahaya-foreground`} aria-readonly="true">{rupiah(Number(nominal) > 0 ? Number(nominal) : 0)}</div>
+              </div>
+            </div>
             {pesan && <p role="alert" className="rounded-xl bg-bahaya px-3 py-2 text-sm text-bahaya-foreground">{pesan}</p>}
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
-              <Button type="submit" disabled={simpan}>{simpan ? "Menyimpan…" : "Simpan"}</Button>
+              <Button type="submit" disabled={simpan || !daftarSiap}>{simpan ? "Menyimpan…" : "Simpan Pengeluaran"}</Button>
             </div>
           </div>
         )}
