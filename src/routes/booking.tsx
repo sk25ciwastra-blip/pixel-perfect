@@ -389,17 +389,15 @@ Terima kasih.`;
               return (
                 <li key={booking.id} className="grid grid-cols-1 items-center gap-3 px-3 py-2.5 lg:grid-cols-[minmax(0,1.7fr)_auto_auto_auto_auto] lg:gap-0">
                   <div className="flex min-w-0 items-center gap-3 lg:pr-3">
-                    <div className="flex h-12 w-[72px] shrink-0 flex-col items-center justify-center rounded-lg bg-[oklch(0.93_0.04_80)] text-center">
-                      <p className="text-[9px] font-semibold uppercase tracking-wide text-[oklch(0.45_0.08_70)]">{roomType?.name ?? 'ROOM'}</p>
-                      <p className="font-serif text-lg font-semibold leading-tight text-[oklch(0.5_0.1_70)]">{room?.room_number ?? '-'}</p>
+                    <div className="flex h-12 w-[72px] shrink-0 flex-col items-center justify-center rounded-lg border border-[oklch(0.5_0.09_75)] bg-[oklch(0.17_0.012_60)] text-center shadow-[0_8px_18px_-12px_var(--gold)]">
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-[oklch(0.78_0.1_80)]">{roomType?.name ?? 'ROOM'}</p>
+                      <p className="font-serif text-lg font-semibold leading-tight text-[oklch(0.98_0.01_80)]">{room?.room_number ?? '-'}</p>
                     </div>
-                    <div className="min-w-0 space-y-0.5">
+                    <div className="flex min-w-0 flex-col justify-center gap-0.5">
                       <p className="truncate text-sm font-bold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
                       <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-xs font-medium text-primary hover:underline">
                         {booking.transaction_number}
                       </button>
-                      <p className="flex items-center gap-1.5 truncate text-xs uppercase"><User className="size-3 shrink-0" />{guest?.full_name ?? '—'}</p>
-                      <p className="flex items-center gap-1.5 truncate text-xs"><Phone className="size-3 shrink-0" />{guest?.phone ?? '—'}</p>
                     </div>
                   </div>
 
