@@ -1,0 +1,350 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --shadow-emas: var(--shadow-emas-val);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-navy-soft: var(--navy-soft);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-v0-success: var(--v0-success);
+  --color-v0-info: var(--v0-info);
+  --color-v0-warning: var(--v0-warning);
+  --color-v0-danger: var(--v0-danger);
+  --color-v0-violet: var(--v0-violet);
+  --color-v0-ungu: var(--v0-ungu);
+  --color-v0-oranye: var(--v0-oranye);
+  --color-siap: var(--siap);
+  --color-siap-foreground: var(--siap-foreground);
+  --color-terisi: var(--terisi);
+  --color-terisi-foreground: var(--terisi-foreground);
+  --color-perlu: var(--perlu);
+  --color-perlu-foreground: var(--perlu-foreground);
+  --color-sedang: var(--sedang);
+  --color-sedang-foreground: var(--sedang-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-bahaya: var(--bahaya);
+  --color-bahaya-foreground: var(--bahaya-foreground);
+  --shadow-lembut: var(--shadow-lembut);
+}
+
+:root {
+  --radius: 0.75rem;
+  /* Baturaden 25 Homestay — design system hitam & champagne gold */
+  --navy: oklch(0.19 0.004 250);          /* #17191C */
+  --navy-deep: oklch(0.13 0.003 250);     /* #090A0B → sidebar */
+  --navy-soft: oklch(0.24 0.003 250);     /* #202124 */
+  --gold: oklch(0.76 0.115 82);           /* #D6AD52 */
+  --gold-light: oklch(0.87 0.105 88);     /* #F2D184 */
+  --gold-dark: oklch(0.6 0.1 78);
+  --v0-success: oklch(0.72 0.15 152);
+  --v0-info: oklch(0.7 0.12 240);
+  --v0-warning: oklch(0.8 0.14 75);
+  --v0-danger: oklch(0.65 0.19 25);
+  --v0-violet: oklch(0.82 0.08 70);       /* netral hangat (pengganti ungu lama) */
+  --v0-ungu: oklch(0.63 0.15 300);        /* ungu lembut — status Terlambat */
+  --v0-oranye: oklch(0.72 0.16 45);       /* oranye — status Perlu Tindakan */
+  --background: oklch(0.135 0.003 250);   /* #090A0B */
+  --foreground: oklch(0.95 0.017 85);     /* #F5EEE0 */
+  --siap: oklch(0.29 0.055 152);
+  --siap-foreground: oklch(0.84 0.13 152);
+  --terisi: oklch(0.29 0.05 240);
+  --terisi-foreground: oklch(0.83 0.09 240);
+  --perlu: oklch(0.31 0.065 75);
+  --perlu-foreground: oklch(0.87 0.13 80);
+  --sedang: oklch(0.3 0.04 200);
+  --sedang-foreground: oklch(0.85 0.08 200);
+  --shadow-lembut: 0 1px 0 oklch(1 0 0 / 0.035) inset, 0 18px 40px -22px oklch(0 0 0 / 0.85);
+  --shadow-emas-val: 0 0 0 1px oklch(0.87 0.105 88 / 0.45) inset, 0 8px 28px -8px oklch(0.76 0.115 82 / 0.55);
+  --permukaan-mewah: linear-gradient(160deg, oklch(0.2 0.006 80 / 0.92) 0%, oklch(0.155 0.004 250 / 0.94) 55%, oklch(0.13 0.003 250 / 0.96) 100%);
+  --sidebar-mewah: linear-gradient(180deg, oklch(0.17 0.006 80) 0%, oklch(0.12 0.003 250) 45%, oklch(0.1 0.003 250) 100%);
+  --emas-isi: linear-gradient(135deg, oklch(0.9 0.1 90) 0%, oklch(0.78 0.115 82) 45%, oklch(0.62 0.1 76) 100%);
+  --card: oklch(0.175 0.004 250);         /* #111316 → #17191C */
+  --card-foreground: oklch(0.95 0.017 85);
+  --popover: oklch(0.21 0.004 250);       /* #202124 */
+  --popover-foreground: oklch(0.95 0.017 85);
+  --primary: oklch(0.76 0.115 82);
+  --primary-foreground: oklch(0.15 0.01 80);
+  --primary-soft: oklch(0.27 0.045 82);
+  --bahaya: oklch(0.29 0.075 25);
+  --bahaya-foreground: oklch(0.8 0.14 25);
+  --secondary: oklch(0.22 0.004 250);
+  --secondary-foreground: oklch(0.95 0.017 85);
+  --muted: oklch(0.22 0.004 250);
+  --muted-foreground: oklch(0.72 0.014 80);  /* #AAA49A */
+  --accent: oklch(0.24 0.01 82);
+  --accent-foreground: oklch(0.95 0.017 85);
+  --destructive: oklch(0.62 0.2 25);
+  --destructive-foreground: oklch(0.98 0.005 85);
+  --border: oklch(0.47 0.07 80 / 0.35);   /* #6E5A30 / 35% */
+  --input: oklch(0.47 0.07 80 / 0.5);
+  --ring: oklch(0.87 0.105 88);
+  --chart-1: oklch(0.76 0.115 82);
+  --chart-2: oklch(0.72 0.15 152);
+  --chart-3: oklch(0.7 0.12 240);
+  --chart-4: oklch(0.87 0.105 88);
+  --chart-5: oklch(0.65 0.19 25);
+  --sidebar: oklch(0.13 0.003 250);
+  --sidebar-foreground: oklch(0.95 0.017 85);
+  --sidebar-primary: oklch(0.76 0.115 82);
+  --sidebar-primary-foreground: oklch(0.15 0.01 80);
+  --sidebar-accent: oklch(0.22 0.004 250);
+  --sidebar-accent-foreground: oklch(0.95 0.017 85);
+  --sidebar-border: oklch(0.47 0.07 80 / 0.3);
+  --sidebar-ring: oklch(0.87 0.105 88);
+  color-scheme: dark;
+  --header-veil: linear-gradient(90deg, var(--background), color-mix(in oklab, var(--background) 82%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 60%, transparent)), linear-gradient(0deg, var(--background), transparent 75%);
+  --header-ink: color-mix(in oklab, var(--gold) 16%, transparent);
+  --header-thread: color-mix(in oklab, var(--gold) 9%, transparent);
+  --header-photo-veil: linear-gradient(90deg, color-mix(in oklab, var(--background) 90%, transparent), color-mix(in oklab, var(--background) 68%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 26%, transparent)), linear-gradient(0deg, var(--background), transparent 55%);
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(1200px 500px at 85% -10%, oklch(0.76 0.115 82 / 0.07), transparent 60%);
+    background-attachment: fixed;
+  }
+  ::selection { background: oklch(0.76 0.115 82 / 0.35); }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  input, select, textarea { color-scheme: dark; }
+}
+
+/* Panel kaca gelap premium: gradien halus, garis champagne tipis, kedalaman. */
+@utility panel-mewah {
+  position: relative;
+  border-radius: 1.1rem;
+  border: 1px solid oklch(0.6 0.08 82 / 0.28);
+  background: var(--permukaan-mewah);
+  box-shadow: 0 1px 0 oklch(0.95 0.05 85 / 0.06) inset, 0 24px 48px -28px oklch(0 0 0 / 0.95), 0 0 0 1px oklch(0 0 0 / 0.35);
+  backdrop-filter: blur(10px);
+}
+
+/* Isi emas untuk tombol/menu aktif. */
+@utility emas-isi {
+  background: var(--emas-isi);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-emas-val);
+}
+
+/* Lingkaran ikon KPI. */
+@utility ikon-bulat {
+  display: grid;
+  place-items: center;
+  border-radius: 9999px;
+  border: 1px solid oklch(0.76 0.115 82 / 0.45);
+  background: radial-gradient(circle at 30% 25%, oklch(0.32 0.04 82), oklch(0.16 0.006 80) 70%);
+  box-shadow: 0 0 22px -6px oklch(0.76 0.115 82 / 0.45), 0 1px 0 oklch(1 0 0 / 0.08) inset;
+}
+
+/* Menu sidebar aktif: kaca keemasan dengan penanda kiri bercahaya. */
+@utility menu-aktif {
+  background: linear-gradient(90deg, oklch(0.76 0.115 82 / 0.16), oklch(0.76 0.115 82 / 0.03) 85%);
+  box-shadow: 0 0 0 1px oklch(0.76 0.115 82 / 0.22) inset;
+  &::before {
+    content: "";
+    position: absolute;
+    left: -0.75rem;
+    top: 22%;
+    bottom: 22%;
+    width: 3px;
+    border-radius: 9999px;
+    background: var(--emas-isi);
+    box-shadow: 0 0 12px var(--gold);
+  }
+}
+
+/* Lencana status ringkas (dipakai halaman berikutnya). */
+@utility lencana {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 9999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid currentColor;
+  border-color: color-mix(in oklab, currentColor 35%, transparent);
+}
+
+/* Garis pemisah emas halus. */
+@utility garis-emas {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, oklch(0.76 0.115 82 / 0.45), transparent);
+}
+
+/* Pemisah kolom tabel operasional: garis emas redup sejajar kepala sampai baris, ikut ter-scroll.
+   Dipakai pada <table> ber-model border-separate, jadi garis dibuat lewat inset box-shadow
+   (border pada <tr> tidak dilukis pada model tersebut). */
+@utility pemisah-kolom {
+  --garis-kolom: inset 1px 0 0 oklch(0.76 0.115 82 / 0.13);
+  --garis-baris: inset 0 -1px 0 oklch(0.76 0.115 82 / 0.1);
+  --garis-kepala: inset 0 -1px 0 oklch(0.76 0.115 82 / 0.2);
+  & th { box-shadow: var(--garis-kolom), var(--garis-kepala); }
+  & th:first-child { box-shadow: var(--garis-kepala); }
+  & td { box-shadow: var(--garis-kolom), var(--garis-baris); }
+  & td:first-child { box-shadow: var(--garis-baris); }
+  & tbody tr:last-child td { box-shadow: var(--garis-kolom); }
+  & tbody tr:last-child td:first-child { box-shadow: none; }
+}
+
+
+@layer base {
+  .font-serif { font-variant-numeric: lining-nums; letter-spacing: -0.01em; }
+  h1, h2, h3 { text-wrap: balance; }
+  .tabular, td, th { font-variant-numeric: tabular-nums; }
+
+  /* Tabel global: kepala kecil berhuruf kapital, baris lembut. */
+  table { border-collapse: separate; border-spacing: 0; }
+  thead th {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  tbody tr { transition: background-color 150ms ease; }
+  tbody tr:hover { background-color: oklch(0.76 0.115 82 / 0.045); }
+
+  /* Isian bawaan selaras tema. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):hover,
+  select:hover, textarea:hover { border-color: oklch(0.76 0.115 82 / 0.5); }
+
+  /* Scrollbar tipis keemasan. */
+  * { scrollbar-width: thin; scrollbar-color: oklch(0.6 0.08 82 / 0.45) transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: oklch(0.6 0.08 82 / 0.4); border-radius: 9999px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  [role="dialog"] { box-shadow: 0 40px 80px -30px oklch(0 0 0 / 0.95); }
+}
+
+/* Header-only heritage motifs, not photographs of the property or real landmarks. */
+.latar-priangan { background: var(--navy-deep); }
+.selubung-priangan { background: var(--header-veil); }
+.latar-priangan-foto .selubung-priangan { background: var(--header-photo-veil); }
+.latar-priangan-dashboard .selubung-priangan {
+  background: linear-gradient(90deg, var(--background), color-mix(in oklab, var(--background) 72%, transparent) 45%, color-mix(in oklab, var(--navy-deep) 52%, transparent)), linear-gradient(0deg, var(--background), transparent 70%);
+}
+.motif-anyaman {
+  background-image: repeating-linear-gradient(45deg, var(--header-ink) 0 4px, transparent 4px 12px), repeating-linear-gradient(-45deg, var(--header-thread) 0 4px, transparent 4px 12px);
+}
+.motif-kayu {
+  background-image: repeating-linear-gradient(0deg, transparent 0 13px, var(--header-thread) 14px, transparent 16px 28px), repeating-linear-gradient(90deg, transparent 0 95px, var(--header-ink) 96px 97px);
+}
+.motif-geometris {
+  background-image: repeating-linear-gradient(45deg, transparent 0 23px, var(--header-thread) 24px 25px, transparent 26px 48px), repeating-linear-gradient(-45deg, transparent 0 23px, var(--header-thread) 24px 25px, transparent 26px 48px);
+}
+.motif-art-deco {
+  background-image: repeating-radial-gradient(ellipse at 85% 140%, transparent 0 19px, var(--header-ink) 20px 21px, transparent 22px 42px), repeating-linear-gradient(90deg, transparent 0 89px, var(--header-thread) 90px 91px);
+}
+.motif-linen {
+  background-image: repeating-linear-gradient(90deg, transparent 0 3px, var(--header-thread) 4px), repeating-linear-gradient(0deg, transparent 0 3px, var(--header-thread) 4px);
+}
+.motif-netral, .motif-braga, .motif-priangan {
+  background-image: repeating-linear-gradient(115deg, transparent 0 7px, var(--header-thread) 8px, transparent 9px 18px);
+}
