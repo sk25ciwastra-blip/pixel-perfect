@@ -167,6 +167,11 @@ const {
 
 async function recordPayment() {
   if (!selectedBooking || selectedRemaining <= 0) return;
+  const arrival = bookingArrival(selectedBooking, Date.now());
+  if (arrival.kind === 'action' || arrival.kind === 'verify') {
+    setMessage('Jadwal Booking kedaluwarsa atau belum lengkap. Periksa detail sebelum menerima pembayaran.');
+    return;
+  }
 
   setMessage('');
   setBusy(true);
@@ -234,6 +239,11 @@ async function recordPayment() {
 
 async function finishCheckIn() {
   if (!selectedBooking) return;
+  const arrival = bookingArrival(selectedBooking, Date.now());
+  if (arrival.kind === 'action' || arrival.kind === 'verify') {
+    setMessage('Jadwal Booking kedaluwarsa atau belum lengkap. Check-in tidak dapat dilanjutkan.');
+    return;
+  }
 
   setMessage('');
 
