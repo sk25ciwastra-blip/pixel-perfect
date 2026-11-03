@@ -1,10 +1,22 @@
 # PANDUAN MULAI OBROLAN BARU — Baturaden 25 Homestay
 
-**Checkpoint terbaru:** 30 Oktober 2026, WIB (riwayat 28 Oktober dipertahankan)  
+**Checkpoint terbaru:** 4 November 2026, WIB (riwayat 30 dan 28 Oktober dipertahankan)  
 **Status:** Panduan kelanjutan proyek; bukan bukti bahwa fitur telah dideploy.  
 **Sumber keputusan resmi:** dokumen dalam folder `DOKUMEN_PROYEK/`, terutama `01_BUKU_INDUK.md` dan dokumen aturan bisnis terkait. Jika ada ketidaksesuaian, periksa commit terbaru dan minta keputusan Owner; jangan diam-diam menimpa keputusan resmi.
 
-## Checkpoint terbaru — 30 Oktober 2026 (melengkapi riwayat 28 Okt di bawah)
+## CHECKPOINT TERBARU — 4 NOVEMBER 2026 (WIB): PEMBAYARAN GABUNGAN
+
+**BACA TERLEBIH DAHULU:** [CHECKPOINT_PEMBAYARAN_GABUNGAN_2026-11-04.md](./CHECKPOINT_PEMBAYARAN_GABUNGAN_2026-11-04.md) — bukti PASS, log, path Windows, risiko, dan panduan melanjutkan lengkap. Riwayat checkpoint 30 Oktober di bawah **tetap dipertahankan**, bukan status terkini untuk pembayaran gabungan.
+
+- **Keputusan Owner resmi:** satu transaksi Booking, Check-in langsung, atau pelunasan dapat memakai **maksimal dua metode pembayaran berbeda** sekaligus (mis. QRIS Rp100.000 + Cash Rp10.000), masing-masing baris payment dan receipt sendiri. Aturan **AB-PAY-004**; PR #35 dokumentasi **merged**, PR #34 pembatas satu metode **closed unmerged**.
+- **Branch implementasi lokal belum di-commit/push/PR:** `feat/combined-payments-20261104`, worktree `C:\tmp\pixel-perfect-combined-payment`, base `397fa8f303fe33d979e8d125cddfc4fd4b19aa6d` saat uji. **Jangan reset/overwrite worktree dirty.**
+- **PASS PostgreSQL portable 17.11 lokal:** `BOOTSTRAP_COMBINED_READY` (migrasi dan 4 fungsi gabungan), Booking DP dua metode, retry/tampering, pelunasan dua metode, rollback atomic, Check-in QRIS+Cash, pemisahan Cash/QRIS dan guard duplikasi penerima komisi per-kamar, penerbitan dua Receipt 58 mm serta original/`SALINAN 1`. TypeScript/build dan pure tests PASS menurut Codex.
+- **PASS concurrency riil:** dua klien serentak dengan request key sama menghasilkan **satu batch Booking/dua payment**, serta **satu batch pelunasan/dua payment tambahan** tanpa duplikasi; `CONCURRENCY_TEST_PASS`, folder log `C:\tmp\combined-bootstrap-20261104-055303-541\concurrency-20261104-064817`. Server PostgreSQL berhenti aman, database sementara dihapus.
+- **BELUM DIUJI:** Finance nominal komisi persentase/per-kamar dan **refund parsial/100%**, peran Owner/Supervisor/Receptionist/Training dalam jalur gabungan, cetak fisik 58 mm. **Belum siap PR/merge/Cloud.**
+- **SATU PEKERJAAN BERIKUTNYA:** jalankan **pengujian runtime Finance lanjutan nominal komisi + refund** pada lab lokal, kemudian uji authorization peran; setelah semuanya PASS, konsolidasikan hanya source yang diperlukan, commit/push branch, ajukan satu PR review (tanpa merge otomatis). **Jangan mengulang tes PASS.**
+- **Larangan:** tidak ada migrasi atau write Cloud, aktivasi flag produksi, publish/deploy, perubahan transaksi demo, pencabutan `20261022000004_revoke_legacy_rpc_execute.sql`, atau reset worktree Owner tanpa izin spesifik.
+
+## Checkpoint historis — 30 Oktober 2026 (melengkapi riwayat 28 Okt di bawah)
 
 - **PR #17 merged** ke `main`, squash commit `62c45dca586f62015d849ff596f66968bfc7184f`. Perbaikan `finance_prepare_payment()` mempertahankan Owner/Supervisor **Bantu Sesi Aktif** dan jalur Training terikat penugasan. Source pure tests PASS; Codex/Owner melaporkan PostgreSQL runtime PASS pada PostgreSQL 17.11 port lokal 55437: Owner/Supervisor bantu sesi OPEN, trainee sah, trainee tidak sah ditolak, Receptionist tidak sah ditolak, sesi CLOSED ditolak, operator/audit benar, snapshot harga terjaga, checkout setelah lunas PASS. **PASS lokal, belum aktif Cloud.**
 - **PR #15 merged**: `CHECKPOINT_RESTORE_LOKAL_2026-10-30.md`. Export Lovable diuji pada PostgreSQL lokal 17.11: 11 transaksi, 15 pembayaran, 12 kamar, 14 tamu, 11 `auth.users`, **59/59 foreign key public valid**. Server lab dihentikan. Pemulihan seluruh stack Supabase **BELUM PASS** karena extension khusus `supabase_vault` tidak tersedia dalam PostgreSQL biasa; jangan menyamakan PASS data aplikasi dengan disaster recovery Supabase penuh.
