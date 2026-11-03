@@ -38,12 +38,7 @@ const semuaMenu: Menu[] = [
     { bagian: "terisi", label: "Terisi" },
     { bagian: "perlu", label: "Perlu Dibersihkan" },
   ] },
-  { ke: "/booking", label: "Booking", ikon: CalendarDays, anak: [
-    { bagian: "semua", label: "Semua Booking" },
-    { bagian: "hari-ini", label: "Hari Ini" },
-    { bagian: "besok", label: "Besok" },
-    { bagian: "mendatang", label: "Mendatang (mulai lusa)" },
-  ] },
+  { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/transaksi", label: "Transaksi", ikon: Receipt },
   { ke: "/tamu", label: "Tamu", ikon: Users },
   { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles, anak: [

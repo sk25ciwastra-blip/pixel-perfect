@@ -2,7 +2,7 @@ import { rpc } from "@/lib/data-live";
 import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, X, Search, CalendarDays, ArrowUpDown, User, Phone, Clock, Circle, ChevronRight } from 'lucide-react';
 import { Kerangka } from '@/components/kerangka';
 import { FormulirPemesanan } from '@/components/formulir-pemesanan';
@@ -50,6 +50,24 @@ function kodePaket(name: string | undefined) {
   return name ? (kode[name] ?? name) : '—';
 }
 
+type BookingArrival = 'upcoming' | 'waiting' | 'late' | 'action' | 'verify';
+
+function bookingArrival(
+  booking: { scheduled_check_in: string | null; scheduled_check_out: string | null },
+  now: number,
+): { kind: BookingArrival; label: string } {
+  const start = booking.scheduled_check_in ? Date.parse(booking.scheduled_check_in) : NaN;
+  const end = booking.scheduled_check_out ? Date.parse(booking.scheduled_check_out) : NaN;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    return { kind: 'verify', label: 'PERLU VERIFIKASI' };
+  }
+  if (now >= end) return { kind: 'action', label: 'PERLU TINDAKAN' };
+  if (now < start) return { kind: 'upcoming', label: 'AKAN DATANG' };
+  const minutesLate = Math.floor((now - start) / 60000);
+  if (minutesLate < 1) return { kind: 'waiting', label: 'MENUNGGU CHECK-IN' };
+  return { kind: 'late', label: `TERLAMBAT ${minutesLate} MENIT` };
+}
+
 function Halaman() {
   const { bagian = 'semua' } = Route.useSearch();
   const cocokJadwal = (t: { scheduled_check_in: string | null }) => {
@@ -61,6 +79,11 @@ function Halaman() {
     if (bagian === 'besok') return d === kunciWib(1);
     return d >= kunciWib(2);
   };
+  const [sekarang, setSekarang] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setSekarang(Date.now()), 30000);
+    return () => clearInterval(interval);
+  }, []);
   const [cari, setCari] = useState('');
   const [tanggalPilih, setTanggalPilih] = useState('');
   const [urut, setUrut] = useState<'dekat' | 'jauh'>('dekat');
@@ -358,9 +381,14 @@ function judulTanggal(value: string) {
               const phoneLast4 = guest?.phone ? guest.phone.replace(/\D/g, '').slice(-4) : '';
               const tgl = (v?: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(v)) : '—';
               const jam = (v?: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(v)).replace('.', ':') : '—';
-              const statusLabel = booking.status === 'booking' ? 'Akan Datang' : booking.status === 'check_in' ? 'Check-in' : booking.status === 'check_out' ? 'Selesai' : 'Dibatalkan';
+              const arrival = bookingArrival(booking, sekarang);
+              const statusLabel = booking.status === 'booking' ? arrival.label : booking.status === 'check_in' ? 'CHECK-IN' : booking.status === 'check_out' ? 'SELESAI' : 'DIBATALKAN';
               const statusKelas = booking.status === 'booking'
-                ? 'bg-[oklch(0.86_0.06_240)] text-[oklch(0.35_0.1_250)]'
+                ? arrival.kind === 'upcoming'
+                  ? 'bg-[oklch(0.86_0.06_240)] text-[oklch(0.35_0.1_250)]'
+                  : arrival.kind === 'waiting'
+                    ? 'bg-[oklch(0.86_0.1_150)] text-[oklch(0.33_0.1_150)]'
+                    : 'bg-[oklch(0.9_0.08_40)] text-[oklch(0.42_0.13_35)]'
                 : booking.status === 'check_out' || booking.status === 'check_in'
                   ? 'bg-[oklch(0.85_0.1_150)] text-[oklch(0.33_0.1_150)]'
                   : 'bg-[oklch(0.86_0.07_25)] text-[oklch(0.4_0.13_25)]';
@@ -442,7 +470,15 @@ Terima kasih.`;
     const r = rooms.rows.find((x) => x.id === t.room_id);
     return [t.transaction_number, g?.full_name, g?.phone, r?.room_number].some((v) => String(v ?? '').toLowerCase().includes(q));
   };
-  const akanDatang = transactions.rows.filter((b) => b.status === 'booking' && cocokJadwal(b) && cocokFilter(b));
+  const bookingTerfilter = transactions.rows.filter((b) => b.status === 'booking' && cocokJadwal(b) && cocokFilter(b));
+  const akanDatang = bookingTerfilter.filter((b) => {
+    const kind = bookingArrival(b, sekarang).kind;
+    return kind === 'upcoming' || kind === 'waiting';
+  });
+  const perluTindakan = bookingTerfilter.filter((b) => {
+    const kind = bookingArrival(b, sekarang).kind;
+    return kind === 'late' || kind === 'action' || kind === 'verify';
+  });
   const riwayat = transactions.rows.filter((b) => b.status !== 'booking' && cocokJadwal(b) && cocokFilter(b));
 
   return (
@@ -511,8 +547,13 @@ Terima kasih.`;
         </label>
       </div>
 
-      <JudulJumlah label="Akan Datang" jumlah={akanDatang.length} />
+      <JudulJumlah label="Akan Datang / Menunggu Check-in" jumlah={akanDatang.length} />
       {baris(akanDatang)}
+
+      <div className="mt-8">
+        <JudulJumlah label="Perlu Tindakan" jumlah={perluTindakan.length} />
+      </div>
+      {baris(perluTindakan)}
 
       <div className="mt-8">
         <JudulJumlah label="Riwayat" jumlah={riwayat.length} />
