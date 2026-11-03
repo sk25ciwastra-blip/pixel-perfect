@@ -140,6 +140,11 @@ const {
     const transaction = transactions.rows.find(
       (item) => item.id === transactionId,
     );
+    // Protect against a stale list/timer: expired or incomplete bookings must
+    // not start a payment flow that the existing backend will reject.
+    if (!transaction || transaction.status !== 'booking') return;
+    const arrival = bookingArrival(transaction, Date.now());
+    if (arrival.kind === 'action' || arrival.kind === 'verify') return;
 
     const paid = totalPaid(transactionId);
     const total = Number(transaction?.price_snapshot ?? 0);
@@ -447,7 +452,9 @@ Terima kasih.`;
                     {booking.status === 'booking' && !readOnly && (
                       <>
                         <button type="button" className={tombolOutline} onClick={hubungi}><Phone className="size-3.5" />Hubungi</button>
-                        <button type="button" className={tombolOutline} onClick={() => openCheckIn(booking.id)}><Circle className="size-3.5" />Check-in</button>
+                        {arrival.kind !== 'action' && arrival.kind !== 'verify' && (
+                          <button type="button" className={tombolOutline} onClick={() => openCheckIn(booking.id)}><Circle className="size-3.5" />Check-in</button>
+                        )}
                       </>
                     )}
                     <button type="button" className={tombolEmas} onClick={() => setDetailBookingId(booking.id)}><ChevronRight className="size-3.5" />Lihat Detail</button>
