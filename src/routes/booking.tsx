@@ -3,8 +3,8 @@ import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
-import { Plus, X } from 'lucide-react';
-import { Kerangka, Judul, Daftar } from '@/components/kerangka';
+import { Plus, X, Search, CalendarDays, ArrowUpDown, User, Phone, Clock, Circle, ChevronRight } from 'lucide-react';
+import { Kerangka } from '@/components/kerangka';
 import { FormulirPemesanan } from '@/components/formulir-pemesanan';
 import { Button } from '@/components/ui/button';
 import { LencanaTeks } from '@/components/status-kamar';
@@ -61,6 +61,9 @@ function Halaman() {
     if (bagian === 'besok') return d === kunciWib(1);
     return d >= kunciWib(2);
   };
+  const [cari, setCari] = useState('');
+  const [tanggalPilih, setTanggalPilih] = useState('');
+  const [urut, setUrut] = useState<'dekat' | 'jauh'>('dekat');
   const { posisiKode } = usePeran();
   const readOnly = posisiKode === 'inspector';
 
@@ -300,7 +303,7 @@ function judulTanggal(value: string) {
     ).getTime();
 
     if (waktuA !== waktuB) {
-      return waktuA - waktuB;
+      return urut === 'dekat' ? waktuA - waktuB : waktuB - waktuA;
     }
 
     return a.transaction_number.localeCompare(b.transaction_number);
@@ -332,92 +335,44 @@ function judulTanggal(value: string) {
     return hasil;
   }, []);
 
+  if (groups.length === 0) {
+    return <p className="rounded-xl border border-gold/15 px-4 py-6 text-center text-sm text-muted-foreground">Tidak ada data.</p>;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {groups.map((group) => (
         <section key={group.dateKey}>
-          <p className="mb-2 text-sm font-bold capitalize">
-  {judulTanggal(group.dateValue)} · {group.bookings.length}{' '}
-{group.bookings.length === 1 ? 'Room' : 'Rooms'}
-</p>
+          <p className="mb-2 flex items-center gap-2 text-sm font-bold capitalize">
+            <CalendarDays className="size-3.5 text-foreground/80" />
+            {judulTanggal(group.dateValue)} · {group.bookings.length}{' '}
+            {group.bookings.length === 1 ? 'Room' : 'Rooms'}
+          </p>
 
-          <Daftar>
-            {group.bookings.map((booking, index) => {
-              const paid = totalPaid(booking.id);
-              const total = Number(booking.price_snapshot ?? 0);
-              const remaining = Math.max(total - paid, 0);
+          <ul className="divide-y divide-gold/25 overflow-hidden rounded-xl border border-gold/30 bg-[#F7F6F3] text-foreground shadow-[0_10px_30px_-18px_var(--gold)] [--foreground:oklch(0.22_0.02_75)] [--muted-foreground:oklch(0.4_0.02_75)] [--primary:oklch(0.55_0.11_70)] [--gold:oklch(0.6_0.1_78)] [--gold-light:oklch(0.5_0.1_78)]">
+            {group.bookings.map((booking) => {
+              const guest = guests.rows.find((item) => item.id === booking.guest_id);
+              const room = rooms.rows.find((item) => item.id === booking.room_id);
+              const roomType = roomTypes.rows.find((item) => item.id === room?.room_type_id);
+              const packageItem = packages.rows.find((item) => item.id === booking.package_id);
+              const phoneLast4 = guest?.phone ? guest.phone.replace(/\D/g, '').slice(-4) : '';
+              const tgl = (v?: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(v)) : '—';
+              const jam = (v?: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(v)).replace('.', ':') : '—';
+              const statusLabel = booking.status === 'booking' ? 'Akan Datang' : booking.status === 'check_in' ? 'Check-in' : booking.status === 'check_out' ? 'Selesai' : 'Dibatalkan';
+              const statusKelas = booking.status === 'booking'
+                ? 'bg-[oklch(0.86_0.06_240)] text-[oklch(0.35_0.1_250)]'
+                : booking.status === 'check_out' || booking.status === 'check_in'
+                  ? 'bg-[oklch(0.85_0.1_150)] text-[oklch(0.33_0.1_150)]'
+                  : 'bg-[oklch(0.86_0.07_25)] text-[oklch(0.4_0.13_25)]';
 
-              const guest = guests.rows.find(
-                (item) => item.id === booking.guest_id,
-              );
-
-              const room = rooms.rows.find(
-                (item) => item.id === booking.room_id,
-              );
-
-              const roomType = roomTypes.rows.find(
-                (item) => item.id === room?.room_type_id,
-              );
-
-              const phoneLast4 = guest?.phone
-                ? guest.phone.replace(/\D/g, '').slice(-4)
-                : '';
-
-              return (
-                <li key={booking.id} className="flex items-center gap-4 px-4 py-4 transition hover:bg-gold/[0.04] sm:px-6">
-                  <div className="flex w-24 shrink-0 self-center flex-col items-center justify-center rounded-xl border border-gold/30 bg-gradient-to-b from-navy-soft to-navy-deep px-2 py-2.5 text-center shadow-[0_0_18px_-8px_var(--gold)]">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-gold/80">
-                      {roomType?.name ?? 'ROOM'}
-                    </p>
-                    <p className="mt-1 font-serif text-xl font-semibold leading-none text-gold-light">
-                      {room?.room_number ?? '-'}
-                    </p>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold">
-                      {guest?.full_name ?? 'Tamu'}
-                      {phoneLast4 ? ` · ${phoneLast4}` : ''}
-                    </p>
-                    <button
-                      type="button"
-                      className="mt-0.5 block max-w-full truncate text-left font-mono text-sm font-semibold text-primary hover:underline"
-                      onClick={() => setDetailBookingId(booking.id)}
-                    >
-                      {booking.transaction_number}
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-  {booking.status === 'booking' && !readOnly && (
-    <>
-      <Button
-  size="sm"
-  variant="outline"
-  onClick={() => {
-    if (!guest?.phone) return;
-
-    const packageItem = packages.rows.find(
-      (item) => item.id === booking.package_id,
-    );
-
-    const formatJadwal = (value: string | null) => {
-      if (!value) return '—';
-
-      return new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Jakarta',
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      })
-        .format(new Date(value))
-        .replace(' pukul ', ', ');
-    };
-
-    const pesan = `Halo Kak ${guest.full_name}, kami dari Baturaden 25 Homestay.
+              const hubungi = () => {
+                if (!guest?.phone) return;
+                const formatJadwal = (value: string | null) => {
+                  if (!value) return '—';
+                  return new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+                    .format(new Date(value)).replace(' pukul ', ', ');
+                };
+                const pesan = `Halo Kak ${guest.full_name}, kami dari Baturaden 25 Homestay.
 Kami mengingatkan reservasi Anda:
 Room: ${(roomType?.name ?? '—').toUpperCase()} · ${room?.room_number ?? '—'}
 Paket: ${kodePaket(packageItem?.name)}
@@ -425,44 +380,70 @@ Check-in: ${formatJadwal(booking.scheduled_check_in)}
 Check-out: ${formatJadwal(booking.scheduled_check_out)}
 No. Transaksi: ${booking.transaction_number}
 Terima kasih.`;
+                openWhatsApp(guest.phone, pesan);
+              };
 
-    openWhatsApp(guest.phone, pesan);
-  }}
->
-  Hubungi
-</Button>
+              const tombolOutline = 'inline-flex h-8 items-center gap-1.5 rounded-lg border border-foreground/20 bg-white px-3 text-xs font-semibold text-foreground shadow-sm transition hover:border-gold';
+              const tombolEmas = 'inline-flex h-8 items-center gap-1 rounded-lg bg-gradient-to-b from-[oklch(0.72_0.11_75)] to-[oklch(0.58_0.11_70)] px-3 text-xs font-semibold text-[oklch(0.98_0.01_80)] shadow transition hover:brightness-105';
 
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => openCheckIn(booking.id)}
-      >
-        Check-in
-      </Button>
-    </>
-  )}
+              return (
+                <li key={booking.id} className="grid grid-cols-1 items-center gap-3 px-3 py-2.5 lg:grid-cols-[minmax(0,1fr)_140px_140px_130px_320px] lg:gap-0">
+                  <div className="flex min-w-0 items-center gap-3 lg:pr-3">
+                    <div className="flex h-12 w-[72px] shrink-0 flex-col items-center justify-center rounded-lg border border-[oklch(0.5_0.09_75)] bg-[oklch(0.17_0.012_60)] text-center shadow-[0_8px_18px_-12px_var(--gold)]">
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-[oklch(0.78_0.1_80)]">{roomType?.name ?? 'ROOM'}</p>
+                      <p className="font-serif text-lg font-semibold leading-tight text-[oklch(0.98_0.01_80)]">{room?.room_number ?? '-'}</p>
+                    </div>
+                    <div className="flex min-w-0 flex-col justify-center gap-0.5">
+                      <p className="truncate text-sm font-bold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
+                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-xs font-medium text-primary hover:underline">
+                        {booking.transaction_number}
+                      </button>
+                    </div>
+                  </div>
 
-  <LencanaTeks
-    status={
-      booking.status === 'booking'
-        ? 'Booking'
-        : booking.status === 'check_in'
-          ? 'Check-in'
-          : booking.status === 'check_out'
-            ? 'Check-out'
-            : 'Dibatalkan'
-    }
-  />
-</div>
+                  {[['Check-in', booking.scheduled_check_in], ['Check-out', booking.scheduled_check_out]].map(([label, v]) => (
+                    <div key={label} className="flex flex-col justify-center gap-1 border-gold/30 lg:border-l lg:px-4">
+                      <p className="flex h-4 items-center text-[10px] leading-none text-muted-foreground">{label}</p>
+                      <p className="flex h-[18px] items-center gap-1.5 text-xs font-semibold"><CalendarDays className="size-3.5 shrink-0" />{tgl(v)}</p>
+                      <p className="flex h-[18px] items-center gap-1.5 text-xs font-semibold"><Clock className="size-3.5 shrink-0" />{jam(v)}</p>
+                    </div>
+                  ))}
+
+                  <div className="flex flex-col justify-center gap-1 border-gold/30 lg:border-l lg:px-4">
+                    <span aria-hidden className="hidden h-4 lg:block" />
+                    <span className={`flex h-[18px] w-fit items-center rounded-full px-2.5 text-[10px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
+                    <p className="flex h-[18px] items-center gap-1.5 text-xs"><User className="size-3" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-end gap-1.5 border-gold/30 lg:border-l lg:pl-3">
+                    {booking.status === 'booking' && !readOnly && (
+                      <>
+                        <button type="button" className={tombolOutline} onClick={hubungi}><Phone className="size-3.5" />Hubungi</button>
+                        <button type="button" className={tombolOutline} onClick={() => openCheckIn(booking.id)}><Circle className="size-3.5" />Check-in</button>
+                      </>
+                    )}
+                    <button type="button" className={tombolEmas} onClick={() => setDetailBookingId(booking.id)}><ChevronRight className="size-3.5" />Lihat Detail</button>
+                  </div>
                 </li>
               );
             })}
-          </Daftar>
+          </ul>
         </section>
       ))}
     </div>
   );
 }
+
+  const cocokFilter = (t: (typeof transactions.rows)[number]) => {
+    if (tanggalPilih && tanggalWib(t.scheduled_check_in ?? t.created_at) !== tanggalPilih) return false;
+    const q = cari.trim().toLowerCase();
+    if (!q) return true;
+    const g = guests.rows.find((x) => x.id === t.guest_id);
+    const r = rooms.rows.find((x) => x.id === t.room_id);
+    return [t.transaction_number, g?.full_name, g?.phone, r?.room_number].some((v) => String(v ?? '').toLowerCase().includes(q));
+  };
+  const akanDatang = transactions.rows.filter((b) => b.status === 'booking' && cocokJadwal(b) && cocokFilter(b));
+  const riwayat = transactions.rows.filter((b) => b.status !== 'booking' && cocokJadwal(b) && cocokFilter(b));
 
   return (
   <>
@@ -483,7 +464,7 @@ Terima kasih.`;
             onClick={() => setOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Buat Booking Baru
+            Booking
           </Button>
         )
       }
@@ -496,23 +477,48 @@ Terima kasih.`;
         <p role="alert">{payments.error}</p>
       )}
 
-      <Judul>Akan Datang</Judul>
-
-      {baris(
-        transactions.rows.filter(
-          (booking) => booking.status === 'booking' && cocokJadwal(booking),
-        ),
-      )}
-
-      <div className="mt-8">
-        <Judul>Riwayat</Judul>
+      <div className="mb-4 grid gap-2.5 md:grid-cols-[minmax(0,1fr)_200px_220px]">
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <Search className="size-3.5 shrink-0 text-gold" />
+          <input
+            value={cari}
+            onChange={(e) => setCari(e.target.value)}
+            placeholder="Cari nomor transaksi, nama tamu, atau nomor kamar..."
+            className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </label>
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <CalendarDays className="size-3.5 shrink-0 text-gold" />
+          <input
+            type="date"
+            aria-label="Pilih Tanggal"
+            value={tanggalPilih}
+            onChange={(e) => setTanggalPilih(e.target.value)}
+            className="h-full w-full bg-transparent text-sm outline-none [color-scheme:dark]"
+          />
+        </label>
+        <label className="flex h-10 items-center gap-2.5 rounded-lg border border-gold/25 bg-navy-deep/60 px-3">
+          <ArrowUpDown className="size-3.5 shrink-0 text-gold" />
+          <select
+            aria-label="Urutkan"
+            value={urut}
+            onChange={(e) => setUrut(e.target.value as 'dekat' | 'jauh')}
+            className="h-full w-full bg-transparent text-sm outline-none [&>option]:bg-navy-deep"
+          >
+            <option value="dekat">Urutkan: Tanggal (Terdekat)</option>
+            <option value="jauh">Urutkan: Tanggal (Terjauh)</option>
+          </select>
+        </label>
       </div>
 
-      {baris(
-        transactions.rows.filter(
-          (booking) => booking.status !== 'booking' && cocokJadwal(booking),
-        ),
-      )}
+      <JudulJumlah label="Akan Datang" jumlah={akanDatang.length} />
+      {baris(akanDatang)}
+
+      <div className="mt-8">
+        <JudulJumlah label="Riwayat" jumlah={riwayat.length} />
+      </div>
+      {baris(riwayat)}
+
 
       {open && !readOnly && (
         <FormulirPemesanan
@@ -706,4 +712,14 @@ Terima kasih.`;
       </Kerangka>
   </>
 );
+}
+
+function JudulJumlah({ label, jumlah }: { label: string; jumlah: number }) {
+  return (
+    <div className="mb-2.5 flex items-center gap-2.5">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{label}</h2>
+      <span className="grid h-5 min-w-5 place-items-center rounded-full bg-gold px-1.5 text-[11px] font-bold text-navy-deep">{jumlah}</span>
+      <span className="h-px flex-1 bg-gradient-to-r from-gold/40 to-transparent" aria-hidden="true" />
+    </div>
+  );
 }

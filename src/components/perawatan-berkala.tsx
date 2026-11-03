@@ -241,10 +241,10 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
   }
 
   return (
-    <section className="mt-8 space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold">Perawatan Berkala</h2>
+    <section className="space-y-5">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 border-b border-gold/20 pb-4">
+        <div className="min-w-0">
+          <h2 className="font-serif text-2xl text-gold-light">Perawatan Berkala</h2>
           <p className="text-sm text-muted-foreground">
             Pilih kategori untuk melihat pekerjaan yang jatuh tempo.
           </p>
@@ -268,15 +268,16 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
             {categories.map((category) => (
               <div
                 key={category.workType}
-                className="rounded-2xl border border-border bg-card p-5 text-left shadow-lembut"
+                className="rounded-lg border border-gold/20 bg-card p-5 text-left shadow-lembut"
               >
-                <p className="text-base font-bold">{category.label}</p>
+                <p className="font-serif text-xl text-gold-light">{category.label}</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {category.count} pekerjaan jatuh tempo
                 </p>
-                <button
+                <Button
                   type="button"
-                  className="mt-4 inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  variant="outline"
+                  className="mt-5 w-full"
                   onClick={() => {
                     setSelectedCategory(category.workType);
                     setSelected([]);
@@ -284,7 +285,7 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
                   }}
                 >
                   Lihat Daftar
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -347,7 +348,7 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
               return (
                 <label
                   key={task.key}
-                  className="rounded-2xl border border-border bg-card p-4 shadow-lembut"
+                  className="rounded-lg border border-border bg-card p-5 shadow-lembut"
                 >
                   <div className="flex items-start gap-3">
                     {!readOnly && (
@@ -366,10 +367,10 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">{task.label}</p>
-                      <p className="mt-1 text-xs font-semibold text-perlu-foreground">
+                      <p className="mt-2 text-sm font-semibold text-perlu-foreground">
                         {waitingAccess ? "MENUNGGU AKSES" : "JATUH TEMPO"}
                       </p>
-                      <p className="mt-2 text-xs text-muted-foreground">
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                         {task.last
                           ? "Terakhir: " +
                             task.last.performed_by_name +

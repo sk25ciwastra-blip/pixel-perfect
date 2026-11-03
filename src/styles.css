@@ -73,6 +73,8 @@
   --color-v0-warning: var(--v0-warning);
   --color-v0-danger: var(--v0-danger);
   --color-v0-violet: var(--v0-violet);
+  --color-v0-ungu: var(--v0-ungu);
+  --color-v0-oranye: var(--v0-oranye);
   --color-siap: var(--siap);
   --color-siap-foreground: var(--siap-foreground);
   --color-terisi: var(--terisi);
@@ -101,6 +103,8 @@
   --v0-warning: oklch(0.8 0.14 75);
   --v0-danger: oklch(0.65 0.19 25);
   --v0-violet: oklch(0.82 0.08 70);       /* netral hangat (pengganti ungu lama) */
+  --v0-ungu: oklch(0.63 0.15 300);        /* ungu lembut — status Terlambat */
+  --v0-oranye: oklch(0.72 0.16 45);       /* oranye — status Perlu Tindakan */
   --background: oklch(0.135 0.003 250);   /* #090A0B */
   --foreground: oklch(0.95 0.017 85);     /* #F5EEE0 */
   --siap: oklch(0.29 0.055 152);
@@ -150,6 +154,10 @@
   --sidebar-border: oklch(0.47 0.07 80 / 0.3);
   --sidebar-ring: oklch(0.87 0.105 88);
   color-scheme: dark;
+  --header-veil: linear-gradient(90deg, var(--background), color-mix(in oklab, var(--background) 82%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 60%, transparent)), linear-gradient(0deg, var(--background), transparent 75%);
+  --header-ink: color-mix(in oklab, var(--gold) 16%, transparent);
+  --header-thread: color-mix(in oklab, var(--gold) 9%, transparent);
+  --header-photo-veil: linear-gradient(90deg, color-mix(in oklab, var(--background) 90%, transparent), color-mix(in oklab, var(--background) 68%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 26%, transparent)), linear-gradient(0deg, var(--background), transparent 55%);
 }
 
 .dark {
@@ -313,4 +321,30 @@
   ::-webkit-scrollbar-track { background: transparent; }
 
   [role="dialog"] { box-shadow: 0 40px 80px -30px oklch(0 0 0 / 0.95); }
+}
+
+/* Header-only heritage motifs, not photographs of the property or real landmarks. */
+.latar-priangan { background: var(--navy-deep); }
+.selubung-priangan { background: var(--header-veil); }
+.latar-priangan-foto .selubung-priangan { background: var(--header-photo-veil); }
+.latar-priangan-dashboard .selubung-priangan {
+  background: linear-gradient(90deg, var(--background), color-mix(in oklab, var(--background) 72%, transparent) 45%, color-mix(in oklab, var(--navy-deep) 52%, transparent)), linear-gradient(0deg, var(--background), transparent 70%);
+}
+.motif-anyaman {
+  background-image: repeating-linear-gradient(45deg, var(--header-ink) 0 4px, transparent 4px 12px), repeating-linear-gradient(-45deg, var(--header-thread) 0 4px, transparent 4px 12px);
+}
+.motif-kayu {
+  background-image: repeating-linear-gradient(0deg, transparent 0 13px, var(--header-thread) 14px, transparent 16px 28px), repeating-linear-gradient(90deg, transparent 0 95px, var(--header-ink) 96px 97px);
+}
+.motif-geometris {
+  background-image: repeating-linear-gradient(45deg, transparent 0 23px, var(--header-thread) 24px 25px, transparent 26px 48px), repeating-linear-gradient(-45deg, transparent 0 23px, var(--header-thread) 24px 25px, transparent 26px 48px);
+}
+.motif-art-deco {
+  background-image: repeating-radial-gradient(ellipse at 85% 140%, transparent 0 19px, var(--header-ink) 20px 21px, transparent 22px 42px), repeating-linear-gradient(90deg, transparent 0 89px, var(--header-thread) 90px 91px);
+}
+.motif-linen {
+  background-image: repeating-linear-gradient(90deg, transparent 0 3px, var(--header-thread) 4px), repeating-linear-gradient(0deg, transparent 0 3px, var(--header-thread) 4px);
+}
+.motif-netral, .motif-braga, .motif-priangan {
+  background-image: repeating-linear-gradient(115deg, transparent 0 7px, var(--header-thread) 8px, transparent 9px 18px);
 }

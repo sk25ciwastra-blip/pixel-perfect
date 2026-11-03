@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Building2, Package, BedDouble, CreditCard, Percent, KeyRound, ChevronRight } from "lucide-react";
+import { Building2, Package, BedDouble, CreditCard, Percent, KeyRound, ChevronRight, Receipt } from "lucide-react";
 import { Kerangka, Daftar } from "@/components/kerangka";
 import { meta } from "@/lib/meta";
 
@@ -13,7 +13,9 @@ const menu = [
   { ikon: BedDouble, label: "Tipe Kamar", ket: "Jenis kamar", ke: "/tipe-kamar" },
   { ikon: Package, label: "Paket & Harga", ket: "Durasi dan tarif", ke: "/paket" },
   { ikon: CreditCard, label: "Metode Pembayaran", ket: "Cash, QRIS, Transfer" },
-  { ikon: Percent, label: "Komisi", ket: "Besaran komisi karyawan" },
+  { ikon: Receipt, label: "Daftar Pengeluaran", ket: "Jenis dan keperluan (khusus Owner)", ke: "/daftar-pengeluaran" },
+  { ikon: Percent, label: "Minimum DP & Komisi", ket: "Ketentuan DP dan komisi (khusus Owner)", ke: "/pengaturan-keuangan" },
+  { ikon: CreditCard, label: "Rekening Owner", ket: "Rekening tujuan transfer (khusus Owner)", ke: "/pengaturan-keuangan" },
   { ikon: KeyRound, label: "Keamanan", ket: "Kata sandi dan PIN" },
 ];
 

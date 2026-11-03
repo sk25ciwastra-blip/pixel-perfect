@@ -244,9 +244,7 @@ export function DetailTransaksi({
   const total = Number(transaction.price_snapshot ?? 0);
   const extraGuestCount = Number(transaction.extra_guest_count ?? 0);
   const extraGuestCharge = Number(transaction.extra_guest_charge ?? 0);
-  const roomPrice = featureFlags.extraGuest
-    ? total - extraGuestCharge
-    : total;
+  const roomPrice = featureFlags.extraGuest ? total - extraGuestCharge : total;
   const remaining = Math.max(total - totalPaid, 0);
 
   const sesiKasTerakhir = [...transactionPayments].reverse().find((item) => item.cash_session_id);
@@ -378,7 +376,7 @@ export function DetailTransaksi({
           <div className="grid items-start gap-y-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)] lg:divide-x lg:divide-gold/20">
             <div className="min-w-0 lg:pr-6">
               <Seksi judul="Riwayat Pembayaran" ikon={History}>
-                {featureFlags.receipt58mm && <div className="mb-2 flex justify-end"><ReceiptHistoryButton paymentIds={transactionPayments.map((payment) => payment.id)} /></div>}
+                {featureFlags.receipt58mm && <div className="mb-2 flex justify-end"><ReceiptHistoryButton paymentIds={transactionPayments.map(payment => payment.id)} /></div>}
                 {transactionPayments.length === 0 ? (
                   <p className="text-[12.5px] text-muted-foreground">Belum ada pembayaran tercatat.</p>
                 ) : (
