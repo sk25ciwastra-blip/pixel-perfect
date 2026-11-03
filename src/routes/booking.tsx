@@ -402,15 +402,17 @@ Terima kasih.`;
                   </div>
 
                   {[['Check-in', booking.scheduled_check_in], ['Check-out', booking.scheduled_check_out]].map(([label, v]) => (
-                    <div key={label} className="space-y-0.5 border-gold/30 lg:border-l lg:px-4">
-                      <p className="flex items-center gap-1.5 text-xs"><CalendarDays className="size-3.5 shrink-0" /><span><span className="block text-[10px] leading-tight text-muted-foreground">{label}</span><span className="text-xs font-semibold">{tgl(v)}</span></span></p>
-                      <p className="flex items-center gap-1.5 text-xs font-semibold"><Clock className="size-3.5 shrink-0" />{jam(v)}</p>
+                    <div key={label} className="flex flex-col justify-center gap-1 border-gold/30 lg:border-l lg:px-4">
+                      <p className="flex h-4 items-center text-[10px] leading-none text-muted-foreground">{label}</p>
+                      <p className="flex h-[18px] items-center gap-1.5 text-xs font-semibold"><CalendarDays className="size-3.5 shrink-0" />{tgl(v)}</p>
+                      <p className="flex h-[18px] items-center gap-1.5 text-xs font-semibold"><Clock className="size-3.5 shrink-0" />{jam(v)}</p>
                     </div>
                   ))}
 
-                  <div className="space-y-1 border-gold/30 lg:border-l lg:px-4">
-                    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
-                    <p className="flex items-center gap-1.5 text-xs"><User className="size-3" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
+                  <div className="flex flex-col justify-center gap-1 border-gold/30 lg:border-l lg:px-4">
+                    <span aria-hidden className="hidden h-4 lg:block" />
+                    <span className={`flex h-[18px] w-fit items-center rounded-full px-2.5 text-[10px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
+                    <p className="flex h-[18px] items-center gap-1.5 text-xs"><User className="size-3" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
                   </div>
 
                   <div className="flex flex-wrap items-center justify-end gap-1.5 border-gold/30 lg:border-l lg:pl-3">
