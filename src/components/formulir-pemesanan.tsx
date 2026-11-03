@@ -266,7 +266,7 @@ export function FormulirPemesanan({
       `Tamu: ${matchedGuest?.full_name ?? name.trim()}`,
       `Kamar: ${selectedRoom?.room_number ?? '-'}`,
       `Paket: ${selectedPackage?.name ?? '-'}`,
-      `Total: ${rupiah(selectedPrice)} (${method})`,
+      `Total: ${rupiah(total)} (${method})`,
       'Terima kasih.',
     ].join('\n');
     openWhatsApp(phone, pesan);
