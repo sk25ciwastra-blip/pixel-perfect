@@ -5,6 +5,6 @@ export function bacaSakelar(nilai: unknown): boolean {
 }
 
 export const fitur = {
-  extraGuest: bacaSakelar(import.meta.env.VITE_FITUR_EXTRA_GUEST),
-  receipt58mm: bacaSakelar(import.meta.env.VITE_FITUR_RECEIPT),
+  extraGuest: bacaSakelar(import.meta.env?.['VITE_FITUR_EXTRA_GUEST']),
+  receipt58mm: bacaSakelar(import.meta.env?.['VITE_FITUR_RECEIPT']),
 } as const;
