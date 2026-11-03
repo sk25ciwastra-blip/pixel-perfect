@@ -52,7 +52,8 @@ export function FormulirPemesanan({
   const amount = nominal[method] ?? '0';
   const setAmount = (v: string) => setNominal(n => ({ ...n, [methods[0] ?? 'QRIS']: v }));
   function toggleMethod(m: string) {
-    setMethods(cur => cur.includes(m) ? cur.filter(x => x !== m) : cur.length >= 2 ? cur : [...cur, m]);
+    // The Booking RPC persists one payment method per request.
+    setMethods([m]);
   }
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -403,7 +404,7 @@ export function FormulirPemesanan({
               </div>
               <div className="space-y-3">
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metode Pembayaran (maks. 2)</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metode Pembayaran (pilih satu)</span>
                   <div className="mt-1 grid grid-cols-3 gap-2">
                     {['Cash', 'QRIS', 'Transfer'].map(m => {
                       const aktif = methods.includes(m);
@@ -426,11 +427,6 @@ export function FormulirPemesanan({
                       onFocus={e => e.currentTarget.select()} className={fieldClass} />
                   </Bidang>
                 ))}
-                {methods.length > 1 && (
-                  <p className="rounded-xl bg-perlu px-3 py-2 text-xs text-perlu-foreground">
-                    Pembayaran 2 metode belum didukung sistem; transaksi hanya bisa disimpan dengan satu metode.
-                  </p>
-                )}
               </div>
             </div>
 
