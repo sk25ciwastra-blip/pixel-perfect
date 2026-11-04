@@ -246,3 +246,24 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - **Dependency minimum dari file migrasi sumber:** `20261022000000_extra_guest_receipt_foundation.sql` menambahkan kolom Extra Guest dan tabel Receipt, bergantung pada Booking/Finance foundation; `20261018000000_finance_training_enforcement.sql` menyediakan assignment/audit dan validator sesi Training; `20261104000000_atomic_combined_payments.sql` bergantung pada objek dari keduanya. Urutan konseptual **Finance foundation → Training enforcement + Extra Guest/Receipt (dengan seluruh hardening terkait dan urutan resmi) → combined payment**, bukan instruksi eksekusi. Periksa lagi seluruh migrasi turunan, ACL/RLS, signature, data existing dan backup/restore sebelum menyusun batch final.
 - **Gate tetap BLOCKED:** backup/restore staging telah tercatat belum PASS dalam dokumen arsitektur, dan identitas Cloud Lovable yang akan dipakai belum terverifikasi sama dengan staging. Jangan menjalankan SQL DDL/DML, `db push`, `migration repair`, merge PR #37, deploy, publish atau menyalakan flags.
 - **Satu pekerjaan berikutnya:** pemeriksaan read-only project target build/Lovable yang benar dan rekonstruksi daftar migrasi resmi yang hilang dari `main` beserta dependensi/risiko, lalu rencana preflight/restore yang perlu persetujuan Owner. Jangan mengulang pengujian Finance/Authorization lokal yang PASS.
+
+
+## INVENTARIS MIGRASI HISTORIS YANG HILANG DARI MAIN — 5 NOVEMBER 2026 WIB (READ-ONLY)
+
+Pemeriksaan `git log --all --name-only -- supabase/migrations` dibandingkan `git ls-tree -r main supabase/migrations`, lalu isi dan preflight SQL sumber dibaca tanpa eksekusi:
+
+| File historis tidak ada di main | Bukti commit sumber | Peran & catatan gate |
+| --- | --- | --- |
+| `20261022000000_extra_guest_receipt_foundation.sql` | `318c84a`, `77671cd` | Kolom Extra Guest, snapshot transaksi, Receipt foundation + RPC; tergantung Booking/Finance foundation |
+| `20261022000001_receipt_thermal_58mm.sql` | `ef1df71`, `77671cd` | Receipt 58 mm, tabel template/payment receipts/print requests; ada overlap DDL dengan 00000, perlu telaah versi/urutan dan bukan replay membabi buta |
+| `20261022000003_extra_guest_receipt_hardening.sql` | `3dc410a`, `38511e8` | Preflight kontrak Booking + Training wrapper, receipt objects, konsistensi snapshot, perbaikan ACL; menyisakan legacy RPC untuk fase transisi |
+| `20261022000004_revoke_legacy_rpc_execute.sql` | `9357feb`, `38511e8` | **BERISIKO / GATE OWNER TERPISAH**: mencabut EXECUTE aplikasi dari signature legacy; komentar sumber secara eksplisit meminta SELECT-only caller preflight dan approval Owner sebelum run |
+| `20261103000000_owner_final_standard_p4_prices.sql` | `b5a7366`, `7fe4f3b` | Harga Standard P4 Owner-final, domain price; verifikasi data katalog dan gate bisnis sebelum run, jangan diasumsikan sekadar dependensi otomatis combined payment |
+
+Masih **ada di main**: `20261018000000_finance_training_enforcement.sql` dan `20261022000002_booking_time_dashboard_enforcement.sql`; keberadaan file repo **bukan** bukti penerapan di Cloud. Migrasi `20261104000000_atomic_combined_payments.sql` ada pada branch/PR #37 dan belum di Cloud.
+
+**Urutan rekonsiliasi konseptual**: identitas target yang benar dan backup/restore → snapshot katalog + migration history → fondasi Finance/Training → Extra Guest/Receipt foundation/58mm dan hardening yang dipilih secara selektif → caller preflight untuk revoke legacy terpisah → pembayaran gabungan → generated RPC types, smoke test dan aktivasi flags hanya bila Owner mengizinkan. Ini **BUKAN daftar `db push` atau perintah eksekusi langsung**, dan tidak berarti semua lima file perlu dipasang apa adanya; overlap 00000/00001 dan sejarah perubahan harus ditinjau.
+
+**Batas izin:** Read-only saja untuk staging `bgtztcfbkcrvcipxbfti`; konfigurasi aplikasi masih mengarah ke ref lama `ijujmxhcifuerkllbbgq`. Jangan ubah ref/env, migrasi, revoke, merge #37, deploy, publish, atau aktivasi flag tanpa keputusan Owner dan bukti target Lovable yang benar.
+
+**Satu langkah berikutnya:** periksa source/migration signatures dan caller-dependency yang masih memakai legacy RPC serta susun matriks SELECT-only preflight untuk target staging yang benar, lalu bereskan backup/restore sebelum meminta persetujuan Cloud write. Hindari mengulang pengujian PASS lokal.
