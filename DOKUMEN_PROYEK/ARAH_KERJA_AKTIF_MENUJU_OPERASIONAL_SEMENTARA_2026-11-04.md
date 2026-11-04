@@ -210,3 +210,29 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - GitHub memverifikasi status **open + draft=true + merged=false**; `base=main`, `head=feat/combined-payments-20261104`, head SHA **`3a8dd60e8337a9fb2f222fbdd81e6fba36e26245`**.
 - Body PR menjelaskan sepuluh file scope, PASS lokal sebelumnya, ketiga gerbang flags default OFF, batasan generated Supabase Cloud types, risiko branch diverged, dan gate Cloud/restore/authorization. **Tidak ada merge, deploy, migrasi Cloud, publish, atau feature flags ON.**
 - **NEXT:** review integrasi PR #36 dan gate kesiapan operasional; lakukan read-only atau local checks terarah berdasarkan masalah nyata; **jangan ulang seluruh Finance/concurrency/authorization PASS**. Minta persetujuan Owner sebelum tindakan berikutnya yang mutatif.
+
+
+## CHECKPOINT INTEGRASI PR #37 DAN PREFLIGHT CLOUD — 5 NOVEMBER 2026 WIB (TERBARU)
+
+**Status pekerjaan utama: REVIEW INTEGRASI LOKAL PASS; CLOUD GATE BLOCKED / BELUM DIOTORISASI.**
+
+### Rekonsiliasi dan PR GitHub (bukti terverifikasi)
+- Owner mengizinkan rekonsiliasi lokal terarah, push branch review terpisah, pembuatan Draft PR pengganti, dan penutupan PR lama. Tidak ada izin merge/deploy/Cloud migration.
+- [Draft PR #37](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/37) **OPEN, DRAFT, NOT MERGED, GitHub mergeable=true**. Target `main`, head `review/combined-payments-integration-20261105`, SHA GitHub `6c3f8c7f00dbcc354da21992e43f29cd10938dea`.
+- Branch baru dibuat dari `main` terkini (saat verifikasi **ahead 1, behind 0**). Sembilan file berbeda; file tes lama `scripts/extra-guest-receipt-pure-tests.cjs` yang telah dihapus di `main` tidak dihidupkan kembali. Tree SHA `6dc5c396f0bb593e3d4c03a7ec1969279cc5b4ab` cocok persis dengan tree commit lokal rekonsiliasi `048149efb110cbe1d2236110d095226260487256`. GitHub commit SHA berbeda karena komit dibuat via connector ketika Git HTTPS tidak tersedia, **bukan perbedaan isi tree**.
+- [PR #36](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/36) telah diberi komentar **superseded by #37**, lalu **CLOSED, NOT MERGED**; riwayatnya tidak diubah. Sekarang satu Draft PR aktif untuk pembayaran gabungan.
+- Hasil pengujian lokal rekonsiliasi: `tsc --noEmit` **PASS**, Vite production build client+SSR **PASS** (warning deprecation non-blocking), `scripts/fitur.test.ts` **7/7 PASS**, `scripts/tamu-tambahan.test.ts` **3/3 PASS**, `finance150-pure-tests.cjs` **PASS**, `git diff --cached --check` **PASS**. Konflik merge Git terselesaikan. PostgreSQL Finance/concurrency/Authorization/Training **PASS LOKAL SEBELUMNYA, TIDAK DIULANG**; bukan bukti PASS Cloud.
+- Rekonsiliasi mempertahankan guard dari `main` yang menolak Extra Guest bila backend belum siap, sakelar Extra Guest/Receipt existing, dan tiga gerbang pembayaran gabungan **DEFAULT OFF**. Tidak ada aktivasi fitur.
+
+### Pemeriksaan Supabase read-only (bukti proyek dan batas cakupan)
+- Koneksi Supabase yang tersedia hanya mengidentifikasi proyek **Baturaden-25-Staging**, project ID `bgtztcfbkcrvcipxbfti`, PostgreSQL 17.11, status ACTIVE_HEALTHY. **Jangan menyamakan proyek ini otomatis dengan Cloud Lovable operasional.**
+- Tool `list_migrations` mengembalikan sepuluh entri historis bernomor 20261019; ini **bukan bukti semua migrasi repo sudah terpasang**. Pemeriksaan katalog fungsi/tabel/kolom dilakukan dengan SQL SELECT read-only, tanpa DDL/DML.
+- **ADA:** `calculate_package_stay_times`, `calculate_scheduled_booking_times`, `get_operational_day_mode`, `finance_is_booking_operator`, `finance_is_owner_or_supervisor`, tabel `finance_settings`, `payments`, `transactions`; `minimum_dp_mode/value` dan `payments.cash_session_id/idempotency_key`.
+- **BELUM ADA pada staging ini:** `finance_training_session_is_valid(uuid,uuid)`, `finance_training_audit`, kolom `transactions.guest_count/extra_guest_count/extra_guest_unit_price/extra_guest_charge`, tabel `finance_payment_batch_idempotency`, serta empat RPC gabungan/training gabungan baru. Empat RPC dan tabel batch memang belum diharapkan sebelum migrasi gabungan, tetapi **fungsi Training dan kolom Extra Guest adalah dependensi prasyarat**.
+- Kesimpulan: **JANGAN menjalankan `20261104000000_atomic_combined_payments.sql` langsung pada staging ini**. Terdapat ketidaksiapan dependensi; status migrasi dan izin aktual pada database Lovable yang akan dipakai tetap **NOT VERIFIED**.
+
+### Satu pekerjaan berikutnya — fokus kritis, tanpa mengulang PASS
+**REKONSILIASI READ-ONLY dependensi dan urutan migrasi Cloud pada proyek yang benar:** verifikasi identitas database Lovable operasional, bandingkan katalog/migration history dengan `20261018000000_finance_training_enforcement.sql`, migrasi Extra Guest/Receipt yang relevan, dan `20261104000000_atomic_combined_payments.sql`; identifikasi urutan, RLS/ACL, generated RPC types, serta rencana rollback sebelum meminta izin Owner untuk Cloud write. **Tidak boleh merge #37, migrasi Cloud, deploy, publish, mengaktifkan tiga flags, atau menyatakan Siap Operasional Sementara tanpa gate dan persetujuan terpisah.**
+
+### Ide Owner tetap di antrean (bukan pekerjaan Codex otomatis)
+- [Form Kas Keluar](./IDE_REVISI_DESAIN_FORM_KAS_KELUAR_2026-11-05.md): kategori **Biaya Operasional** dan **Prive** dengan subkategori bertingkat, **DISETUJUI OWNER / BELUM DIIMPLEMENTASIKAN**, untuk Lovable saat workspace tersedia. Diskusi desain tidak mengubah prioritas operasional.
