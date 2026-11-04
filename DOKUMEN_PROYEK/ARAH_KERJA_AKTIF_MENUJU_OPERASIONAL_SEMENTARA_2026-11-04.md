@@ -2,6 +2,25 @@
 **Baturaden 25 Homestay — keputusan Owner 4 November 2026 WIB**  
 **Status:** ARAH KERJA AKTIF / DOKUMENTASI SAJA (tidak menjalankan kode, migrasi Cloud, atau deploy)
 
+## ATURAN KERJA OWNER TERBARU — CATAT UNTUK CHAT BARU (5 NOVEMBER 2026 WIB)
+
+**Prinsip:** "Jika ada yang mudah, kenapa harus sulit" dan **"Sekali mendayung, dua tiga pulau terlampaui."**
+
+1. Ketika Owner menulis **"Codex sedang bekerja"**, artinya instruksi sudah diberikan dan Codex masih memproses. **Jangan kirim tugas Codex baru, mengulang tugas PASS, atau bertanya ulang hal yang sudah dijawab.** Tunggu laporan terakhirnya.
+2. Fokus **100% Siap Operasional Sementara**, bukan menambah fitur nonkritis, desain besar, atau audit menyeluruh. Pekerjaan baru harus terkait gap nyata; uji ulang bagian yang berubah saja.
+3. Jika ada tugas yang dapat ChatGPT lakukan langsung melalui akses GitHub/Supabase/Lovable yang tersedia, **kerjakan sendiri dahulu**; jangan melemparkannya ke Codex atau Owner. Tindakan berisiko/Cloud/merge/deploy memerlukan persetujuan Owner.
+4. **Format jawaban:** selesaikan **Bagian 1 (pekerjaan utama, hasil nyata/checkpoint/gate berikutnya)**, lalu **Bagian 2 (obrolan santai ide/desain)** bila berguna. Diskusi santai berlangsung paralel saat Codex bekerja, **tanpa membuat Codex menunggu atau mengganggu tugasnya**.
+5. Pemilik workspace Lovable sementara belum merespons; jangan memulai perpindahan atau reconnection yang belum tersedia. Saat tersedia, perbarui checkpoint serah-terima sebelum pindah.
+
+### Ide laporan untuk pembahasan santai — belum persetujuan implementasi
+
+- Tujuan Owner: **dokumen profesional untuk calon investor atau pengajuan kredit bank**, bukan hanya laporan internal resepsionis.
+- Indikator inti: **Total Pendapatan**, **Total Kamar**, **Total Tamu Baru**, **Total Tamu Lama**. **Tanpa Saldo Awal**, saldo berjalan, atau saldo akhir seperti rekening koran.
+- **Total Kamar = jumlah kejadian penjualan sewa kamar selama periode yang dipilih, termasuk Extend; bukan jumlah nomor kamar unik maupun sekadar nomorator transaksi.** DP + pelunasan satu sewa tidak boleh dihitung sebagai dua kamar terjual.
+- Arah visual: cetak rapi profesional terinspirasi rekening koran; **format final BELUM diputuskan**.
+- Pembicaraan awal tentang pengeluaran: Owner khawatir besarnya biaya terlihat mengejutkan investor. **Jangan memanipulasi, menghapus biaya yang material dari laporan laba-rugi, atau menampilkan omzet sebagai laba.** Opsi yang akan dibahas: **(A) Laporan Kinerja Pendapatan/Operasional** dengan KPI dan penjualan saja, secara jelas dilabeli bukan laba-rugi; **(B) Laporan Laba Rugi dan arus kas pendukung yang transparan** untuk due diligence/bank. Jangan klaim template atau dokumen sudah diterima bank.
+- Status: **KONSEP DISKUSI SANTAI**; jangan beri tugas Codex/implementasi baru untuk laporan selama tugas operasional kritis berjalan.
+
 ## UPDATE GATE AUTHORIZATION — 4 NOVEMBER 2026, 23:40 WIB
 
 **11/11 PASS LOKAL (laporan Codex):** Owner, Supervisor bantu Receptionist, Receptionist, Training Day 1/Day 2, ACL authenticated/anon; direct RPC trainee tanpa wrapper, sesi Owner yang salah, trainee buka sesi sendiri, Housekeeping, dan Supervisor menunjuk Owner semuanya ditolak sesuai aturan. Dual identity operator/sesi dan rollback tanpa data parsial **PASS**. PostgreSQL tes berhenti aman. **Bukan PASS Cloud.**
