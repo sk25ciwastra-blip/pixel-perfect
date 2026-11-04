@@ -12,6 +12,7 @@ import { openWhatsApp } from '@/lib/whatsapp';
 import { usePeran } from '@/lib/peran';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
+import { durasiWib, jamWib, tanggalWib, waktuWib } from '@/lib/waktu-transaksi';
 
 type DetailTransaksiProps = {
   transactionId: string;
@@ -33,54 +34,6 @@ function kodePaket(name: string | undefined) {
   };
 
   return name ? (kode[name] ?? name) : '—';
-}
-
-function waktuWib(value: string | null) {
-  if (!value) return '—';
-
-  return new Date(value).toLocaleString('id-ID', {
-    timeZone: 'Asia/Jakarta',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function tanggalWib(value: string | null) {
-  if (!value) return '—';
-
-  return new Date(value).toLocaleDateString('id-ID', {
-    timeZone: 'Asia/Jakarta',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
-function jamWib(value: string | null) {
-  if (!value) return '—';
-
-  return new Date(value).toLocaleTimeString('id-ID', {
-    timeZone: 'Asia/Jakarta',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function durasiWib(awal: string | null, akhir: string | null) {
-  if (!awal || !akhir) return '—';
-
-  const menit = Math.round((new Date(akhir).getTime() - new Date(awal).getTime()) / 60000);
-
-  if (!Number.isFinite(menit) || menit < 0) return '—';
-
-  const jam = Math.floor(menit / 60);
-
-  if (jam === 0) return `${menit % 60} menit`;
-
-  return `${jam} jam ${menit % 60} menit`;
 }
 
 const labelStatusTransaksi: Record<string, string> = {
@@ -300,8 +253,8 @@ export function DetailTransaksi({
             </div>
             <div className="min-w-0">
               <Seksi judul="Jadwal & Status" ikon={Clock3}>
-                <Baris label="Check-in" ikon={Car}>{waktuWib(transaction.scheduled_check_in)}</Baris>
-                <Baris label="Check-out" ikon={CalendarDays}>{waktuWib(transaction.scheduled_check_out)}</Baris>
+                <Baris label="Check-in" ikon={Car}>{waktuWib(transaction.started_at)}</Baris>
+                <Baris label="Check-out" ikon={CalendarDays}>{waktuWib(transaction.checked_out_at)}</Baris>
                 <Baris label="Durasi" ikon={Timer}>{durasiWib(transaction.scheduled_check_in, transaction.scheduled_check_out)}</Baris>
                 <Baris label="Status" ikon={Stamp}>
                   <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-gold/30 bg-gold/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gold-light">
