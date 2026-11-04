@@ -630,6 +630,128 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_training_assignments: {
+        Row: {
+          created_at: string
+          created_by: string
+          ends_on: string
+          id: string
+          label: string
+          resolution_note: string
+          resolved_at: string | null
+          resolved_by: string | null
+          starts_on: string
+          status: string
+          supervisor_user_id: string
+          trainee_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          ends_on: string
+          id?: string
+          label?: string
+          resolution_note?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          starts_on: string
+          status?: string
+          supervisor_user_id: string
+          trainee_user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          ends_on?: string
+          id?: string
+          label?: string
+          resolution_note?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          starts_on?: string
+          status?: string
+          supervisor_user_id?: string
+          trainee_user_id?: string
+        }
+        Relationships: []
+      }
+      finance_training_audit: {
+        Row: {
+          action: string
+          assignment_id: string
+          created_at: string
+          details: Json
+          entity_id: string | null
+          entity_type: string
+          id: string
+          label: string
+          operator_id: string
+          payment_id: string | null
+          session_id: string
+          supervisor_id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          action: string
+          assignment_id: string
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          label?: string
+          operator_id: string
+          payment_id?: string | null
+          session_id: string
+          supervisor_id: string
+          transaction_id?: string | null
+        }
+        Update: {
+          action?: string
+          assignment_id?: string
+          created_at?: string
+          details?: Json
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          label?: string
+          operator_id?: string
+          payment_id?: string | null
+          session_id?: string
+          supervisor_id?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_training_audit_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "finance_training_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_training_audit_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_training_audit_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "finance_cash_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_training_audit_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guest_notes: {
         Row: {
           author_id: string | null
@@ -1220,6 +1342,82 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_receipts: {
+        Row: {
+          id: string
+          issued_at: string
+          outstanding_at_issue: number
+          payment_amount: number
+          payment_id: string
+          payment_status_at_issue: string
+          receipt_kind: string
+          receipt_snapshot: Json
+          schema_version: number
+          served_by: string
+          snapshot_hash: string | null
+          template_snapshot: Json
+          template_version_id: string | null
+          total_paid_at_issue: number
+          transaction_id: string
+        }
+        Insert: {
+          id?: string
+          issued_at?: string
+          outstanding_at_issue: number
+          payment_amount: number
+          payment_id: string
+          payment_status_at_issue: string
+          receipt_kind: string
+          receipt_snapshot: Json
+          schema_version?: number
+          served_by: string
+          snapshot_hash?: string | null
+          template_snapshot: Json
+          template_version_id?: string | null
+          total_paid_at_issue: number
+          transaction_id: string
+        }
+        Update: {
+          id?: string
+          issued_at?: string
+          outstanding_at_issue?: number
+          payment_amount?: number
+          payment_id?: string
+          payment_status_at_issue?: string
+          receipt_kind?: string
+          receipt_snapshot?: Json
+          schema_version?: number
+          served_by?: string
+          snapshot_hash?: string | null
+          template_snapshot?: Json
+          template_version_id?: string | null
+          total_paid_at_issue?: number
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_receipts_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_receipts_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "receipt_template_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_receipts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -1299,6 +1497,107 @@ export type Database = {
           },
         ]
       }
+      receipt_print_requests: {
+        Row: {
+          copy_label: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          idempotency_key: string
+          physical_confirmed_at: string | null
+          print_no: number
+          printer_target: string | null
+          receipt_id: string
+          requested_at: string
+          requested_by: string
+          status: string
+        }
+        Insert: {
+          copy_label?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          idempotency_key: string
+          physical_confirmed_at?: string | null
+          print_no: number
+          printer_target?: string | null
+          receipt_id: string
+          requested_at?: string
+          requested_by: string
+          status?: string
+        }
+        Update: {
+          copy_label?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string
+          physical_confirmed_at?: string | null
+          print_no?: number
+          printer_target?: string | null
+          receipt_id?: string
+          requested_at?: string
+          requested_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipt_print_requests_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "payment_receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipt_template_versions: {
+        Row: {
+          blocks: Json
+          created_at: string
+          created_by: string | null
+          footer_config: Json
+          header_config: Json
+          id: string
+          language: string
+          paper_width_mm: number
+          preset: string
+          published_at: string | null
+          status: string
+          template_kind: string
+          version: number
+        }
+        Insert: {
+          blocks: Json
+          created_at?: string
+          created_by?: string | null
+          footer_config?: Json
+          header_config?: Json
+          id?: string
+          language?: string
+          paper_width_mm?: number
+          preset: string
+          published_at?: string | null
+          status?: string
+          template_kind: string
+          version: number
+        }
+        Update: {
+          blocks?: Json
+          created_at?: string
+          created_by?: string | null
+          footer_config?: Json
+          header_config?: Json
+          id?: string
+          language?: string
+          paper_width_mm?: number
+          preset?: string
+          published_at?: string | null
+          status?: string
+          template_kind?: string
+          version?: number
+        }
+        Relationships: []
+      }
       room_types: {
         Row: {
           active: boolean
@@ -1375,6 +1674,7 @@ export type Database = {
       }
       transactions: {
         Row: {
+          base_price_snapshot: number | null
           checked_out_at: string | null
           commission_mode_snapshot: string | null
           commission_per_room_amount_snapshot: number | null
@@ -1384,6 +1684,10 @@ export type Database = {
           created_by: string
           day_mode: string | null
           ends_at: string | null
+          extra_guest_charge: number
+          extra_guest_count: number
+          extra_guest_unit_price: number
+          guest_count: number
           guest_id: string
           id: string
           minimum_dp_amount_snapshot: number | null
@@ -1400,6 +1704,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          base_price_snapshot?: number | null
           checked_out_at?: string | null
           commission_mode_snapshot?: string | null
           commission_per_room_amount_snapshot?: number | null
@@ -1409,6 +1714,10 @@ export type Database = {
           created_by?: string
           day_mode?: string | null
           ends_at?: string | null
+          extra_guest_charge?: number
+          extra_guest_count?: number
+          extra_guest_unit_price?: number
+          guest_count?: number
           guest_id: string
           id?: string
           minimum_dp_amount_snapshot?: number | null
@@ -1425,6 +1734,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          base_price_snapshot?: number | null
           checked_out_at?: string | null
           commission_mode_snapshot?: string | null
           commission_per_room_amount_snapshot?: number | null
@@ -1434,6 +1744,10 @@ export type Database = {
           created_by?: string
           day_mode?: string | null
           ends_at?: string | null
+          extra_guest_charge?: number
+          extra_guest_count?: number
+          extra_guest_unit_price?: number
+          guest_count?: number
           guest_id?: string
           id?: string
           minimum_dp_amount_snapshot?: number | null
@@ -1496,6 +1810,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_receipt_template_version: {
+        Args: { _template_id: string }
+        Returns: undefined
+      }
       advance_room_cleaning:
         | { Args: { _room_id: string }; Returns: undefined }
         | { Args: { _note: string; _room_id: string }; Returns: undefined }
@@ -1532,6 +1850,14 @@ export type Database = {
         Returns: undefined
       }
       check_in_booking: { Args: { _transaction_id: string }; Returns: string }
+      check_in_training_booking: {
+        Args: { _session_id: string; _transaction_id: string }
+        Returns: string
+      }
+      check_out_training_transaction: {
+        Args: { _session_id: string; _transaction_id: string }
+        Returns: string
+      }
       check_out_transaction: {
         Args: { _transaction_id: string }
         Returns: string
@@ -1582,6 +1908,14 @@ export type Database = {
         }
         Returns: string
       }
+      create_finance_training_assignment: {
+        Args: {
+          _starts_on: string
+          _supervisor_user_id: string
+          _trainee_user_id: string
+        }
+        Returns: string
+      }
       create_official_package: {
         Args: {
           _active: boolean
@@ -1625,6 +1959,71 @@ export type Database = {
             }
             Returns: string
           }
+        | {
+            Args: {
+              _address: string
+              _amount: number
+              _day_mode: string
+              _guest_count: number
+              _idempotency_key: string
+              _method: string
+              _mode: string
+              _name: string
+              _package_id: string
+              _phone: string
+              _room_id: string
+              _scheduled_check_in: string
+              _session_id: string
+            }
+            Returns: string
+          }
+      create_training_finance_deposit: {
+        Args: {
+          _amount: number
+          _bank_account_id?: string
+          _idempotency_key: string
+          _method: string
+          _proof_ref?: string
+          _session_id: string
+        }
+        Returns: string
+      }
+      create_training_reservation:
+        | {
+            Args: {
+              _address: string
+              _amount: number
+              _day_mode: string
+              _idempotency_key?: string
+              _method: string
+              _mode: string
+              _name: string
+              _package_id: string
+              _phone: string
+              _room_id: string
+              _scheduled_check_in?: string
+              _session_id?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _address: string
+              _amount: number
+              _day_mode: string
+              _guest_count: number
+              _idempotency_key: string
+              _method: string
+              _mode: string
+              _name: string
+              _package_id: string
+              _phone: string
+              _room_id: string
+              _scheduled_check_in: string
+              _session_id: string
+            }
+            Returns: string
+          }
       decide_finance_deposit: {
         Args: { _deposit_id: string; _reason?: string; _status: string }
         Returns: undefined
@@ -1646,13 +2045,58 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      finance_training_assignment_for: {
+        Args: { _user_id: string }
+        Returns: {
+          ends_on: string
+          id: string
+          label: string
+          starts_on: string
+          status: string
+          supervisor_user_id: string
+          trainee_user_id: string
+        }[]
+      }
+      finance_training_context_assignment: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: string
+      }
+      finance_training_context_matches_session: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
+      finance_training_context_valid: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      finance_training_current_user_can_read_session: {
+        Args: { _session_id: string }
+        Returns: boolean
+      }
+      finance_training_current_user_is_restricted: {
+        Args: never
+        Returns: boolean
+      }
+      finance_training_is_restricted: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      finance_training_session_is_valid: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_finance_session_summary: {
         Args: { _session_id: string }
         Returns: Json
       }
+      get_finance_training_context: { Args: never; Returns: Json }
       get_operational_day_mode: {
         Args: { _calendar_date: string }
         Returns: string
+      }
+      get_training_finance_session_summary: {
+        Args: { _session_id: string }
+        Returns: Json
       }
       has_employee_position: {
         Args: {
@@ -1669,6 +2113,7 @@ export type Database = {
         Returns: boolean
       }
       is_receptionist: { Args: { _user_id: string }; Returns: boolean }
+      issue_payment_receipt: { Args: { _payment_id: string }; Returns: string }
       next_expense_number: { Args: never; Returns: string }
       next_housekeeping_number: { Args: never; Returns: string }
       next_transaction_number: { Args: never; Returns: string }
@@ -1711,6 +2156,37 @@ export type Database = {
         }
         Returns: string
       }
+      record_receipt_print_result: {
+        Args: {
+          _error_code?: string
+          _error_message?: string
+          _physical_confirmed?: boolean
+          _print_request_id: string
+          _status: string
+        }
+        Returns: undefined
+      }
+      record_training_finance_expense: {
+        Args: {
+          _amount: number
+          _category: string
+          _idempotency_key: string
+          _method: string
+          _note?: string
+          _session_id: string
+        }
+        Returns: string
+      }
+      record_training_transaction_payment: {
+        Args: {
+          _amount: number
+          _idempotency_key: string
+          _method: string
+          _session_id: string
+          _transaction_id: string
+        }
+        Returns: string
+      }
       record_transaction_payment:
         | {
             Args: { _amount: number; _method: string; _transaction_id: string }
@@ -1735,8 +2211,30 @@ export type Database = {
             }
             Returns: string
           }
+      request_receipt_print: {
+        Args: { _idempotency_key: string; _receipt_id: string }
+        Returns: Json
+      }
+      resolve_finance_training_assignment: {
+        Args: {
+          _assignment_id: string
+          _resolution_note?: string
+          _status: string
+        }
+        Returns: undefined
+      }
       resolve_housekeeping_transaction: {
         Args: { _room_id: string }
+        Returns: string
+      }
+      save_receipt_template_version: {
+        Args: {
+          _blocks: Json
+          _footer_config: Json
+          _header_config: Json
+          _preset: string
+          _template_kind: string
+        }
         Returns: string
       }
       set_finance_commission_config: {
