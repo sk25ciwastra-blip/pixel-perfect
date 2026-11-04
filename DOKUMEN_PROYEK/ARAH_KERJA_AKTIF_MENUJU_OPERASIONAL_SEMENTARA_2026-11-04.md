@@ -386,3 +386,12 @@ Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixe
 - UI Lovable Backups sebelumnya diverifikasi menampilkan backup terbaru **4 Nov 2026 pukul 19.55.34 UTC** (5 Nov 02.55 WIB). Kemampuan restore secara nyata **belum diuji**; tidak ada Restore yang dieksekusi.
 - **Batas PASS:** skema/ACL backend terpasang dan terverifikasi. **Belum** diuji panggilan RPC nyata dengan akun peran, transaksi Cloud end-to-end, feature flags, sinkronisasi source PR #37, atau deployment. PR #37 tetap Draft/unmerged, flag gabungan **OFF**, tidak ada pembayaran pelanggan yang dibuat/dimodifikasi, tidak ada perubahan UI maupun publish.
 - **Langkah berikutnya:** verifikasi kontrak RPC, pembatasan sesi dan pelatihan dalam lingkungan terisolasi atau tes Cloud yang disetujui dengan data dummy; jangan menyalakan flag sebelum verifikasi dan persetujuan Owner tersendiri. Jangan mengulang tes lokal PASS tanpa perubahan relevan.
+
+
+## PASS TERBATAS CLOUD — BOOKING PEMBAYARAN GABUNGAN, ROLLBACK (5 NOVEMBER 2026 WIB)
+
+- Dengan izin Owner melakukan uji dummy Cloud, konektor Lovable pribadi memanggil `public.create_reservation_combined` dalam transaksi eksplisit `BEGIN; SET LOCAL ROLE authenticated; set_config('request.jwt.claim.sub', <akun Owner sesi OPEN>, true); ... ROLLBACK;`.
+- **PASS 1 kasus:** Booking dummy Kamar 02 Paket 4 Jam, dua metode `Cash Rp20.000 + QRIS Rp20.000`, konfigurasi DP Cloud `PERCENTAGE 40%`, transaksi mengembalikan nomor resmi `BTRDTRX-000022`, **dua payment_ids**. Hasil di-ROLLBACK, sehingga nomor uji bersifat sementara/tidak boleh dianggap nomor transaksi tersimpan. Query verifikasi setelahnya: **0 transaksi tersimpan** untuk nomor telepon dummy khusus uji ini.
+- Pengujian otorisasi dengan `SET LOCAL ROLE authenticated` dan JWT subject Owner sesi kas OPEN mengembalikan `finance_is_booking_operator=true` dan `finance_is_owner_or_supervisor=true`. Pengujian ini **bukan** pembuktian login browser semua akun.
+- Percobaan lanjutan yang menggabungkan booking/retry/pelunasan pada satu request SQL ditolak konektor sebagai `INVALID_ARGUMENT`, tanpa rincian PostgreSQL. **Retry, settlement, akun Receptionist/Supervisor/Trainee, penolakan DP <40%, dan E2E browser: BELUM PASS.** Jangan mengulang format request yang sama; siapkan runner/uji terisolasi atau jalur UI sah untuk kelanjutan.
+- Tidak ada pembayaran dummy permanen, perubahan data bisnis, merge, publish, deploy, atau pengaktifan fitur. PR #37 tetap Draft dan tiga flag gabungan tetap OFF.
