@@ -406,3 +406,13 @@ Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixe
 - **PASS otorisasi dasar:** akun Owner sesi kas OPEN dan akun Supervisor memperoleh izin Booking; Receptionist aktif mendapat izin Booking tanpa hak Owner/Supervisor. Dua data Receptionist `active=false` tidak memperoleh izin, sesuai guard. Wrapper Training ditolak tanpa assignment aktif: `Training wajib memakai sesi kas aktif penanggung jawab`.
 - **Batas PASS:** belum diuji trainee dengan assignment ACTIVE, concurrent multi-client nyata, akses RLS melalui browser/app, refund/closing terintegrasi, atau feature flags di aplikasi terpublikasi. PR #37 tetap DRAFT / unmerged dan feature flag OFF. Tes kombinasi SQL tertentu sempat ditolak konektor `INVALID_ARGUMENT`, kemudian skenario relevan berhasil dijalankan sebagai blok PL/pgSQL terpisah.
 - **Integritas data akhir SELECT:** `transactions=12`, `payments=16`, `guests=15`, `finance_payment_batch_idempotency=0`, data tamu dummy uji tersimpan **0**; tidak ada data uji permanen. Tidak ada merge, publish, deploy, atau perubahan aturan Owner.
+
+
+## PASS MERGE PR #37 — GITHUB MAIN KE SOURCE LOVABLE PRIBADI (5 NOVEMBER 2026 WIB)
+
+- Owner **secara eksplisit menyetujui merge PR #37 saja**, tanpa feature activation, migrasi ulang, publish, atau deploy.
+- Pemeriksaan sebelum merge: PR #37 `OPEN/DRAFT`, `mergeable=true`; head `6c3f8c7f00dbcc354da21992e43f29cd10938dea`, 9 file fitur, `main` 20 commit lebih baru namun GitHub tidak mendeteksi konflik aktual. Marked **ready for review**, kemudian **merge normal** dengan `expected_head_sha` persis berhasil.
+- GitHub merge SHA **`998961626cfc7b751d3e6c487dba128fe2f6d8de`**; PR #37 diverifikasi **CLOSED/MERGED**.
+- Lovable pribadi ID `017f6e78-15f2-4d07-a38c-87cb185279bf` melalui konektor `get_project` melaporkan `latest_commit_sha` **sama** `998961626cfc7b751d3e6c487dba128fe2f6d8de`. `read_file` Lovable dari commit tersebut berhasil untuk `src/lib/feature-flags.ts` (tiga sakelar gabungan) dan `src/lib/combined-payments.ts` (pemanggil RPC). **PASS sinkronisasi source**, bukan klaim build/pratinjau/publikasi.
+- Migrasi Cloud pembayaran gabungan **telah dipasang dan diverifikasi sebelumnya**; dalam langkah merge ini tidak menjalankan ulang DDL, tidak menjalankan tes Finance/Auth lokal yang sudah PASS, dan tidak mengubah data Cloud. Tidak ada publish/deploy; aplikasi sebelumnya telah berstatus published, tetapi versi publik terkini belum diverifikasi berubah. Feature flag gabungan harus tetap **OFF** sampai aktivasi Owner.
+- **Berikutnya:** uji build/pratinjau Lovable pada commit gabungan, verifikasi runtime feature flags OFF, lalu E2E per akun pada lingkungan yang benar sebelum keputusan aktivasi/publish terpisah.
