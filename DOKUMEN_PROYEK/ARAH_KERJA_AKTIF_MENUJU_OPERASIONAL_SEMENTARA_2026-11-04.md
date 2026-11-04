@@ -63,3 +63,33 @@
 
 ## Ketentuan permanen
 Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desain diarahkan untuk membantu kerja karyawan, dan keputusan yang sudah disetujui tidak dirancang ulang. Tidak ada tindakan Cloud/merge/revoke legacy/publish tanpa persetujuan Owner masing-masing. Motto Owner: **jika ada yang mudah, kenapa harus sulit**.
+
+
+## PROTOKOL KERJA OWNER — PERMANEN UNTUK CHAT BERIKUTNYA (konfirmasi 4–5 Nov 2026)
+
+**Pemicu literal:** Saat Owner mengatakan `"Codex sedang bekerja"`, Codex sedang mengerjakan instruksi **yang sudah diberikan**. **Jangan memberikan instruksi Codex baru, memulai pekerjaan berulang, atau menyuruh Owner melakukan audit ulang** sebelum hasil tugas berjalan diterima. Fokus satu blocker penting pada jalur menuju **100% Siap Operasional Sementara**; jangan menambah pekerjaan non-esensial ke jalur kritis.
+
+**Urutan respons Londo:**
+1. Jika ada pekerjaan yang dapat dilakukan ChatGPT **langsung** via GitHub, Supabase atau alat terhubung, **kerjakan sendiri dulu**, dengan prinsip tidak mengubah produksi/merge/deploy/migrasi tanpa izin Owner. Laporkan tindakan nyata dan batasnya.
+2. Lanjutkan **pembahasan santai** bersama Owner (mis. ide tujuh fitur/desain laporan) **setelah** bagian utama diselesaikan. Pembahasan ide tidak otomatis menjadi tugas Codex atau perubahan sistem.
+3. Pisahkan **KEPUTUSAN OWNER**, **USULAN**, **PASS LOKAL**, **AKTIF CLOUD**, dan **TERTUNDA**. Setiap milestone dicatat agar obrolan atau workspace baru tidak mengulang langkah yang sama.
+4. Motto Owner: **"jika ada yang mudah, kenapa harus sulit"** dan **"Sekali mendayung, dua tiga pulau terlampaui."**
+
+## KONSEP LAPORAN — ARAH TUJUAN OWNER, BELUM SPESIFIKASI FINAL
+
+**Tujuan yang dijelaskan Owner:** menghasilkan **berkas profesional yang dapat dipresentasikan kepada calon investor atau saat mengajukan kredit bank**; selain manfaat operasional. Jangan menyamakan halaman cetak ini dengan rekonsiliasi kas per shift atau rekening koran rekening bank resmi.
+
+**Keputusan Owner yang sudah jelas:**
+- Ringkasan utama memuat **Total Pendapatan, Total Kamar, Total Tamu Baru, Total Tamu Lama**.
+- **Tanpa Saldo Awal** dalam tampilan/cetakan laporan yang dimaksud. Jangan otomatis menyisipkan kolom saldo berjalan dan saldo akhir seperti rekening koran bank.
+- **Total Kamar = jumlah penjualan/sewa kamar dalam periode terpilih, TERMASUK Extend**. Bukan jumlah nomor kamar unik, bukan hitung nomorator/TRX, dan tidak boleh terjadi duplikasi dari DP + pelunasan atau dua metode pembayaran. Satu kejadian sewa awal + satu Extend = **dua penjualan kamar** menurut contoh Owner.
+- Format visual akhir belum dipilih; desain cetak profesional terinspirasi keterbacaan rekening koran, tidak wajib meniru rekening koran bank.
+- Kebutuhan Owner: cara menampilkan pengeluaran **tanpa menimbulkan salah persepsi** bahwa seluruh pengeluaran besar adalah biaya operasional rutin.
+
+**Pedoman penyajian yang masih USULAN — BELUM keputusan Owner:**
+- Pisahkan **Ringkasan Kinerja Operasional** (pendapatan, kamar terjual, tamu baru/lama, tren dan metrik relevan) dari **Ringkasan Keuangan & Lampiran** untuk pembaca investor/bank.
+- Jika laporan menyajikan laba/rugi, modal, pembayaran utang, pembelian aset, renovasi atau pengeluaran satu kali, **klasifikasikan dengan benar**. Jangan menyebut semua arus uang keluar sebagai biaya operasi; jangan pula menyembunyikan biaya material, kewajiban, refund, atau risiko. Rekonsiliasi ke data dan bukti dapat ditelusuri.
+- Versi ringkas boleh mendahulukan pendapatan dan performa penjualan, tetapi untuk due diligence investor atau bank tetap harus disediakan laporan biaya, laba/rugi, arus kas dan dokumen pendukung yang **lengkap dan jujur** sesuai kebutuhan.
+- **BELUM DIPUTUSKAN:** definisi Tamu Baru/Lama (orang unik atau kunjungan), pendapatan kotor vs net refund, status sewa yang dihitung, format laporan final, jenis/klasifikasi biaya, dan apakah ada sumber data memadai. Jangan hardcode definisi dari dugaan.
+- Pembahasan laporan ini adalah **sesi santai/konsep**, bukan alasan mengalihkan Codex dari jalur hardening dan kesiapan operasional sementara.
+
