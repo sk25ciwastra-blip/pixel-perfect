@@ -395,3 +395,14 @@ Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixe
 - Pengujian otorisasi dengan `SET LOCAL ROLE authenticated` dan JWT subject Owner sesi kas OPEN mengembalikan `finance_is_booking_operator=true` dan `finance_is_owner_or_supervisor=true`. Pengujian ini **bukan** pembuktian login browser semua akun.
 - Percobaan lanjutan yang menggabungkan booking/retry/pelunasan pada satu request SQL ditolak konektor sebagai `INVALID_ARGUMENT`, tanpa rincian PostgreSQL. **Retry, settlement, akun Receptionist/Supervisor/Trainee, penolakan DP <40%, dan E2E browser: BELUM PASS.** Jangan mengulang format request yang sama; siapkan runner/uji terisolasi atau jalur UI sah untuk kelanjutan.
 - Tidak ada pembayaran dummy permanen, perubahan data bisnis, merge, publish, deploy, atau pengaktifan fitur. PR #37 tetap Draft dan tiga flag gabungan tetap OFF.
+
+
+## PASS CLOUD TERBATAS — DP, RETRY, PELUNASAN, OTORISASI (5 NOVEMBER 2026 WIB)
+
+- **Pengujian Cloud melalui konektor Lovable**, semuanya memakai `BEGIN`, `SET LOCAL ROLE authenticated`, JWT subject akun uji yang tersedia, fungsi RPC gabungan yang sudah dipasang, dan **`ROLLBACK`**. Bukan E2E browser.
+- **PASS DP kurang dari minimum:** Booking dummy Kamar 02 Paket 4 Jam harga weekday Rp100.000, pembayaran `Cash Rp19.999 + QRIS Rp20.000` (total Rp39.999) ditolak persis dengan pesan `Booking wajib memiliki DP minimum sesuai aturan Owner` (minimum 40% = Rp40.000).
+- **PASS idempotensi Booking:** panggilan `create_reservation_combined` dua kali memakai request key, fingerprint dan payload identik; hasil kedua **sama**, jumlah pembayaran tetap **2**, bukan 4.
+- **PASS pelunasan gabungan:** Booking dummy DP Cash Rp20.000 + QRIS Rp20.000, kemudian `record_transaction_payment_combined` Cash Rp30.000 + Transfer Rp30.000: dua payment IDs masing-masing fase, jumlah pembayaran **Rp100.000 = price_snapshot Rp100.000**.
+- **PASS otorisasi dasar:** akun Owner sesi kas OPEN dan akun Supervisor memperoleh izin Booking; Receptionist aktif mendapat izin Booking tanpa hak Owner/Supervisor. Dua data Receptionist `active=false` tidak memperoleh izin, sesuai guard. Wrapper Training ditolak tanpa assignment aktif: `Training wajib memakai sesi kas aktif penanggung jawab`.
+- **Batas PASS:** belum diuji trainee dengan assignment ACTIVE, concurrent multi-client nyata, akses RLS melalui browser/app, refund/closing terintegrasi, atau feature flags di aplikasi terpublikasi. PR #37 tetap DRAFT / unmerged dan feature flag OFF. Tes kombinasi SQL tertentu sempat ditolak konektor `INVALID_ARGUMENT`, kemudian skenario relevan berhasil dijalankan sebagai blok PL/pgSQL terpisah.
+- **Integritas data akhir SELECT:** `transactions=12`, `payments=16`, `guests=15`, `finance_payment_batch_idempotency=0`, data tamu dummy uji tersimpan **0**; tidak ada data uji permanen. Tidak ada merge, publish, deploy, atau perubahan aturan Owner.
