@@ -154,3 +154,18 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - Kas keluar tunai dicatat Receptionist menggunakan kategori yang sesuai; **Prive dipisahkan dari biaya operasional**. Kategori dan kontrol teknis tetap mengikuti aturan Owner/sistem Finance yang ada, jangan langsung menambah fitur sebelum memeriksa implementasi.
 - Owner tidak lagi mengkhawatirkan kesan pengeluaran besar bagi investor sebagai alasan merombak laporan; laporan tetap harus **akurat, transparan, lengkap bila diperlukan**, tanpa menyembunyikan biaya atau kewajiban.
 - **Belum instruksi implementasi ke Codex**: ini pembahasan santai konsep laporan sementara prioritas utama tetap kesiapan operasional sementara.
+
+
+## KEPUTUSAN OWNER — PRIVE CASH DAN IZIN COMMIT LOKAL (5 NOVEMBER 2026)
+
+**KEPUTUSAN OWNER (bukan usulan):**
+- **Prive dicatat ketika uang Cash dari laci kas digunakan untuk kebutuhan pribadi Owner.** Resepsionis yang mengelola laci kas dapat mencatat kas keluar tersebut dengan kategori yang tepat sesuai alur Finance dan audit yang berlaku.
+- **QRIS yang langsung diterima Owner adalah pendapatan usaha; bukan otomatis Prive.** Bedakan pengakuan pendapatan, sumber dana, dan mutasi kas. Jangan menggandakan pendapatan atau membuat entri kas keluar fiktif.
+- Ringkasan laporan yang diinginkan Owner: **Total Pendapatan, Biaya Operasional, Prive**; metrik penjualan kamar dan tamu tetap bagian konteks operasional sesuai keputusan sebelumnya.
+- Jangan mengubah implementasi Finance hanya karena diskusi laporan ini. Tinjau implementasi kategori kas keluar yang sudah ada saat masuk tahap desain/pelaporan.
+
+**PERSETUJUAN SOURCE TERSENDIRI:**
+- Owner menyetujui **COMMIT LOKAL saja** atas tepat **10 file yang telah staged** di branch `feat/combined-payments-20261104`, berdasarkan hasil selective staging sebelumnya.
+- Persetujuan ini **TIDAK mencakup** push, PR, merge, deploy, migrasi Cloud, aktivasi feature flags, reset/rebase atau perubahan file lain.
+- Sebelum commit, pastikan indeks staging masih tepat 10 file sesuai checkpoint. Jika berubah, hentikan tanpa commit dan laporkan selisih.
+- Setelah commit, catat SHA aktual dan status Git; jangan otomatis melakukan langkah berikutnya.
