@@ -5,7 +5,6 @@ import {
   Info, Car, CalendarPlus, Stamp, MapPin, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
-import { ReceiptHistoryButton, ReceiptPrintButton } from '@/components/receipt-actions';
 import { LambangTeratai } from '@/components/kerangka';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
@@ -13,7 +12,6 @@ import { openWhatsApp } from '@/lib/whatsapp';
 import { usePeran } from '@/lib/peran';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
-import { featureFlags } from '@/lib/feature-flags';
 
 type DetailTransaksiProps = {
   transactionId: string;
@@ -242,9 +240,6 @@ export function DetailTransaksi({
     .reduce((total, item) => total + Number(item.amount), 0);
 
   const total = Number(transaction.price_snapshot ?? 0);
-  const extraGuestCount = Number(transaction.extra_guest_count ?? 0);
-  const extraGuestCharge = Number(transaction.extra_guest_charge ?? 0);
-  const roomPrice = featureFlags.extraGuest ? total - extraGuestCharge : total;
   const remaining = Math.max(total - totalPaid, 0);
 
   const sesiKasTerakhir = [...transactionPayments].reverse().find((item) => item.cash_session_id);
@@ -299,7 +294,7 @@ export function DetailTransaksi({
                 <Baris label="Tipe Kamar" ikon={DoorOpen}>{roomType?.name ?? '—'}</Baris>
                 <Baris label="Paket" ikon={Package}>{kodePaket(packageItem?.name)}</Baris>
                 <Baris label="Jenis Hari" ikon={CalendarDays}>{transaction.day_mode?.toUpperCase() ?? '—'}</Baris>
-                <Baris label="Jumlah Tamu" ikon={Users}>{featureFlags.extraGuest ? `${transaction.guest_count ?? 2} orang` : 'Belum tersedia'}</Baris>
+                <Baris label="Jumlah Tamu" ikon={Users}>Belum tersedia</Baris>
               </Seksi>
 
             </div>
@@ -337,17 +332,9 @@ export function DetailTransaksi({
                     <tr className="border-t border-gold/15">
                       <td className="py-1.5 pr-2">Paket {kodePaket(packageItem?.name)}</td>
                       <td className="py-1.5 text-center tabular-nums">1</td>
-                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(roomPrice)}</td>
-                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(roomPrice)}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(total)}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(total)}</td>
                     </tr>
-                    {featureFlags.extraGuest && extraGuestCharge > 0 && (
-                      <tr className="border-t border-gold/15">
-                        <td className="py-1.5 pr-2">Extra Guest ({extraGuestCount} × Rp50.000)</td>
-                        <td className="py-1.5 text-center tabular-nums">{extraGuestCount}</td>
-                        <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(50000)}</td>
-                        <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(extraGuestCharge)}</td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
                 <div className="flex items-center justify-between gap-3 border-t border-gold/30 bg-gold/15 px-3 py-2">
@@ -376,7 +363,6 @@ export function DetailTransaksi({
           <div className="grid items-start gap-y-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)] lg:divide-x lg:divide-gold/20">
             <div className="min-w-0 lg:pr-6">
               <Seksi judul="Riwayat Pembayaran" ikon={History}>
-                {featureFlags.receipt58mm && <div className="mb-2 flex justify-end"><ReceiptHistoryButton paymentIds={transactionPayments.map(payment => payment.id)} /></div>}
                 {transactionPayments.length === 0 ? (
                   <p className="text-[12.5px] text-muted-foreground">Belum ada pembayaran tercatat.</p>
                 ) : (
@@ -391,7 +377,6 @@ export function DetailTransaksi({
                           <th className="py-1 pr-1 text-left font-medium">Oleh</th>
                           <th className="py-1 pr-1 text-left font-medium">Jenis</th>
                           <th className="py-1 text-left font-medium">Catatan</th>
-                          {featureFlags.receipt58mm && <th className="py-1 text-right font-medium">Struk</th>}
                         </tr>
                       </thead>
                       <tbody>
@@ -409,7 +394,6 @@ export function DetailTransaksi({
                               <td className="py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
                               <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
                               <td className="py-1.5 text-muted-foreground">—</td>
-                              {featureFlags.receipt58mm && <td className="py-1.5 text-right"><ReceiptPrintButton paymentId={payment.id} label="Print Receipt" /></td>}
                             </tr>
                           );
                         })}

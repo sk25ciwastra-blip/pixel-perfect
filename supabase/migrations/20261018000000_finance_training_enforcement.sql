@@ -525,22 +525,14 @@ BEGIN
     FOR UPDATE;
   END IF;
 
-  IF NOT FOUND OR selected_session.status <> 'OPEN' THEN
-    RAISE EXCEPTION 'Sesi kas aktif penerima pembayaran tidak ditemukan';
-  END IF;
-
-  -- Preserve the approved Owner/Supervisor assisted-session path while
-  -- allowing an assigned trainee only through a validated Training context.
-  -- Restricted trainees must not inherit the Owner/Supervisor shortcut.
-  IF selected_session.opened_by <> NEW.recorded_by
-     AND NOT (
-       NOT public.finance_training_is_restricted(NEW.recorded_by)
-       AND public.finance_is_owner_or_supervisor(NEW.recorded_by)
-     )
-     AND NOT public.finance_training_context_matches_session(
-       auth.uid(), selected_session.id
+  IF NOT FOUND OR selected_session.status <> 'OPEN'
+     OR (
+       selected_session.opened_by <> NEW.recorded_by
+       AND NOT public.finance_training_context_matches_session(
+         auth.uid(), selected_session.id
+       )
      ) THEN
-    RAISE EXCEPTION 'Operator tidak berwenang membantu sesi kas ini';
+    RAISE EXCEPTION 'Sesi kas aktif penerima pembayaran tidak ditemukan';
   END IF;
 
   NEW.cash_session_id := selected_session.id;
@@ -1023,22 +1015,12 @@ BEGIN
        s.opened_by <> auth.uid()
        AND NOT public.finance_is_owner_or_supervisor(auth.uid())
        AND NOT public.has_role(auth.uid(), 'owner')
-       AND NOT public.finance_training_context_matches_session(auth.uid(), _session_id)
      ) THEN
     RAISE EXCEPTION 'Akses sesi ditolak';
   END IF;
 
   SELECT jsonb_build_object(
     'opening_cash', s.opening_cash,
-    -- Preserve the deployed Finance contract: cash-only expected balance
-    -- can be negative; QRIS/Transfer must not inflate physical cash.
-    'expected_cash', s.opening_cash
-      + COALESCE((SELECT SUM(amount) FROM public.payments
-                  WHERE cash_session_id = _session_id AND method = 'Cash'), 0)
-      - COALESCE((SELECT SUM(amount) FROM public.finance_expenses
-                  WHERE session_id = _session_id AND method = 'CASH'), 0)
-      - COALESCE((SELECT SUM(amount) FROM public.finance_refunds
-                  WHERE source_session_id = _session_id AND refund_method = 'CASH'), 0),
     'payments_total', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id), 0),
     'cash', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'Cash'), 0),
     'qris', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'QRIS'), 0),
@@ -1093,21 +1075,6 @@ REVOKE ALL ON FUNCTION public.finance_training_audit_row() FROM PUBLIC, authenti
 
 REVOKE ALL ON FUNCTION public.finance_training_current_user_is_restricted() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.finance_training_current_user_can_read_session(uuid) FROM PUBLIC;
-
--- New Training API functions must not inherit PostgreSQL's default PUBLIC
--- EXECUTE grant. Authenticated operators use the explicit grants below;
--- anon has no Training API access.
-REVOKE ALL ON FUNCTION public.get_finance_training_context() FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.create_finance_training_assignment(uuid, uuid, date) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.resolve_finance_training_assignment(uuid, text, text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.create_training_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamptz, uuid, uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.record_training_transaction_payment(uuid, numeric, text, uuid, uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.check_in_training_booking(uuid, uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.check_out_training_transaction(uuid, uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.record_training_finance_expense(uuid, uuid, numeric, text, text, text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.create_training_finance_deposit(uuid, uuid, text, numeric, uuid, text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.get_training_finance_session_summary(uuid) FROM PUBLIC, anon;
-
 GRANT EXECUTE ON FUNCTION public.finance_training_current_user_is_restricted() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.finance_training_current_user_can_read_session(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_finance_training_context() TO authenticated;

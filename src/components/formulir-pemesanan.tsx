@@ -6,7 +6,6 @@ import { rpc, useTable } from '@/lib/data-live';
 import { useSesiKasKonteks } from '@/lib/sesi-kas';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { biayaTamuTambahan } from '@/lib/tamu-tambahan';
-import { featureFlags } from '@/lib/feature-flags';
 
 type Mode = 'booking' | 'check_in';
 type DayMode = 'weekday' | 'weekend';
@@ -108,14 +107,14 @@ export function FormulirPemesanan({
   }
 
   const selectedPrice = selectedPackage ? priceForPackage(selectedPackage.id) : 0;
-  const jumlahTamu = featureFlags.extraGuest ? 2 + Math.max(0, Math.floor(Number(extraGuests) || 0)) : 2;
+  const jumlahTamu = 2 + Math.max(0, Math.floor(Number(extraGuests) || 0));
   const extra = biayaTamuTambahan(jumlahTamu);
   const total = selectedPrice + extra.total;
 
   const setting = financeSettings.rows[0];
-  const minimumDp = setting && total > 0
+  const minimumDp = setting && selectedPrice > 0
     ? setting.minimum_dp_mode === 'PERCENTAGE'
-      ? Math.ceil((total * Number(setting.minimum_dp_value)) / 100)
+      ? Math.ceil((selectedPrice * Number(setting.minimum_dp_value)) / 100)
       : Number(setting.minimum_dp_value)
     : null;
 
@@ -199,7 +198,7 @@ export function FormulirPemesanan({
       setError('Pembayaran 2 metode belum didukung sistem (penyimpanan hanya mencatat satu metode per transaksi). Gunakan satu metode untuk saat ini.');
       return;
     }
-    if (!featureFlags.extraGuest && extra.tambahan > 0) {
+    if (extra.tambahan > 0) {
       setError('Biaya tamu tambahan belum dapat dicatat sistem. Pembaruan database menunggu persetujuan Owner; sementara isi maksimal 2 tamu.');
       return;
     }
@@ -212,22 +211,19 @@ export function FormulirPemesanan({
     if (!Number.isFinite(payment) || payment < 0 || payment > total || !['Cash', 'QRIS', 'Transfer'].includes(method)) {
       setError('Nominal pembayaran harus antara Rp 0 dan harga paket.'); return;
     }
-    if (featureFlags.extraGuest && mode === 'booking' && minimumDp !== null && payment < minimumDp) {
-      setError(`DP minimum adalah ${rupiah(minimumDp)} (40% dari total tagihan).`); return;
-    }
     if (!sessionId || needsAssistedContext) {
       setError(needsAssistedContext
         ? 'Pilih sesi bantuan aktif di halaman Keuangan sebelum menyimpan transaksi.'
         : 'Buka sesi kas aktif sebelum menyimpan transaksi.');
       return;
     }
-    if (mode === 'check_in' && payment !== total) {
+    if (mode === 'check_in' && payment !== selectedPrice) {
       setError('Pembayaran check-in langsung harus sama dengan harga resmi.'); return;
     }
 
     const requestFingerprint = JSON.stringify({
       mode, roomId, packageId, normalizedName, normalizedPhone, normalizedAddress,
-      payment, method, dayMode, scheduledCheckIn, sessionId, guestCount: jumlahTamu,
+      payment, method, dayMode, scheduledCheckIn, sessionId,
     });
     const requestKey = lastRequestFingerprint && lastRequestFingerprint !== requestFingerprint
       ? crypto.randomUUID() : idempotencyKey;
@@ -235,7 +231,7 @@ export function FormulirPemesanan({
     setLastRequestFingerprint(requestFingerprint);
     setSaving(true);
 
-    const reservationArgs = {
+    const { data, error: failure } = await rpc(isTraining ? 'create_training_reservation' : 'create_reservation', {
       _mode: mode,
       _room_id: roomId,
       _package_id: packageId,
@@ -247,10 +243,8 @@ export function FormulirPemesanan({
       _day_mode: dayMode,
       _idempotency_key: requestKey,
       _session_id: sessionId || null,
-      ...(featureFlags.extraGuest ? { _guest_count: jumlahTamu } : {}),
       ...(scheduledCheckIn ? { _scheduled_check_in: scheduledCheckIn } : {}),
-    };
-    const { data, error: failure } = await rpc(isTraining ? 'create_training_reservation' : 'create_reservation', reservationArgs);
+    });
     setSaving(false);
     if (failure) { setError(failure.message); return; }
     setSavedNumber(data);
@@ -266,7 +260,7 @@ export function FormulirPemesanan({
       `Tamu: ${matchedGuest?.full_name ?? name.trim()}`,
       `Kamar: ${selectedRoom?.room_number ?? '-'}`,
       `Paket: ${selectedPackage?.name ?? '-'}`,
-      `Total: ${rupiah(total)} (${method})`,
+      `Total: ${rupiah(selectedPrice)} (${method})`,
       'Terima kasih.',
     ].join('\n');
     openWhatsApp(phone, pesan);
@@ -373,7 +367,7 @@ export function FormulirPemesanan({
                   </select>
                 </Bidang>
                 <Bidang label="Jumlah Tamu">
-                  <div className={readClass}>{jumlahTamu}</div>
+                  <div className={readClass}>2</div>
                 </Bidang>
                 {mode === 'booking' && (
                   <div className="grid grid-cols-2 gap-3">
@@ -394,12 +388,10 @@ export function FormulirPemesanan({
                 <Bidang label={`Harga Kamar (${dayMode === 'weekday' ? 'Weekday' : 'Weekend'})`}>
                   <div className={readClass}>{selectedPrice > 0 ? rupiah(selectedPrice) : '—'}</div>
                 </Bidang>
-                {featureFlags.extraGuest && (
-                  <Bidang label={`Extra Guest (orang · ${rupiah(extra.tarif)}/orang)`}>
-                    <input type="number" min={0} max={18} step={1} value={extraGuests}
-                      onChange={e => setExtraGuests(e.target.value)} onFocus={e => e.currentTarget.select()} className={fieldClass} />
-                  </Bidang>
-                )}
+                <Bidang label={`Extra Guest (orang · ${rupiah(extra.tarif)}/orang)`}>
+                  <input type="number" min={0} max={18} step={1} value={extraGuests}
+                    onChange={e => setExtraGuests(e.target.value)} onFocus={e => e.currentTarget.select()} className={fieldClass} />
+                </Bidang>
               </div>
               <div className="space-y-3">
                 <div>
@@ -437,7 +429,7 @@ export function FormulirPemesanan({
             <Judul>PAYMENT SUMMARY</Judul>
             <div className="rounded-xl border border-gold/25 bg-secondary/50 px-4 py-3 text-sm">
               <Baris k="Harga kamar" v={rupiah(selectedPrice)} />
-              {featureFlags.extraGuest && <Baris k={`Extra Guest (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} />}
+              <Baris k={`Extra Guest (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} />
               <div className="mt-2 flex justify-between border-t border-gold/20 pt-2 font-bold">
                 <span>Total Tagihan</span><span className="text-gold-light">{rupiah(total)}</span>
               </div>
@@ -445,8 +437,8 @@ export function FormulirPemesanan({
               {mode === 'booking' && (
                 <Baris k="Sisa tagihan" v={rupiah(Math.max(0, total - methods.reduce((s, m) => s + Math.max(0, Number(nominal[m]) || 0), 0)))} />
               )}
-              {featureFlags.extraGuest && mode === 'booking' && minimumDp !== null && (
-                <p className="mt-2 text-xs text-muted-foreground">Minimum DP 40%: {rupiah(minimumDp)}</p>
+              {extra.tambahan > 0 && (
+                <p className="mt-2 text-xs text-perlu-foreground">Biaya Extra Guest belum dapat disimpan sistem (menunggu persetujuan pembaruan database oleh Owner).</p>
               )}
             </div>
 

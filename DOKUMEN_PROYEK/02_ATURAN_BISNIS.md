@@ -45,7 +45,7 @@ Semua angka di bawah adalah `weekday/weekend` dalam Rupiah. Kolom package-level 
 | ID | Paket | Standard | Superior | Deluxe | Status | Tanggal dicatat | Tanggal keputusan | Sumber / fitur |
 |---|---|---:|---:|---:|---|---|---|---|
 | AB-PRICE-P2 | P2 / Paket 2 Jam | 70.000 / 80.000 | 80.000 / 90.000 | 90.000 / 100.000 | DISETUJUI OWNER, TERUJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06005`, seed Owner; pricing |
-| AB-PRICE-P4 | P4 / Paket 4 Jam | **90.000 / 100.000** | 90.000 / 100.000 | 100.000 / 110.000 | **KEPUTUSAN FINAL OWNER; MIGRASI BELUM DIJALANKAN** | 2026-11-03 | 2026-11-03 | Koreksi Standard P4 pada `20261103000000_owner_final_standard_p4_prices.sql`; Cloud Lovable sudah cocok, lab repository perlu rerun |
+| AB-PRICE-P4 | P4 / Paket 4 Jam | 80.000 / 90.000 | 90.000 / 100.000 | 100.000 / 110.000 | DISETUJUI OWNER, TERUJI | 2026-10-13 | BELUM TERVERIFIKASI | Seed Owner dan `06005`; P4 package-level dikoreksi 80.000/90.000 |
 | AB-PRICE-P6 | P6 / Paket 6 Jam | 110.000 / 120.000 | 120.000 / 130.000 | 130.000 / 140.000 | DISETUJUI OWNER, TERUJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06005`; pricing |
 | AB-PRICE-P12 | P12 / Paket 12 Jam | 150.000 / 170.000 | 160.000 / 180.000 | 170.000 / 190.000 | DISETUJUI OWNER, TERUJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06005`; pricing |
 | AB-PRICE-P24 | P24 / Paket 24 Jam | 200.000 / 220.000 | 210.000 / 230.000 | 220.000 / 240.000 | DISETUJUI OWNER, TERUJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06005`; pricing |
@@ -54,7 +54,7 @@ Semua angka di bawah adalah `weekday/weekend` dalam Rupiah. Kolom package-level 
 | AB-PRICE-PH | PH / Paket Harian | 170.000 / 190.000 | 180.000 / 200.000 | 190.000 / 210.000 | DISETUJUI OWNER, TERUJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06005`; pricing |
 | AB-PRICE-PW | PW / Paket Mingguan | 800.000 / 800.000 | 1.000.000 / 1.000.000 | 1.200.000 / 1.200.000 | DISETUJUI OWNER, TERUJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06005`; pricing |
 
-**Keputusan final Owner (3 November 2026):** harga **Standard P4 weekday Rp90.000 / weekend Rp100.000** menggantikan keputusan historis Rp80.000/Rp90.000. Migrasi `20261006000010_correct_p4_prices.sql` tetap no-op sebagai catatan historis; koreksi forward-only terpisah ada pada `20261103000000_owner_final_standard_p4_prices.sql`. Harga transaksi historis tidak diubah. Jangan eksekusi Cloud tanpa gerbang dan persetujuan migrasi tersendiri.
+**Catatan konflik yang wajib dipantau:** migrasi lokal `20261006000010_correct_p4_prices.sql` memuat koreksi P4 Standard menjadi 90.000/100.000. Nilai itu bertentangan dengan aturan package-level Owner yang dicatat di atas dan belum dianggap disetujui; migrasi tersebut belum termasuk status 22/40.
 
 ## Booking, check-in, dan pembayaran
 
@@ -71,7 +71,6 @@ Semua angka di bawah adalah `weekday/weekend` dalam Rupiah. Kolom package-level 
 | AB-PAY-001 | Metode pembayaran yang ditemukan: Cash, QRIS, Transfer. | BELUM TERVERIFIKASI | 2026-10-13 | BELUM TERVERIFIKASI | Schema Drizzle dan RPC pembayaran; belum ada keputusan Owner bertanggal | Pembayaran |
 | AB-PAY-002 | Payment dicatat terkait `transaction_id`; pembayaran tambahan tidak boleh melebihi sisa tagihan. | DIKERJAKAN / SIAP UJI | 2026-10-13 | BELUM TERVERIFIKASI | Migrasi `06000`; pembayaran | Pembayaran |
 | AB-PAY-003 | `kind` pembayaran membedakan `dp` dan `payment`. | BELUM TERVERIFIKASI | 2026-10-13 | BELUM TERVERIFIKASI | Baseline Drizzle `0005` dan RPC reservasi; belum ada keputusan Owner bertanggal | Pembayaran |
-| AB-PAY-004 | Owner mengizinkan pembayaran **gabungan maksimal dua metode** dalam satu proses Booking/Check-in langsung (contoh tagihan Rp110.000 = QRIS Rp100.000 + Cash Rp10.000). Jumlah semua komponen harus memenuhi total bayar/DP yang diwajibkan. Setiap komponen dicatat sebagai baris pembayaran tersendiri dengan metode dan nominal aslinya namun tetap merujuk transaksi yang sama; komisi, sesi kas, audit, refund dan Receipt per-payment harus tetap akurat. Jika hanya satu metode dipilih, alur lama tetap didukung. **Aturan disetujui, implementasi backend atomic belum PASS; jangan aktifkan UI gabungan untuk transaksi nyata sampai tersimpan aman.** | DISETUJUI OWNER / IMPLEMENTASI BELUM SELESAI | 2026-11-03 | 2026-11-03 | Klarifikasi eksplisit Owner mengenai revisi Booking, Check-in dan struk; membatalkan asumsi PR #34 | Booking, Check-in, Finance, Receipt 58 mm |
 
 ## Rencana resmi enam area
 

@@ -1,24 +1,11 @@
 [CmdletBinding()]
-param([string]$PostgresBin = '', [string]$TestAssetsDir = '')
+param()
 
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
-$pgBin = if ($PostgresBin) { $PostgresBin } else { Join-Path $repo '.tools\postgresql-test\runtime\pgsql\bin' }
-$requiredTools = @('initdb.exe', 'pg_ctl.exe', 'pg_isready.exe', 'psql.exe', 'createdb.exe', 'postgres.exe')
-foreach ($tool in $requiredTools) {
-  if (-not (Test-Path -LiteralPath (Join-Path $pgBin $tool) -PathType Leaf)) {
-    throw "PostgreSQL executable missing: $tool in '$pgBin'. Supply -PostgresBin with the PostgreSQL 17.11 bin folder."
-  }
-}
+$pgBin = Join-Path $repo '.tools\postgresql-test\runtime\pgsql\bin'
 $drizzleDir = Join-Path $repo 'drizzle\migrations'
 $migrationDir = Join-Path $repo 'supabase\migrations'
-$assetsDir = if ($TestAssetsDir) { $TestAssetsDir } else { Join-Path $repo '.tools\postgresql-test' }
-$requiredAssets = @('bootstrap-supabase-stubs.sql', 'seed-master-data.sql', 'seed-receptionists.sql')
-foreach ($asset in $requiredAssets) {
-  if (-not (Test-Path -LiteralPath (Join-Path $assetsDir $asset) -PathType Leaf)) {
-    throw "Finance150 test asset missing: $asset in '$assetsDir'. Supply -TestAssetsDir with the existing PostgreSQL test fixture folder."
-  }
-}
 $port = 55433
 $hostAddress = '127.0.0.1'
 $dbName = 'baturaden25_finance150_test'
@@ -143,7 +130,7 @@ try {
   Add-Record '03-readiness' 'PASS' '' "log=$readyLog"
   Invoke-LoggedTool '04-create-database' $Createdb @('-h', $hostAddress, '-p', $port, '-U', 'postgres', $dbName)
 
-  $bootstrap = Join-Path $assetsDir 'bootstrap-supabase-stubs.sql'
+  $bootstrap = Join-Path $repo '.tools\postgresql-test\bootstrap-supabase-stubs.sql'
   Invoke-LoggedPsql '05-bootstrap-supabase-stubs' $bootstrap
 
   $drizzleBaseline = Get-ChildItem -LiteralPath $drizzleDir -Filter '*.sql' |
@@ -169,8 +156,8 @@ try {
     Invoke-LoggedPsql ("10-baseline-" + $migration.BaseName) $migration.FullName
   }
 
-  Invoke-LoggedPsql '20-seed-master-data' (Join-Path $assetsDir 'seed-master-data.sql')
-  Invoke-LoggedPsql '21-seed-receptionists' (Join-Path $assetsDir 'seed-receptionists.sql')
+  Invoke-LoggedPsql '20-seed-master-data' (Join-Path $repo '.tools\postgresql-test\seed-master-data.sql')
+  Invoke-LoggedPsql '21-seed-receptionists' (Join-Path $repo '.tools\postgresql-test\seed-receptionists.sql')
   foreach ($migration in $postSeedBaseline) {
     Invoke-LoggedPsql ("11-baseline-post-seed-" + $migration.BaseName) $migration.FullName
   }
@@ -178,8 +165,6 @@ try {
   Invoke-LoggedPsql '31-finance-compatibility' (Join-Path $migrationDir $financeCompatibility)
   Invoke-LoggedPsql '32-finance-supervisor-alignment' (Join-Path $migrationDir $supervisorAlignment)
   Invoke-LoggedPsql '33-booking-reference-read-privileges' (Join-Path $migrationDir $referencePrivileges)
-  # Explicitly apply Owner-final Standard P4 correction to isolated lab only.
-  Invoke-LoggedPsql '34-owner-final-standard-p4' (Join-Path $migrationDir '20261103000000_owner_final_standard_p4_prices.sql')
 
   $testSql = @'
 \set ON_ERROR_STOP on
@@ -264,11 +249,9 @@ BEGIN
   FROM public.payments p JOIN public.transactions t ON t.id = p.transaction_id
   JOIN public.guests g ON g.id = t.guest_id
   WHERE g.phone = '081250000102';
-  -- Paket 4 Jam Standard weekday price is 90000 per Owner-approved catalog.
   IF weekday_price <> 90000 OR weekday_mode <> 'weekday' THEN
     RAISE EXCEPTION 'FAIL authoritative weekday mode/price: %, %', weekday_mode, weekday_price;
   END IF;
-  -- Paket 4 Jam Standard weekend price is 100000 per Owner-approved catalog.
   IF weekend_price <> 100000 OR weekend_mode <> 'weekend' THEN
     RAISE EXCEPTION 'FAIL authoritative weekend mode/price: %, %', weekend_mode, weekend_price;
   END IF;
@@ -715,14 +698,13 @@ SELECT public.create_reservation(
   (SELECT id FROM public.rooms WHERE room_number = '12'),
   (SELECT id FROM public.packages WHERE name = 'Paket 24 Jam'),
   'Supervisor Direct Checkin', '081250000203', 'Alamat Role Test',
-  (SELECT CASE WHEN public.get_operational_day_mode(CURRENT_DATE) = 'weekday'
-              THEN pr.weekday_price ELSE pr.weekend_price END
+  (SELECT pr.weekday_price
    FROM public.rooms r
    JOIN public.room_types rt ON rt.id = r.room_type_id
    JOIN public.packages p ON p.name = 'Paket 24 Jam'
    JOIN public.package_room_type_prices pr ON pr.package_id = p.id AND pr.pricing_group = rt.pricing_group
    WHERE r.room_number = '12'),
-  'Cash', (SELECT public.get_operational_day_mode(CURRENT_DATE)), NULL,
+  'Cash', 'weekday', NULL,
   '60606060-6060-4606-8606-606060606060'::uuid,
   (SELECT id FROM public.finance_cash_sessions WHERE opened_by = '44444444-4444-4444-8444-444444444444'::uuid AND status = 'OPEN' ORDER BY opened_at DESC LIMIT 1)
 );

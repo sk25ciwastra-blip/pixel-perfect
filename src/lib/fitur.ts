@@ -1,12 +1,10 @@
-import { featureFlags } from '@/lib/feature-flags';
-
-// Compatibility shim for historical Lovable imports. Never bypass the
-// feature + backend-ready + Owner-approved activation requirements.
+// Sakelar fitur. Default OFF: hanya nilai persis 'aktif' yang menyalakan fitur.
+// Diaktifkan setelah backend terverifikasi dan disetujui Owner.
 export function bacaSakelar(nilai: unknown): boolean {
   return nilai === 'aktif';
 }
 
-export const fitur = Object.freeze({
-  extraGuest: featureFlags.extraGuest,
-  receipt58mm: featureFlags.receipt58mm,
-});
+export const fitur = {
+  extraGuest: bacaSakelar(import.meta.env?.['VITE_FITUR_EXTRA_GUEST']),
+  receipt58mm: bacaSakelar(import.meta.env?.['VITE_FITUR_RECEIPT']),
+} as const;
