@@ -297,3 +297,14 @@ Masih **ada di main**: `20261018000000_finance_training_enforcement.sql` dan `20
 - Konfirmasi identitas **BUKAN persetujuan untuk memindah proyek, reconnect GitHub/Supabase, mengganti env/ref, merge, migrasi, deploy, publish, atau mengaktifkan fitur**.
 - Status database runtime proyek pribadi masih **NOT VERIFIED** walaupun Lovable melaporkan database enabled. Ref staging resmi Owner `bgtztcfbkcrvcipxbfti` berbeda dari ref lama yang tercatat dalam repo `ijujmxhcifuerkllbbgq`; jangan menyamakan keduanya.
 - **Satu langkah berikutnya:** lanjutkan pemeriksaan read-only identitas Cloud runtime dari proyek pribadi dan tunggu konfirmasi workspace kerja/sementara sebelum mengatur serah-terima. Prioritas 100% Siap Operasional Sementara; jangan mengulang PASS lokal.
+
+
+## BUKTI SCREENSHOT OWNER — DATABASE LOVABLE PRIBADI (5 NOVEMBER 2026 WIB)
+
+Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixel Perfect Homestay Hub` di workspace pribadi `Kozan's Lovable`. Pemeriksaan hanya visual, **bukan query ke database Lovable**, dan tidak ada aksi UI mutatif.
+
+- **Screenshot Pengaturan:** project name `Pixel Perfect Homestay Hub`, subdomain `pixel-perfect-homestay-hub`, owner tampak `Kozan 25 Ciwastra`. Tidak menampilkan project reference Supabase.
+- **Screenshot Database:** ada tabel `finance_training_assignments` (0 rows), `finance_training_audit` (0 rows), `finance_cash_sessions` (2 rows), `finance_settings` (1 row), `finance_reservation_idempotency` (3 rows), `finance_expenses` (2 rows), dan tabel Finance/Housekeeping/Guests lain. Ini **membuktikan objek Training tertentu terlihat pada Lovable Cloud pribadi**, berbeda dari temuan katalog Supabase staging `bgtztcfbkcrvcipxbfti` yang tidak memiliki tabel Training. Tidak membuktikan seluruh RPC, RLS, atau pengamanan sudah PASS.
+- **Screenshot Backups:** UI menampilkan daftar backup harian, contoh 3, 2, 1 November 2026 dan tanggal-tanggal sebelumnya, beserta tombol restore. **Jangan tekan Restore.** Adanya daftar backup **tidak membuktikan** dump dapat dipulihkan penuh, status PITR, atau rollback sudah PASS.
+- **Kesimpulan target:** Cloud Lovable pribadi dan proyek staging konektor Supabase memiliki **kondisi skema berbeda**. Ref database runtime Lovable tidak ditampilkan di screenshot; statusnya tetap **NOT VERIFIED**. Jangan mengubah `.env`, `supabase/config.toml`, koneksi, menjalankan migrasi, atau deploy berdasarkan dugaan kecocokan ref.
+- **Langkah berikutnya:** gunakan akses read-only Lovable yang ada untuk inventaris tabel/kontrak RPC bila alat dapat menyediakannya, atau minta hanya identitas ref melalui pengaturan resmi jika tersedia; cocokkan dengan staging sebelum menyusun rencana Cloud. Tidak mengulang Finance/Auth lokal yang PASS.
