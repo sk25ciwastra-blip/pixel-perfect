@@ -186,3 +186,10 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - Resepsionis mencatat **Cash keluar dari laci** dengan kategori, nominal, tanggal/waktu, operator, sesi kas, deskripsi, dan audit sesuai kemampuan sistem yang ada. QRIS masuk langsung Owner dan tidak otomatis menjadi Prive.
 - **STATUS:** konsep desain/kategori berjenjang **DIUSULKAN OWNER / BELUM DIIMPLEMENTASIKAN**, belum memerintahkan Codex mengubah Finance. Cek kategori kas keluar existing sebelum membuat schema/flow baru; jangan mengubah keputusan keuangan historis.
 - Klasifikasi akuntansi harus memisahkan pembelian aset, pembayaran pinjaman, refund dan transaksi lain yang bukan biaya operasi rutin; jangan memaksakan semua pengeluaran bisnis masuk biaya rutin. Konsultasikan pemetaan final sebelum laporan investor/bank.
+
+
+## UPDATE OWNER — PUSH BRANCH DIIZINKAN & IDE KAS KELUAR DISETUJUI (5 NOVEMBER 2026)
+
+- **PERSETUJUAN OWNER:** push **branch lokal** `feat/combined-payments-20261104` yang memiliki commit source `3a8dd60e8337a9fb2f222fbdd81e6fba36e26245` ke GitHub remote **diizinkan**. Lingkup izin **push branch ini saja**; **TIDAK** termasuk create PR, merge, Cloud migration, deploy, publish, reset, atau mengaktifkan feature flag produksi. Sebelum push periksa branch/commit SHA dan target remote yang benar, tanpa men-stage runner `.ps1` maupun dua file `.bak`.
+- **Ide desain Form Kas Keluar dua tingkat disetujui Owner**, simpan sebagai referensi kerja Lovable: [IDE_REVISI_DESAIN_FORM_KAS_KELUAR_2026-11-05.md](./IDE_REVISI_DESAIN_FORM_KAS_KELUAR_2026-11-05.md). Dua kategori utama **Biaya Operasional** dan **Prive**; Prive memiliki penerima **Owner, Istri Owner, Anak Owner, Lainnya**; Biaya Operasional memiliki subkategori jenis biaya. Status: konsep disetujui, **belum diimplementasikan**.
+- **TARGET TETAP:** 100% Siap Operasional Sementara. Sesudah push terverifikasi, lanjut penilaian jalur integrasi dan deployment yang memang belum PASS, bukan ulang Finance/concurrency/auth lokal. Pekerjaan desain dilakukan nanti saat workspace Lovable tersedia.
