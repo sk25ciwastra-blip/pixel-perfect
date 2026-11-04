@@ -2,6 +2,14 @@
 **Baturaden 25 Homestay — keputusan Owner 4 November 2026 WIB**  
 **Status:** ARAH KERJA AKTIF / DOKUMENTASI SAJA (tidak menjalankan kode, migrasi Cloud, atau deploy)
 
+## UPDATE GATE AUTHORIZATION — 4 NOVEMBER 2026, 23:40 WIB
+
+**11/11 PASS LOKAL (laporan Codex):** Owner, Supervisor bantu Receptionist, Receptionist, Training Day 1/Day 2, ACL authenticated/anon; direct RPC trainee tanpa wrapper, sesi Owner yang salah, trainee buka sesi sendiri, Housekeeping, dan Supervisor menunjuk Owner semuanya ditolak sesuai aturan. Dual identity operator/sesi dan rollback tanpa data parsial **PASS**. PostgreSQL tes berhenti aman. **Bukan PASS Cloud.**
+
+**BACA CHECKPOINT BARU:** [CHECKPOINT_AUTHORIZATION_COMBINED_PAYMENTS_2026-11-04.md](./CHECKPOINT_AUTHORIZATION_COMBINED_PAYMENTS_2026-11-04.md).
+
+**PEKERJAAN BERIKUTNYA BERUBAH:** jangan mengulang Finance/concurrency/auth. **Review diff worktree lokal `C:\tmp\pixel-perfect-combined-payment`, branch `feat/combined-payments-20261104`**, pisahkan source implementasi dari file log/temp, identifikasi risiko tersisa dan siapkan rencana satu PR. **Jangan commit, push, buat PR, merge, deploy atau migrasi Cloud tanpa keputusan Owner berikutnya.** Lovable workspace masih ditunda sampai pemilik merespons; tujuan 100% Siap Operasional Sementara tetap berlaku.
+
 ## Perintah utama jika berpindah obrolan
 **Lanjutkan proyek Baturaden 25 Homestay menuju 100% target _Siap Operasional Sementara_.** Jangan mengartikan ini sebagai 100% fitur masa depan atau status GO-LIVE yang sudah tercapai. Baca checkpoint dan hasil PASS sebelumnya, kemudian kerjakan **satu gap kritis yang belum PASS**. Jangan memulai audit/bootstrap/tes yang sudah PASS tanpa indikasi regresi. Jangan mengulang permintaan keputusan Owner yang sudah disahkan.
 
