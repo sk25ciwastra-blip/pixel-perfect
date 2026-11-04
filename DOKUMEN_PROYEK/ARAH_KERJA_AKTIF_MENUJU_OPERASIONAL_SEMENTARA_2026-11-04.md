@@ -308,3 +308,11 @@ Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixe
 - **Screenshot Backups:** UI menampilkan daftar backup harian, contoh 3, 2, 1 November 2026 dan tanggal-tanggal sebelumnya, beserta tombol restore. **Jangan tekan Restore.** Adanya daftar backup **tidak membuktikan** dump dapat dipulihkan penuh, status PITR, atau rollback sudah PASS.
 - **Kesimpulan target:** Cloud Lovable pribadi dan proyek staging konektor Supabase memiliki **kondisi skema berbeda**. Ref database runtime Lovable tidak ditampilkan di screenshot; statusnya tetap **NOT VERIFIED**. Jangan mengubah `.env`, `supabase/config.toml`, koneksi, menjalankan migrasi, atau deploy berdasarkan dugaan kecocokan ref.
 - **Langkah berikutnya:** gunakan akses read-only Lovable yang ada untuk inventaris tabel/kontrak RPC bila alat dapat menyediakannya, atau minta hanya identitas ref melalui pengaturan resmi jika tersedia; cocokkan dengan staging sebelum menyusun rencana Cloud. Tidak mengulang Finance/Auth lokal yang PASS.
+
+
+## GATE AKSES BROWSER LOVABLE — 5 NOVEMBER 2026 WIB
+
+- Owner mengizinkan **pemeriksaan browser read-only** pada proyek Lovable pribadi `Pixel Perfect Homestay Hub`. Cloud Browser membuka editor project ID `017f6e78-15f2-4d07-a38c-87cb185279bf` tetapi menampilkan **`You don't have access`**, meminta login ke akun berizin. Browser ini belum memiliki sesi login yang sama dengan konektor Lovable.
+- **Tidak dilakukan login**, input credential, akses secrets, perubahan Cloud/project, pindah workspace, restore, deploy, publish, atau migrasi. Jangan mengulang membuka UI browser dalam kondisi sama tanpa sesi auth yang sah/izin baru.
+- Konektor Lovable masih memberi status project ready + database enabled (stack supabase), tetapi **tidak menyediakan project ref**. Screenshot Owner menunjukkan Finance/Training tables dalam Cloud Lovable pribadi, namun ref runtime tetap belum terbukti. Katalog staging Supabase yang tersedia adalah lingkungan lain dengan skema berbeda.
+- **Status: BLOCKED AUTH BROWSER / PROJECT REF NOT VERIFIED.** Langkah berikutnya hanya verifikasi ref melalui kanal resmi yang sah atau bukti Owner tanpa API key/password; lanjut pekerjaan teknis lain yang dapat dikerjakan aman sambil menunggu. PR #37 tetap Draft dan Cloud writes tidak diizinkan.
