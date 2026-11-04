@@ -341,3 +341,11 @@ Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixe
 - Compare GitHub pada saat pemeriksaan: branch fitur **1 ahead / 10 behind** `main`, status `diverged`. Sepuluh commit di `main` sejak merge-base hanya mengubah **satu file dokumentasi** `DOKUMEN_PROYEK/ARAH_KERJA_AKTIF_MENUJU_OPERASIONAL_SEMENTARA_2026-11-04.md`; bukan perubahan code fitur. File diff branch tetap 9 file yang tercatat di PR.
 - `get_pr_info` saat ini melaporkan `mergeable=false`; **penyebab belum diverifikasi** (jangan menyebut pasti konflik kode). Combined commit status API melaporkan `statuses=[]`: tidak ada status CI yang tersedia dalam endpoint tersebut. Ini **bukan bukti CI PASS** atau tes FAIL.
 - **Keputusan tindakan:** review/read-only saja. Tidak melakukan rebase, force push, merge, menjalankan ulang Finance/Auth yang sebelumnya PASS, migrasi Cloud, deploy, atau mengubah feature flags. Jika integrasi akan diajukan, perlu pengecekan penyebab mergeable=false dan persetujuan Owner terpisah sebelum perubahan branch atau merge.
+
+
+## PASS LANGSUNG — PENCARIAN DAFTAR TRANSAKSI DI PRATINJAU LOVABLE PRIBADI (5 NOVEMBER 2026 WIB)
+
+- **PASS PRATINJAU / READ-ONLY**: melalui editor Lovable pribadi terautentikasi, buka `/transaksi`, lalu jalankan pencarian `8`, `18`, `018`, dan `000018` pada form **Cari Nomor Transaksi**. Semua menampilkan target legacy `BTRD25-000018` (ANDIN · 0349, Superior B 03, status SELESAI, tanggal 12 Oktober 2026).
+- Query `8` menampilkan **2 transaksi** (`BTRD25-000018` dan `BTRD25-000008`) sesuai pencocokan satu digit. Query `18`, `018`, dan `000018` masing-masing **1 transaksi** target. Hasil tampil sebagai **pencarian seluruh periode** walaupun pilihan bulan UI November 2026.
+- Hanya mengoperasikan kolom cari dan tombol Cari; **tidak mengubah transaksi, membuka aksi pembayaran, mengubah Cloud, publish, deploy, ataupun merge**.
+- Kesimpulan: **laporan bug pencarian digit 8/18/018/000018 telah PASS pada pratinjau Lovable pribadi yang diuji**. Tidak perlu mengulang perbaikan Codex pada jalur ini. **Bukan** klaim E2E aplikasi terpublikasi atau semua skenario pencarian lain PASS.
