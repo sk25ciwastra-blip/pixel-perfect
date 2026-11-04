@@ -288,3 +288,12 @@ Masih **ada di main**: `20261018000000_finance_training_enforcement.sql` dan `20
 - `lovable_get_database_status`: `enabled=true`, `stack=supabase`. Tool **tidak mengembalikan Supabase project ref/URL database**. Project ref runtime yang sedang dipakai tetap **NOT VERIFIED**, terutama karena repo `.env`/`supabase/config.toml` menunjuk ref lama `ijujmxhcifuerkllbbgq` sementara staging resmi Owner `bgtztcfbkcrvcipxbfti`.
 - Koneksi Lovable hanya diperiksa **read-only**. Tidak ada perubahan workspace, project settings, koneksi GitHub/Supabase, kode, publish, deploy, atau migrasi. Keterangan `is_published=true` tidak berarti sudah lulus uji operasional atau diperbarui.
 - **Satu blocker berikutnya:** konfirmasi identitas database runtime yang benar dari pengaturan Cloud/project Lovable resmi (tanpa membagikan API key/password) dan kaitannya dengan workspace tujuan. Setelah itu lanjut pemeriksaan migrasi + backup/restore hanya pada target yang terverifikasi, dengan izin Owner terpisah untuk Cloud write.
+
+
+## KONFIRMASI OWNER — IDENTITAS WORKSPACE PRIBADI LOVABLE (5 NOVEMBER 2026 WIB)
+
+- **OWNER MEMASTIKAN:** Workspace Lovable `Kozan's Lovable` (ID `a9e820a62a1e7cf0822a`) adalah **WORKSPACE PRIBADI OWNER**. Proyek di dalamnya bernama `Pixel Perfect Homestay Hub` (ID `017f6e78-15f2-4d07-a38c-87cb185279bf`), [editor](https://lovable.dev/projects/017f6e78-15f2-4d07-a38c-87cb185279bf).
+- **Jangan keliru** menganggap workspace pribadi ini sebagai workspace kerja/sementara. Status akses, pemilik, kesiapan desain, dan tahap serah-terima workspace kerja/sementara **belum diverifikasi/masih menunggu** sesuai checkpoint sebelumnya.
+- Konfirmasi identitas **BUKAN persetujuan untuk memindah proyek, reconnect GitHub/Supabase, mengganti env/ref, merge, migrasi, deploy, publish, atau mengaktifkan fitur**.
+- Status database runtime proyek pribadi masih **NOT VERIFIED** walaupun Lovable melaporkan database enabled. Ref staging resmi Owner `bgtztcfbkcrvcipxbfti` berbeda dari ref lama yang tercatat dalam repo `ijujmxhcifuerkllbbgq`; jangan menyamakan keduanya.
+- **Satu langkah berikutnya:** lanjutkan pemeriksaan read-only identitas Cloud runtime dari proyek pribadi dan tunggu konfirmasi workspace kerja/sementara sebelum mengatur serah-terima. Prioritas 100% Siap Operasional Sementara; jangan mengulang PASS lokal.
