@@ -202,3 +202,11 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - Perbandingan GitHub `main...feat/combined-payments-20261104`: status **diverged**, branch fitur **ahead 1, behind 21**. Merge-base terdeteksi `34d9df68f411357223ea1399e10ec9bc3efd1c1b`. File beda yang terlapor tetap **10 file sesuai izin Owner**. Jumlah commit tertinggal dapat berubah jika `main` bergerak. **Jangan rebase, merge, force push atau mengulang uji PASS hanya karena hitungan ini.**
 - Pencarian PR berdasarkan branch tersebut: **tidak menemukan PR**. Izin Owner baru sampai push; **create PR memerlukan persetujuan terpisah**.
 - **LANGKAH UTAMA SELANJUTNYA:** review risiko sinkronisasi dan siapkan satu **draft PR** dari branch yang telah di-push, tetapi hanya buat PR setelah persetujuan Owner. Setelah review, fokus preflight sistem aktif (read-only) dan gate menuju 100% Siap Operasional Sementara. Jangan membuat PR baru jika sudah ada; verifikasi state dahulu.
+
+
+## CHECKPOINT DRAFT PR #36 — 5 NOVEMBER 2026
+
+- **Owner mengizinkan membuat satu Draft PR untuk review saja**; ChatGPT langsung membuat [Draft PR #36](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/36), judul `feat: guarded atomic combined payments (local PASS; Cloud OFF)`.
+- GitHub memverifikasi status **open + draft=true + merged=false**; `base=main`, `head=feat/combined-payments-20261104`, head SHA **`3a8dd60e8337a9fb2f222fbdd81e6fba36e26245`**.
+- Body PR menjelaskan sepuluh file scope, PASS lokal sebelumnya, ketiga gerbang flags default OFF, batasan generated Supabase Cloud types, risiko branch diverged, dan gate Cloud/restore/authorization. **Tidak ada merge, deploy, migrasi Cloud, publish, atau feature flags ON.**
+- **NEXT:** review integrasi PR #36 dan gate kesiapan operasional; lakukan read-only atau local checks terarah berdasarkan masalah nyata; **jangan ulang seluruh Finance/concurrency/authorization PASS**. Minta persetujuan Owner sebelum tindakan berikutnya yang mutatif.
