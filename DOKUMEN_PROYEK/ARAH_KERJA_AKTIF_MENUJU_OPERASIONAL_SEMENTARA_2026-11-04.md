@@ -349,3 +349,11 @@ Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixe
 - Query `8` menampilkan **2 transaksi** (`BTRD25-000018` dan `BTRD25-000008`) sesuai pencocokan satu digit. Query `18`, `018`, dan `000018` masing-masing **1 transaksi** target. Hasil tampil sebagai **pencarian seluruh periode** walaupun pilihan bulan UI November 2026.
 - Hanya mengoperasikan kolom cari dan tombol Cari; **tidak mengubah transaksi, membuka aksi pembayaran, mengubah Cloud, publish, deploy, ataupun merge**.
 - Kesimpulan: **laporan bug pencarian digit 8/18/018/000018 telah PASS pada pratinjau Lovable pribadi yang diuji**. Tidak perlu mengulang perbaikan Codex pada jalur ini. **Bukan** klaim E2E aplikasi terpublikasi atau semua skenario pencarian lain PASS.
+
+
+## PASS GITHUB — DRAFT PR #38 WAKTU AKTUAL (5 NOVEMBER 2026 WIB)
+
+- Owner menyetujui **push branch** khusus fix waktu, kemudian ChatGPT membuat [Draft PR #38](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/38) dari `fix/transaction-actual-times-20261105` menuju `main`. Status diverifikasi **OPEN / DRAFT / UNMERGED** dan GitHub `mergeable=true` saat pengecekan.
+- Remote head `8828d0a4bd540cdcc735f3f05761d92731a72ec4`, basis `main` `610bb6b0bfae79bb9ef99155ba08802ff9a7b1b1`; saat pembukaan PR **1 ahead / 0 behind**, tepat **3 file** (`src/components/detail-transaksi.tsx`, `src/lib/waktu-transaksi.ts`, `scripts/detail-transaksi-waktu.test.ts`).
+- Patch dibaca melalui GitHub: Detail Transaksi kini memakai `started_at` dan `checked_out_at` untuk waktu aktual; formatter WIB dipindahkan tanpa mengubah makna; durasi tetap memakai jadwal paket. Codex melaporkan regresi timestamp **5/5 PASS**, TypeScript PASS, production build PASS, diff check PASS di worktree lokal terpisah; **bukan klaim Cloud/E2E PASS**.
+- **Gate:** PR #38 hanya untuk review. Tidak dilakukan merge, perubahan Cloud, migrasi, publish, deploy, atau menyalakan flag. PR #37 pembayaran gabungan tetap Draft terpisah. Jangan mengulang tes lokal yang telah PASS tanpa perubahan baru.
