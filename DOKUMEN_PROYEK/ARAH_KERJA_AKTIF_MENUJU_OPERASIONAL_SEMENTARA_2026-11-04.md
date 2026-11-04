@@ -119,3 +119,10 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - Usulan klasifikasi terpisah: **biaya operasional**, **investasi/perolehan aset atau renovasi**, dan **pengambilan pribadi Owner (prive/distribusi sesuai bentuk badan usaha)**; jangan menyamakan seluruh kas keluar dengan beban usaha.
 - Prinsip laporan investor/kredit: angka aktual, transparan, dapat diaudit; tampilan ringkas boleh menonjolkan performa kamar dan pendapatan tetapi informasi biaya material, kewajiban dan arus kas harus tersedia pada laporan/lampiran pendukung. Jangan memasukkan rincian keuangan pribadi Owner ke repo GitHub.
 - **Keputusan teknis tentang kategori, kewenangan karyawan mencatat pengambilan Owner, approval, dan mapping akuntansi BELUM FINAL**; jangan hardcode tanpa keputusan dan review aturan Owner.
+
+## CATATAN OWNER — PENGAMBILAN CASH UNTUK KEPERLUAN PRIBADI (5 NOVEMBER 2026)
+
+- **Arah konsep dari Owner:** pencatatan pengambilan uang tunai untuk kebutuhan pribadi bersifat **fleksibel**, karena aktivitas kas keluar dilakukan oleh **Receptionist** menggunakan **Cash**.
+- Usulan klasifikasi pada laporan tetap memisahkan **pengambilan Owner/prive** dari **biaya operasional homestay**. Tujuan utamanya akurasi laporan dan pembelajaran kontrol keuangan, bukan menyembunyikan pengeluaran dari pihak investor/bank.
+- **BELUM diputuskan/diimplementasikan:** nama kategori persis pada aplikasi, aturan approval bila diperlukan, pembatasan akses, mapping accounting dan formulir input. Cek kategori kas keluar dan jejak audit **yang sudah ada** sebelum menambah fitur baru. Jangan membuat pekerjaan Codex baru hanya karena diskusi ini.
+- Selama fase kerja aktif, lanjutkan gate menuju 100% **Siap Operasional Sementara**; diskusi desain/laporan berjalan santai paralel.
