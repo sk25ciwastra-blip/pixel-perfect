@@ -93,3 +93,29 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - **BELUM DIPUTUSKAN:** definisi Tamu Baru/Lama (orang unik atau kunjungan), pendapatan kotor vs net refund, status sewa yang dihitung, format laporan final, jenis/klasifikasi biaya, dan apakah ada sumber data memadai. Jangan hardcode definisi dari dugaan.
 - Pembahasan laporan ini adalah **sesi santai/konsep**, bukan alasan mengalihkan Codex dari jalur hardening dan kesiapan operasional sementara.
 
+
+
+## UPDATE HARDENING COMBINED PAYMENT — 5 NOVEMBER 2026, 00:17 WIB (laporan Codex)
+
+**FINAL HARDENING PASS LOKAL**, tanpa mengulang SQL runtime Finance/concurrency/authorization sebelumnya:
+- Adapter RPC bertipe lokal: `src/lib/combined-payments.ts` (menghindari `rpc as any`).
+- Flag tiga gerbang **DEFAULT OFF**; RPC gabungan hanya digunakan bila `VITE_FEATURE_COMBINED_PAYMENT`, `VITE_FEATURE_COMBINED_PAYMENT_BACKEND_READY`, dan `VITE_FEATURE_COMBINED_PAYMENT_OWNER_APPROVED` semuanya `true`. Saat OFF, UI **tidak** memanggil RPC gabungan dan **tidak** mengubah dua metode menjadi satu diam-diam.
+- `src/components/formulir-pemesanan.tsx` dan `src/routes/booking.tsx` menggunakan gating; state `paymentIdempotencyKey` dan `legacyArgs` tak dipakai dibersihkan.
+- Validasi DP minimum dinamis sesuai Owner menggunakan `ceil`, tidak lagi tergantung pada feature flag Extra Guest.
+- Tes baru `scripts/fitur.test.ts`: **7/7 PASS** OFF/ON dan DP. TypeScript, frontend build, Extra Guest/Receipt pure, RPC contract, dan `git diff --check`: **PASS**. Hanya warning non-blocking `inputValidator`, `vite-tsconfig-paths`, Nitro.
+- Worktree lokal `C:\tmp\pixel-perfect-combined-payment` branch `feat/combined-payments-20261104` tetap **DIRTY / UNCOMMITTED** beserta migrasi dan harness. `.bak`/runner sementara tidak masuk PR. **Tidak ada Cloud write, migrasi, commit, push, PR atau produksi flag ON**.
+- **Risiko berikutnya:** generated types Supabase Cloud belum sinkron dengan RPC baru; adapter lokal hanya solusi sementara. Backend Cloud harus diverifikasi dan diberi persetujuan Owner tersendiri sebelum aktivasi.
+- **Langkah kerja aktif selanjutnya:** review akhir file untuk staging terbatas dan rencana satu PR; jangan commit/push/PR otomatis. Setelah aman, beralih ke gap deployment/operasional nyata; jangan audit ulang tes PASS.
+
+## PROTOKOL SAAT RESPONS CHAT GAGAL DIMUAT (keputusan alur kerja)
+- **Reload halaman diperbolehkan**, tetapi jangan menganggap tindakan backend dibatalkan. Hasil aksi GitHub/Supabase dapat sukses walau respons ChatGPT tidak tampil.
+- Sebelum mencoba ulang: **read-only cek status** file/commit/PR GitHub, object/migrasi/data Supabase yang dituju, atau log Codex. Jika sudah ada, **jangan ulang mutasi**. Jika belum ada, lakukan hanya langkah yang memang belum selesai.
+- Jangan kirim pesan “ulangi dari awal”; gunakan **“Periksa status terakhir dulu, lalu lanjutkan tanpa mengulang tindakan yang sudah berhasil.”**
+- Hindari tindakan tidak idempoten dua kali, terutama migrasi, pembayaran, refund, commit/merge, dan publish.
+
+## CATATAN KONSEP KAS KELUAR DAN LAPORAN OWNER (diskusi, bukan implementasi)
+- Owner menghendaki **kategori kas keluar diinput oleh karyawan** sehingga laporan Owner dapat memisahkan pengeluaran operasional dengan pengambilan pribadi Owner dan kategori lain sesuai kebutuhan.
+- Ini adalah **arah konsep yang disambut Owner**, bukan perintah mengubah Finance150 sekarang; **verifikasi kategori dan alur yang sudah tersedia** sebelum menambah apa pun. Hindari membuat pekerjaan Codex baru jika fasilitas yang sama sudah ada.
+- Usulan klasifikasi terpisah: **biaya operasional**, **investasi/perolehan aset atau renovasi**, dan **pengambilan pribadi Owner (prive/distribusi sesuai bentuk badan usaha)**; jangan menyamakan seluruh kas keluar dengan beban usaha.
+- Prinsip laporan investor/kredit: angka aktual, transparan, dapat diaudit; tampilan ringkas boleh menonjolkan performa kamar dan pendapatan tetapi informasi biaya material, kewajiban dan arus kas harus tersedia pada laporan/lampiran pendukung. Jangan memasukkan rincian keuangan pribadi Owner ke repo GitHub.
+- **Keputusan teknis tentang kategori, kewenangan karyawan mencatat pengambilan Owner, approval, dan mapping akuntansi BELUM FINAL**; jangan hardcode tanpa keputusan dan review aturan Owner.
