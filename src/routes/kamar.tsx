@@ -208,7 +208,7 @@ function HalamanKamar() {
       aksi={
         <div className="flex flex-wrap items-center gap-2">
           {canCheckIn && <Button className="h-11 gap-2 px-5" onClick={() => setCheckInOpen(true)}><Plus className="size-4" />Check-in</Button>}
-          {peran === "owner" && <Button variant="outline" className="h-11 gap-2 px-4" onClick={() => edit()}><Plus className="size-4" />Kamar</Button>}
+          {peran === "owner" && <Button className="h-11 gap-2 px-5" onClick={() => edit()}><Plus className="size-4" />Kamar</Button>}
         </div>
       }
     >

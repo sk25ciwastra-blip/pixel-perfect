@@ -32,28 +32,13 @@ function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
 
 const semuaMenu: Menu[] = [
   { ke: "/", label: "Dashboard", ikon: LayoutGrid },
-  { ke: "/kamar", label: "Kamar", ikon: BedDouble, anak: [
-    { bagian: "semua", label: "Semua Kamar" },
-    { bagian: "tersedia", label: "Tersedia" },
-    { bagian: "terisi", label: "Terisi" },
-    { bagian: "perlu", label: "Perlu Dibersihkan" },
-  ] },
+  { ke: "/kamar", label: "Kamar", ikon: BedDouble },
   { ke: "/booking", label: "Booking", ikon: CalendarDays },
   { ke: "/transaksi", label: "Transaksi", ikon: Receipt },
   { ke: "/tamu", label: "Tamu", ikon: Users },
-  { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles, anak: [
-    { bagian: "status", label: "Status" },
-    { bagian: "checklist", label: "Checklist" },
-    { bagian: "perawatan", label: "Perawatan Berkala" },
-    { bagian: "riwayat", label: "Riwayat Pekerjaan" },
-  ] },
+  { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles },
   { ke: "/keuangan", label: "Keuangan", ikon: Wallet, ownerSaja: true },
-  { ke: "/laporan", label: "Laporan", ikon: FileBarChart, anak: [
-    { bagian: "closing", label: "Closing Shift" },
-    { bagian: "riwayat", label: "Riwayat Closing" },
-    { bagian: "harian", label: "Rekap Harian" },
-    { bagian: "pendapatan", label: "Rekap Pendapatan" },
-  ] },
+  { ke: "/laporan", label: "Laporan", ikon: FileBarChart },
   { ke: "/karyawan", label: "Tim & Akses", ikon: IdCard, ownerSaja: true, anak: [
     { bagian: "receptionist", label: "Receptionist" },
     { bagian: "housekeeping", label: "Housekeeping" },
