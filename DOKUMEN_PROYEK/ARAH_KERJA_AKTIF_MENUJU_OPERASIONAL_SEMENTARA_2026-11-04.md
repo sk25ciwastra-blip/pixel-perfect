@@ -126,3 +126,31 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - Usulan klasifikasi pada laporan tetap memisahkan **pengambilan Owner/prive** dari **biaya operasional homestay**. Tujuan utamanya akurasi laporan dan pembelajaran kontrol keuangan, bukan menyembunyikan pengeluaran dari pihak investor/bank.
 - **BELUM diputuskan/diimplementasikan:** nama kategori persis pada aplikasi, aturan approval bila diperlukan, pembatasan akses, mapping accounting dan formulir input. Cek kategori kas keluar dan jejak audit **yang sudah ada** sebelum menambah fitur baru. Jangan membuat pekerjaan Codex baru hanya karena diskusi ini.
 - Selama fase kerja aktif, lanjutkan gate menuju 100% **Siap Operasional Sementara**; diskusi desain/laporan berjalan santai paralel.
+
+
+## CHECKPOINT SELECTIVE STAGING — 5 NOVEMBER 2026, 00:32 WIB (laporan Codex)
+
+- Branch lokal `feat/combined-payments-20261104...origin/main`, worktree `C:\tmp\pixel-perfect-combined-payment`.
+- **10 file STAGED, 1.645 insertions dan 96 deletions**, belum commit/push/PR:
+  `supabase/migrations/20261104000000_atomic_combined_payments.sql`,
+  `src/lib/combined-payments.ts`,
+  `src/lib/feature-flags.ts`,
+  `src/lib/fitur.ts`,
+  `src/components/formulir-pemesanan.tsx`,
+  `src/routes/booking.tsx`,
+  `scripts/fitur.test.ts`,
+  `scripts/extra-guest-receipt-pure-tests.cjs`,
+  `scripts/combined-payments-finance-runtime-tests.sql`,
+  `scripts/combined-payments-authorization-runtime-tests.sql`.
+- **Dikecualikan:** `scripts/combined-payments-runtime-test.ps1`, dua `.bak`, log PostgreSQL dan generated outputs.
+- Migration SHA-256 cocok reviewed artifact `F1DF06EDE387A65FDDB9A3FDC829713CBEDCA9BB369683B1DFE614E5B678ACEB`; `git diff --cached --check` PASS, secret scan staged tidak menemukan secret; tiga gerbang flag tetap **default OFF**.
+- TypeScript/build, 7/7 feature tests, Finance, concurrency dan authorization sebelumnya PASS lokal; **runtime tidak diulang**.
+- **Next action hanya setelah persetujuan Owner:** commit terarah di branch fitur lokal, kemudian persetujuan terpisah untuk push/PR. **Jangan merge/migrasi/deploy/aktifkan flag Cloud secara otomatis**. Types Supabase Cloud/generated RPC masih perlu sinkronisasi setelah backend Cloud disiapkan.
+
+## KEPUTUSAN KONSEP LAPORAN OWNER — 5 NOVEMBER 2026
+
+- **Tiga komponen laporan yang Owner inginkan:** **Total Pendapatan**, **Biaya Operasional**, **Prive** (pengambilan pribadi Owner). Total Kamar/Tamu Baru/Tamu Lama tetap metrik operasional yang pernah dibahas; untuk format ringkasan terbaru, tiga komponen di atas menjadi garis besar.
+- **QRIS masuk langsung kepada Owner**, bukan kas tunai resepsionis. Namun **tetap pendapatan usaha** dan tetap memerlukan pencatatan/rekonsiliasi yang benar; bukan otomatis pengeluaran atau prive hanya karena uang berada di akun Owner.
+- Kas keluar tunai dicatat Receptionist menggunakan kategori yang sesuai; **Prive dipisahkan dari biaya operasional**. Kategori dan kontrol teknis tetap mengikuti aturan Owner/sistem Finance yang ada, jangan langsung menambah fitur sebelum memeriksa implementasi.
+- Owner tidak lagi mengkhawatirkan kesan pengeluaran besar bagi investor sebagai alasan merombak laporan; laporan tetap harus **akurat, transparan, lengkap bila diperlukan**, tanpa menyembunyikan biaya atau kewajiban.
+- **Belum instruksi implementasi ke Codex**: ini pembahasan santai konsep laporan sementara prioritas utama tetap kesiapan operasional sementara.
