@@ -169,3 +169,20 @@ Codex = fungsi/tes; Lovable = desain. Tema UI Premium Dark & Gold; 7 fitur desai
 - Persetujuan ini **TIDAK mencakup** push, PR, merge, deploy, migrasi Cloud, aktivasi feature flags, reset/rebase atau perubahan file lain.
 - Sebelum commit, pastikan indeks staging masih tepat 10 file sesuai checkpoint. Jika berubah, hentikan tanpa commit dan laporkan selisih.
 - Setelah commit, catat SHA aktual dan status Git; jangan otomatis melakukan langkah berikutnya.
+
+
+## CHECKPOINT COMMIT LOKAL & KONSEP KAS KELUAR BERTINGKAT — 5 NOVEMBER 2026
+
+### Selesai: satu commit source lokal
+- **Laporan Codex:** commit lokal `3a8dd60e8337a9fb2f222fbdd81e6fba36e26245`, pesan `feat: add guarded atomic combined payments`, branch `feat/combined-payments-20261104`, **ahead 1 dari origin/main**.
+- Tepat **10 file** yang telah disetujui Owner berhasil di-commit. Runner sementara dan dua `.bak` tetap untracked, tidak ikut commit.
+- Semua hasil PASS lokal sebelumnya tetap berlaku sesuai batasnya; **tidak ada pengulangan runtime tes**, push, PR, Cloud write, migrasi, deploy, atau aktivasi feature flag.
+- **Pekerjaan berikutnya:** pastikan scope perubahan source dan keselamatan integrasi; **minta keputusan Owner terpisah** sebelum melakukan push branch dan membuka PR. Tidak otomatis merge atau mengubah produksi.
+
+### Konsep Form Kas Keluar — keputusan arah dari Owner, detail belum final
+- Owner menghendaki **dua kategori tingkat pertama:** **Biaya Operasional** dan **Prive**.
+- Ketika **Prive** dipilih, tampilkan subkategori/penerima: contoh **Owner**, **Istri Owner**, **Anak Owner**, dan **Lainnya**. Ini menandai tujuan pengambilan pribadi, **tetap seluruhnya masuk kelompok Prive** dan bukan biaya operasional.
+- Owner mengusulkan **Biaya Operasional juga memiliki subkategori** supaya laporan dapat memisahkan jenis biaya. Daftar final belum diputuskan; contoh untuk pembahasan: listrik/air/internet, laundry, amenities, kebersihan, maintenance, gaji, perlengkapan dan lain-lain.
+- Resepsionis mencatat **Cash keluar dari laci** dengan kategori, nominal, tanggal/waktu, operator, sesi kas, deskripsi, dan audit sesuai kemampuan sistem yang ada. QRIS masuk langsung Owner dan tidak otomatis menjadi Prive.
+- **STATUS:** konsep desain/kategori berjenjang **DIUSULKAN OWNER / BELUM DIIMPLEMENTASIKAN**, belum memerintahkan Codex mengubah Finance. Cek kategori kas keluar existing sebelum membuat schema/flow baru; jangan mengubah keputusan keuangan historis.
+- Klasifikasi akuntansi harus memisahkan pembelian aset, pembayaran pinjaman, refund dan transaksi lain yang bukan biaya operasi rutin; jangan memaksakan semua pengeluaran bisnis masuk biaya rutin. Konsultasikan pemetaan final sebelum laporan investor/bank.
