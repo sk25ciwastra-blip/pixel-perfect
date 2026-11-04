@@ -7,9 +7,17 @@ import { useSesiKasKonteks } from '@/lib/sesi-kas';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { biayaTamuTambahan } from '@/lib/tamu-tambahan';
 import { featureFlags } from '@/lib/feature-flags';
+import {
+  createReservationCombined,
+  createTrainingReservationCombined,
+  minimumDpAmount,
+  shouldUseCombinedPayment,
+  type CombinedPaymentComponent,
+} from '@/lib/combined-payments';
 
 type Mode = 'booking' | 'check_in';
 type DayMode = 'weekday' | 'weekend';
+type MetodePembayaran = 'Cash' | 'QRIS' | 'Transfer';
 
 function Bidang({ label, children, lebar }: { label: string; children: ReactNode; lebar?: boolean }) {
   return (
@@ -46,13 +54,23 @@ export function FormulirPemesanan({
   const [dayMode, setDayMode] = useState<DayMode>('weekday');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  const [methods, setMethods] = useState<string[]>(['QRIS']);
+  const [methods, setMethods] = useState<MetodePembayaran[]>(['QRIS']);
   const [nominal, setNominal] = useState<Record<string, string>>({});
   const method = methods[0] ?? '';
   const amount = nominal[method] ?? '0';
   const setAmount = (v: string) => setNominal(n => ({ ...n, [methods[0] ?? 'QRIS']: v }));
-  function toggleMethod(m: string) {
-    setMethods(cur => cur.includes(m) ? cur.filter(x => x !== m) : cur.length >= 2 ? cur : [...cur, m]);
+  const [paymentIdempotencyKeys, setPaymentIdempotencyKeys] = useState<Record<string, string>>(() => ({ QRIS: crypto.randomUUID() }));
+  function toggleMethod(m: MetodePembayaran) {
+    if (!methods.includes(m) && methods.length >= 1 && !featureFlags.combinedPayment) {
+      setError('Pembayaran gabungan belum diaktifkan. Pilih satu metode pembayaran sampai backend siap.');
+      return;
+    }
+    setMethods(cur => {
+      if (cur.includes(m)) return cur.filter(x => x !== m);
+      if (cur.length >= 2) return cur;
+      setPaymentIdempotencyKeys(keys => ({ ...keys, [m]: keys[m] ?? crypto.randomUUID() }));
+      return [...cur, m];
+    });
   }
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -108,16 +126,14 @@ export function FormulirPemesanan({
   }
 
   const selectedPrice = selectedPackage ? priceForPackage(selectedPackage.id) : 0;
-  const jumlahTamu = featureFlags.extraGuest ? 2 + Math.max(0, Math.floor(Number(extraGuests) || 0)) : 2;
+  const guestCount = featureFlags.extraGuest ? 2 + Math.max(0, Math.floor(Number(extraGuests) || 0)) : 2;
+  const jumlahTamu = guestCount;
   const extra = biayaTamuTambahan(jumlahTamu);
   const total = selectedPrice + extra.total;
+  const paymentTotal = methods.reduce((sum, m) => sum + Math.max(0, Number(nominal[m]) || 0), 0);
 
   const setting = financeSettings.rows[0];
-  const minimumDp = setting && total > 0
-    ? setting.minimum_dp_mode === 'PERCENTAGE'
-      ? Math.ceil((total * Number(setting.minimum_dp_value)) / 100)
-      : Number(setting.minimum_dp_value)
-    : null;
+  const minimumDp = minimumDpAmount(total, setting);
 
   const availableRooms = rooms.rows.filter(
     room => room.active && (mode === 'booking' || room.status === 'ready'),
@@ -195,8 +211,8 @@ export function FormulirPemesanan({
       (!matchedGuest && (!normalizedAddress || normalizedAddress.length > 500))
     ) { setError('Periksa nama, alamat, dan nomor WA (8–16 angka).'); return; }
     if (methods.length === 0) { setError('Pilih minimal 1 metode pembayaran.'); return; }
-    if (methods.length > 1) {
-      setError('Pembayaran 2 metode belum didukung sistem (penyimpanan hanya mencatat satu metode per transaksi). Gunakan satu metode untuk saat ini.');
+    if (methods.length > 1 && !featureFlags.combinedPayment) {
+      setError('Pembayaran gabungan belum diaktifkan. Pilih satu metode pembayaran sampai backend siap.');
       return;
     }
     if (!featureFlags.extraGuest && extra.tambahan > 0) {
@@ -209,11 +225,14 @@ export function FormulirPemesanan({
     if (!selectedRoomType?.pricing_group || selectedPrice <= 0) {
       setError('Harga resmi untuk kamar dan paket ini belum tersedia.'); return;
     }
-    if (!Number.isFinite(payment) || payment < 0 || payment > total || !['Cash', 'QRIS', 'Transfer'].includes(method)) {
-      setError('Nominal pembayaran harus antara Rp 0 dan harga paket.'); return;
+    if (methods.some(m => !Number.isFinite(Number(nominal[m])) || Number(nominal[m]) <= 0) || paymentTotal > total || !methods.every(m => ['Cash', 'QRIS', 'Transfer'].includes(m))) {
+      setError('Setiap nominal metode harus positif dan jumlah pembayaran tidak boleh melebihi total tagihan.'); return;
     }
-    if (featureFlags.extraGuest && mode === 'booking' && minimumDp !== null && payment < minimumDp) {
-      setError(`DP minimum adalah ${rupiah(minimumDp)} (40% dari total tagihan).`); return;
+    if (mode === 'booking' && minimumDp !== null && paymentTotal < minimumDp) {
+      const dpBasis = setting?.minimum_dp_mode === 'PERCENTAGE'
+        ? `${Number(setting.minimum_dp_value)}% dari total tagihan`
+        : 'sesuai pengaturan Owner';
+      setError(`DP minimum adalah ${rupiah(minimumDp)} (${dpBasis}).`); return;
     }
     if (!sessionId || needsAssistedContext) {
       setError(needsAssistedContext
@@ -221,16 +240,18 @@ export function FormulirPemesanan({
         : 'Buka sesi kas aktif sebelum menyimpan transaksi.');
       return;
     }
-    if (mode === 'check_in' && payment !== total) {
+    if (mode === 'check_in' && paymentTotal !== total) {
       setError('Pembayaran check-in langsung harus sama dengan harga resmi.'); return;
     }
 
     const requestFingerprint = JSON.stringify({
       mode, roomId, packageId, normalizedName, normalizedPhone, normalizedAddress,
-      payment, method, dayMode, scheduledCheckIn, sessionId, guestCount: jumlahTamu,
+      payments: methods.map(m => ({ method: m, amount: Number(nominal[m]) || 0 })), dayMode, scheduledCheckIn, sessionId, guestCount: jumlahTamu,
     });
     const requestKey = lastRequestFingerprint && lastRequestFingerprint !== requestFingerprint
       ? crypto.randomUUID() : idempotencyKey;
+    const componentKeys = { ...paymentIdempotencyKeys };
+    if (lastRequestFingerprint && lastRequestFingerprint !== requestFingerprint) methods.forEach(m => { componentKeys[m] = crypto.randomUUID(); });
     if (requestKey !== idempotencyKey) setIdempotencyKey(requestKey);
     setLastRequestFingerprint(requestFingerprint);
     setSaving(true);
@@ -247,13 +268,28 @@ export function FormulirPemesanan({
       _day_mode: dayMode,
       _idempotency_key: requestKey,
       _session_id: sessionId || null,
-      ...(featureFlags.extraGuest ? { _guest_count: jumlahTamu } : {}),
+      ...(featureFlags.extraGuest ? { _guest_count: guestCount } : {}),
       ...(scheduledCheckIn ? { _scheduled_check_in: scheduledCheckIn } : {}),
     };
-    const { data, error: failure } = await rpc(isTraining ? 'create_training_reservation' : 'create_reservation', reservationArgs);
+    const combinedArgs = {
+      _mode: mode, _room_id: roomId, _package_id: packageId, _name: normalizedName,
+      _phone: normalizedPhone, _address: normalizedAddress,
+      _payments: methods.map(m => ({ method: m, amount: Number(nominal[m]), idempotency_key: componentKeys[m] })) as CombinedPaymentComponent[],
+      _day_mode: dayMode, _request_idempotency_key: requestKey, _request_fingerprint: requestFingerprint,
+      _session_id: sessionId || null,
+      ...(featureFlags.extraGuest ? { _guest_count: guestCount } : {}),
+      ...(scheduledCheckIn ? { _scheduled_check_in: scheduledCheckIn } : {}),
+    };
+    const combined = shouldUseCombinedPayment(methods.length, featureFlags.combinedPayment);
+    const { data, error: failure } = combined
+      ? await (isTraining ? createTrainingReservationCombined(combinedArgs) : createReservationCombined(combinedArgs))
+      : await rpc(isTraining ? 'create_training_reservation' : 'create_reservation', reservationArgs);
     setSaving(false);
     if (failure) { setError(failure.message); return; }
-    setSavedNumber(data);
+    setIdempotencyKey(crypto.randomUUID());
+    setPaymentIdempotencyKeys(Object.fromEntries(methods.map(m => [m, crypto.randomUUID()])));
+    setLastRequestFingerprint('');
+    setSavedNumber(data?.transaction_number ?? data);
     await onSaved();
   }
 
@@ -405,7 +441,7 @@ export function FormulirPemesanan({
                 <div>
                   <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metode Pembayaran (maks. 2)</span>
                   <div className="mt-1 grid grid-cols-3 gap-2">
-                    {['Cash', 'QRIS', 'Transfer'].map(m => {
+                    {(['Cash', 'QRIS', 'Transfer'] as MetodePembayaran[]).map(m => {
                       const aktif = methods.includes(m);
                       return (
                         <button key={m} type="button" aria-pressed={aktif}
@@ -427,8 +463,10 @@ export function FormulirPemesanan({
                   </Bidang>
                 ))}
                 {methods.length > 1 && (
-                  <p className="rounded-xl bg-perlu px-3 py-2 text-xs text-perlu-foreground">
-                    Pembayaran 2 metode belum didukung sistem; transaksi hanya bisa disimpan dengan satu metode.
+                  <p className="rounded-xl bg-secondary px-3 py-2 text-xs">
+                    {featureFlags.combinedPayment
+                      ? 'Dua metode disimpan atomic dalam satu transaksi dan masing-masing memiliki riwayat pembayaran sendiri.'
+                      : 'Pembayaran gabungan belum diaktifkan. Pilih satu metode sampai backend siap.'}
                   </p>
                 )}
               </div>
@@ -445,8 +483,10 @@ export function FormulirPemesanan({
               {mode === 'booking' && (
                 <Baris k="Sisa tagihan" v={rupiah(Math.max(0, total - methods.reduce((s, m) => s + Math.max(0, Number(nominal[m]) || 0), 0)))} />
               )}
-              {featureFlags.extraGuest && mode === 'booking' && minimumDp !== null && (
-                <p className="mt-2 text-xs text-muted-foreground">Minimum DP 40%: {rupiah(minimumDp)}</p>
+              {mode === 'booking' && minimumDp !== null && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Minimum DP {setting?.minimum_dp_mode === 'PERCENTAGE' ? `${Number(setting.minimum_dp_value)}%` : 'Owner'}: {rupiah(minimumDp)}
+                </p>
               )}
             </div>
 

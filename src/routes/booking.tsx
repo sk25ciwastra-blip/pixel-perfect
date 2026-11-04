@@ -14,6 +14,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
 import { useSesiKasKonteks } from '@/lib/sesi-kas';
+import {
+  recordTransactionPaymentCombined,
+  recordTrainingTransactionPaymentCombined,
+  shouldUseCombinedPayment,
+  type CombinedPaymentComponent,
+} from '@/lib/combined-payments';
+import { featureFlags } from '@/lib/feature-flags';
 
 export const Route = createFileRoute('/booking')({
   head: () =>
@@ -93,9 +100,11 @@ function Halaman() {
   const [open, setOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState('');
 const [detailBookingId, setDetailBookingId] = useState('');
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] =
-    useState<MetodePembayaran>('QRIS');
+  const [paymentMethods, setPaymentMethods] = useState<MetodePembayaran[]>(['QRIS']);
+  const [paymentAmounts, setPaymentAmounts] = useState<Partial<Record<MetodePembayaran, string>>>({ QRIS: '' });
+  const [paymentIdempotencyKeys, setPaymentIdempotencyKeys] = useState<Partial<Record<MetodePembayaran, string>>>({ QRIS: crypto.randomUUID() });
+  const [paymentRequestKey, setPaymentRequestKey] = useState(() => crypto.randomUUID());
+  const [paymentRequestFingerprint, setPaymentRequestFingerprint] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -105,7 +114,6 @@ const guests = useTable('guests');
 const rooms = useTable('rooms');
 const roomTypes = useTable('room_types');
 const packages = useTable('packages');
-const [paymentIdempotencyKey, setPaymentIdempotencyKey] = useState(() => crypto.randomUUID());
 const {
   sessionId: paymentSessionId,
   activeSession: activePaymentSession,
@@ -151,9 +159,11 @@ const {
     const remaining = Math.max(total - paid, 0);
 
     setSelectedBookingId(transactionId);
-    setPaymentAmount(remaining > 0 ? String(remaining) : '');
-    setPaymentMethod('QRIS');
-    setPaymentIdempotencyKey(crypto.randomUUID());
+    setPaymentMethods(['QRIS']);
+    setPaymentAmounts({ QRIS: remaining > 0 ? String(remaining) : '' });
+    setPaymentIdempotencyKeys({ QRIS: crypto.randomUUID() });
+    setPaymentRequestKey(crypto.randomUUID());
+    setPaymentRequestFingerprint('');
     setMessage('');
   }
 
@@ -161,7 +171,9 @@ const {
     if (busy) return;
 
     setSelectedBookingId('');
-    setPaymentAmount('');
+    setPaymentAmounts({ QRIS: '' });
+    setPaymentMethods(['QRIS']);
+    setPaymentRequestFingerprint('');
     setMessage('');
   }
 
@@ -177,16 +189,14 @@ async function recordPayment() {
   setBusy(true);
 
   try {
-    const amount = Number(paymentAmount);
-
-    if (
-      !Number.isFinite(amount) ||
-      amount <= 0 ||
-      amount > selectedRemaining
-    ) {
-      setMessage(
-        `Nominal pembayaran harus antara Rp 1 dan ${rupiah(selectedRemaining)}.`,
-      );
+    if (paymentMethods.length > 1 && !featureFlags.combinedPayment) {
+      setMessage('Pembayaran gabungan belum diaktifkan. Pilih satu metode pembayaran sampai backend siap.');
+      return;
+    }
+    const amounts = paymentMethods.map((method) => Number(paymentAmounts[method] ?? 0));
+    const amount = amounts.reduce((sum, value) => sum + value, 0);
+    if (amounts.some((value) => !Number.isFinite(value) || value <= 0) || amount > selectedRemaining) {
+      setMessage('Setiap nominal harus positif dan total tidak boleh melebihi sisa tagihan.');
       return;
     }
 
@@ -202,41 +212,69 @@ async function recordPayment() {
       return;
     }
 
-    const { error: paymentError } = await rpc(
-      isTraining ? 'record_training_transaction_payment' : 'record_transaction_payment',
-      {
-        _transaction_id: selectedBooking.id,
-        _amount: amount,
-        _method: paymentMethod,
-        _idempotency_key: paymentIdempotencyKey,
-        _session_id: paymentSessionId,
-      },
-    );
+    const requestFingerprint = JSON.stringify({
+      transactionId: selectedBooking.id,
+      payments: paymentMethods.map((method) => ({ method, amount: Number(paymentAmounts[method]) || 0 })),
+      sessionId: paymentSessionId,
+    });
+    const requestKey = paymentRequestFingerprint && paymentRequestFingerprint !== requestFingerprint
+      ? crypto.randomUUID()
+      : paymentRequestKey;
+    const componentKeys = { ...paymentIdempotencyKeys };
+    if (paymentRequestFingerprint && paymentRequestFingerprint !== requestFingerprint) {
+      paymentMethods.forEach((method) => { componentKeys[method] = crypto.randomUUID(); });
+    }
+    setPaymentRequestKey(requestKey);
+    setPaymentRequestFingerprint(requestFingerprint);
+    setPaymentIdempotencyKeys(componentKeys);
+
+    const combinedArgs = {
+      _transaction_id: selectedBooking.id,
+      _payments: paymentMethods.map((method) => ({
+        method,
+        amount: Number(paymentAmounts[method]),
+        idempotency_key: componentKeys[method],
+      })) as CombinedPaymentComponent[],
+      _request_idempotency_key: requestKey,
+      _request_fingerprint: requestFingerprint,
+      _session_id: paymentSessionId,
+    };
+    const primaryMethod = paymentMethods[0] ?? 'QRIS';
+    const combined = shouldUseCombinedPayment(paymentMethods.length, featureFlags.combinedPayment);
+    const { error: paymentError } = combined
+      ? await (isTraining ? recordTrainingTransactionPaymentCombined(combinedArgs) : recordTransactionPaymentCombined(combinedArgs))
+      : await rpc(
+          isTraining ? 'record_training_transaction_payment' : 'record_transaction_payment',
+          {
+            _transaction_id: selectedBooking.id,
+            _amount: amount,
+            _method: primaryMethod,
+            _idempotency_key: componentKeys[primaryMethod] ?? crypto.randomUUID(),
+            _session_id: paymentSessionId,
+          },
+        );
 
     if (paymentError) {
       setMessage(paymentError.message);
       return;
     }
 
-    // A successful payment ends this idempotent operation; the next payment
-    // must use a fresh key while uncertain retries keep the current key.
-    setPaymentIdempotencyKey(crypto.randomUUID());
     const remaining = selectedRemaining - amount;
-
+    setPaymentIdempotencyKeys({ QRIS: crypto.randomUUID() });
+    setPaymentRequestKey(crypto.randomUUID());
+    setPaymentRequestFingerprint('');
     await payments.refresh();
-
-    setPaymentAmount(remaining > 0 ? String(remaining) : '');
-
+    setPaymentMethods(['QRIS']);
+    setPaymentAmounts({ QRIS: remaining > 0 ? String(remaining) : '' });
     setMessage(
       remaining > 0
-        ? `Pembayaran tercatat. Masih ada sisa ${rupiah(remaining)}.`
+        ? 'Pembayaran tercatat. Masih ada sisa ' + rupiah(remaining) + '.'
         : 'Pembayaran tercatat. Transaksi sudah lunas.',
     );
   } finally {
     setBusy(false);
   }
 }
-
 async function finishCheckIn() {
   if (!selectedBooking) return;
   const arrival = bookingArrival(selectedBooking, Date.now());
@@ -276,7 +314,7 @@ async function finishCheckIn() {
     ]);
 
     setSelectedBookingId('');
-    setPaymentAmount('');
+    setPaymentAmounts({ QRIS: '' });
     setMessage('');
   } finally {
     setBusy(false);
@@ -653,36 +691,51 @@ Terima kasih.`;
 
             {selectedRemaining > 0 ? (
               <div className="mt-5 space-y-4">
-                <label className="block text-sm">
-                  Nominal pembayaran
-                  <input
-                    type="number"
-                    min="1"
-                    max={selectedRemaining}
-                    step="1"
-                    value={paymentAmount}
-                    onChange={(event) =>
-                      setPaymentAmount(event.target.value)
-                    }
-                    className="mt-1 h-12 w-full rounded-xl border border-input bg-background px-4"
-                  />
-                </label>
+                {paymentMethods.map((method) => (
+                  <label key={method} className="block text-sm">
+                    Nominal {method}
+                    <input
+                      type="number"
+                      min="1"
+                      max={selectedRemaining}
+                      step="1"
+                      value={paymentAmounts[method] ?? ''}
+                      onChange={(event) =>
+                        setPaymentAmounts((current) => ({ ...current, [method]: event.target.value }))
+                      }
+                      className="mt-1 h-12 w-full rounded-xl border border-input bg-background px-4"
+                    />
+                  </label>
+                ))}
 
                 <div>
-                  <p className="mb-2 text-sm">Metode pembayaran</p>
+                  <p className="mb-2 text-sm">Metode pembayaran (maks. 2)</p>
                   <div className="grid grid-cols-3 gap-2">
-                    {(
-                      ['Cash', 'QRIS', 'Transfer'] as const
-                    ).map((method) => (
+                    {(['Cash', 'QRIS', 'Transfer'] as const).map((method) => (
                       <Button
                         key={method}
                         type="button"
-                        variant={
-                          paymentMethod === method
-                            ? 'default'
-                            : 'outline'
-                        }
-                        onClick={() => setPaymentMethod(method)}
+                        variant={paymentMethods.includes(method) ? 'default' : 'outline'}
+                        disabled={!paymentMethods.includes(method) && paymentMethods.length >= 2}
+                        onClick={() => {
+                          if (paymentMethods.includes(method)) {
+                            if (paymentMethods.length === 1) return;
+                            setPaymentMethods((current) => current.filter((item) => item !== method));
+                            setPaymentAmounts((current) => {
+                              const next = { ...current };
+                              delete next[method];
+                              return next;
+                            });
+                          } else {
+                            if (paymentMethods.length >= 1 && !featureFlags.combinedPayment) {
+                              setMessage('Pembayaran gabungan belum diaktifkan. Pilih satu metode pembayaran sampai backend siap.');
+                              return;
+                            }
+                            setPaymentMethods((current) => [...current, method]);
+                            setPaymentAmounts((current) => ({ ...current, [method]: '' }));
+                            setPaymentIdempotencyKeys((current) => ({ ...current, [method]: crypto.randomUUID() }));
+                          }
+                        }}
                       >
                         {method}
                       </Button>

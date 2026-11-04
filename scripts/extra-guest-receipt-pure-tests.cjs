@@ -34,7 +34,8 @@ const form = fs.readFileSync(
 );
 const receipt = fs.readFileSync(path.join(__dirname, "..", "src/lib/receipt-print.ts"), "utf8");
 assert.match(form, /_guest_count: guestCount/);
-assert.match(form, /extraGuestCharge/);
+assert.match(form, /biayaTamuTambahan\(jumlahTamu\)/);
+assert.match(form, /extra\.total/);
 assert.match(receipt, /58mm/);
 assert.match(receipt, /PAYMENT HISTORY/);
 assert.match(receipt, /copy_label/);

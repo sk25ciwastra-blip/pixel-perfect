@@ -7,6 +7,7 @@ export function bacaSakelar(nilai: unknown): boolean {
 }
 
 export const fitur = Object.freeze({
+  combinedPayment: featureFlags.combinedPayment,
   extraGuest: featureFlags.extraGuest,
   receipt58mm: featureFlags.receipt58mm,
 });
