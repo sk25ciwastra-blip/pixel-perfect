@@ -333,3 +333,11 @@ Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixe
 - Menu database **Manage → Settings** sebelumnya hanya menampilkan region, PostgreSQL, ukuran/storage, bukan ref. **Tidak boleh menyimpulkan** bahwa `bgtztcfbkcrvcipxbfti` atau `ijujmxhcifuerkllbbgq` adalah runtime personal Lovable berdasarkan informasi ini.
 - Aktivitas editor Lovable untuk commit-commit **dokumentasi** yang disinkronkan dari GitHub menampilkan status **“Pembuatan gagal / Pratinjau sudah usang”**. Ini adalah status panel pratinjau untuk perubahan docs; **belum membuktikan** kegagalan build kode aplikasi atau kegagalan database. Jangan mengambil tindakan publish/build/revert hanya karena indikator tersebut.
 - **Gate:** ref Cloud pribadi tetap NOT VERIFIED; tidak menjalankan SQL bahkan read-only, tidak membuka Secrets, tidak mengubah konektor atau kode. Jika jalur resmi nonrahasia tidak tersedia, hentikan pengejaran ref dan prioritaskan langkah siap operasional lain yang dapat diverifikasi aman. PR #37 tetap Draft.
+
+
+## MONITOR DRAFT PR #37 — GATE GITHUB READ-ONLY (5 NOVEMBER 2026 WIB)
+
+- PR [#37](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/37) tetap **OPEN / DRAFT / UNMERGED**; head `review/combined-payments-integration-20261105` SHA `6c3f8c7f00dbcc354da21992e43f29cd10938dea`, base `main`; 9 file fitur, +1658/-82 terhadap basis lama. Tidak ada review/inline thread terdaftar.
+- Compare GitHub pada saat pemeriksaan: branch fitur **1 ahead / 10 behind** `main`, status `diverged`. Sepuluh commit di `main` sejak merge-base hanya mengubah **satu file dokumentasi** `DOKUMEN_PROYEK/ARAH_KERJA_AKTIF_MENUJU_OPERASIONAL_SEMENTARA_2026-11-04.md`; bukan perubahan code fitur. File diff branch tetap 9 file yang tercatat di PR.
+- `get_pr_info` saat ini melaporkan `mergeable=false`; **penyebab belum diverifikasi** (jangan menyebut pasti konflik kode). Combined commit status API melaporkan `statuses=[]`: tidak ada status CI yang tersedia dalam endpoint tersebut. Ini **bukan bukti CI PASS** atau tes FAIL.
+- **Keputusan tindakan:** review/read-only saja. Tidak melakukan rebase, force push, merge, menjalankan ulang Finance/Auth yang sebelumnya PASS, migrasi Cloud, deploy, atau mengubah feature flags. Jika integrasi akan diajukan, perlu pengecekan penyebab mergeable=false dan persetujuan Owner terpisah sebelum perubahan branch atau merge.
