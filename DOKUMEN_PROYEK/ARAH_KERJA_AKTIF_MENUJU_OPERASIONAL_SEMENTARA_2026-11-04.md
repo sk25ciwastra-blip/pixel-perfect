@@ -375,3 +375,14 @@ Owner menyerahkan tiga tangkapan layar dari Cloud/Database/Settings proyek `Pixe
 - Fungsi pendukung `calculate_package_stay_times`, `calculate_scheduled_booking_times`, `finance_is_booking_operator`, `finance_is_owner_or_supervisor` **ADA** pada database Lovable pribadi.
 - **Kesimpulan terverifikasi:** backend pembayaran gabungan PR #37 **belum dipasang pada database Lovable pribadi**. Source PR #37 tetap Draft dan semua flag gabungan harus OFF. Tidak boleh mengaktifkan fitur atau mencoba RPC yang belum tersedia. Identitas project ref Supabase runtime tetap belum diverifikasi; namun query metadata ini secara langsung menargetkan proyek Lovable ID di atas.
 - **Langkah aman berikutnya:** lengkapi gate backup/restore, dependency SQL, ACL/RLS, dan urutan migrasi **khusus target Lovable pribadi**; minta persetujuan Owner terpisah sebelum DDL/migrasi Cloud atau merge PR #37. Jangan menjalankan ulang tes lokal Finance/Auth yang PASS.
+
+
+## PASS MIGRASI CLOUD LOVABLE PRIBADI — BACKEND PEMBAYARAN GABUNGAN (5 NOVEMBER 2026 WIB)
+
+- Owner secara eksplisit **menyetujui pemasangan migrasi pembayaran gabungan ke database Lovable pribadi**, dengan fitur tetap OFF dan **tanpa merge, publish, atau deploy**.
+- Target: proyek Lovable pribadi `017f6e78-15f2-4d07-a38c-87cb185279bf`, database `enabled=true` (`supabase` stack). Sebelum DDL, query katalog memastikan 4 RPC gabungan **0**, tabel batch **belum ada**.
+- SQL dijalankan dari **file persis commit PR #37** `supabase/migrations/20261104000000_atomic_combined_payments.sql` pada `6c3f8c7f00dbcc354da21992e43f29cd10938dea` (blob SHA `43646f65618bd69658b8f6f50ae05fa7b340160b`), transaksi `BEGIN`–`COMMIT`. Konektor Lovable melaporkan **tanpa error**.
+- Verifikasi katalog setelah DDL: **4 RPC ADA**, tabel `public.finance_payment_batch_idempotency` **ADA**, `RLS=true`, **1 SELECT policy**, **0 baris batch**. Keempat RPC `SECURITY DEFINER`; `anon EXECUTE=false`, `authenticated EXECUTE=true` untuk masing-masing.
+- UI Lovable Backups sebelumnya diverifikasi menampilkan backup terbaru **4 Nov 2026 pukul 19.55.34 UTC** (5 Nov 02.55 WIB). Kemampuan restore secara nyata **belum diuji**; tidak ada Restore yang dieksekusi.
+- **Batas PASS:** skema/ACL backend terpasang dan terverifikasi. **Belum** diuji panggilan RPC nyata dengan akun peran, transaksi Cloud end-to-end, feature flags, sinkronisasi source PR #37, atau deployment. PR #37 tetap Draft/unmerged, flag gabungan **OFF**, tidak ada pembayaran pelanggan yang dibuat/dimodifikasi, tidak ada perubahan UI maupun publish.
+- **Langkah berikutnya:** verifikasi kontrak RPC, pembatasan sesi dan pelatihan dalam lingkungan terisolasi atau tes Cloud yang disetujui dengan data dummy; jangan menyalakan flag sebelum verifikasi dan persetujuan Owner tersendiri. Jangan mengulang tes lokal PASS tanpa perubahan relevan.
