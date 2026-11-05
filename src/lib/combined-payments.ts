@@ -86,11 +86,11 @@ export function minimumDpAmount(
 }
 
 export function createReservationCombined(args: CombinedReservationArgs) {
-  return combinedSupabase.rpc('create_reservation_combined', args);
+  return combinedSupabase.rpc('create_reservation_combined', args as never);
 }
 
 export function createTrainingReservationCombined(args: CombinedReservationArgs) {
-  return combinedSupabase.rpc('create_training_reservation_combined', args);
+  return combinedSupabase.rpc('create_training_reservation_combined', args as never);
 }
 
 export function recordTransactionPaymentCombined(args: CombinedSettlementArgs) {
