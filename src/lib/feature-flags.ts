@@ -25,3 +25,19 @@ export const featureFlags = Object.freeze({
     import.meta.env['VITE_FEATURE_RECEIPT_OWNER_APPROVED'],
   ),
 });
+
+// Preview-only gate: production/custom hosts always stay OFF even if env flags ship in the bundle.
+export function isPreviewHost(hostname: string): boolean {
+  const h = hostname.toLowerCase();
+  if (h === 'localhost' || h === '127.0.0.1') return true;
+  if (h.endsWith('.lovableproject.com') || h.endsWith('.lovableproject-dev.com')) return true;
+  if (/^project--[0-9a-f-]{36}-dev\.lovable\.app$/.test(h)) return true;
+  const [first, ...rest] = h.split('.');
+  const suffix = '.' + rest.join('.');
+  const okSuffix = ['.lovable.app', '.gpt-eng.com', '.gptengineer.run'].some(s => suffix.endsWith(s));
+  return okSuffix && /^(?:id-preview|preview)(?:-[a-z0-9]+)?--.+$/.test(first ?? '');
+}
+
+export function extraGuestAktif(hostname: string, flagOn: boolean = featureFlags.extraGuest): boolean {
+  return flagOn && isPreviewHost(hostname);
+}

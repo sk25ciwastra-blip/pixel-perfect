@@ -6,7 +6,7 @@ import { rpc, useTable } from '@/lib/data-live';
 import { useSesiKasKonteks } from '@/lib/sesi-kas';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { biayaTamuTambahan } from '@/lib/tamu-tambahan';
-import { featureFlags } from '@/lib/feature-flags';
+import { featureFlags, extraGuestAktif } from '@/lib/feature-flags';
 import {
   createReservationCombined,
   createTrainingReservationCombined,
@@ -214,7 +214,8 @@ export function FormulirPemesanan({
       setError('Pembayaran gabungan belum diaktifkan. Pilih satu metode pembayaran sampai backend siap.');
       return;
     }
-    if (extra.tambahan > 0) {
+    const extraGuestOn = typeof window !== 'undefined' && extraGuestAktif(window.location.hostname);
+    if (extra.tambahan > 0 && (!extraGuestOn || methods.length > 1)) {
       setError('Biaya tamu tambahan belum dapat dicatat sistem. Pembaruan database menunggu persetujuan Owner; sementara isi maksimal 2 tamu.');
       return;
     }
@@ -268,6 +269,7 @@ export function FormulirPemesanan({
       _idempotency_key: requestKey,
       _session_id: sessionId || null,
       ...(scheduledCheckIn ? { _scheduled_check_in: scheduledCheckIn } : {}),
+      ...(extraGuestOn ? { _guest_count: jumlahTamu } : {}),
     };
     const combinedArgs = {
       _mode: mode, _room_id: roomId, _package_id: packageId, _name: normalizedName,

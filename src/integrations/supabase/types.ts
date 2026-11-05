@@ -422,6 +422,47 @@ export type Database = {
           },
         ]
       }
+      finance_payment_batch_idempotency: {
+        Row: {
+          created_at: string
+          created_by: string
+          operation: string
+          payment_ids: Json
+          request_fingerprint: string
+          request_idempotency_key: string
+          transaction_id: string | null
+          transaction_number: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          operation: string
+          payment_ids?: Json
+          request_fingerprint: string
+          request_idempotency_key: string
+          transaction_id?: string | null
+          transaction_number?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          operation?: string
+          payment_ids?: Json
+          request_fingerprint?: string
+          request_idempotency_key?: string
+          transaction_id?: string | null
+          transaction_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payment_batch_idempotency_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_refund_allocations: {
         Row: {
           adjusted_commission: number
@@ -1977,6 +2018,24 @@ export type Database = {
             }
             Returns: string
           }
+      create_reservation_combined: {
+        Args: {
+          _address: string
+          _day_mode: string
+          _guest_count?: number
+          _mode: string
+          _name: string
+          _package_id: string
+          _payments: Json
+          _phone: string
+          _request_fingerprint?: string
+          _request_idempotency_key?: string
+          _room_id: string
+          _scheduled_check_in?: string
+          _session_id?: string
+        }
+        Returns: Json
+      }
       create_training_finance_deposit: {
         Args: {
           _amount: number
@@ -2024,6 +2083,24 @@ export type Database = {
             }
             Returns: string
           }
+      create_training_reservation_combined: {
+        Args: {
+          _address: string
+          _day_mode: string
+          _guest_count?: number
+          _mode: string
+          _name: string
+          _package_id: string
+          _payments: Json
+          _phone: string
+          _request_fingerprint?: string
+          _request_idempotency_key?: string
+          _room_id: string
+          _scheduled_check_in?: string
+          _session_id?: string
+        }
+        Returns: Json
+      }
       decide_finance_deposit: {
         Args: { _deposit_id: string; _reason?: string; _status: string }
         Returns: undefined
@@ -2187,6 +2264,16 @@ export type Database = {
         }
         Returns: string
       }
+      record_training_transaction_payment_combined: {
+        Args: {
+          _payments: Json
+          _request_fingerprint: string
+          _request_idempotency_key: string
+          _session_id: string
+          _transaction_id: string
+        }
+        Returns: Json
+      }
       record_transaction_payment:
         | {
             Args: { _amount: number; _method: string; _transaction_id: string }
@@ -2211,6 +2298,16 @@ export type Database = {
             }
             Returns: string
           }
+      record_transaction_payment_combined: {
+        Args: {
+          _payments: Json
+          _request_fingerprint: string
+          _request_idempotency_key: string
+          _session_id: string
+          _transaction_id: string
+        }
+        Returns: Json
+      }
       request_receipt_print: {
         Args: { _idempotency_key: string; _receipt_id: string }
         Returns: Json
