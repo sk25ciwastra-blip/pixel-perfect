@@ -35,7 +35,7 @@ export function isPreviewHost(hostname: string): boolean {
   const [first, ...rest] = h.split('.');
   const suffix = '.' + rest.join('.');
   const okSuffix = ['.lovable.app', '.gpt-eng.com', '.gptengineer.run'].some(s => suffix.endsWith(s));
-  return okSuffix && /^(?:id-preview|preview)(?:-[a-z0-9]+)?--.+$/.test(first);
+  return okSuffix && /^(?:id-preview|preview)(?:-[a-z0-9]+)?--.+$/.test(first ?? '');
 }
 
 export function extraGuestAktif(hostname: string, flagOn: boolean = featureFlags.extraGuest): boolean {
