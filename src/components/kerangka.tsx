@@ -87,21 +87,21 @@ export function Logo({ ringkas }: { ringkas?: boolean }) {
   return (
     <div className="text-center leading-tight">
       <div className="relative mx-auto w-fit">
-        <span className="pointer-events-none absolute -inset-2 -z-0 rounded-full bg-gold/20 blur-xl" aria-hidden="true" />
+        <span className="pointer-events-none absolute -inset-2 -z-0 rounded-full bg-gold/15 blur-xl" aria-hidden="true" />
         <img
           src={logoBaturaden.url}
           alt="Baturaden 25 Homestay"
           width={900}
           height={287}
-          className="relative mx-auto block h-auto w-full max-w-[188px]"
+          className="relative mx-auto block h-auto w-full max-w-[146px]"
         />
       </div>
-      <div className="mx-auto mt-3 flex items-center justify-center gap-2">
-        <span className="h-px w-8 bg-gradient-to-r from-transparent to-gold" />
-        <span className="text-[0.55rem] font-semibold tracking-[0.3em] text-gold">MANAJEMEN</span>
-        <span className="h-px w-8 bg-gradient-to-l from-transparent to-gold" />
+      <div className="mx-auto mt-1 flex items-center justify-center gap-1.5">
+        <span className="h-px w-6 bg-gradient-to-r from-transparent to-gold/70" />
+        <span className="text-[0.52rem] font-semibold tracking-[0.28em] text-gold">MANAJEMEN</span>
+        <span className="h-px w-6 bg-gradient-to-l from-transparent to-gold/70" />
       </div>
-      <p className="mt-2 text-[0.78rem] text-foreground/90">Nyaman Seperti di Rumah Sendiri</p>
+      <p className="mt-1.5 text-[0.72rem] text-foreground/90">Nyaman Seperti di Rumah Sendiri</p>
     </div>
   );
 }
