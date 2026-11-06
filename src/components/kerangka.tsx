@@ -7,6 +7,7 @@ import {
 import { usePeran } from "@/lib/peran";
 import { LatarHeader } from "@/components/latar-header";
 import gedungSate from "@/assets/gedung-sate-malam.jpg";
+import logoBaturaden from "@/assets/logo-baturaden-25.png.asset.json";
 import { konteksHeader } from "@/lib/konteks-header";
 
 type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean; anak?: { bagian: string; label: string }[] };
@@ -85,15 +86,17 @@ export function Logo({ ringkas }: { ringkas?: boolean }) {
   }
   return (
     <div className="text-center leading-tight">
-      <div className="relative mx-auto mb-2 w-fit">
-        <span className="pointer-events-none absolute inset-0 -z-0 rounded-full bg-gold/25 blur-xl" aria-hidden="true" />
-        <LambangTeratai className="relative h-14 w-20 text-gold-light drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.7)]" />
+      <div className="relative mx-auto w-fit">
+        <span className="pointer-events-none absolute -inset-2 -z-0 rounded-full bg-gold/20 blur-xl" aria-hidden="true" />
+        <img
+          src={logoBaturaden.url}
+          alt="Baturaden 25 Homestay"
+          width={900}
+          height={287}
+          className="relative mx-auto block h-auto w-full max-w-[188px]"
+        />
       </div>
-      <p className="font-serif text-[1.6rem] leading-none text-foreground">
-        Baturaden <span className="text-gold-light">25</span>
-      </p>
-      <p className="mt-1 font-serif text-[1.6rem] leading-none text-foreground">Homestay</p>
-      <div className="mx-auto mt-2 flex items-center justify-center gap-2">
+      <div className="mx-auto mt-3 flex items-center justify-center gap-2">
         <span className="h-px w-8 bg-gradient-to-r from-transparent to-gold" />
         <span className="text-[0.55rem] font-semibold tracking-[0.3em] text-gold">MANAJEMEN</span>
         <span className="h-px w-8 bg-gradient-to-l from-transparent to-gold" />
