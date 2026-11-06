@@ -87,7 +87,6 @@ export function Logo({ ringkas }: { ringkas?: boolean }) {
   return (
     <div className="text-center leading-tight">
       <div className="relative mx-auto w-fit">
-        <span className="pointer-events-none absolute -inset-2 -z-0 rounded-full bg-gold/15 blur-xl" aria-hidden="true" />
         <img
           src={logoBaturaden.url}
           alt="Baturaden 25 Homestay"
