@@ -6,6 +6,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { meta } from '@/lib/meta';
 // Panorama unggahan sebelumnya dipilih kembali oleh Owner; lokasi belum terverifikasi.
 import panorama from '@/assets/panorama-kota-malam.png.asset.json';
+import logoBaturaden from '@/assets/logo-baturaden-25.png.asset.json';
 
 export const Route = createFileRoute('/auth')({ head: () => meta('Masuk', 'Masuk ke Baturaden 25 Homestay.'), component: Auth });
 
@@ -29,18 +30,20 @@ function Auth() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/25 via-transparent to-background/25" />
 
       <div className="relative grid min-h-svh grid-rows-[1fr_auto_1fr] justify-items-center px-5 py-8 sm:px-10">
-        {/* Logo resmi Baturaden 25 Homestay */}
+        {/* Logo resmi Baturaden 25 Homestay — sama seperti di sidebar */}
         <div aria-label="Baturaden 25 Homestay" className="mb-4 w-fit self-end text-center leading-tight">
-          <svg viewBox="0 0 64 40" className="mx-auto mb-2 h-10 w-[4.5rem] text-gold drop-shadow-[0_0_12px_color-mix(in_oklch,var(--gold)_50%,transparent)]" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
-            <path d="M32 4c5 6 6 14 0 24C26 18 27 10 32 4Z" />
-            <path d="M32 28c-4-8-10-13-19-14 0 9 8 15 19 14Z" />
-            <path d="M32 28c4-8 10-13 19-14 0 9-8 15-19 14Z" />
-            <path d="M32 30c-8 2-17 0-24-6 6 7 15 10 24 9 9 1 18-2 24-9-7 6-16 8-24 6Z" />
-            <path d="M14 36h36" strokeOpacity="0.6" />
-          </svg>
-          <p className="font-serif text-2xl text-foreground">Baturaden <span className="text-gold-light">25</span></p>
-          <p className="font-serif text-2xl text-foreground">Homestay</p>
-          <div className="mx-auto mt-3 flex items-center justify-center gap-2"><span className="h-px w-8 bg-gradient-to-r from-transparent to-gold" /><span className="text-[0.6rem] font-semibold text-gold">MANAJEMEN</span><span className="h-px w-8 bg-gradient-to-l from-transparent to-gold" /></div>
+          <img
+            src={logoBaturaden.url}
+            alt="Baturaden 25 Homestay"
+            width={900}
+            height={287}
+            className="mx-auto block h-auto w-full max-w-[146px]"
+          />
+          <div className="mx-auto mt-1 flex items-center justify-center gap-1.5">
+            <span className="h-px w-6 bg-gradient-to-r from-transparent to-gold/70" />
+            <span className="text-[0.52rem] font-semibold tracking-[0.28em] text-gold">MANAJEMEN</span>
+            <span className="h-px w-6 bg-gradient-to-l from-transparent to-gold/70" />
+          </div>
         </div>
 
         {/* Susunan formulir tengah dipulihkan; autentikasi tetap. */}
