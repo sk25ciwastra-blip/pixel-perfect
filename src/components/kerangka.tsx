@@ -100,7 +100,7 @@ export function Logo({ ringkas }: { ringkas?: boolean }) {
         <span className="text-[0.52rem] font-semibold tracking-[0.28em] text-gold">MANAJEMEN</span>
         <span className="h-px w-6 bg-gradient-to-l from-transparent to-gold/70" />
       </div>
-      <p className="mt-1.5 text-[0.72rem] text-foreground/90">Nyaman Seperti di Rumah Sendiri</p>
+      <p className="mt-2.5 text-[0.72rem] text-foreground/90">Nyaman Seperti di Rumah Sendiri</p>
     </div>
   );
 }
