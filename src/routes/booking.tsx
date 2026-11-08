@@ -3,7 +3,7 @@ import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, X, Search, CalendarDays, ArrowUpDown, User, Phone, Clock, Circle, ChevronRight } from 'lucide-react';
+import { CalendarPlus, X, Search, CalendarDays, ArrowUpDown, User, Phone, Clock, Circle, ChevronRight } from 'lucide-react';
 import { Kerangka } from '@/components/kerangka';
 import { FormulirPemesanan } from '@/components/formulir-pemesanan';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ export const Route = createFileRoute('/booking')({
   head: () =>
     meta(
       'Pemesanan',
-      'Daftar pemesanan kamar Baturaden 25 Homestay.',
+      'Kelola reservasi dan kedatangan tamu Baturaden 25 Homestay.',
     ),
   validateSearch: (s: Record<string, unknown>): { bagian?: 'semua' | 'hari-ini' | 'besok' | 'mendatang' | undefined } => ({
     bagian: ['semua', 'hari-ini', 'besok', 'mendatang'].includes(String(s['bagian'])) ? (s['bagian'] as 'semua') : undefined,
@@ -475,8 +475,8 @@ Terima kasih.`;
                       <p className="font-serif text-lg font-semibold leading-tight text-[oklch(0.98_0.01_80)]">{room?.room_number ?? '-'}</p>
                     </div>
                     <div className="flex min-w-0 flex-col justify-center gap-0.5">
-                      <p className="truncate text-sm font-bold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
-                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-xs font-medium text-primary hover:underline">
+                      <p className="truncate text-[15px] font-semibold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
+                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-[13px] font-medium text-primary hover:underline">
                         {booking.transaction_number}
                       </button>
                     </div>
@@ -484,9 +484,9 @@ Terima kasih.`;
 
                   {[['Check-in', booking.scheduled_check_in], ['Check-out', booking.scheduled_check_out]].map(([label, v]) => (
                     <div key={label} className="flex flex-col justify-center gap-1 border-gold/30 lg:border-l lg:px-4">
-                      <p className="flex h-4 items-center text-[10px] leading-none text-muted-foreground">{label}</p>
-                      <p className="flex h-[18px] items-center gap-1.5 text-xs font-semibold"><CalendarDays className="size-3.5 shrink-0" />{tgl(v)}</p>
-                      <p className="flex h-[18px] items-center gap-1.5 text-xs font-semibold"><Clock className="size-3.5 shrink-0" />{jam(v)}</p>
+                      <p className="flex h-4 items-center text-[12px] font-medium leading-none text-muted-foreground">{label}</p>
+                      <p className="flex h-[18px] items-center gap-1.5 text-[13px] font-semibold"><CalendarDays className="size-3.5 shrink-0" />{tgl(v)}</p>
+                      <p className="flex h-[18px] items-center gap-1.5 text-[13px] font-semibold"><Clock className="size-3.5 shrink-0" />{jam(v)}</p>
                     </div>
                   ))}
 
@@ -547,15 +547,15 @@ Terima kasih.`;
 
     <Kerangka
       judul="Booking"
-      keterangan="Daftar pemesanan kamar"
+      keterangan="Kelola reservasi dan kedatangan tamu"
       aksi={
         !readOnly && (
           <Button
-            className="h-11 rounded-xl"
+            className="h-11 rounded-full bg-gradient-to-b from-[oklch(0.86_0.11_82)] to-[oklch(0.66_0.12_74)] px-5 text-navy-deep shadow-[0_10px_24px_-14px_var(--gold)] transition hover:brightness-105"
             onClick={() => setOpen(true)}
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Booking
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Reservasi Baru
           </Button>
         )
       }
