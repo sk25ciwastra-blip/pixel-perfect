@@ -26,7 +26,7 @@ export const Route = createFileRoute('/booking')({
   head: () =>
     meta(
       'Pemesanan',
-      'Daftar pemesanan kamar Baturaden 25 Homestay.',
+      'Kelola reservasi dan kedatangan tamu Baturaden 25 Homestay.',
     ),
   validateSearch: (s: Record<string, unknown>): { bagian?: 'semua' | 'hari-ini' | 'besok' | 'mendatang' | undefined } => ({
     bagian: ['semua', 'hari-ini', 'besok', 'mendatang'].includes(String(s['bagian'])) ? (s['bagian'] as 'semua') : undefined,
