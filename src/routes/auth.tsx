@@ -37,7 +37,7 @@ function Auth() {
             alt="Baturaden 25 Homestay"
             width={900}
             height={287}
-            className="mx-auto block h-auto w-full max-w-[178px]"
+            className="mx-auto block h-auto w-full max-w-[194px]"
           />
           <div className="mx-auto mt-1 flex items-center justify-center gap-1.5">
             <span className="h-px w-6 bg-gradient-to-r from-transparent to-gold/70" />
