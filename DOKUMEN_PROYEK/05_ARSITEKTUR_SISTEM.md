@@ -1,5 +1,18 @@
 # Baturaden 25 Homestay V1.0 — Arsitektur Sistem
 
+## Checkpoint wiring frontend lokal — 12 November 2026
+
+`formulir-pemesanan.tsx` meneruskan jumlah tamu ke kontrak gabungan yang ada;
+autofill nominal tunggal memakai total termasuk extra guest. `feature-flags.ts`
+tetap memakai tiga gate dan menambah allowlist hostname eksak untuk persetujuan
+host operasional Extra Guest; default tidak diaktifkan.
+`receipt-actions.tsx` membuka popup sinkron sebelum async, lalu `receipt-print.ts`
+menggunakan issue/request/result RPC yang ada, query RLS scoped/paginated, snapshot
+server dan key retry per pembayaran. Dialog terbuka bukan physical confirmation.
+Detail transaksi memakai snapshot tersimpan dan kontrol receipt yang sama.
+Tidak ada migrasi atau perubahan otorisasi; [paket serah terima](PAKET_KESIAPAN_OPERASIONAL_LOKAL_2026-11-12.md)
+memuat preflight/postflight SELECT-only dan batas Cloud/browser/printer.
+
 **Tanggal pencatatan:** 2026-10-13<br>
 **Status:** baseline terdokumentasi; beberapa modul masih bertahap.
 

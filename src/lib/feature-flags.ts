@@ -38,6 +38,20 @@ export function isPreviewHost(hostname: string): boolean {
   return okSuffix && /^(?:id-preview|preview)(?:-[a-z0-9]+)?--.+$/.test(first ?? '');
 }
 
-export function extraGuestAktif(hostname: string, flagOn: boolean = featureFlags.extraGuest): boolean {
-  return flagOn && isPreviewHost(hostname);
+export function extraGuestAktif(
+  hostname: string,
+  flagOn: boolean = featureFlags.extraGuest,
+  approvedHosts: string = import.meta.env['VITE_FEATURE_EXTRA_GUEST_APPROVED_HOSTS'] ?? '',
+): boolean {
+  // Production stays OFF unless the Owner explicitly approves the exact hostname
+  // as well as all three existing feature gates. No wildcard/subdomain matching.
+  const host = hostname.toLowerCase();
+  const approved = approvedHosts.split(',').some((entry) => {
+    const candidate = entry.trim().toLowerCase();
+    const validHostname = candidate.length <= 253 && candidate.split('.').every(
+      (label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label),
+    );
+    return validHostname && candidate === host;
+  });
+  return flagOn && (isPreviewHost(host) || approved);
 }
