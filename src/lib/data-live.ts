@@ -46,8 +46,11 @@ export function useTable<T extends string>(
 
     let query = supabase
       .from(table as keyof Tabel)
-      .select('*')
-      .order('created_at', { ascending: true });
+      .select('*');
+    // finance_settings has no created_at column.
+    if (table !== 'finance_settings') {
+      query = query.order('created_at', { ascending: true });
+    }
     if (scopeColumn && scopeValue) query = query.eq(scopeColumn, scopeValue);
     const { data, error: failure } = await query;
 
