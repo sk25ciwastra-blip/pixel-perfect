@@ -47,64 +47,99 @@ function paymentRow(payment: JsonRecord, showMethod = true) {
 }
 export function receiptHtml(data: ReceiptPrintData) {
   const s = data.receipt_snapshot ?? {};
+  const t = data.template_snapshot ?? {};
+  if (t.language !== "en" || Number(t.paper_width_mm) !== 58) {
+    throw new Error("Receipt template must be English and 58 mm.");
+  }
+
+  const supportedBlocks = [
+    "header", "transaction_details", "description", "payment_history",
+    "current_payment", "totals", "footer",
+  ];
+  const requiredBlocks = supportedBlocks.filter((key) => key !== "payment_history");
+  const blocks: string[] = Array.isArray(t.blocks)
+    ? t.blocks.map((block: JsonRecord) => block?.key)
+    : [];
+  if (
+    blocks.some((key) => !supportedBlocks.includes(key)) ||
+    new Set(blocks).size !== blocks.length ||
+    requiredBlocks.some((key) => !blocks.includes(key))
+  ) {
+    throw new Error("Receipt template blocks are incomplete or invalid.");
+  }
+
   const h = s.header ?? {};
+  const templateHeader = t.header ?? {};
+  const templateFooter = t.footer ?? {};
   const room = s.room ?? {};
   const current = s.current_payment ?? {};
   const history = Array.isArray(s.payment_history) ? s.payment_history : [];
   const hasHistory = history.length > 0;
-  const title =
-    s.transaction_type === "BOOKING" ? "Thank you for booking" : "Thank you for your visit";
-  let html =
-    '<article class="receipt"><header><strong>' +
-    esc(h.name || "Baturaden 25 Homestay") +
-    "</strong><span>" +
-    esc(h.address) +
-    "</span><span>" +
-    esc(h.city) +
-    "</span><span>WhatsApp: " +
-    esc(h.whatsapp) +
-    "</span>";
-  if (data.copy_label) html += '<b class="copy">' + esc(data.copy_label) + "</b>";
-  html +=
-    "</header><hr><h1>PAYMENT RECEIPT</h1>" +
-    row("Registration Number", s.registration_number) +
-    row("Receipt Reference", s.payment_reference) +
-    row("Served by", s.served_by?.name || s.served_by?.user_id) +
-    row("Transaction Type", s.transaction_type);
-  html +=
-    s.transaction_type === "BOOKING"
-      ? row("Scheduled Check-in", s.scheduled_check_in) +
-        row("Scheduled Check-out", s.scheduled_check_out)
-      : row("Actual Check-in", s.actual_check_in) +
-        row("Estimated Check-out", s.actual_check_out || "—");
-  html +=
-    "<hr><h2>DESCRIPTION</h2>" +
-    row("Room", String(room.number || "—") + " · " + String(room.type || "—")) +
-    row("Package", s.package) +
-    row("Room Price", money(Number(s.total_bill || 0) - Number(s.extra_guest_charge || 0)));
-  if (Number(s.extra_guest_charge || 0) > 0)
-    html += row(
-      "Extra Guest",
-      String(s.extra_guest_count) + " × " + money(50000) + " = " + money(s.extra_guest_charge),
-    );
-  if (hasHistory) html += "<h2>PAYMENT HISTORY</h2>" + history.map((payment: JsonRecord) => paymentRow(payment, false)).join("");
-  html +=
-    "<h2>" +
-    (hasHistory ? "CURRENT PAYMENT" : "PAYMENT") +
-    "</h2>" +
-    (hasHistory ? "" : row("Payment Method", current.method)) +
-    paymentRow({ ...current, kind: current.kind || "payment" }) +
-    "<hr>" +
-    row("Total Bill", money(s.total_bill)) +
-    row("Total Paid", money(s.total_paid)) +
-    row("Outstanding Balance", money(s.outstanding_balance)) +
-    row("Payment Status", s.payment_status) +
-    "<footer>" +
-    esc(title) +
-    "<br><small>Printed request #" +
-    esc(data.print_no) +
-    "</small></footer></article>";
-  return html;
+  const copyNo = Number(data.print_no);
+  const copyLabel = Number.isInteger(copyNo) && copyNo > 1
+    ? "SALINAN " + (copyNo - 1) + "/COPY " + (copyNo - 1)
+    : "";
+  const thankYou = templateFooter.thank_you ||
+    (s.transaction_type === "BOOKING" ? "Thank you for booking" : "Thank you for your visit");
+
+  const content: Record<string, string> = {
+    header:
+      '<header><strong>' +
+      esc(templateHeader.title || h.name || "Baturaden 25 Homestay") +
+      "</strong><span>" +
+      esc(templateHeader.address || h.address) +
+      "</span><span>" +
+      esc(templateHeader.city || h.city) +
+      "</span><span>WhatsApp: " +
+      esc(templateHeader.whatsapp || h.whatsapp) +
+      "</span>" +
+      (copyLabel ? '<b class="copy">' + esc(copyLabel) + "</b>" : "") +
+      "</header>",
+    transaction_details:
+      "<hr><h1>PAYMENT RECEIPT</h1>" +
+      row("Registration Number", s.registration_number) +
+      row("Receipt Reference", s.payment_reference) +
+      row("Served by", s.served_by?.name || s.served_by?.user_id) +
+      row("Transaction Type", s.transaction_type) +
+      (s.transaction_type === "BOOKING"
+        ? row("Scheduled Check-in", s.scheduled_check_in) +
+          row("Scheduled Check-out", s.scheduled_check_out)
+        : row("Actual Check-in", s.actual_check_in) +
+          row("Estimated Check-out", s.actual_check_out || "—")),
+    description:
+      "<hr><h2>DESCRIPTION</h2>" +
+      row("Room", String(room.number || "—") + " · " + String(room.type || "—")) +
+      row("Package", s.package) +
+      row("Room Price", money(Number(s.total_bill || 0) - Number(s.extra_guest_charge || 0))) +
+      (Number(s.extra_guest_charge || 0) > 0
+        ? row(
+            "Extra Guest",
+            String(s.extra_guest_count) + " × " + money(50000) + " = " + money(s.extra_guest_charge),
+          )
+        : ""),
+    payment_history: hasHistory
+      ? "<h2>PAYMENT HISTORY</h2>" +
+        history.map((payment: JsonRecord) => paymentRow(payment, false)).join("")
+      : "",
+    current_payment:
+      "<h2>" + (hasHistory ? "CURRENT PAYMENT" : "PAYMENT") + "</h2>" +
+      (hasHistory ? "" : row("Payment Method", current.method)) +
+      paymentRow({ ...current, kind: current.kind || "payment" }),
+    totals:
+      "<hr>" +
+      row("Total Bill", money(s.total_bill)) +
+      row("Total Paid", money(s.total_paid)) +
+      row("Outstanding Balance", money(s.outstanding_balance)) +
+      row("Payment Status", s.payment_status),
+    footer:
+      "<footer>" +
+      esc(thankYou) +
+      "<br><small>Printed request #" +
+      esc(data.print_no) +
+      "</small></footer>",
+  };
+
+  return '<article class="receipt">' + blocks.map((key) => content[key]).join("") + "</article>";
 }
 export function openReceiptPrintWindow() {
   // Open synchronously on the user click, before any asynchronous RPC.
