@@ -1,5 +1,12 @@
 # Baturaden 25 Homestay V1.0 — Status Fitur
 
+Checkpoint 12 November 2026: lihat [paket kesiapan lokal](PAKET_KESIAPAN_OPERASIONAL_LOKAL_2026-11-12.md).
+Integrasi frontend Extra Guest/gabungan, nominal check-in, detail snapshot dan
+receipt 58mm disiapkan lokal; TypeScript/build serta 15 skenario baru PASS mock.
+Tidak ada aktivasi flag baru; Extra Guest preview sudah ON pada env baseline,
+host operasional tetap dibatasi. Belum commit/integrasi/Cloud/browser/printer. PASS Housekeeping,
+Finance/Training dan receipt lama dipertahankan, tidak diuji ulang. Bukan GO-LIVE.
+
 **Tanggal pencatatan:** 2026-10-13<br>
 **Kaidah:** file atau kode yang ada tidak otomatis berarti fitur selesai. Status harus mengikuti bukti Staging, uji lokal, dan persetujuan Owner.
 

@@ -1,5 +1,14 @@
 # Baturaden 25 Homestay V1.0 — Riwayat Perubahan
 
+## 12 November 2026 — paket kesiapan lokal, belum integrasi
+
+Atas instruksi Owner, branch `fix/operational-readiness-final-20261112` dibuat dari
+main `f33ea76` yang memuat merge PR #39. Gap frontend Extra Guest/combined payload,
+nominal check-in, receipt 58mm, detail snapshot dan label sesi OPEN diperbaiki.
+TypeScript/build dan 15 skenario mock baru PASS. Dua SQL SELECT-only disiapkan,
+tidak dieksekusi. Tidak ada aturan bisnis baru, migrasi/akses Cloud, aktivasi flag baru,
+commit, push, PR, merge atau deploy. Lihat [laporan dan batas hasil](PAKET_KESIAPAN_OPERASIONAL_LOKAL_2026-11-12.md).
+
 **Tanggal pencatatan dokumen:** 2026-10-13<br>
 **Aturan:** riwayat Git adalah bukti perubahan repository, bukan otomatis bukti persetujuan Owner.
 

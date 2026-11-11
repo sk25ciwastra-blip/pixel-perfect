@@ -13,6 +13,7 @@ import { usePeran } from '@/lib/peran';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 import { durasiWib, jamWib, tanggalWib, waktuWib } from '@/lib/waktu-transaksi';
+import { ReceiptPrintButton, ReceiptHistoryButton } from '@/components/receipt-actions';
 
 type DetailTransaksiProps = {
   transactionId: string;
@@ -247,7 +248,7 @@ export function DetailTransaksi({
                 <Baris label="Tipe Kamar" ikon={DoorOpen}>{roomType?.name ?? '—'}</Baris>
                 <Baris label="Paket" ikon={Package}>{kodePaket(packageItem?.name)}</Baris>
                 <Baris label="Jenis Hari" ikon={CalendarDays}>{transaction.day_mode?.toUpperCase() ?? '—'}</Baris>
-                <Baris label="Jumlah Tamu" ikon={Users}>Belum tersedia</Baris>
+                <Baris label="Jumlah Tamu" ikon={Users}>{transaction.guest_count ?? 'Belum tersedia'}</Baris>
               </Seksi>
 
             </div>
@@ -285,9 +286,15 @@ export function DetailTransaksi({
                     <tr className="border-t border-gold/15">
                       <td className="py-1.5 pr-2">Paket {kodePaket(packageItem?.name)}</td>
                       <td className="py-1.5 text-center tabular-nums">1</td>
-                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(total)}</td>
-                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(total)}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0))}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0))}</td>
                     </tr>
+                    {Number(transaction.extra_guest_charge) > 0 && <tr className="border-t border-gold/15">
+                      <td className="py-1.5 pr-2">Extra Guest</td>
+                      <td className="py-1.5 text-center tabular-nums">{transaction.extra_guest_count}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(transaction.extra_guest_unit_price)}</td>
+                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(transaction.extra_guest_charge)}</td>
+                    </tr>}
                   </tbody>
                 </table>
                 <div className="flex items-center justify-between gap-3 border-t border-gold/30 bg-gold/15 px-3 py-2">
@@ -346,7 +353,7 @@ export function DetailTransaksi({
                               <td className="py-1.5 pr-1 whitespace-nowrap">{payment.method}</td>
                               <td className="py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
                               <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
-                              <td className="py-1.5 text-muted-foreground">—</td>
+                              <td className="py-1.5 text-muted-foreground"><ReceiptPrintButton paymentId={payment.id} /></td>
                             </tr>
                           );
                         })}
@@ -360,12 +367,13 @@ export function DetailTransaksi({
               <Seksi judul="Sesi Kas & Perubahan" ikon={Info}>
                 <Baris label="Sesi Kas" ikon={ReceiptText}>
                   {sesiKas
-                    ? `${sesiKas.status === 'open' ? 'Terbuka' : 'Ditutup'} · ${tanggalWib(`${sesiKas.operational_date}T00:00:00+07:00`)}`
+                    ? `${sesiKas.status === 'OPEN' ? 'Terbuka' : 'Ditutup'} · ${tanggalWib(`${sesiKas.operational_date}T00:00:00+07:00`)}`
                     : '—'}
                 </Baris>
                 <Baris label="Terakhir diubah" ikon={Clock3}>{waktuWib(transaction.updated_at)}</Baris>
               </Seksi>
 
+              <ReceiptHistoryButton transactionNumber={transaction.transaction_number} />
               <button
                 type="button"
                 onClick={onClose}

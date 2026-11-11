@@ -1,5 +1,11 @@
 # Baturaden 25 Homestay V1.0 — Buku Induk Proyek
 
+Checkpoint terbaru 12 November 2026: [paket kesiapan operasional lokal](PAKET_KESIAPAN_OPERASIONAL_LOKAL_2026-11-12.md).
+Baseline main `f33ea76` memuat PR #39. Paket frontend baru belum committed atau
+diintegrasikan; TypeScript/build dan 15 skenario integrasi mock baru PASS.
+Cloud, aktivasi flag, browser, printer dan persetujuan operasional tetap terpisah.
+Status historis di bawah tidak menggantikan bukti terbaru dalam checkpoint tersebut.
+
 **Tanggal pencatatan:** 2026-10-13<br>
 **Status dokumen:** AKTIF — dokumen induk permanen<br>
 **Repository:** `pixel-perfect-read`

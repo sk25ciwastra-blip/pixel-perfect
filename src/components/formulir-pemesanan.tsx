@@ -7,6 +7,7 @@ import { useSesiKasKonteks } from '@/lib/sesi-kas';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { biayaTamuTambahan } from '@/lib/tamu-tambahan';
 import { featureFlags, extraGuestAktif } from '@/lib/feature-flags';
+import { ReceiptTransactionButton } from '@/components/receipt-actions';
 import {
   createReservationCombined,
   createTrainingReservationCombined,
@@ -133,6 +134,15 @@ export function FormulirPemesanan({
 
   const setting = financeSettings.rows[0];
   const minimumDp = minimumDpAmount(total, setting);
+  const extraGuestOn = typeof window !== 'undefined' && extraGuestAktif(window.location.hostname);
+
+  useEffect(() => {
+    if (mode === 'check_in' && methods.length === 1 && selectedPrice > 0) {
+      const selectedMethod = methods[0]!;
+      setNominal((current) => current[selectedMethod] === String(total)
+        ? current : { ...current, [selectedMethod]: String(total) });
+    }
+  }, [mode, methods, selectedPrice, total]);
 
   const availableRooms = rooms.rows.filter(
     room => room.active && (mode === 'booking' || room.status === 'ready'),
@@ -140,11 +150,11 @@ export function FormulirPemesanan({
 
   const dataLoading =
     rooms.loading || roomTypes.loading || packages.loading || packagePrices.loading ||
-    guests.loading || transactions.loading || sessionLoading;
+    guests.loading || transactions.loading || financeSettings.loading || sessionLoading;
 
   const dataError =
     rooms.error || roomTypes.error || packages.error || packagePrices.error ||
-    guests.error || transactions.error || sessionError;
+    guests.error || transactions.error || financeSettings.error || sessionError;
 
   const fieldClass =
     'mt-1 h-11 w-full rounded-xl border border-input bg-background px-3 text-foreground outline-none focus:border-primary';
@@ -177,9 +187,6 @@ export function FormulirPemesanan({
       }
       const nextDayMode = data as DayMode;
       setDayMode(nextDayMode);
-      if (mode === 'check_in' && selectedPackage) {
-        setAmount(String(priceForPackage(selectedPackage.id, nextDayMode)));
-      }
     }
     void resolveDayMode();
     return () => { cancelled = true; };
@@ -214,8 +221,7 @@ export function FormulirPemesanan({
       setError('Pembayaran gabungan belum diaktifkan. Pilih satu metode pembayaran sampai backend siap.');
       return;
     }
-    const extraGuestOn = typeof window !== 'undefined' && extraGuestAktif(window.location.hostname);
-    if (extra.tambahan > 0 && (!extraGuestOn || methods.length > 1)) {
+    if (extra.tambahan > 0 && !extraGuestOn) {
       setError('Biaya tamu tambahan belum dapat dicatat sistem. Pembaruan database menunggu persetujuan Owner; sementara isi maksimal 2 tamu.');
       return;
     }
@@ -278,6 +284,7 @@ export function FormulirPemesanan({
       _day_mode: dayMode, _request_idempotency_key: requestKey, _request_fingerprint: requestFingerprint,
       _session_id: sessionId || null,
       ...(scheduledCheckIn ? { _scheduled_check_in: scheduledCheckIn } : {}),
+      ...(extraGuestOn ? { _guest_count: jumlahTamu } : {}),
     };
     const combined = shouldUseCombinedPayment(methods.length, featureFlags.combinedPayment);
     const { data, error: failure } = combined
@@ -301,7 +308,7 @@ export function FormulirPemesanan({
       `Tamu: ${matchedGuest?.full_name ?? name.trim()}`,
       `Kamar: ${selectedRoom?.room_number ?? '-'}`,
       `Paket: ${selectedPackage?.name ?? '-'}`,
-      `Total: ${rupiah(selectedPrice)} (${method})`,
+      `Total: ${rupiah(total)} (${methods.join(' + ')})`,
       'Terima kasih.',
     ].join('\n');
     openWhatsApp(phone, pesan);
@@ -332,12 +339,14 @@ export function FormulirPemesanan({
             {mode === 'check_in' ? (
               <>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Cetak struk 58mm belum tersedia di versi ini. "Kirim Struk" membuka WhatsApp berisi ringkasan; pesan baru terkirim setelah Anda menekan kirim di WhatsApp.
+                  {featureFlags.receipt58mm ? 'Cetak Struk membuka dialog cetak 58mm; hasil fisik perlu diperiksa pada printer. ' : 'Cetak struk 58mm belum diaktifkan. '}"Kirim Struk" membuka WhatsApp berisi ringkasan; pesan baru terkirim setelah Anda menekan kirim di WhatsApp.
                 </p>
                 <div className="mt-5 grid grid-cols-3 gap-2">
-                  <Button type="button" variant="outline" disabled title="Fitur struk 58mm belum tersedia">
-                    <Printer className="size-4" />Cetak Struk
-                  </Button>
+                  {featureFlags.receipt58mm ? <ReceiptTransactionButton transactionNumber={savedNumber} /> : (
+                    <Button type="button" variant="outline" disabled title="Fitur struk 58mm belum diaktifkan">
+                      <Printer className="size-4" />Cetak Struk
+                    </Button>
+                  )}
                   <Button type="button" variant="outline" onClick={kirimStruk}>
                     <Send className="size-4" />Kirim Struk
                   </Button>
@@ -408,7 +417,7 @@ export function FormulirPemesanan({
                   </select>
                 </Bidang>
                 <Bidang label="Jumlah Tamu">
-                  <div className={readClass}>2</div>
+                  <div className={readClass}>{jumlahTamu}</div>
                 </Bidang>
                 {mode === 'booking' && (
                   <div className="grid grid-cols-2 gap-3">
@@ -480,7 +489,7 @@ export function FormulirPemesanan({
               {mode === 'booking' && (
                 <Baris k="Sisa tagihan" v={rupiah(Math.max(0, total - methods.reduce((s, m) => s + Math.max(0, Number(nominal[m]) || 0), 0)))} />
               )}
-              {extra.tambahan > 0 && (
+              {extra.tambahan > 0 && !extraGuestOn && (
                 <p className="mt-2 text-xs text-perlu-foreground">Biaya Extra Guest belum dapat disimpan sistem (menunggu persetujuan pembaruan database oleh Owner).</p>
               )}
               {mode === 'booking' && minimumDp !== null && (
