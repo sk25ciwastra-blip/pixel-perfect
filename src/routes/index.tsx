@@ -1100,7 +1100,7 @@ function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; j
       className={`flex h-auto min-h-12 min-w-0 whitespace-pre-line flex-row items-center justify-start gap-1 rounded-lg border px-2 py-2.5 text-left text-[0.7rem] font-bold whitespace-nowrap leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
       <Ikon className={`size-5 shrink-0 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
-      <span className="min-w-0 whitespace-pre-line">{judul}</span>
+      <span className="min-w-0 whitespace-nowrap">{judul}</span>
     </Button>
   );
 }

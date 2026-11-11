@@ -21,7 +21,7 @@ export function PengumumanSidebar() {
   }, [siap, masuk, buka]);
   return (
     <div className="relative bg-gradient-to-t from-background/95 via-background/80 to-background/40 px-5 pb-5 pt-4 [text-shadow:0_2px_10px_oklch(0_0_0/0.9)]">
-      <p className="flex items-center gap-2 font-semibold text-gold"><Megaphone className="size-5" strokeWidth={1.7} />Pengumuman Owner</p>
+      <p className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-gold"><Megaphone className="size-4" strokeWidth={1.7} />Pengumuman Owner</p>
       <p className="mt-2 line-clamp-2 text-[0.8rem] leading-snug text-foreground/90">{terbaru?.body ?? "Belum ada pengumuman operasional"}</p>
       {terbaru && <p className="mt-2 text-[0.7rem] text-muted-foreground">{tanggal(terbaru.created_at)}</p>}
       <button type="button" onClick={() => setBuka(true)} className="ml-auto mt-1 flex items-center gap-0.5 text-xs font-semibold text-gold hover:text-gold-light">Lihat <ChevronRight className="size-3.5" /></button>
