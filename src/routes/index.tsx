@@ -723,8 +723,8 @@ function Ringkasan() {
                   <p className="mt-1 text-xs text-muted-foreground">Kamar dan Booking akan muncul di sini secara realtime.</p>
                 </div>
               ) : (
-                <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg tabel-krem shadow-lg">
-                  <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-[11px] [&_th]:text-center [&_td]:text-center xl:min-w-0">
+                <div className="mx-4 mb-4 max-h-[400px] min-w-0 overflow-auto rounded-lg tabel-krem shadow-lg">
+                  <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-xs font-semibold [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
                       <col className="w-[44px]" />
                       <col className="w-[48px]" />
@@ -736,7 +736,7 @@ function Ringkasan() {
                       <col className="w-[64px]" />
                       <col className="w-[68px]" />
                     </colgroup>
-                    <thead className="sticky top-0 z-10 bg-navy-deep text-[11px] [&_th]:normal-case [&_th]:tracking-normal [&_th]:text-gold-light">
+                    <thead className="sticky top-0 z-10 bg-navy-deep text-[11px] [&_th]:normal-case [&_th]:tracking-normal [&_th]:text-foreground [&_th]:font-bold">
                       <tr className="border-b border-gold/20">
                         <th className="px-1 py-2 font-semibold">Kamar</th>
                         <th className="px-1 py-2 font-semibold">Tipe</th>
@@ -765,21 +765,21 @@ function Ringkasan() {
                         return (
                           <tr key={room.id} className="transition hover:bg-gold/[0.04]">
                             <td className="px-1 py-2">
-                              <span className="font-semibold tabular-nums">{room.room_number}</span>
+                              <span className="inline-flex min-w-9 justify-center rounded-full bg-[var(--pil)] px-2 py-0.5 font-bold tabular-nums text-[var(--pil-teks)]">{room.room_number}</span>
                             </td>
-                            <td className="truncate px-1 py-2" title={roomType?.name}>{tipeKamarRingkas(roomType?.name)}</td>
+                            <td className="truncate px-1 py-2.5 font-bold" title={roomType?.name}>{tipeKamarRingkas(roomType?.name)}</td>
                             <td className="px-1 py-2">
                               {guest ? (
                                 <>
-                                  <p className="truncate text-xs font-medium" title={guest.full_name}>{guest.full_name}</p>
+                                  <p className="truncate text-xs font-bold uppercase" title={guest.full_name}>{guest.full_name}</p>
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
-                              {item && <Button variant="link" className="mt-0.5 h-auto max-w-full whitespace-normal break-all p-0 font-mono text-[10px] leading-snug text-gold-light" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>}
+                              {item && <Button variant="link" className="mt-0.5 h-auto max-w-full whitespace-normal break-all p-0 font-mono text-[10px] font-bold leading-snug text-foreground/80" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>}
                             </td>
                             <td className="px-1 py-2">
                               {item ? (
                                 <>
-                                  <p className="font-semibold">{kodePaket(packageItem?.name)}</p>
+                                  <p className="font-bold">{kodePaket(packageItem?.name)}</p>
                                   {bookingBerikutnya && <p className="mt-1 text-[10px] text-gold-light">Booking berikutnya {jamWib(bookingBerikutnya.scheduled_check_in ?? bookingBerikutnya.created_at)}</p>}
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
@@ -787,13 +787,13 @@ function Ringkasan() {
                             <td className="px-1 py-2">
                               <span className={`inline-flex max-w-full items-center justify-center gap-1.5 leading-tight ${kelasStatus}`}>
                                 <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
-                                <span className={labelStatus === "Overtime" ? "text-xs font-medium" : undefined}>{labelStatus}</span>
+                                <span className="text-xs font-bold">{labelStatus}</span>
                               </span>
                             </td>
                             <td className="px-1 py-2 whitespace-nowrap tabular-nums">{terisi ? item?.started_at ? jamWib(item.started_at) : "—" : item?.scheduled_check_in ? jamWib(item.scheduled_check_in) : "—"}</td>
                             <td className="px-1 py-2">
                               {sisa ? (
-                                <span className={`whitespace-nowrap font-mono text-xs font-semibold tabular-nums ${sisa.status === "expired" ? "text-bahaya-foreground" : "text-gold-light"}`}>{formatSisaTabel(batasTimer ?? null, sekarang)}</span>
+                                <span className={`whitespace-nowrap font-serif text-base font-bold [font-variant-numeric:lining-nums_tabular-nums] ${sisa.status === "expired" ? "text-bahaya-foreground" : "text-gold-light"}`}>{formatSisaTabel(batasTimer ?? null, sekarang)}</span>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
                             <td className="px-1 py-2 whitespace-nowrap tabular-nums">{terisi ? item?.ends_at ? jamWib(item.ends_at) : "—" : item?.scheduled_check_out ? jamWib(item.scheduled_check_out) : "—"}</td>
@@ -867,47 +867,30 @@ function Ringkasan() {
                   </div>
                 </div>
               ) : (
-                <ol className="mt-1 max-h-[240px] overflow-y-auto pr-3.5 divide-y divide-gold/10">
+                <ol className="mt-1 max-h-[330px] overflow-y-auto pr-2 divide-y divide-gold/15">
                   {transaksiTerbaru.map((t) => {
                     const metodeKode = t.metode.toLowerCase();
                     const warnaMetode = metodeKode === "qris" ? "var(--v0-info)" : metodeKode === "transfer" ? "var(--v0-ungu)" : "var(--gold)";
                     const labelMetode = metodeKode === "qris" ? "QRIS" : metodeKode === "transfer" ? "TRANSFER" : "CASH";
                     return (
-                      <li key={t.id} className="grid gap-y-1 py-2.5">
-                        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
-                          <span aria-hidden="true" className={`inline-flex size-6 shrink-0 items-center justify-center rounded-md border ${t.jenis === "masuk" ? "border-siap/30 bg-siap/10 text-siap-foreground" : "border-bahaya/30 bg-bahaya/10 text-bahaya-foreground"}`}>
-                            {t.jenis === "masuk" ? <ArrowDownLeft className="size-3.5" strokeWidth={2} /> : <ArrowUpRight className="size-3.5" strokeWidth={2} />}
-                          </span>
-                          <p className="truncate text-xs font-semibold leading-snug">
-                            {t.jenis === "masuk" ? (
-                              <>{t.judul}{t.wa && <span className="font-normal tabular-nums text-muted-foreground"> • {t.wa}</span>}</>
-                            ) : (
-                              <>{t.judul}{t.catatan && <span className="font-normal text-muted-foreground"> • {t.catatan}</span>}</>
-                            )}
-                          </p>
-                          <p className={`shrink-0 text-sm font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>
-                            {t.jenis === "masuk" ? "+ " : "− "}{rupiah(t.nominal)}
-                          </p>
+                      <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2.5 py-2.5">
+                        <span aria-hidden="true" className={`inline-flex size-9 shrink-0 items-center justify-center rounded-lg border ${t.jenis === "masuk" ? "border-siap/40 bg-siap/10 text-siap-foreground" : "border-bahaya/40 bg-bahaya/10 text-bahaya-foreground"}`}>
+                          {t.jenis === "masuk" ? <ArrowDownLeft className="size-4" strokeWidth={2} /> : <ArrowUpRight className="size-4" strokeWidth={2} />}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium leading-snug">{t.judul}{t.jenis === "masuk" && t.wa && <span className="tabular-nums"> - {t.wa}</span>}</p>
+                          {t.jenis === "keluar" && (t.catatan || t.operator) && <p className="truncate text-[10px] leading-snug text-muted-foreground">{[t.catatan, t.operator && `Oleh ${t.operator}`].filter(Boolean).join(" - ")}</p>}
+                          {t.nomor !== "—" && (t.trxId || t.expenseId) ? (
+                            <Button variant="link" className="h-auto p-0 font-mono text-[11px] font-bold leading-snug text-gold hover:text-gold-light" onClick={() => (t.trxId ? setDetailTransactionId(t.trxId) : t.expenseId ? setDetailExpenseId(t.expenseId) : undefined)}>{t.nomor}</Button>
+                          ) : <span className="font-mono text-[11px] text-gold">{t.nomor}</span>}
                         </div>
-                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 pl-8">
-                          <p className="min-w-0 truncate text-[11px] leading-snug text-muted-foreground">
-                            {t.nomor !== "—" && (t.trxId || t.expenseId) ? (
-                              <Button variant="link" className="h-auto p-0 align-baseline font-mono text-[11px] leading-snug text-gold-light hover:text-gold" onClick={() => (t.trxId ? setDetailTransactionId(t.trxId) : t.expenseId ? setDetailExpenseId(t.expenseId) : undefined)}>{t.nomor}</Button>
-                            ) : (
-                              <span className="font-mono">{t.nomor}</span>
-                            )}
-                            {t.jenis === "masuk" && t.sub && <span> • {t.sub}</span>}
-                            {t.jenis === "keluar" && t.operator && <span> • {t.operator}</span>}
-                          </p>
-                          <div className="flex shrink-0 items-center gap-1.5">
-                            <span
-                              className="inline-flex items-center rounded-md border px-1.5 text-[9px] font-bold tracking-[0.08em]"
-                              style={{ color: warnaMetode, borderColor: `color-mix(in oklab, ${warnaMetode} 32%, transparent)`, backgroundColor: `color-mix(in oklab, ${warnaMetode} 10%, transparent)` }}
-                            >
-                              {labelMetode}
-                            </span>
-                            <span className="text-[11px] tabular-nums text-muted-foreground">{jamWib(t.waktu)}</span>
-                          </div>
+                        <div className="flex flex-col items-center gap-1 border-l border-gold/20 pl-2.5">
+                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Booking") : "Pengeluaran"}</span>
+                          <span className="text-[11px] tabular-nums text-muted-foreground">{jamWib(t.waktu)} WIB</span>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <p className={`whitespace-nowrap text-base font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>{t.jenis === "masuk" ? "+ " : "– "}{rupiah(t.nominal)}</p>
+                          <span className="inline-flex items-center rounded-md border px-2 text-[9px] font-bold tracking-[0.08em]" style={{ color: warnaMetode, borderColor: `color-mix(in oklab, ${warnaMetode} 45%, transparent)`, backgroundColor: `color-mix(in oklab, ${warnaMetode} 12%, transparent)` }}>{labelMetode}</span>
                         </div>
                       </li>
                     );
@@ -1115,7 +1098,7 @@ function IkonAksi({ label, disabled, kelas = "text-gold-light", onClick, childre
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`grid size-7 shrink-0 place-items-center rounded-full border border-gold/25 bg-secondary/80 [&_svg]:size-3.5 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${kelas}`}
+      className={`grid size-7 shrink-0 place-items-center rounded-lg border border-current/40 bg-[var(--pil-tombol,var(--secondary))] [&_svg]:size-4 transition hover:border-current focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${kelas}`}
     >
       {children}
     </Button>
