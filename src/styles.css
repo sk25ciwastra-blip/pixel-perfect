@@ -348,3 +348,17 @@
 .motif-netral, .motif-braga, .motif-priangan {
   background-image: repeating-linear-gradient(115deg, transparent 0 7px, var(--header-thread) 8px, transparent 9px 18px);
 }
+
+/* Tabel krem Status Kamar Dashboard: menimpa token lokal agar teks gelap terbaca di latar terang. */
+@utility tabel-krem {
+  background: oklch(0.965 0.012 85);
+  color: oklch(0.2 0.01 80);
+  --foreground: oklch(0.2 0.01 80);
+  --muted-foreground: oklch(0.42 0.012 80);
+  --navy-deep: oklch(0.925 0.02 85);
+  --gold-light: oklch(0.32 0.03 75);
+  --gold: oklch(0.55 0.11 75);
+  --bahaya-foreground: oklch(0.55 0.21 27);
+  --terisi-foreground: oklch(0.45 0.15 245);
+  --secondary: oklch(0.9 0.015 85);
+}

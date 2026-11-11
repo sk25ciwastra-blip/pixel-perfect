@@ -26,6 +26,7 @@ import {
   Search,
   type LucideIcon,
 } from "lucide-react";
+import { BellRing } from "lucide-react";
 import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import panorama from "@/assets/panorama-kota-malam.png.asset.json";
@@ -39,7 +40,6 @@ import { meta } from "@/lib/meta";
 import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
-import { PapanInformasi } from "@/components/papan-informasi";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 
 export const Route = createFileRoute("/")({
@@ -659,21 +659,21 @@ function Ringkasan() {
           {/* Sapaan */}
           <header className="mt-6 max-w-3xl sm:mt-10">
             <p className="mt-2 text-base text-foreground/90 sm:text-lg">{salamWaktu(jamSekarang)}, <span className="font-semibold text-gold-light">{posisi || "Pengguna"}</span></p>
-            <h1 className="mt-1 font-serif text-[2.1rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
-              <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">{nama || "Pengguna"}</span>
+            <h1 className="mt-1 font-serif text-[2.1rem] font-bold leading-[1.05] tracking-tight sm:text-5xl 2xl:text-[3.6rem]">
+              <span className="bg-gradient-to-b from-gold-light to-gold bg-clip-text text-transparent">Dashboard Operasional</span>
             </h1>
-            <p className="mt-3 text-xs font-medium leading-relaxed text-foreground sm:text-sm"><span className="rounded bg-background/70 px-2 py-1 box-decoration-clone backdrop-blur-sm">Dibalik Homestay yang Ramai, ada Tim yang memiliki Visi & Misi yang sama.</span></p>
+            <p className="mt-3 text-sm font-medium leading-relaxed text-foreground sm:text-base"><span className="rounded bg-background/50 px-1 box-decoration-clone">Pantau kondisi kamar, kedatangan tamu, dan aktivitas hari ini dalam satu tampilan.</span></p>
           </header>
 
           {/* KPI + Aksi Cepat */}
           <div className="mt-7 grid grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(300px,1.25fr)_repeat(3,minmax(0,1fr))]">
             <section className="panel-mewah min-w-0 p-4" aria-labelledby="judul-aksi-cepat">
-              <h2 id="judul-aksi-cepat" className="font-serif text-xl font-semibold">Aksi Cepat</h2>
+              <h2 id="judul-aksi-cepat" className="flex items-center gap-3 text-sm font-semibold tracking-[0.2em] text-gold"><BellRing className="size-5" strokeWidth={1.6} aria-hidden="true" />AKSI CEPAT<span className="h-px flex-1 bg-gradient-to-r from-gold/50 to-transparent" aria-hidden="true" /></h2>
               {bolehAksiTransaksi ? (
                 <div className="mt-4 grid grid-cols-3 gap-1.5">
-                  <TombolAksi ikon={LogIn} judul={"Check-in\nLangsung"} utama onClick={() => setModal("check_in")} />
-                  <TombolAksi ikon={CalendarPlus} judul="Tambah Booking" onClick={() => setModal("booking")} />
-                  <TombolAksi ikon={ReceiptText} judul={"Kas\nKeluar"} onClick={() => setModal("pengeluaran")} />
+                  <TombolAksi ikon={LogIn} judul="CHECK-IN" utama onClick={() => setModal("check_in")} />
+                  <TombolAksi ikon={CalendarPlus} judul="RESERVASI" onClick={() => setModal("booking")} />
+                  <TombolAksi ikon={ReceiptText} judul="KAS KELUAR" onClick={() => setModal("pengeluaran")} />
                 </div>
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -723,7 +723,7 @@ function Ringkasan() {
                   <p className="mt-1 text-xs text-muted-foreground">Kamar dan Booking akan muncul di sini secara realtime.</p>
                 </div>
               ) : (
-                <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg border border-gold/15 bg-navy-deep/50">
+                <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg tabel-krem shadow-lg">
                   <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-[11px] [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
                       <col className="w-[44px]" />
@@ -917,7 +917,6 @@ function Ringkasan() {
             </section>
           </div>
 
-          <PapanInformasi />
 
           {/* Tiga modul analitik berjajar */}
           <div className={`mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "xl:grid-cols-3" : ""}`}>
@@ -1098,10 +1097,10 @@ function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; j
       variant="ghost"
       type="button"
       onClick={onClick}
-      className={`flex h-auto min-h-12 min-w-0 whitespace-pre-line flex-row items-center justify-start gap-1 rounded-lg border px-1.5 py-2.5 text-left text-[0.65rem] font-semibold leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
+      className={`flex h-auto min-h-12 min-w-0 whitespace-pre-line flex-row items-center justify-start gap-1 rounded-lg border px-2 py-2.5 text-left text-[0.7rem] font-bold whitespace-nowrap leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
-      <Ikon className={`size-3.5 shrink-0 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
-      <span className="min-w-0 whitespace-pre-line">{judul}</span>
+      <Ikon className={`size-5 shrink-0 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
+      <span className="min-w-0 whitespace-nowrap">{judul}</span>
     </Button>
   );
 }
