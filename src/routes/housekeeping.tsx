@@ -113,6 +113,7 @@ function Halaman() {
         operationalRooms
           .filter(
             (room) =>
+              room.status === 'ready' &&
               latestChecklist.get(room.id)?.result === 'needs_action',
           )
           .map((room) => room.id),
@@ -190,6 +191,13 @@ function Halaman() {
 
       if (advanceError) {
         setMessage(advanceError.message);
+        return false;
+      }
+
+      try {
+        await refreshAll();
+      } catch {
+        setMessage('Pembersihan sudah dimulai, tetapi tampilan gagal diperbarui. Muat ulang halaman untuk melihat status terbaru.');
         return false;
       }
 
