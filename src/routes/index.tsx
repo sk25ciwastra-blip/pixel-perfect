@@ -723,7 +723,7 @@ function Ringkasan() {
                   <p className="mt-1 text-xs text-muted-foreground">Kamar dan Booking akan muncul di sini secara realtime.</p>
                 </div>
               ) : (
-                <div className="mx-4 mb-4 max-h-[400px] min-w-0 flex-1 overflow-auto rounded-lg tabel-krem shadow-lg">
+                <div className="mx-4 mb-4 max-h-[400px] min-w-0 overflow-auto rounded-lg tabel-krem shadow-lg">
                   <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-xs font-semibold [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
                       <col className="w-[44px]" />
@@ -793,7 +793,7 @@ function Ringkasan() {
                             <td className="px-1 py-2 whitespace-nowrap tabular-nums">{terisi ? item?.started_at ? jamWib(item.started_at) : "—" : item?.scheduled_check_in ? jamWib(item.scheduled_check_in) : "—"}</td>
                             <td className="px-1 py-2">
                               {sisa ? (
-                                <span className={`whitespace-nowrap font-serif text-base font-bold tabular-nums ${sisa.status === "expired" ? "text-bahaya-foreground" : "text-gold-light"}`}>{formatSisaTabel(batasTimer ?? null, sekarang)}</span>
+                                <span className={`whitespace-nowrap font-serif text-base font-bold [font-variant-numeric:lining-nums_tabular-nums] ${sisa.status === "expired" ? "text-bahaya-foreground" : "text-gold-light"}`}>{formatSisaTabel(batasTimer ?? null, sekarang)}</span>
                               ) : <span className="text-muted-foreground">—</span>}
                             </td>
                             <td className="px-1 py-2 whitespace-nowrap tabular-nums">{terisi ? item?.ends_at ? jamWib(item.ends_at) : "—" : item?.scheduled_check_out ? jamWib(item.scheduled_check_out) : "—"}</td>
