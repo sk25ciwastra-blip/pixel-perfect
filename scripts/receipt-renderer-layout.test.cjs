@@ -6,6 +6,9 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const source = fs.readFileSync('src/lib/receipt-print.ts', 'utf8');
 const context = { exports: {}, require(name) {
+  if (name === '../assets/receipt-thermal-logo-monochrome.png?inline') return {
+    default: 'data:image/png;base64,' + fs.readFileSync('src/assets/receipt-thermal-logo-monochrome.png').toString('base64'),
+  };
   if (name === '@/lib/data-live') return { rpc() { throw Error('Unexpected RPC'); } };
   if (name === '@/lib/feature-flags') return { featureFlags: { receipt58mm: false } };
   if (name === '@/integrations/supabase/client') return { supabase: { from() { throw Error('Unexpected Cloud read'); } } };
@@ -33,6 +36,10 @@ function fixture(type = 'WALK_IN', kind = 'FINAL_PAYMENT') {
       current_payment: { kind, amount: deposit ? 52000 : 130000, method: 'QRIS', created_at: 'fixture-current-time' }, payment_history: [] } };
 }
 function columns(html) {
+  assert.equal((html.match(/class="thermal-logo"/g) || []).length, 1);
+  assert.match(html, /src="data:image\/png;base64,/);
+  assert.match(html, /alt="Baturaden 25 Homestay — DAILY &amp; WEEKLY"/);
+  assert.match(html, /width="1239" height="496" loading="eager" decoding="sync"/);
   assert.match(html, /<table class="description">/);
   assert.match(html, /<th scope="col">DESCRIPTION<\/th><th scope="col">PACKAGE<\/th><th scope="col">AMOUNT<\/th>/);
   assert.match(html, /<td>Room 03<small>Fixture room<\/small><\/td><td>Paket 2 Jam<\/td>/);
@@ -84,7 +91,8 @@ test('escape untrusted fields, retain copy numbering, avoid fabricated logo or u
   data.receipt_snapshot.payment_status = '<unknown>';
   data.template_snapshot.footer.thank_you = '<b>untrusted</b>';
   const html = receiptHtml(data);
-  assert.doesNotMatch(html, /<script|<img|<svg|<b>untrusted/);
+  assert.equal((html.match(/<img /g) || []).length, 1); // Only the trusted local logo.
+  assert.doesNotMatch(html.replace(/<img class="thermal-logo"[^>]*>/g, ''), /<script|<img|<svg|<b>untrusted/);
   assert.match(html, /&lt;script&gt;/); assert.match(html, /&quot;&lt;&amp;&#39;/);
   assert.match(html, /SALINAN 2\/COPY 2/); assert.match(html, /Printed request #3/);
   assert.match(html, /<strong>&lt;unknown&gt;<\/strong>/);
@@ -110,4 +118,22 @@ test('existing template validation and optional history block remain intact', ()
   data.template_snapshot.blocks = data.template_snapshot.blocks.filter(block => block.key !== 'payment_history');
   assert.doesNotThrow(() => receiptHtml(data));
   data.template_snapshot.blocks.pop(); assert.throws(() => receiptHtml(data), /incomplete or invalid/);
+});
+
+test('thermal logo is bounded inside printable header without new page rules or external image requests', () => {
+  let output = '';
+  const popup = { closed: false, document: { write(html) { output += html; }, close() {} }, focus() {}, print() {} };
+  openReceiptPrintPreview([fixture()], popup);
+  assert.match(output, /\.thermal-logo\{display:block;width:50mm;max-width:100%;height:auto;max-height:21mm;object-fit:contain/);
+  assert.match(output, /margin:0 auto 1mm;break-inside:avoid/);
+  assert.match(output, /padding:3mm 2.5mm/); // 53mm inner width > 50mm logo.
+  assert.ok(50 * 496 / 1239 < 21);
+  assert.equal((output.match(/<img /g) || []).length, 1);
+  assert.doesNotMatch(output, /<img[^>]+src="https?:/);
+  assert.match(output, /\.receipt:last-child\{page-break-after:auto\}/);
+  const bytes = fs.readFileSync('src/assets/receipt-thermal-logo-monochrome.png');
+  assert.equal(bytes.readUInt32BE(16), 1239); assert.equal(bytes.readUInt32BE(20), 496);
+  assert.equal(bytes[24], 1); assert.equal(bytes[25], 0); // True 1-bit grayscale PNG.
+  // Runtime usage must stay confined to the thermal renderer.
+  assert.doesNotMatch(fs.readFileSync('src/lib/payment-confirmation-pdf.ts', 'utf8'), /receipt-thermal-logo/);
 });
