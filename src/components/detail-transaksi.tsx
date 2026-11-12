@@ -10,6 +10,8 @@ import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { usePeran } from '@/lib/peran';
+import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
+import { AksiPdfStruk } from '@/components/konfirmasi-pembayaran';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 import { durasiWib, jamWib, tanggalWib, waktuWib } from '@/lib/waktu-transaksi';
@@ -123,6 +125,7 @@ export function DetailTransaksi({
   const cashSessions = useTable('finance_cash_sessions', !restricted);
   const housekeepingHistory = useTable('housekeeping_history', restricted);
   const { posisiKode } = usePeran();
+  const konfirmasi = usePaymentConfirmation();
 
   if (!transaction) {
     return null;
@@ -374,6 +377,7 @@ export function DetailTransaksi({
               </Seksi>
 
               <ReceiptHistoryButton transactionNumber={transaction.transaction_number} />
+              <AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} />
               <button
                 type="button"
                 onClick={onClose}
