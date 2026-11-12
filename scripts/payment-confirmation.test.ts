@@ -208,7 +208,7 @@ test('success/close/PDF have no check-in or receipt side effects, gate OFF, manu
   const deps: ConfirmationDependencies = { changed: state => states.push(state), thermalEnabled: () => false,
     refreshCheckIn: async (id, number) => ({ id, transaction_number: number, status: 'check_in', started_at: 'actual', ends_at: 'end', scheduled_check_out: 'schedule' }),
     load: async () => data, download: async () => () => { saves++; }, print: async () => { prints++; },
-    whatsapp: phone => { expect(phone).toBe('6281234567890'); chats++; } };
+    reserveWhatsApp: () => ({ close: () => {}, navigate: phone => { expect(phone).toBe('6281234567890'); chats++; } }) };
   const actions = createPaymentConfirmationActions(deps);
   await actions.captureCheckInSuccess({ transactionId: 'tx', transactionNumber: data.transactionNumber });
   expect(states.map(s => s.status)).toEqual(['loading', 'ready']);
