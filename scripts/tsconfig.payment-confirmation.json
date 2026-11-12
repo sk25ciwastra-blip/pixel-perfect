@@ -1,5 +1,5 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": { "types": ["vite/client", "node"] },
-  "include": ["../src/lib/payment-confirmation*.ts", "../src/lib/use-payment-confirmation.ts"]
+  "include": ["../src/lib/payment-confirmation*.ts", "../src/lib/use-payment-confirmation.ts", "../src/components/konfirmasi-pembayaran.tsx"]
 }

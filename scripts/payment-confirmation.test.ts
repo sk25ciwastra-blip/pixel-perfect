@@ -1,11 +1,13 @@
 import { test, expect } from 'bun:test';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { PDFDocument, PDFArray, PDFName, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import { createClient } from '@supabase/supabase-js';
 import { buildPaymentConfirmation, confirmationDate, type ConfirmationInput } from '../src/lib/payment-confirmation';
 import { loadPaymentConfirmation, loadCheckInSuccess } from '../src/lib/payment-confirmation-data';
 import { generatePaymentConfirmationPdf, downloadConfirmationBytes } from '../src/lib/payment-confirmation-pdf';
 import { createPaymentConfirmationActions, type ConfirmationDependencies, type ConfirmationState } from '../src/lib/payment-confirmation-actions';
+import { canUseConfirmationPdf } from '../src/lib/payment-confirmation-access';
 
 // Issue #45 example is fixture only; never reads or writes DEMO/Cloud data.
 function fixture(): ConfirmationInput {
@@ -122,15 +124,35 @@ function templateFixture(kind = 'BOOKING') {
       address: fixture().business.address, city: fixture().business.city, whatsapp: fixture().business.whatsapp } };
 }
 function transport(options: { role?: string; position?: string; loggedIn?: boolean; fail?: string; count?: number; stale?: boolean;
-  templates?: ReturnType<typeof templateFixture>[] } = {}) {
+  templates?: ReturnType<typeof templateFixture>[]; active?: boolean; training?: boolean; ledgerChanged?: boolean;
+  revokeOnFinal?: boolean; actorChanged?: boolean; refunds?: ConfirmationInput['refunds']; paymentOmitted?: boolean; paymentTampered?: boolean;
+  refundPayload?: (payload: Record<string, unknown>, call: number) => unknown } = {}) {
   const input = fixture(), requests: URL[] = [];
-  let txReads = 0;
+  const paymentRows = (options.count ? Array.from({ length: options.count }, (_, i) => ({ ...input.payments[0]!, id: `p${String(i).padStart(4, '0')}` }))
+    : input.payments).sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at) || a.id.localeCompare(b.id));
+  const paymentDigest = createHash('sha256').update(JSON.stringify(paymentRows.map(p => [p.id, p.transaction_id,
+    String(Math.round(p.amount * 100)), new Date(p.created_at).toISOString(), p.kind, p.method]))).digest('hex');
+  let txReads = 0, rpcReads = 0, authReads = 0;
   const client = createClient('https://example.invalid', 'isolated-test-key', { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: async (url, init) => {
     const u = new URL(String(url)); requests.push(u);
     const table = u.pathname.split('/').at(-1)!;
+    if (table === 'read_payment_confirmation_refunds') {
+      rpcReads++;
+      expect(init?.method).toBe('POST');
+      expect(JSON.parse(String(init?.body))).toEqual({ _transaction_id: 'tx' });
+      if (options.training || (options.revokeOnFinal && rpcReads > 1) || options.fail === 'finance_refunds') {
+        return new Response(JSON.stringify({ message: 'denied', code: '42501' }), { status: 403 });
+      }
+      const payload = { schema_version: 1, transaction_id: 'tx', actor_id: 'operator', complete: true,
+        refund_count: options.refunds?.length ?? 0, refunds: options.refunds ?? [],
+        payment_count: paymentRows.length, payment_digest: paymentDigest,
+        ledger_revision: options.ledgerChanged && rpcReads > 1 ? 'b'.repeat(32) : 'a'.repeat(32) };
+      return new Response(JSON.stringify(options.refundPayload ? options.refundPayload(payload, rpcReads) : payload),
+        { headers: { 'Content-Type': 'application/json' } });
+    }
     if (table === 'transactions') txReads++;
     if (options.fail === table) return new Response(JSON.stringify({ message: 'denied', code: '42501' }), { status: 403 });
-    const objects: Record<string, unknown> = { user_roles: { role: options.role ?? 'owner' }, employees: { active: true, position: options.position ?? 'receptionist' },
+    const objects: Record<string, unknown> = { user_roles: { role: options.role ?? 'owner' }, employees: { active: options.active ?? true, position: options.position ?? 'receptionist' },
       transactions: { ...input.transaction, updated_at: options.stale && txReads > 1 ? 'changed' : input.transaction.updated_at },
       guests: input.guest, rooms: input.room, packages: input.package, room_types: input.roomType };
     let body: unknown = objects[table];
@@ -150,13 +172,13 @@ function transport(options: { role?: string; position?: string; loggedIn?: boole
     }
     if (table === 'payments' || table === 'finance_refunds') {
       const offset = Number(u.searchParams.get('offset') ?? 0), limit = Number(u.searchParams.get('limit') ?? 100);
-      body = table === 'finance_refunds' ? [] : options.count
-        ? Array.from({ length: options.count }, (_, i) => ({ ...input.payments[0], id: `p${String(i).padStart(4, '0')}` })).slice(offset, offset + limit) : input.payments;
+      body = table === 'finance_refunds' ? [] : (options.paymentOmitted ? paymentRows.slice(1) : options.paymentTampered
+        ? paymentRows.map((p, i) => i === 0 ? { ...p, amount: p.amount + 1 } : p) : paymentRows).slice(offset, offset + limit);
     }
     expect(init?.method ?? 'GET').toBe('GET');
     return new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
   } } });
-  client.auth.getUser = async () => ({ data: { user: options.loggedIn === false ? null : { id: 'operator' } }, error: null }) as never;
+  client.auth.getUser = async () => ({ data: { user: options.loggedIn === false ? null : { id: options.actorChanged && ++authReads > 1 ? 'other-operator' : 'operator' } }, error: null }) as never;
   return { client, requests };
 }
 test('RLS-scoped reads paginate history, select same TRX, never mutate; auth/permission/error/staleness gates', async () => {
@@ -167,10 +189,62 @@ test('RLS-scoped reads paginate history, select same TRX, never mutate; auth/per
   expect((await loadCheckInSuccess('tx', 'BTRDTRX-000025', client)).id).toBe('tx');
   await expect(loadCheckInSuccess('tx', 'wrong', client)).rejects.toThrow('Jangan ulang');
   await expect(loadPaymentConfirmation('tx', transport({ loggedIn: false }).client)).rejects.toThrow('login');
-  await expect(loadPaymentConfirmation('tx', transport({ role: 'employee' }).client)).rejects.toThrow('refund');
+  expect((await loadPaymentConfirmation('tx', transport({ role: 'employee' }).client)).transactionId).toBe('tx');
   await expect(loadPaymentConfirmation('tx', transport({ role: 'employee', position: 'housekeeping' }).client)).rejects.toThrow('ditolak');
   await expect(loadPaymentConfirmation('tx', transport({ fail: 'finance_refunds' }).client)).rejects.toThrow('denied');
   await expect(loadPaymentConfirmation('tx', transport({ stale: true }).client)).rejects.toThrow('berubah');
+});
+
+test('staff PDF access: eligible roles, Training/inactive/other roles denied and refund RPC never writes', async () => {
+  for (const [role, position] of [['owner', 'owner'], ['employee', 'supervisor'], ['employee', 'receptionist']]) {
+    const { client, requests } = transport({ role, position, refunds: [{ id: 'other-operator-refund', transaction_id: 'tx',
+      amount: 10000, created_at: '2026-11-12T09:00:00+07:00', refund_method: 'QRIS' }] });
+    const doc = await loadPaymentConfirmation('tx', client);
+    expect(doc.totals).toMatchObject({ refunded: 10000, netPaid: 70000, remaining: 10000, status: 'PARTIALLY PAID' });
+    expect(doc.history.at(-1)?.type).toBe('refund');
+    expect(requests.filter(u => u.pathname.endsWith('/read_payment_confirmation_refunds'))).toHaveLength(2);
+    expect(requests.some(u => u.pathname.endsWith('/finance_refunds'))).toBe(false);
+    expect(requests.some(u => /issue_|request_receipt|record_|storage/.test(u.pathname))).toBe(false);
+    expect(canUseConfirmationPdf(true, true, position, 'NONE')).toBe(true);
+    expect(canUseConfirmationPdf(true, true, position, 'PASSED')).toBe(true);
+  }
+  for (const position of ['housekeeping', 'inspector', 'investor', 'unknown']) {
+    await expect(loadPaymentConfirmation('tx', transport({ role: 'employee', position }).client)).rejects.toThrow('ditolak');
+    expect(canUseConfirmationPdf(true, true, position, 'NONE')).toBe(false);
+  }
+  for (const position of ['receptionist', 'supervisor']) {
+    await expect(loadPaymentConfirmation('tx', transport({ role: 'employee', position, active: false }).client)).rejects.toThrow('ditolak');
+    await expect(loadPaymentConfirmation('tx', transport({ role: 'employee', position, training: true }).client)).rejects.toThrow('denied');
+    for (const status of ['ACTIVE', 'PENDING', 'FAILED', 'REVOKED', 'EXPIRED_PENDING_OWNER']) {
+      expect(canUseConfirmationPdf(true, true, position, status)).toBe(false);
+    }
+  }
+  await expect(loadPaymentConfirmation('tx', transport({ loggedIn: false }).client)).rejects.toThrow('login');
+  expect(canUseConfirmationPdf(false, true, 'owner', 'NONE')).toBe(false);
+  expect(canUseConfirmationPdf(true, false, 'owner', 'NONE')).toBe(false);
+});
+
+test('refund completeness/consistency fails closed, including missing RPC, changed ledger/access and cross-TRX payload', async () => {
+  expect((await loadPaymentConfirmation('tx', transport().client)).totals.refunded).toBe(0);
+  for (const refundPayload of [() => null, (p: Record<string, unknown>) => ({ ...p, complete: false }),
+    (p: Record<string, unknown>) => ({ ...p, refund_count: 1 }), (p: Record<string, unknown>) => ({ ...p, transaction_id: 'other' }),
+    (p: Record<string, unknown>) => ({ ...p, actor_id: 'other' }), (p: Record<string, unknown>) => ({ ...p, schema_version: 2 }),
+    (p: Record<string, unknown>) => ({ ...p, ledger_revision: '' }), (p: Record<string, unknown>) => ({ ...p, refund_count: 1,
+      refunds: [{ id: 'other', transaction_id: 'other', amount: 1, created_at: '2026-11-13T00:00:00Z', refund_method: 'CASH' }] })]) {
+    await expect(loadPaymentConfirmation('tx', transport({ refundPayload }).client)).rejects.toThrow();
+  }
+  for (const options of [{ ledgerChanged: true }, { revokeOnFinal: true }, { actorChanged: true }, { fail: 'finance_refunds' },
+    { paymentOmitted: true }, { paymentTampered: true },
+    { refundPayload: () => ({ code: 'PGRST202', message: 'function unavailable' }) }]) {
+    await expect(loadPaymentConfirmation('tx', transport(options).client)).rejects.toThrow();
+  }
+  const refunds = Array.from({ length: 205 }, (_, i) => ({ id: `refund-${i}`, transaction_id: 'tx', amount: 1,
+    created_at: '2026-11-13T00:00:00Z', refund_method: 'CASH' }));
+  expect((await loadPaymentConfirmation('tx', transport({ refunds }).client)).totals.refunded).toBe(205);
+  const ui = readFileSync('src/components/konfirmasi-pembayaran.tsx', 'utf8');
+  expect(ui).toContain('!hook.pdfAvailable'); expect(ui).not.toContain("peran !== 'owner'");
+  expect(readFileSync('src/routes/booking.tsx', 'utf8')).toContain('<DialogCheckInBerhasil hook={paymentConfirmation}');
+  expect(readFileSync('src/components/detail-transaksi.tsx', 'utf8')).toContain('<AksiPdfStruk hook={konfirmasi}');
 });
 
 test('official identity accepts ACTIVE unpublished Cloud templates and enforces shared valid headers', async () => {
@@ -202,7 +276,7 @@ test('official identity accepts ACTIVE unpublished Cloud templates and enforces 
 });
 
 test('success/close/PDF have no check-in or receipt side effects, gate OFF, manual WhatsApp, loading/cancel', async () => {
-  const data = buildPaymentConfirmation(fixture());
+  const data = { ...buildPaymentConfirmation(fixture()), ledgerRevision: 'fixture-revision' };
   const states: ConfirmationState[] = [];
   let saves = 0, prints = 0, chats = 0, resolveLoad: ((data: typeof data) => void) | undefined;
   const deps: ConfirmationDependencies = { changed: state => states.push(state), thermalEnabled: () => false,

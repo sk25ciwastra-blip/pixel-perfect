@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from '@/integrations/supabase/types';
-import { buildPaymentConfirmation } from './payment-confirmation';
+import { buildPaymentConfirmation, type ConfirmationRefund } from './payment-confirmation';
 
 async function required<T>(request: PromiseLike<{ data: T; error: { message: string } | null }>, label: string): Promise<NonNullable<T>> {
   const result = await request;
@@ -36,13 +36,32 @@ function configText(config: Json, key: string) {
   return typeof value === 'string' ? value : '';
 }
 
+async function completeRefunds(transactionId: string, actorId: string, client: SupabaseClient<Database>) {
+  const payload = await required(client.rpc('read_payment_confirmation_refunds', { _transaction_id: transactionId }), 'Histori refund terotorisasi');
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload) || payload['schema_version'] !== 1 ||
+    payload['transaction_id'] !== transactionId || payload['actor_id'] !== actorId || payload['complete'] !== true ||
+    !Number.isSafeInteger(payload['refund_count']) || !Array.isArray(payload['refunds']) ||
+    payload['refund_count'] !== payload['refunds'].length || typeof payload['ledger_revision'] !== 'string' ||
+    !Number.isSafeInteger(payload['payment_count']) || typeof payload['payment_count'] !== 'number' || payload['payment_count'] < 0 ||
+    typeof payload['payment_digest'] !== 'string' || !/^[a-f0-9]{64}$/.test(payload['payment_digest']) ||
+    !/^[a-f0-9]{32}$/.test(payload['ledger_revision'])) {
+    throw new Error('Histori refund tidak lengkap atau kontrak akses tidak cocok.');
+  }
+  const refunds: ConfirmationRefund[] = payload['refunds'].map(row => {
+    if (!row || typeof row !== 'object' || Array.isArray(row) || row['transaction_id'] !== transactionId ||
+      typeof row['id'] !== 'string' || typeof row['amount'] !== 'number' || typeof row['created_at'] !== 'string' ||
+      typeof row['refund_method'] !== 'string') throw new Error('Histori refund tidak lengkap atau transaksi tidak cocok.');
+    return { id: row['id'], transaction_id: transactionId, amount: row['amount'], created_at: row['created_at'], refund_method: row['refund_method'] };
+  });
+  return { refunds, revision: payload['ledger_revision'], paymentCount: payload['payment_count'], paymentDigest: payload['payment_digest'] };
+}
+
 /** Read-only browser/RLS queries. No receipt RPC, public URL, storage or financial writes. */
 export async function loadPaymentConfirmation(transactionId: string, client: SupabaseClient<Database>) {
   const access = await frontdesk(client);
-  // finance_refunds_read is owner OR created_by=self. An empty staff read is not proof
-  // of no refunds. Fail closed until an approved complete-refund read exists; never bypass RLS.
-  if (!access.owner) throw new Error('PDF belum tersedia untuk akses ini: histori refund lengkap hanya dapat diverifikasi Owner.');
   if (!transactionId) throw new Error('Pilih transaksi terlebih dahulu.');
+  // Server verifies role, Training DENY and the exact transaction. Missing RPC fails closed.
+  const initialRefunds = await completeRefunds(transactionId, access.userId, client);
   const t = await required(client.from('transactions').select('*').eq('id', transactionId).single(), 'Transaksi');
   const guest = await required(client.from('guests').select('id,full_name,phone').eq('id', t.guest_id).single(), 'Tamu');
   const room = await required(client.from('rooms').select('id,room_number,room_type_id').eq('id', t.room_id).single(), 'Kamar');
@@ -52,9 +71,14 @@ export async function loadPaymentConfirmation(transactionId: string, client: Sup
   const payments = await confirmationPages((from, to) => client.from('payments')
     .select('id,transaction_id,amount,created_at,kind,method').eq('transaction_id', transactionId)
     .order('created_at', { ascending: true }).order('id', { ascending: true }).range(from, to));
-  const refunds = await confirmationPages((from, to) => client.from('finance_refunds')
-    .select('id,transaction_id,amount,created_at,refund_method').eq('transaction_id', transactionId)
-    .order('created_at', { ascending: true }).order('id', { ascending: true }).range(from, to));
+  const paymentCanonical = JSON.stringify(payments.map(p => [p.id, p.transaction_id,
+    String(Math.round(p.amount * 100)), new Date(p.created_at).toISOString(), p.kind, p.method]));
+  const paymentDigest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(paymentCanonical))))
+    .map(byte => byte.toString(16).padStart(2, '0')).join('');
+  if (payments.length !== initialRefunds.paymentCount || paymentDigest !== initialRefunds.paymentDigest) {
+    throw new Error('Histori pembayaran tidak lengkap atau berubah; muat ulang Payment Confirmation.');
+  }
+  const refunds = initialRefunds.refunds;
   // ACTIVE is the official template contract; published_at may legitimately be NULL.
   // PDF uses only the shared identity, so every active BOOKING/WALK_IN header must agree.
   const templates = await confirmationPages((from, to) => client.from('receipt_template_versions').select('header_config')
@@ -72,11 +96,16 @@ export async function loadPaymentConfirmation(transactionId: string, client: Sup
   // Recheck transaction/version and identity after paginated reads; reject a stale or revoked session.
   const latest = await required(client.from('transactions').select('updated_at').eq('id', transactionId).single(), 'Validasi transaksi');
   const finalAccess = await frontdesk(client);
-  if (!finalAccess.owner || access.userId !== finalAccess.userId || latest.updated_at !== t.updated_at) {
+  const finalRefunds = await completeRefunds(transactionId, finalAccess.userId, client);
+  if (access.userId !== finalAccess.userId || latest.updated_at !== t.updated_at ||
+    initialRefunds.revision !== finalRefunds.revision || initialRefunds.paymentDigest !== finalRefunds.paymentDigest ||
+    initialRefunds.paymentCount !== finalRefunds.paymentCount || JSON.stringify(refunds) !== JSON.stringify(finalRefunds.refunds)) {
     throw new Error('Data atau akses berubah; muat ulang Payment Confirmation.');
   }
-  return buildPaymentConfirmation({ transaction: t, guest, room, roomType, package: pkg, payments, refunds,
-    refundsComplete: true, canReadGuestPhone: true, generatedAt: new Date().toISOString(), business });
+  return { ...buildPaymentConfirmation({ transaction: t, guest, room, roomType, package: pkg, payments, refunds,
+    refundsComplete: true, canReadGuestPhone: true, generatedAt: new Date().toISOString(), business }),
+    // Bracketed independent reads, NOT an atomic financial snapshot. Also binds the login.
+    ledgerRevision: access.userId + ':' + initialRefunds.revision };
 }
 
 /** Successful RPC identity is retained independently of optional PDF availability. Never retries check-in. */
