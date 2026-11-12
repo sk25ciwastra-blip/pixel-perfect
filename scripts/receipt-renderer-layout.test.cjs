@@ -124,10 +124,10 @@ test('thermal logo is bounded inside printable header without new page rules or 
   let output = '';
   const popup = { closed: false, document: { write(html) { output += html; }, close() {} }, focus() {}, print() {} };
   openReceiptPrintPreview([fixture()], popup);
-  assert.match(output, /\.thermal-logo\{display:block;width:50mm;max-width:100%;height:auto;max-height:21mm;object-fit:contain/);
+  assert.match(output, /\.thermal-logo\{display:block;width:40mm;max-width:100%;height:auto;max-height:21mm;object-fit:contain/);
   assert.match(output, /margin:0 auto 1mm;break-inside:avoid/);
-  assert.match(output, /padding:3mm 2.5mm/); // 53mm inner width > 50mm logo.
-  assert.ok(50 * 496 / 1239 < 21);
+  assert.match(output, /padding:3mm 2.5mm/); // 53mm inner width > 40mm logo.
+  assert.ok(40 * 496 / 1239 < 21);
   assert.equal((output.match(/<img /g) || []).length, 1);
   assert.doesNotMatch(output, /<img[^>]+src="https?:/);
   assert.match(output, /\.receipt:last-child\{page-break-after:auto\}/);
