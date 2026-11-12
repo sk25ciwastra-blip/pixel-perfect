@@ -33,7 +33,10 @@ function row(label: string, value: unknown) {
 }
 function paymentRow(payment: JsonRecord, showMethod = true) {
   const kind =
-    payment.kind === "dp" ? "Deposit" : payment.kind === "payment" ? "Payment" : payment.kind;
+    payment.kind === "dp" || payment.kind === "DEPOSIT" ? "Deposit" :
+      payment.kind === "FINAL_PAYMENT" ? "Final Payment" :
+      payment.kind === "PARTIAL_PAYMENT" ? "Partial Payment" :
+      payment.kind === "payment" ? "Payment" : payment.kind;
   return (
     '<div class="payment"><span>' +
     esc(kind) +
@@ -81,6 +84,8 @@ export function receiptHtml(data: ReceiptPrintData) {
     : "";
   const thankYou = templateFooter.thank_you ||
     (s.transaction_type === "BOOKING" ? "Thank you for booking" : "Thank you for your visit");
+  // Presentation only: retain the authoritative snapshot status below the emphasis.
+  const statusTitle = s.payment_status === "BALANCE DUE" ? "NOT PAID IN FULL" : s.payment_status;
 
   const content: Record<string, string> = {
     header:
@@ -100,6 +105,7 @@ export function receiptHtml(data: ReceiptPrintData) {
       row("Registration Number", s.registration_number) +
       row("Receipt Reference", s.payment_reference) +
       row("Served by", s.served_by?.name || s.served_by?.user_id) +
+      row("Payment Method", current.method) +
       row("Transaction Type", s.transaction_type) +
       (s.transaction_type === "BOOKING"
         ? row("Scheduled Check-in", s.scheduled_check_in) +
@@ -107,33 +113,32 @@ export function receiptHtml(data: ReceiptPrintData) {
         : row("Actual Check-in", s.actual_check_in) +
           row("Estimated Check-out", s.actual_check_out || "—")),
     description:
-      "<hr><h2>DESCRIPTION</h2>" +
-      row("Room", String(room.number || "—") + " · " + String(room.type || "—")) +
-      row("Package", s.package) +
-      row("Room Price", money(Number(s.total_bill || 0) - Number(s.extra_guest_charge || 0))) +
+      '<table class="description"><colgroup><col class="item-col"><col class="package-col"><col class="amount-col"></colgroup>' +
+      '<thead><tr><th scope="col">DESCRIPTION</th><th scope="col">PACKAGE</th><th scope="col">AMOUNT</th></tr></thead><tbody>' +
+      '<tr><td>Room ' + esc(String(room.number || "—")) + '<small>' + esc(room.type || "—") + '</small></td><td>' +
+      esc(s.package) + '</td><td class="amount">' + money(Number(s.total_bill || 0) - Number(s.extra_guest_charge || 0)) + '</td></tr>' +
       (Number(s.extra_guest_charge || 0) > 0
-        ? row(
-            "Extra Guest",
-            String(s.extra_guest_count) + " × " + money(50000) + " = " + money(s.extra_guest_charge),
-          )
-        : ""),
+        ? '<tr><td>Extra Guest</td><td>' + esc(String(s.extra_guest_count) + " × " + money(50000)) +
+          '</td><td class="amount">' + money(s.extra_guest_charge) + '</td></tr>'
+        : "") + '</tbody></table>',
     payment_history: hasHistory
-      ? "<h2>PAYMENT HISTORY</h2>" +
-        history.map((payment: JsonRecord) => paymentRow(payment, false)).join("")
+      ? '<section class="payment-section"><h2>PAYMENT HISTORY</h2>' +
+        history.map((payment: JsonRecord) => paymentRow(payment, false)).join("") + '</section>'
       : "",
     current_payment:
-      "<h2>" + (hasHistory ? "CURRENT PAYMENT" : "PAYMENT") + "</h2>" +
+      '<section class="payment-section current-payment"><h2>' + (hasHistory ? "CURRENT PAYMENT" : "PAYMENT") + "</h2>" +
       (hasHistory ? "" : row("Payment Method", current.method)) +
-      paymentRow({ ...current, kind: current.kind || "payment" }),
+      paymentRow({ ...current, kind: current.kind || "payment" }) + '</section>',
     totals:
-      "<hr>" +
-      row("Total Bill", money(s.total_bill)) +
-      row("Total Paid", money(s.total_paid)) +
+      '<section class="totals">' +
+      row(s.transaction_type === "WALK_IN" ? "Grand Total" : "Total Charge", money(s.total_bill)) +
+      row(current.kind === "DEPOSIT" || current.kind === "dp" ? "Deposit Paid" : "Total Paid", money(s.total_paid)) +
       row("Outstanding Balance", money(s.outstanding_balance)) +
-      row("Payment Status", s.payment_status),
+      '</section><div class="payment-status"><strong>' + esc(statusTitle) + '</strong>' +
+      '<small>Payment Status: ' + esc(s.payment_status) + '</small></div>',
     footer:
       "<footer>" +
-      esc(thankYou) +
+      '<strong>' + esc(thankYou) + '</strong>' +
       "<br><small>Printed request #" +
       esc(data.print_no) +
       "</small></footer>",
@@ -154,7 +159,34 @@ export function openReceiptPrintWindow() {
 export function openReceiptPrintPreview(receipts: ReceiptPrintData[], popup: Window) {
   if (popup.closed) throw new Error("Print preview was closed before it was ready");
   const css =
-    "@page{size:58mm auto;margin:0}*{box-sizing:border-box}body{margin:0;background:#fff;color:#000;font:10px/1.3 Arial,sans-serif}.receipt{width:58mm;max-width:58mm;padding:3mm 2.5mm;page-break-after:always}.receipt:last-child{page-break-after:auto}header{text-align:center;display:grid;gap:1px}header strong{font-size:13px}header span{font-size:9px}.copy{margin-top:2mm;font-size:11px}.row{display:flex;justify-content:space-between;gap:6px;margin:1.5mm 0}.row span{min-width:0}.row strong{text-align:right;overflow-wrap:anywhere}h1,h2{font-size:10px;margin:2mm 0 1mm}h1{text-align:center}hr{border:0;border-top:1px dashed #000;margin:2mm 0}.payment{display:grid;grid-template-columns:1fr auto;gap:1px;margin:2mm 0}.payment small{grid-column:1/3;font-size:8px}footer{text-align:center;margin-top:3mm}";
+    `@page{size:58mm auto;margin:0}
+    *{box-sizing:border-box}
+    body{margin:0;background:#fff;color:#000;font:10px/1.3 Arial,sans-serif}
+    .receipt{width:58mm;max-width:58mm;padding:3mm 2.5mm;page-break-after:always;overflow-wrap:anywhere}
+    .receipt:last-child{page-break-after:auto}
+    header{text-align:center;display:grid;gap:1px;padding-bottom:1mm}
+    header strong{font-size:14px;line-height:1.15}header span{font-size:9px}
+    .copy{margin-top:2mm;font-size:11px;border:1px solid #000;padding:1mm}
+    .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:2mm;margin:1mm 0}
+    .row strong{text-align:right;overflow-wrap:anywhere}
+    h1,h2{font-size:10px;margin:1.5mm 0 1mm;letter-spacing:.3px}h1{text-align:center}
+    hr{border:0;border-top:1px dashed #000;margin:2mm 0}
+    .description{width:100%;table-layout:fixed;border-collapse:collapse;margin:2mm 0;font-size:9px}
+    .item-col{width:38%}.package-col{width:28%}.amount-col{width:34%}
+    .description th{font-size:8px;text-align:left;border-top:1px dashed #000;border-bottom:1px dashed #000;padding:1.5mm 0}
+    .description td{vertical-align:top;padding:1.5mm .5mm 1.5mm 0;overflow-wrap:anywhere}
+    .description th:last-child,.description .amount{text-align:right;padding-right:0;font-variant-numeric:tabular-nums}
+    .description small{display:block;font-size:8px}.description tbody{border-bottom:1px dashed #000}
+    .payment-section{border-bottom:1px dashed #000;padding-bottom:1mm}
+    .payment{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1px 2mm;margin:1.5mm 0}
+    .payment strong{text-align:right;font-variant-numeric:tabular-nums}.payment small{grid-column:1/3;font-size:8px}
+    .current-payment h2{font-weight:800}.totals{padding:1mm 0;border-bottom:1px dashed #000}
+    .totals .row:first-child{font-size:11px}.totals .row:first-child span{font-weight:bold}
+    .payment-status{text-align:center;border-top:2px solid #000;border-bottom:2px solid #000;padding:2mm 0;margin:2mm 0;break-inside:avoid}
+    .payment-status strong{display:block;font-size:14px;line-height:1.2;font-weight:900;letter-spacing:.5px}
+    .payment-status small{display:block;margin-top:.5mm;font-size:8px}
+    footer{text-align:center;border-top:1px dashed #000;padding-top:2mm;margin-top:2mm;break-inside:avoid}
+    footer strong{font-size:10px}footer small{font-size:8px}`;
   popup.document.write(
     '<!doctype html><html><head><meta charset="utf-8"><title>Payment Receipt</title><style>' +
       css +
