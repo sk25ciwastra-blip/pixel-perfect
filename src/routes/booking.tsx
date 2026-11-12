@@ -22,6 +22,7 @@ import {
 } from '@/lib/combined-payments';
 import { featureFlags } from '@/lib/feature-flags';
 import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
+import { DialogCheckInBerhasil } from '@/components/konfirmasi-pembayaran';
 
 export const Route = createFileRoute('/booking')({
   head: () =>
@@ -547,6 +548,7 @@ Terima kasih.`;
 
   return (
   <>
+    <DialogCheckInBerhasil hook={paymentConfirmation} />
     {detailBookingId && (
       <DetailTransaksi
         transactionId={detailBookingId}
