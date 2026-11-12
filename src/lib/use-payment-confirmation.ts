@@ -6,20 +6,23 @@ import { CLOSED_CONFIRMATION, createPaymentConfirmationActions, type Confirmatio
 import { reserveConfirmationWhatsAppWindow } from './payment-confirmation-whatsapp';
 import { openReceiptPrintWindow, receiptPaymentIds, printReceiptBatch } from './receipt-print';
 import { supabase } from '@/integrations/supabase/client';
+import { canUseConfirmationPdf } from './payment-confirmation-access';
 
 /** Headless API for Booking success and Detail Transaksi; Stage B owns all buttons/dialogs. */
 export function usePaymentConfirmation() {
   const [state, setState] = useState<ConfirmationState>(CLOSED_CONFIRMATION);
-  const { siap, masuk, posisiKode } = usePeran();
+  const { siap, masuk, posisiKode, training } = usePeran();
   const active = useRef(false);
   active.current = siap && masuk && ['owner', 'supervisor', 'receptionist'].includes(posisiKode ?? '');
+  const pdfAccess = useRef(false);
+  pdfAccess.current = canUseConfirmationPdf(siap, masuk, posisiKode, training.status);
   const keys = useRef(new Map<string, string>());
   const printing = useRef(false);
   const actions = useMemo(() => createPaymentConfirmationActions({
     changed: setState,
     refreshCheckIn: (id, number) => loadCheckInSuccess(id, number, supabase),
     load: async (id) => {
-      if (!active.current) throw new Error('Akses belum siap atau ditolak.');
+      if (!pdfAccess.current) throw new Error('Akses PDF belum siap atau ditolak (termasuk Training).');
       return loadPaymentConfirmation(id, supabase);
     },
     download: async (data) => {
@@ -51,5 +54,8 @@ export function usePaymentConfirmation() {
     if (!siap || !masuk || !active.current) actions.clear();
     return () => { actions.clear(); keys.current.clear(); };
   }, [siap, masuk, posisiKode, actions]);
-  return { state, ...actions, thermalAvailable: featureFlags.receipt58mm };
+  useEffect(() => {
+    if (!pdfAccess.current) actions.clear();
+  }, [siap, masuk, posisiKode, training.status, actions]);
+  return { state, ...actions, pdfAvailable: pdfAccess.current, thermalAvailable: featureFlags.receipt58mm };
 }

@@ -2,19 +2,17 @@ import { useState } from 'react';
 import { CheckCircle2, Download, Printer, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { usePeran } from '@/lib/peran';
 import type { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 
 type Hook = ReturnType<typeof usePaymentConfirmation>;
 const wib = (v: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(v)) + ' WIB' : '—';
 
-/** PDF + WhatsApp manual steps. PDF is Owner-only (refund visibility); staff see an honest notice. */
+/** PDF + WhatsApp manual steps; server revalidates role, Training and the chosen transaction. */
 export function AksiPdfStruk({ hook, transactionId }: { hook: Hook; transactionId: string }) {
-  const { peran } = usePeran();
   const [busy, setBusy] = useState<'' | 'pdf' | 'wa'>('');
   const [unduh, setUnduh] = useState(false);
   const [pesan, setPesan] = useState('');
-  if (peran !== 'owner') return <p className="rounded-lg border border-gold/25 px-3 py-2 text-xs text-muted-foreground">PDF sementara hanya untuk Owner; Cetak Struk/Selesai tetap tersedia.</p>;
+  if (!hook.pdfAvailable) return <p className="rounded-lg border border-gold/25 px-3 py-2 text-xs text-muted-foreground">PDF untuk Owner, Supervisor aktif, dan Receptionist aktif; Training tidak diizinkan. Cetak Struk/Selesai tetap tersedia.</p>;
   const jalankan = async (jenis: 'pdf' | 'wa') => {
     if (busy) return; setBusy(jenis); setPesan('');
     try {

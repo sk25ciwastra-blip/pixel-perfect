@@ -1,11 +1,10 @@
 import { test, expect } from 'bun:test';
-import { createPaymentConfirmationActions, type ConfirmationDependencies } from '../src/lib/payment-confirmation-actions';
-import type { PaymentConfirmation } from '../src/lib/payment-confirmation';
+import { createPaymentConfirmationActions, type ConfirmationDependencies, type ConfirmationDocument } from '../src/lib/payment-confirmation-actions';
 import { reserveConfirmationWhatsAppWindow } from '../src/lib/payment-confirmation-whatsapp';
 
 // Only fields read by these actions; no SDK, Cloud, operational transaction or PDF renderer.
 const document = (id = 'fixture', phone: string | null = '081234567890') =>
-  ({ transactionId: id, guest: { phone } }) as PaymentConfirmation;
+  ({ transactionId: id, guest: { phone }, ledgerRevision: 'fixture-revision' }) as ConfirmationDocument;
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason: Error) => void;
@@ -47,7 +46,7 @@ test('WA requires successful PDF download for the same transaction before reserv
 test('reserves synchronously before fresh access read and navigates only after it succeeds', async () => {
   const { actions, deps, events } = setup();
   await actions.download('fixture');
-  const read = deferred<PaymentConfirmation>();
+  const read = deferred<ConfirmationDocument>();
   deps.load = () => { events.push('fresh read'); return read.promise; };
   const pending = actions.openWhatsApp('fixture');
   expect(events).toEqual(['saved', 'reserved', 'fresh read']); // Before yielding even a microtask.
@@ -91,7 +90,7 @@ test('clear/logout and new check-in close pending blank tab immediately and prev
   for (const cancel of ['clear', 'capture']) {
     const { actions, deps, events } = setup();
     await actions.download('fixture');
-    const read = deferred<PaymentConfirmation>();
+    const read = deferred<ConfirmationDocument>();
     deps.load = () => read.promise;
     const pending = actions.openWhatsApp('fixture');
     if (cancel === 'clear') actions.clear();
@@ -106,11 +105,34 @@ test('clear/logout and new check-in close pending blank tab immediately and prev
 test('manually closed placeholder never opens a replacement tab after asynchronous validation', async () => {
   const { actions, deps, events, closeTab } = setup();
   await actions.download('fixture');
-  const read = deferred<PaymentConfirmation>();
+  const read = deferred<ConfirmationDocument>();
   deps.load = () => read.promise;
   const pending = actions.openWhatsApp('fixture');
   closeTab(); read.resolve(document());
   await expect(pending).rejects.toThrow('tab closed');
+  expect(events).toEqual(['saved', 'reserved', 'closed']);
+});
+
+test('ledger/access changes during PDF generation prevent save and invalidate WhatsApp eligibility', async () => {
+  for (const mode of ['revision', 'access']) {
+    const { actions, deps, events } = setup();
+    let reads = 0;
+    deps.load = async () => {
+      if (++reads === 1) return document();
+      if (mode === 'access') throw new Error('access revoked');
+      return { ...document(), ledgerRevision: 'changed-ledger' };
+    };
+    await expect(actions.download('fixture')).rejects.toThrow(mode === 'access' ? 'revoked' : 'berubah');
+    expect(events).not.toContain('saved');
+    await expect(actions.openWhatsApp('fixture')).rejects.toThrow('Unduh PDF dahulu');
+  }
+});
+
+test('WhatsApp rejects a changed ledger even with the same guest phone and transaction', async () => {
+  const { actions, deps, events } = setup();
+  await actions.download('fixture');
+  deps.load = async () => ({ ...document(), ledgerRevision: 'new-refund-revision' });
+  await expect(actions.openWhatsApp('fixture')).rejects.toThrow('berubah');
   expect(events).toEqual(['saved', 'reserved', 'closed']);
 });
 
