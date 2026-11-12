@@ -21,6 +21,7 @@ import {
   type CombinedPaymentComponent,
 } from '@/lib/combined-payments';
 import { featureFlags } from '@/lib/feature-flags';
+import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 
 export const Route = createFileRoute('/booking')({
   head: () =>
@@ -76,6 +77,7 @@ function bookingArrival(
 }
 
 function Halaman() {
+  const paymentConfirmation = usePaymentConfirmation();
   const { bagian = 'semua' } = Route.useSearch();
   const cocokJadwal = (t: { scheduled_check_in: string | null }) => {
     if (bagian === 'semua') return true;
@@ -295,7 +297,7 @@ async function finishCheckIn() {
   setBusy(true);
 
   try {
-    const { error: checkInError } = await rpc(
+    const { data: checkedInNumber, error: checkInError } = await rpc(
       isTraining ? 'check_in_training_booking' : 'check_in_booking',
       isTraining
         ? { _transaction_id: selectedBooking.id, _session_id: paymentSessionId }
@@ -306,6 +308,13 @@ async function finishCheckIn() {
       setMessage(checkInError.message);
       return;
     }
+
+    // Headless success state for Stage B. Read back the SAME transaction after the RPC;
+    // optional document failures never retry check-in or create financial records.
+    void paymentConfirmation.captureCheckInSuccess({
+      transactionId: selectedBooking.id,
+      transactionNumber: String(checkedInNumber ?? selectedBooking.transaction_number),
+    });
 
     await Promise.all([
       transactions.refresh(),
