@@ -116,7 +116,13 @@ test('real landscape PDF, official logo, one page when it fits, full multipage h
   await expect(generatePaymentConfirmationPdf(data, logo)).rejects.toThrow('font PDF');
 });
 
-function transport(options: { role?: string; position?: string; loggedIn?: boolean; fail?: string; count?: number; stale?: boolean } = {}) {
+function templateFixture(kind = 'BOOKING') {
+  return { id: kind, template_kind: kind, status: 'ACTIVE', published_at: null as string | null,
+    language: 'en', paper_width_mm: 58, header_config: { title: fixture().business.name,
+      address: fixture().business.address, city: fixture().business.city, whatsapp: fixture().business.whatsapp } };
+}
+function transport(options: { role?: string; position?: string; loggedIn?: boolean; fail?: string; count?: number; stale?: boolean;
+  templates?: ReturnType<typeof templateFixture>[] } = {}) {
   const input = fixture(), requests: URL[] = [];
   let txReads = 0;
   const client = createClient('https://example.invalid', 'isolated-test-key', { auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: async (url, init) => {
@@ -126,9 +132,22 @@ function transport(options: { role?: string; position?: string; loggedIn?: boole
     if (options.fail === table) return new Response(JSON.stringify({ message: 'denied', code: '42501' }), { status: 403 });
     const objects: Record<string, unknown> = { user_roles: { role: options.role ?? 'owner' }, employees: { active: true, position: options.position ?? 'receptionist' },
       transactions: { ...input.transaction, updated_at: options.stale && txReads > 1 ? 'changed' : input.transaction.updated_at },
-      guests: input.guest, rooms: input.room, packages: input.package, room_types: input.roomType,
-      receipt_template_versions: { header_config: { title: input.business.name, address: input.business.address, whatsapp: input.business.whatsapp } } };
+      guests: input.guest, rooms: input.room, packages: input.package, room_types: input.roomType };
     let body: unknown = objects[table];
+    if (table === 'receipt_template_versions') {
+      // Model Cloud rows and apply actual SDK query filters, rather than returning a canned header.
+      let rows = options.templates ?? [templateFixture(), templateFixture('WALK_IN')];
+      for (const key of ['status', 'language', 'paper_width_mm'] as const) {
+        const filter = u.searchParams.get(key);
+        if (filter) rows = rows.filter(row => `eq.${row[key]}` === filter);
+      }
+      const kinds = u.searchParams.get('template_kind');
+      if (kinds) rows = rows.filter(row => kinds.slice(4, -1).split(',').includes(row.template_kind));
+      if (u.searchParams.has('published_at')) rows = rows.filter(row => row.published_at !== null);
+      rows = [...rows].sort((a, b) => a.id.localeCompare(b.id));
+      const offset = Number(u.searchParams.get('offset') ?? 0), limit = Number(u.searchParams.get('limit') ?? 100);
+      body = rows.slice(offset, offset + limit);
+    }
     if (table === 'payments' || table === 'finance_refunds') {
       const offset = Number(u.searchParams.get('offset') ?? 0), limit = Number(u.searchParams.get('limit') ?? 100);
       body = table === 'finance_refunds' ? [] : options.count
@@ -152,6 +171,34 @@ test('RLS-scoped reads paginate history, select same TRX, never mutate; auth/per
   await expect(loadPaymentConfirmation('tx', transport({ role: 'employee', position: 'housekeeping' }).client)).rejects.toThrow('ditolak');
   await expect(loadPaymentConfirmation('tx', transport({ fail: 'finance_refunds' }).client)).rejects.toThrow('denied');
   await expect(loadPaymentConfirmation('tx', transport({ stale: true }).client)).rejects.toThrow('berubah');
+});
+
+test('official identity accepts ACTIVE unpublished Cloud templates and enforces shared valid headers', async () => {
+  const { client, requests } = transport();
+  expect((await loadPaymentConfirmation('tx', client)).business).toEqual(fixture().business);
+  const query = requests.find(u => u.pathname.endsWith('/receipt_template_versions'))!.searchParams;
+  expect(query.get('status')).toBe('eq.ACTIVE');
+  expect(query.get('language')).toBe('eq.en');
+  expect(query.get('paper_width_mm')).toBe('eq.58');
+  expect(query.get('template_kind')).toBe('in.(BOOKING,WALK_IN)');
+  expect(query.has('published_at')).toBe(false);
+  expect(query.get('order')).toBe('id.asc');
+  expect(query.get('select')).not.toContain('published_at');
+  const inactive = { ...templateFixture(), status: 'RETIRED', published_at: '2026-11-01T00:00:00Z' };
+  inactive.header_config = { ...inactive.header_config, title: 'Old identity' };
+  expect((await loadPaymentConfirmation('tx', transport({ templates: [inactive, templateFixture('WALK_IN')] }).client)).business)
+    .toEqual(fixture().business);
+  for (const templates of [[], [inactive], [{ ...templateFixture(), header_config: { ...templateFixture().header_config, title: '  ' } }],
+    [templateFixture(), { ...templateFixture('WALK_IN'), header_config: { ...templateFixture().header_config, whatsapp: 'different' } }]]) {
+    await expect(loadPaymentConfirmation('tx', transport({ templates }).client)).rejects.toThrow('identitas resmi aktif');
+  }
+  const reversed = [templateFixture('WALK_IN'), templateFixture()];
+  expect((await loadPaymentConfirmation('tx', transport({ templates: reversed }).client)).business).toEqual(fixture().business);
+  // A conflicting active header on the next page must not be silently ignored.
+  const many = Array.from({ length: 101 }, (_, i) => ({ ...templateFixture(), id: String(i).padStart(3, '0') }));
+  many[100]!.header_config = { ...many[100]!.header_config, address: 'conflicting address' };
+  await expect(loadPaymentConfirmation('tx', transport({ templates: many }).client)).rejects.toThrow('tidak konsisten');
+  await expect(loadPaymentConfirmation('tx', transport({ fail: 'receipt_template_versions' }).client)).rejects.toThrow('denied');
 });
 
 test('success/close/PDF have no check-in or receipt side effects, gate OFF, manual WhatsApp, loading/cancel', async () => {

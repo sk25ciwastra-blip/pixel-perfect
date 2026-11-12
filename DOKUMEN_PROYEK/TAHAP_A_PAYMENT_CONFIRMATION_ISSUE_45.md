@@ -60,8 +60,11 @@ Lovable should use that reference for the final design.
   The stored total bill is never prorated. Extra Guest uses stored snapshots.
 - A transaction version/auth recheck rejects changed records or users during
   loading. Reads are a client snapshot, not a new atomic server financial export.
-- Business identity/contact come from an already-published English 58 mm
-  `receipt_template_versions.header_config`; missing required identity fails
+- Business identity/contact come from ACTIVE English 58 mm BOOKING/WALK_IN
+  `receipt_template_versions.header_config`, including rows with NULL
+  `published_at`. All matching rows are read in ID order with pagination and
+  must agree on the identity/contact fields used by the PDF; empty names or
+  conflicting headers block output. Missing required identity fails
   clearly, unavailable optional contact fields are omitted. No contact invented.
   Logo is bundled `/assets/Logo_Resmi_BTRD25_Transparan.png`, fetched same-origin.
 - Dates use WIB. Actual checkout is exclusively `checked_out_at`. Checkout

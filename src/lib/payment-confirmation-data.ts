@@ -55,9 +55,20 @@ export async function loadPaymentConfirmation(transactionId: string, client: Sup
   const refunds = await confirmationPages((from, to) => client.from('finance_refunds')
     .select('id,transaction_id,amount,created_at,refund_method').eq('transaction_id', transactionId)
     .order('created_at', { ascending: true }).order('id', { ascending: true }).range(from, to));
-  const template = await required(client.from('receipt_template_versions').select('header_config')
-    .not('published_at', 'is', null).eq('language', 'en').eq('paper_width_mm', 58)
-    .order('published_at', { ascending: false }).order('id', { ascending: true }).limit(1).single(), 'Konfigurasi identitas resmi');
+  // ACTIVE is the official template contract; published_at may legitimately be NULL.
+  // PDF uses only the shared identity, so every active BOOKING/WALK_IN header must agree.
+  const templates = await confirmationPages((from, to) => client.from('receipt_template_versions').select('header_config')
+    .eq('status', 'ACTIVE').eq('language', 'en').eq('paper_width_mm', 58)
+    .in('template_kind', ['BOOKING', 'WALK_IN']).order('id', { ascending: true }).range(from, to));
+  const identities = templates.map(template => ({
+    name: configText(template.header_config, 'title').trim() || configText(template.header_config, 'name').trim(),
+    address: configText(template.header_config, 'address').trim(), city: configText(template.header_config, 'city').trim(),
+    whatsapp: configText(template.header_config, 'whatsapp').trim(),
+  }));
+  const business = identities[0];
+  if (!business?.name || identities.some(identity => !identity.name || JSON.stringify(identity) !== JSON.stringify(business))) {
+    throw new Error('Konfigurasi identitas resmi aktif tidak tersedia, tidak valid, atau tidak konsisten.');
+  }
   // Recheck transaction/version and identity after paginated reads; reject a stale or revoked session.
   const latest = await required(client.from('transactions').select('updated_at').eq('id', transactionId).single(), 'Validasi transaksi');
   const finalAccess = await frontdesk(client);
@@ -65,11 +76,7 @@ export async function loadPaymentConfirmation(transactionId: string, client: Sup
     throw new Error('Data atau akses berubah; muat ulang Payment Confirmation.');
   }
   return buildPaymentConfirmation({ transaction: t, guest, room, roomType, package: pkg, payments, refunds,
-    refundsComplete: true, canReadGuestPhone: true, generatedAt: new Date().toISOString(), business: {
-      name: configText(template.header_config, 'title') || configText(template.header_config, 'name'),
-      address: configText(template.header_config, 'address'), city: configText(template.header_config, 'city'),
-      whatsapp: configText(template.header_config, 'whatsapp'),
-    } });
+    refundsComplete: true, canReadGuestPhone: true, generatedAt: new Date().toISOString(), business });
 }
 
 /** Successful RPC identity is retained independently of optional PDF availability. Never retries check-in. */
