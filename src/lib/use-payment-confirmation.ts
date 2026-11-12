@@ -3,7 +3,7 @@ import { usePeran } from './peran';
 import { featureFlags } from './feature-flags';
 import { loadCheckInSuccess, loadPaymentConfirmation } from './payment-confirmation-data';
 import { CLOSED_CONFIRMATION, createPaymentConfirmationActions, type ConfirmationState } from './payment-confirmation-actions';
-import { openWhatsApp } from './whatsapp';
+import { reserveConfirmationWhatsAppWindow } from './payment-confirmation-whatsapp';
 import { openReceiptPrintWindow, receiptPaymentIds, printReceiptBatch } from './receipt-print';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -30,7 +30,7 @@ export function usePaymentConfirmation() {
       if (!active.current) throw new Error('Sesi berubah; unduhan dibatalkan.');
       return () => downloadConfirmationBytes(bytes, data.transactionNumber);
     },
-    whatsapp: phone => openWhatsApp(phone),
+    reserveWhatsApp: reserveConfirmationWhatsAppWindow,
     thermalEnabled: () => featureFlags.receipt58mm,
     print: async (number) => {
       if (!active.current) throw new Error('Akses belum siap atau ditolak.');
