@@ -167,7 +167,7 @@ export function openReceiptPrintPreview(receipts: ReceiptPrintData[], popup: Win
     .receipt{width:58mm;max-width:58mm;padding:3mm 2.5mm;page-break-after:always;overflow-wrap:anywhere}
     .receipt:last-child{page-break-after:auto}
     header{text-align:center;display:grid;gap:1px;padding-bottom:1mm}
-    .thermal-logo{display:block;width:50mm;max-width:100%;height:auto;max-height:21mm;object-fit:contain;margin:0 auto 1mm;break-inside:avoid}
+    .thermal-logo{display:block;width:40mm;max-width:100%;height:auto;max-height:21mm;object-fit:contain;margin:0 auto 1mm;break-inside:avoid}
     header strong{font-size:14px;line-height:1.15}header span{font-size:9px}
     .copy{margin-top:2mm;font-size:11px;border:1px solid #000;padding:1mm}
     .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:2mm;margin:1mm 0}
