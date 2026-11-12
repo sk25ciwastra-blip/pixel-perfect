@@ -2,6 +2,11 @@ import { rpc } from "@/lib/data-live";
 import { featureFlags } from "@/lib/feature-flags";
 import { supabase } from "@/integrations/supabase/client";
 import thermalLogo from "../assets/receipt-thermal-logo-monochrome.png?inline";
+// Owner-approved thermal presentation override (2026-11-13). Remove once official
+// contact configuration is aligned; never rewrite Cloud templates or old snapshots.
+const THERMAL_CONTACT = Object.freeze({
+  address: "Jl. Baturaden Raya No. 25, Ciwastra", city: "Kota Bandung", whatsapp: "0811669805",
+});
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type JsonRecord = any;
 export type ReceiptPrintData = {
@@ -93,12 +98,12 @@ export function receiptHtml(data: ReceiptPrintData) {
       '<header><img class="thermal-logo" src="' + esc(thermalLogo) +
       '" alt="Baturaden 25 Homestay — DAILY &amp; WEEKLY" width="1239" height="496" loading="eager" decoding="sync"><strong>' +
       esc(templateHeader.title || h.name || "Baturaden 25 Homestay") +
-      "</strong><span>" +
-      esc(templateHeader.address || h.address) +
+      '</strong><span class="thermal-contact">' +
+      esc(THERMAL_CONTACT.address) +
       "</span><span>" +
-      esc(templateHeader.city || h.city) +
+      esc(THERMAL_CONTACT.city) +
       "</span><span>WhatsApp: " +
-      esc(templateHeader.whatsapp || h.whatsapp) +
+      esc(THERMAL_CONTACT.whatsapp) +
       "</span>" +
       (copyLabel ? '<b class="copy">' + esc(copyLabel) + "</b>" : "") +
       "</header>",
@@ -140,6 +145,8 @@ export function receiptHtml(data: ReceiptPrintData) {
       '<small>Payment Status: ' + esc(s.payment_status) + '</small></div>',
     footer:
       "<footer>" +
+      '<section class="payment-note"><h2>CATATAN</h2><p>Pembayaran yang telah diterima ' +
+      '<strong><em>tidak dapat dibatalkan maupun dikembalikan</em></strong> dengan alasan apa pun.</p></section>' +
       '<strong>' + esc(thankYou) + '</strong>' +
       "<br><small>Printed request #" +
       esc(data.print_no) +
@@ -169,6 +176,7 @@ export function openReceiptPrintPreview(receipts: ReceiptPrintData[], popup: Win
     header{text-align:center;display:grid;gap:1px;padding-bottom:1mm}
     .thermal-logo{display:block;width:40mm;max-width:100%;height:auto;max-height:21mm;object-fit:contain;margin:0 auto 1mm;break-inside:avoid}
     header strong{font-size:14px;line-height:1.15}header span{font-size:9px}
+    header .thermal-contact,header .thermal-contact~span{font-size:10px;line-height:1.25;color:#000;text-align:center}
     .copy{margin-top:2mm;font-size:11px;border:1px solid #000;padding:1mm}
     .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:2mm;margin:1mm 0}
     .row strong{text-align:right;overflow-wrap:anywhere}
@@ -189,7 +197,11 @@ export function openReceiptPrintPreview(receipts: ReceiptPrintData[], popup: Win
     .payment-status strong{display:block;font-size:14px;line-height:1.2;font-weight:900;letter-spacing:.5px}
     .payment-status small{display:block;margin-top:.5mm;font-size:8px}
     footer{text-align:center;border-top:1px dashed #000;padding-top:2mm;margin-top:2mm;break-inside:avoid}
-    footer strong{font-size:10px}footer small{font-size:8px}`;
+    footer strong{font-size:10px}footer small{font-size:8px}
+    footer .payment-note{text-align:left;font-size:10px;line-height:1.35;margin:0 0 2mm}
+    footer .payment-note h2{font-size:10px;font-weight:700;margin:0 0 1mm}
+    footer .payment-note p{margin:0}
+    footer .payment-note strong em{font-weight:700;font-style:italic}`;
   popup.document.write(
     '<!doctype html><html><head><meta charset="utf-8"><title>Payment Receipt</title><style>' +
       css +

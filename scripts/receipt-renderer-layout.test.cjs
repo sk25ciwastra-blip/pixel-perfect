@@ -55,7 +55,7 @@ test('A WALK-IN full payment: actual times, three columns, Grand Total, strong p
   assert.ok(html.includes(data.receipt_snapshot.actual_check_in));
   assert.doesNotMatch(html, /Scheduled Check-in|PAYMENT HISTORY/);
   assert.match(html, /Grand Total/); assert.match(html, /<div class="payment-status"><strong>PAID IN FULL<\/strong>/);
-  assert.match(html, /<footer><strong>Thank you for your visit<\/strong>/);
+  assert.match(html, /<footer>.*<strong>Thank you for your visit<\/strong>/);
   assert.match(html, /Payment Method/); assert.match(html, /QRIS/);
 });
 test('B BOOKING deposit: schedule, charge/deposit/balance, unpaid emphasis and original status', () => {
@@ -137,3 +137,41 @@ test('thermal logo is bounded inside printable header without new page rules or 
   // Runtime usage must stay confined to the thermal renderer.
   assert.doesNotMatch(fs.readFileSync('src/lib/payment-confirmation-pdf.ts', 'utf8'), /receipt-thermal-logo/);
 });
+
+for (const [variant, type, kind] of [['WALK-IN paid', 'WALK_IN', 'FINAL_PAYMENT'],
+  ['BOOKING deposit', 'BOOKING', 'DEPOSIT'], ['BOOKING settlement', 'BOOKING', 'FINAL_PAYMENT']]) {
+  test('thermal header/footer: ' + variant, () => {
+    const data = fixture(type, kind);
+    data.template_snapshot.header.whatsapp = '0811669505';
+    data.receipt_snapshot.header = { address: 'Historical address', city: 'Historical city', whatsapp: '0811669505' };
+    if (variant === 'BOOKING settlement') {
+      data.receipt_snapshot.payment_history = [{ kind: 'dp', amount: 52000, created_at: 'dummy-prior-time' }];
+      data.receipt_snapshot.current_payment.amount = 78000;
+    }
+    const before = JSON.stringify(data);
+    let html = '';
+    openReceiptPrintPreview([data], { closed: false,
+      document: { write(value) { html += value; }, close() {} }, focus() {}, print() {} });
+    assert.equal(JSON.stringify(data), before); // Contact override never rewrites historical snapshots.
+    const header = html.match(/<header>(.*?)<\/header>/s)[1];
+    assert.match(header, /<span class="thermal-contact">Jl\. Baturaden Raya No\. 25, Ciwastra<\/span><span>Kota Bandung<\/span><span>WhatsApp: 0811669805<\/span>/);
+    assert.doesNotMatch(header, /0811669505|Historical address|Historical city/);
+    assert.equal((header.match(/class="thermal-logo"/g) || []).length, 1);
+    assert.match(header, /DAILY &amp; WEEKLY/);
+    assert.match(html, /\.thermal-logo\{display:block;width:40mm;max-width:100%;height:auto;[^}]*margin:0 auto 1mm/);
+    assert.match(html, /header \.thermal-contact,header \.thermal-contact~span\{font-size:10px;line-height:1\.25;color:#000;text-align:center\}/);
+    const note = html.match(/<section class="payment-note">(.*?)<\/section>/s)[1];
+    assert.equal((html.match(/>CATATAN</g) || []).length, 1);
+    assert.equal(note, '<h2>CATATAN</h2><p>Pembayaran yang telah diterima <strong><em>tidak dapat dibatalkan maupun dikembalikan</em></strong> dengan alasan apa pun.</p>');
+    assert.match(html, /footer \.payment-note h2\{[^}]*font-weight:700/);
+    assert.match(html, /footer \.payment-note strong em\{font-weight:700;font-style:italic\}/);
+    const totals = html.indexOf('<section class="totals">'), status = html.indexOf('<div class="payment-status">');
+    const footer = html.indexOf('<footer>'), noteAt = html.indexOf('<section class="payment-note">');
+    const thanks = html.indexOf('<strong>Thank you', noteAt), request = html.indexOf('Printed request #', thanks);
+    assert.ok(totals < status && status < footer && footer < noteAt && noteAt < thanks && thanks < request);
+    assert.match(html, /footer\{[^}]*border-top:1px dashed #000/);
+    assert.ok(html.includes(kind === 'DEPOSIT' ? '<strong>NOT PAID IN FULL</strong>' : '<strong>PAID IN FULL</strong>'));
+    if (variant === 'BOOKING settlement') assert.ok(html.indexOf('PAYMENT HISTORY') < html.indexOf('CURRENT PAYMENT'));
+    assert.equal((html.match(/<article class="receipt">/g) || []).length, 1);
+  });
+}
