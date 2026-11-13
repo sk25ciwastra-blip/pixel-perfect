@@ -8,10 +8,10 @@ export const provisionSecureEmployee=createServerFn({method:'POST'}).middleware(
     noStore();
     const services=await import('./employee-services.server');
     await services.requirePrivateEmployeeOwner(context.supabase);
-    const core=await import('./employee-provisioning.server');const approval=core.approvedEmployeeDelivery();
+    const core=await import('./employee-provisioning.server');const approval=await core.approvedEmployeeDelivery();
     if(!approval)throw new core.EnrollmentError('OWNER_DECISION_PENDING');
     const {supabaseAdmin}=await import('@/integrations/supabase/client.server');
-    return core.provisionEmployee(data,services.createProvisioningPorts(context.supabase,supabaseAdmin,context.userId),approval);
+    return core.provisionEmployee(data,services.createProvisioningPorts(context.supabase,supabaseAdmin,context.userId,approval),approval);
   });
 export const changeOwnPassword=createServerFn({method:'POST'}).middleware([requireSupabaseAuth])
   .inputValidator(validateOwnPasswordChange).handler(async({data,context})=>{

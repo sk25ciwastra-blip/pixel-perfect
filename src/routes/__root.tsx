@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { usePeran } from "../lib/peran";
+import { isAuthOnlyPasswordPage } from '../lib/employee-email-setup-flow';
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -155,6 +156,7 @@ function AccessGate({ children }: { children: ReactNode }) {
   const publicPage =
     location.pathname === '/auth' ||
     location.pathname === '/reset-password';
+  const passwordSetupPage = isAuthOnlyPasswordPage(location.pathname);
 
   function bolehAksesHalaman(pathname: string) {
     if (peran === 'owner') return true;
@@ -206,7 +208,7 @@ function AccessGate({ children }: { children: ReactNode }) {
 
     if (!masuk && !publicPage) {
       void navigate({ to: '/auth', replace: true });
-    } else if (masuk && publicPage) {
+    } else if (masuk && publicPage && !passwordSetupPage) {
       void navigate({ to: '/', replace: true });
     } else if (aksesDitolak) {
       void navigate({ to: '/', replace: true });
@@ -215,6 +217,7 @@ function AccessGate({ children }: { children: ReactNode }) {
     siap,
     masuk,
     publicPage,
+    passwordSetupPage,
     aksesDitolak,
     navigate,
   ]);
@@ -225,7 +228,7 @@ function AccessGate({ children }: { children: ReactNode }) {
 
   if (
     (!masuk && !publicPage) ||
-    (masuk && publicPage) ||
+    (masuk && publicPage && !passwordSetupPage) ||
     aksesDitolak
   ) {
     return null;
