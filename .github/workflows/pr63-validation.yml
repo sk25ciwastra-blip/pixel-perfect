@@ -9,10 +9,12 @@ on:
       - src/routes/index.tsx
       - src/routes/kamar.tsx
       - src/lib/room-overtime.ts
+      - src/lib/room-overtime-view.ts
       - src/lib/active-stay-pages.ts
       - src/lib/use-active-room-stays.ts
       - scripts/active-stay-pages-tests.cjs
       - scripts/room-overtime-view-tests.cjs
+      - scripts/room-overtime-view-integration-tests.cjs
       - .github/workflows/pr63-validation.yml
 
 permissions:
@@ -35,5 +37,7 @@ jobs:
         run: node --experimental-strip-types scripts/active-stay-pages-tests.cjs
       - name: Test overtime view boundary
         run: node --experimental-strip-types scripts/room-overtime-view-tests.cjs
+      - name: Test booking and overtime view coexistence
+        run: node --experimental-strip-types scripts/room-overtime-view-integration-tests.cjs
       - name: Build application (no deploy)
         run: bun run build
