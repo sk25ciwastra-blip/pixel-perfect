@@ -40,6 +40,7 @@ import { meta } from "@/lib/meta";
 import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
+import { isBookingArrivalDay } from "@/lib/booking-arrival-wib";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 
 export const Route = createFileRoute("/")({
@@ -258,15 +259,9 @@ function Ringkasan() {
     (item) => item.status === "booking",
   );
 
-  const bookingHariIni = useMemo(() => {
-    const awalHari = new Date(`${tanggalWib(sekarang)}T00:00:00+07:00`).getTime();
-    const akhirHari = awalHari + 86_400_000;
-    return bookingAktif.filter((item) => {
-      const mulai = item.scheduled_check_in ? new Date(item.scheduled_check_in).getTime() : NaN;
-      const akhir = item.scheduled_check_out ? new Date(item.scheduled_check_out).getTime() : NaN;
-      return Number.isFinite(mulai) && Number.isFinite(akhir) && mulai < akhirHari && akhir > awalHari;
-    });
-  }, [bookingAktif, sekarang]);
+  const bookingHariIni = useMemo(() =>
+    bookingAktif.filter((item) => isBookingArrivalDay(item, sekarang)),
+  [bookingAktif, sekarang]);
 
   const kamarTerisi = useMemo(() => {
     return transaksi
