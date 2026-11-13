@@ -14,10 +14,9 @@ jobs:
       postgres:
         image: postgres:17.11
         env:
-          TMPDIR: ${{ runner.temp }}
           POSTGRES_PASSWORD: synthetic-native-test-only
         ports:
-          - 55432:5432
+          - '127.0.0.1:55432:5432'
         options: >-
           --health-cmd pg_isready
           --health-interval 5s
@@ -36,6 +35,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Native multi-session races and disposable cutover/restore only
         env:
+          TMPDIR: ${{ runner.temp }}
           B25_NATIVE_DISPOSABLE: 'YES'
           B25_NATIVE_PORT: '55432'
           B25_NATIVE_PASSWORD: synthetic-native-test-only

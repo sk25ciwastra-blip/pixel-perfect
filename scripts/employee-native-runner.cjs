@@ -25,16 +25,25 @@ async function run(work){
    await exec(tool('initdb'),['-D',cluster,'-U','postgres','--auth-local=trust','--auth-host=trust','--no-locale','--encoding=UTF8']);
    await control(tool('pg_ctl'),['-D',cluster,'-l',path.join(root,'server.log'),'-o',`-h 127.0.0.1 -p ${port} -c max_connections=20 -c shared_buffers=32MB -c log_statement=none -c log_min_error_statement=panic`,'-w','start']);started=true;
   }
+  const container=ci?process.env.B25_NATIVE_CONTAINER:undefined;
+  let expectedHosts=['127.0.0.1'];
+  if(container){
+   if(!/^[a-f0-9]{12,64}$/.test(container))throw Error('INVALID_EPHEMERAL_CONTAINER');
+   // Docker NAT exposes loopback to the client but inet_server_addr() is the
+   // container bridge IP. Verify both against this job's exact service object.
+   const network=JSON.parse(await exec('docker',['inspect','--format','{{json .NetworkSettings}}',container]));
+   if(!network.Ports?.['5432/tcp']?.some(p=>p.HostIp==='127.0.0.1'&&p.HostPort===String(port)))throw Error('UNSAFE_CONTAINER_PORT_BINDING');
+   expectedHosts=Object.values(network.Networks??{}).map(n=>n.IPAddress);
+   if(!expectedHosts.length||expectedHosts.some(h=>!net.isIPv4(h)||!(/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(h))))throw Error('UNSAFE_CONTAINER_NETWORK');
+  }
   admin=open('postgres');const info=(await admin.unsafe("SELECT current_setting('server_version_num')::int version,host(inet_server_addr()) host,current_user actor"))[0];
-  if(info.version<170000||info.version>=180000||info.host!=='127.0.0.1'||info.actor!=='postgres')throw Error('UNSAFE_NATIVE_SERVER');
+  if(info.version<170000||info.version>=180000||!expectedHosts.includes(info.host)||info.actor!=='postgres')throw Error('UNSAFE_NATIVE_SERVER');
   // The service/cluster must start empty, not a pre-existing application DB.
   if((await admin.unsafe("SELECT datname FROM pg_database WHERE datname NOT IN ('postgres','template0','template1')")).length)throw Error('SERVER_NOT_DISPOSABLE_EMPTY');
   await admin.unsafe('CREATE ROLE authenticated NOLOGIN;CREATE ROLE anon NOLOGIN;');
   async function database(){const name=dbName();await admin.unsafe(`CREATE DATABASE ${name}`);created.push(name);return {name,sql:open(name)};}
   const childEnv=Object.fromEntries(Object.entries(process.env).filter(([k])=>!k.toUpperCase().startsWith('PG')));
   const artifact={root,tool,exec,open,database,port,env:{...childEnv,PGHOST:'127.0.0.1',PGHOSTADDR:'127.0.0.1',PGPORT:String(port),PGUSER:'postgres',PGPASSWORD:options.password??'',PGPASSFILE:path.join(root,'no-password-file')},version:info.version};
-  const container=ci?process.env.B25_NATIVE_CONTAINER:undefined;
-  if(container&&!/^[a-f0-9]{12,64}$/.test(container))throw Error('INVALID_EPHEMERAL_CONTAINER');
   const inside='/tmp/'+path.basename(root)+'.dump';
   artifact.backup=async(name,file)=>{
    if(container){

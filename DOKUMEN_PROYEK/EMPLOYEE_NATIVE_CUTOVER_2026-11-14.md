@@ -8,6 +8,8 @@ Harness menggunakan PostgreSQL **native 17.11**, bukan PGlite. Binary portable b
 
 CI menyediakan service disposable `postgres:17.11` pada loopback; opt-in hanya ketika GitHub Actions dan B25_NATIVE_DISPOSABLE=YES. Driver postgres 3.4.9 sudah ada dalam frozen lockfile. Dump/restore CI memakai executable dari container service yang sama, agar versi client/server sesuai. Kredensial service di workflow bersifat sintetis, bukan kredensial aplikasi.
 
+Guard CI mencocokkan container ID job, binding port host `127.0.0.1`, serta IP bridge privat dari Docker inspect dengan `inet_server_addr()`. Guard lokal tetap mensyaratkan server loopback langsung. Percobaan CI awal ditolak karena guard awal menyamakan alamat bridge server dengan alamat loopback client; koreksi terbatas pada runner/workflow ini.
+
 Cleanup menutup koneksi, menjatuhkan hanya database yang dibuat runner dengan prefix/random-name tervalidasi, dan menghentikan hanya cluster miliknya sendiri. Tidak melakukan recursive delete atau menghapus direktori lama. `cleanup.json` membuktikan jumlah database yang dibuat/dihapus dan shutdown cluster. Dump sintetis tetap lokal; CI mengunggah hanya evidence/cleanup JSON, tidak dump.
 
 Prasyarat Auth/Storage/roles/cash adalah schema fixture minimal. `auth.uid()` membaca actor GUC khusus tes, bukan JWT. SET ROLE authenticated menegakkan ACL/RLS native; identitas actor hanya fixture. Ini bukan bukti validasi token Auth atau seluruh kontrak schema Cloud. Guard cash memakai definisi fungsi existing, bukan guard rekaan.
