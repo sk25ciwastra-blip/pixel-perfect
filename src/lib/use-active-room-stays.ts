@@ -22,8 +22,8 @@ export function useActiveRoomStays() {
     const version = ++requestVersion.current;
     setLoading(true);
     try {
-      const collected = await loadActiveStayPages<ActiveStay>((start, end) =>
-        supabase
+      const collected = await loadActiveStayPages<ActiveStay>(async (start, end) =>
+        await supabase
           .from("transactions")
           .select("*")
           .eq("status", "check_in")
