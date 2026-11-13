@@ -26,7 +26,24 @@ async function run() {
   );
   await assert.rejects(loadActiveStayPages(async () => ({ data: null, error: null })), /tidak tersedia/);
   await assert.rejects(loadActiveStayPages(async () => ({ data: [], error: null }), 0), /Ukuran halaman/);
-  console.log("PASS active stay pagination 0/1/199/200/201/1001, exact page boundaries, partial fetch failure, null response, invalid size");
+  await assert.rejects(
+    loadActiveStayPages(async (start) => ({
+      data: start === 0
+        ? Array.from({ length: 200 }, (_, i) => ({ id: String(i) }))
+        : [{ id: "199" }],
+      error: null,
+    }), 200, (row) => row.id),
+    /berubah selama pembacaan/,
+  );
+  await assert.rejects(
+    loadActiveStayPages(async () => ({ data: [{ id: "" }], error: null }), 200, (row) => row.id),
+    /berubah selama pembacaan/,
+  );
+  await assert.rejects(
+    loadActiveStayPages(async () => ({ data: Array.from({ length: 201 }, (_, i) => i), error: null }), 200),
+    /melebihi batas/,
+  );
+  console.log("PASS active stay pagination 0/1/199/200/201/1001, exact page boundaries, partial fetch failure, null response, invalid size, duplicate/missing IDs, oversized page");
 }
 
 run().catch((error) => { console.error(error); process.exitCode = 1; });
