@@ -16,6 +16,8 @@ permissions:
   contents: read
 jobs:
   email-only:
+    # Gate-5 stacked PR runs its new integration scenarios, not the old SQL suite.
+    if: github.base_ref == 'main' || github.base_ref == 'feat/secure-employee-provisioning-20261114'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

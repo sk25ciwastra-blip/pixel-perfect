@@ -16,7 +16,7 @@ const menu = [
   { ikon: Receipt, label: "Daftar Pengeluaran", ket: "Jenis dan keperluan (khusus Owner)", ke: "/daftar-pengeluaran" },
   { ikon: Percent, label: "Minimum DP & Komisi", ket: "Ketentuan DP dan komisi (khusus Owner)", ke: "/pengaturan-keuangan" },
   { ikon: CreditCard, label: "Rekening Owner", ket: "Rekening tujuan transfer (khusus Owner)", ke: "/pengaturan-keuangan" },
-  { ikon: KeyRound, label: "Keamanan", ket: "Kata sandi dan PIN" },
+  { ikon: KeyRound, label: "Keamanan", ket: "Kata sandi dan PIN", ke: "/reset-password" },
 ];
 
 function HalamanPengaturan() {
@@ -25,7 +25,7 @@ function HalamanPengaturan() {
       <Daftar>
         {menu.map((m) => (
           <li key={m.label}>
-            <Link to={"ke" in m ? m.ke : "/pengaturan"} className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-secondary">
+            <Link to={"ke" in m ? m.ke : "/pengaturan"} search={m.label==='Keamanan'?{mode:'own'}:{}} className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-secondary">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
                 <m.ikon className="h-5 w-5" />
               </span>

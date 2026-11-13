@@ -1,0 +1,35 @@
+name: Employee functional integration
+on:
+  pull_request:
+    paths:
+      - 'src/lib/employee-integration*'
+      - 'src/lib/employee-training-resolution*'
+      - 'src/lib/employee-lifecycle*'
+      - src/routes/reset-password.tsx
+      - src/routes/pengaturan.tsx
+      - scripts/employee-integration-tests.cjs
+      - scripts/tsconfig.employee-integration.json
+      - .github/workflows/employee-integration.yml
+permissions:
+  contents: read
+jobs:
+  integration-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch locked dependency snapshots without merging
+        run: git fetch --no-tags origin b4a486c747202031e52a06a5cf9d67126fc83654 b9460e98e56ea0a58da828f2208a468e8cdb09af a8acfcf548bcba11111361f0b4e03ef82dd69c38 98e87d1e86803bb0d77c5aaf0a67ac846bb082ea
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bun install --frozen-lockfile
+      - name: Isolated PostgreSQL fixture
+        run: npm install --prefix "$RUNNER_TEMP/employee-integration-pg" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.3.14
+      - name: New integration scenarios only
+        run: BTRD25_PGLITE_MODULE="$RUNNER_TEMP/employee-integration-pg/node_modules/@electric-sql/pglite" node scripts/employee-integration-tests.cjs
+      - run: bunx tsc --noEmit -p scripts/tsconfig.employee-integration.json
+      - run: bun run build
