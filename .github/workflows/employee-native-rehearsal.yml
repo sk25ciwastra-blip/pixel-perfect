@@ -1,0 +1,53 @@
+name: Employee native concurrency and cutover rehearsal
+on:
+  pull_request:
+    paths:
+      - 'scripts/employee-native-*.cjs'
+      - .github/workflows/employee-native-rehearsal.yml
+permissions:
+  contents: read
+jobs:
+  native-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_PASSWORD: synthetic-native-test-only
+        ports:
+          - '127.0.0.1:55432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact dependency snapshots, no merge
+        run: git fetch --no-tags origin b4a486c747202031e52a06a5cf9d67126fc83654 b9460e98e56ea0a58da828f2208a468e8cdb09af a8acfcf548bcba11111361f0b4e03ef82dd69c38 98e87d1e86803bb0d77c5aaf0a67ac846bb082ea 849761cd47ac33e86cf839aa0cff8adb8ba86f0b
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bun install --frozen-lockfile
+      - name: Native multi-session races and disposable cutover/restore only
+        env:
+          TMPDIR: ${{ runner.temp }}
+          B25_NATIVE_DISPOSABLE: 'YES'
+          B25_NATIVE_PORT: '55432'
+          B25_NATIVE_PASSWORD: synthetic-native-test-only
+          B25_NATIVE_CONTAINER: ${{ job.services.postgres.id }}
+        run: node scripts/employee-native-rehearsal.cjs
+      - name: Upload sanitized race/cleanup evidence only, never DB dumps
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: employee-native-overlap-evidence
+          path: |
+            ${{ runner.temp }}/b25-employee-native-*/evidence.json
+            ${{ runner.temp }}/b25-employee-native-*/cleanup.json
+          if-no-files-found: error
+          retention-days: 14
