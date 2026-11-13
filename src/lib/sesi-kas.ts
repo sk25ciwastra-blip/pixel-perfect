@@ -69,7 +69,7 @@ export function useSesiKasKonteks() {
     training.is_training,
   );
   const needsAssistedContext = training.is_training
-    ? !trainingSession
+    ? !activeSession
     : isSessionHelper && (
       (Boolean(assistedSessionId) && !assistedSession) ||
       (!assistedSessionId && !ownSession && openSessions.length > 1)
