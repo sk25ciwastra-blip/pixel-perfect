@@ -31,6 +31,7 @@ export function useActiveRoomStays() {
           .order("id", { ascending: true })
           .range(start, end),
         PAGE_SIZE,
+        (row) => row.id,
       );
       if (version === requestVersion.current) {
         setRows(collected);
