@@ -280,8 +280,9 @@ function HalamanKamar() {
                       <p className="mt-2 truncate text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold-light/90">
                         {roomType?.name ?? "Tipe kamar belum tersedia"}
                       </p>
-                      <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${teks[status]}`}>
-                        <span className={`size-1.5 rounded-full ${latar[status]}`} />{labelStatusKamar[status]}
+                      <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${!overtimeDataUnknown && transaksiOvertime ? "text-red-400" : teks[status]}`}>
+                        <span className={`size-1.5 rounded-full ${!overtimeDataUnknown && transaksiOvertime ? "bg-red-500" : latar[status]}`} />
+                        {!overtimeDataUnknown && transaksiOvertime ? "TERISI · PERLU TINDAKAN" : labelStatusKamar[status]}
                       </span>
                       {overtimeDataUnknown && (
                         <span className="mt-2 text-xs text-gold-light" role="status">Data overtime belum terverifikasi</span>
