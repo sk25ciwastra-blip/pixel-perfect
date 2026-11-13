@@ -798,8 +798,13 @@ function Ringkasan() {
                         const item = terisi?.transaksi ?? booking;
                         const guest = terisi?.guest ?? guests.rows.find((guestItem) => guestItem.id === booking?.guest_id);
                         const sisa = terisi ? formatSisaWaktu(item?.ends_at ?? null, sekarang) : booking?.scheduled_check_in && booking?.scheduled_check_out ? formatStatusBooking(booking.scheduled_check_in, booking.scheduled_check_out, sekarang) : null;
-                        const labelStatus = terisi ? sisa?.status === "expired" ? "Overtime" : "Terisi" : sisa?.status === "late" ? "Terlambat Datang" : sisa?.status === "expired" ? "Booking kedaluwarsa" : "Booking";
-                        const kelasStatus = terisi ? "text-bahaya-foreground" : sisa?.status === "late" || sisa?.status === "expired" ? "text-v0-warning" : "text-terisi-foreground";
+                        // Booking stays visible, but never suggests the physical room
+                        // is ready while a different, overdue check-in is still active.
+                        const kamarMasihTerisiOvertime = !terisi && transaksiPerluTindakan.some(
+                          ({ room: overtimeRoom }) => overtimeRoom?.id === room.id,
+                        );
+                        const labelStatus = terisi ? sisa?.status === "expired" ? "Overtime" : "Terisi" : kamarMasihTerisiOvertime ? "Booking · Kamar masih terisi" : sisa?.status === "late" ? "Terlambat Datang" : sisa?.status === "expired" ? "Booking kedaluwarsa" : "Booking";
+                        const kelasStatus = kamarMasihTerisiOvertime || terisi ? "text-bahaya-foreground" : sisa?.status === "late" || sisa?.status === "expired" ? "text-v0-warning" : "text-terisi-foreground";
                         const batasTimer = terisi ? item?.ends_at : sisa?.status === "booking" ? item?.scheduled_check_in : item?.scheduled_check_out;
                         const packageItem = item ? packages.rows.find((p) => p.id === item.package_id) : undefined;
                         const phoneNumber = guest?.phone ? normalizeWhatsAppNumber(guest.phone) : "";
