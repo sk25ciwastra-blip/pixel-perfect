@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { loadActiveStayPages } from "@/lib/active-stay-pages";
 
 type ActiveStay = Database["public"]["Tables"]["transactions"]["Row"];
 const PAGE_SIZE = 200;
@@ -20,24 +21,17 @@ export function useActiveRoomStays() {
   const refresh = useCallback(async () => {
     const version = ++requestVersion.current;
     setLoading(true);
-    const collected: ActiveStay[] = [];
-    let offset = 0;
     try {
-      while (true) {
-        const { data, error: failure } = await supabase
+      const collected = await loadActiveStayPages<ActiveStay>((start, end) =>
+        supabase
           .from("transactions")
           .select("*")
           .eq("status", "check_in")
           .order("created_at", { ascending: true })
           .order("id", { ascending: true })
-          .range(offset, offset + PAGE_SIZE - 1);
-        if (version !== requestVersion.current) return;
-        if (failure) throw new Error(failure.message);
-        const page = data ?? [];
-        collected.push(...page);
-        if (page.length < PAGE_SIZE) break;
-        offset += PAGE_SIZE;
-      }
+          .range(start, end),
+        PAGE_SIZE,
+      );
       if (version === requestVersion.current) {
         setRows(collected);
         setError("");
