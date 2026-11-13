@@ -1,4 +1,4 @@
-import { roomOvertimeIndicator } from "@/lib/room-overtime";
+import { roomOvertimeIndicator } from "./room-overtime.ts";
 
 type Stay = { id: string; room_id: string | null; status: string; ends_at: string | null };
 
