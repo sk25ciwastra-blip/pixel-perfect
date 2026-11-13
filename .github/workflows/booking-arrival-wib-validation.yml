@@ -1,0 +1,33 @@
+name: Booking arrival WIB focused verification
+
+on:
+  push:
+    branches:
+      - fix/dashboard-booking-arrival-wib-20261113
+  pull_request:
+    paths:
+      - src/routes/index.tsx
+      - src/lib/booking-arrival-wib.ts
+      - scripts/booking-arrival-wib-tests.cjs
+      - .github/workflows/booking-arrival-wib-validation.yml
+
+permissions:
+  contents: read
+
+jobs:
+  booking-arrival:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Check TypeScript
+        run: bunx tsc --noEmit
+      - name: Test WIB booking arrival date
+        run: node --experimental-strip-types scripts/booking-arrival-wib-tests.cjs
+      - name: Production build without deploy
+        run: bun run build
