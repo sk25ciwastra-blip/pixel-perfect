@@ -3,7 +3,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { LencanaStatus } from '@/components/status-kamar';
-import type { StatusKamar } from '@/lib/data-contoh';
+import { housekeepingSections, housekeepingShortageNote } from '@/lib/housekeeping-queue';
 import { useTable } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
@@ -34,13 +34,6 @@ export const Route = createFileRoute('/housekeeping')({
     ),
   component: Halaman,
 });
-
-type Section = {
-  key: 'dirty' | 'needs_action' | 'cleaning' | 'ready';
-  judul: string;
-  label: StatusKamar;
-  rooms: ReturnType<typeof useTable<'rooms'>>['rows'];
-};
 
 function Halaman() {
   const { posisiKode } = usePeran();
@@ -107,50 +100,7 @@ function Halaman() {
     return map;
   }, [checklists.rows]);
 
-  const needsActionIds = useMemo(
-    () =>
-      new Set(
-        operationalRooms
-          .filter(
-            (room) =>
-              room.status === 'ready' &&
-              latestChecklist.get(room.id)?.result === 'needs_action',
-          )
-          .map((room) => room.id),
-      ),
-    [latestChecklist, operationalRooms],
-  );
-
-  const sections: Section[] = [
-    {
-      key: 'dirty',
-      judul: 'Perlu Dibersihkan',
-      label: 'perlu',
-      rooms: operationalRooms.filter((room) => room.status === 'dirty'),
-    },
-    {
-      key: 'needs_action',
-      judul: 'Perlu Tindakan',
-      label: 'perlu',
-      rooms: operationalRooms.filter((room) => needsActionIds.has(room.id)),
-    },
-    {
-      key: 'cleaning',
-      judul: 'Sedang Dibersihkan',
-      label: 'sedang',
-      rooms: operationalRooms.filter(
-        (room) => room.status === 'cleaning' && !needsActionIds.has(room.id),
-      ),
-    },
-    {
-      key: 'ready',
-      judul: 'Sudah Siap',
-      label: 'siap',
-      rooms: operationalRooms.filter(
-        (room) => room.status === 'ready' && !needsActionIds.has(room.id),
-      ),
-    },
-  ];
+  const sections = housekeepingSections(operationalRooms, bagian === 'checklist' ? 'checklist' : 'status');
 
   const dirtyRooms = sections.find((section) => section.key === 'dirty')?.rooms ?? [];
   const allDirtySelected =
@@ -201,6 +151,7 @@ function Halaman() {
         return false;
       }
 
+      setMessage('Pembersihan dimulai. Selesaikan pemeriksaan melalui tab Checklist.');
       return true;
     } finally {
       setProcessingIds((current) => current.filter((item) => item !== id));
@@ -236,7 +187,7 @@ function Halaman() {
     setMessage(
       failed.length
         ? `${succeeded.length} kamar dimulai, ${failed.length} kamar gagal karena status berubah atau tidak tersedia.`
-        : `${succeeded.length} kamar berhasil dimulai.`,
+        : `${succeeded.length} kamar berhasil dimulai. Selesaikan pemeriksaan melalui tab Checklist.`,
     );
   }
 
@@ -351,7 +302,7 @@ function Halaman() {
               <table className="w-full min-w-[650px] text-left text-sm">
                 <thead><tr className="bg-secondary/60">{['Kamar', 'Tipe', 'Status', 'Riwayat Terakhir', 'Aksi'].map((title) => <th key={title} className="px-4 py-3 text-xs">{title}</th>)}</tr></thead>
                 <tbody>
-                  {sections.filter((section) => bagian === 'status' || section.key === 'cleaning' || section.key === 'needs_action').map((section) => (
+                  {sections.map((section) => (
                     <Fragment key={section.key}>
                       <tr><td colSpan={5} className="border-y border-gold/10 bg-gold/5 px-4 py-2.5 font-semibold text-gold-light">{section.judul}<span className="ml-2 text-xs font-normal text-muted-foreground">· {section.rooms.length} kamar</span></td></tr>
                       {section.rooms.length === 0 && <tr><td colSpan={5} className="px-4 py-4 text-sm text-muted-foreground">Tidak ada kamar dalam status ini.</td></tr>}
@@ -359,20 +310,21 @@ function Halaman() {
                         const roomType = types.rows.find((type) => type.id === room.room_type_id);
                         const roomHistory = history.rows.filter((item) => item.room_id === room.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 3);
                         const lastHistory = roomHistory[0];
+                        const shortage = housekeepingShortageNote(latestChecklist.get(room.id));
                         return (
                           <tr key={room.id} className="align-top">
                             <td className="border-b border-border px-4 py-4"><div className="flex items-center gap-2">{section.key === 'dirty' && canAdvance && <input aria-label={`Pilih kamar ${room.room_number}`} type="checkbox" className="size-4 accent-primary" checked={selectedIds.includes(room.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...current, room.id] : current.filter((id) => id !== room.id))} />}<span className="inline-grid min-w-10 place-items-center rounded-md border border-gold/20 bg-secondary px-2 py-1.5 text-base font-semibold">{room.room_number}</span></div></td>
                             <td className="border-b border-border px-4 py-4 text-muted-foreground">{roomType?.name}</td>
-                            <td className="border-b border-border px-4 py-4">{section.key === 'needs_action' ? <span className="inline-block rounded-full bg-bahaya px-2.5 py-1 text-xs font-semibold text-bahaya-foreground">Perlu Tindakan</span> : <LencanaStatus status={section.label} />}
-                              {section.key === 'needs_action' && room.status === 'ready' && <p className="mt-2 max-w-36 text-xs leading-relaxed text-perlu-foreground">READY dengan kekurangan tercatat. Tinjau alasan pada riwayat audit.</p>}
+                            <td className="border-b border-border px-4 py-4"><LencanaStatus status={section.label} />
+                              {shortage && <details className="mt-2 max-w-48 text-xs leading-relaxed text-perlu-foreground"><summary className="cursor-pointer">Informasi kekurangan</summary><p className="mt-1 whitespace-pre-wrap break-words">{shortage}</p></details>}
                             </td>
                             <td className="max-w-64 border-b border-border px-4 py-4">
                               {!lastHistory ? <span className="text-sm text-muted-foreground">Belum ada riwayat.</span> : <details className="text-sm"><summary className="cursor-pointer text-muted-foreground">{new Date(lastHistory.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}<span className="mt-1 block text-xs text-gold">{lastHistory.performed_by_name}</span></summary><div className="mt-3 space-y-3">{roomHistory.map((item) => <div key={item.id} className="border-l border-gold/25 pl-3"><p className="font-semibold">{item.action === 'start_cleaning' ? 'Mulai dibersihkan' : item.action === 'finish_cleaning' ? 'Selesai dibersihkan' : 'Override menjadi siap'}</p><p className="mt-1 text-xs text-muted-foreground">{item.performed_by_name} · {new Date(item.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</p><p className="mt-1 break-all font-mono text-xs text-gold/80">{item.job_number ?? 'HK legacy'}{item.transaction_id && transactionNumbers.get(item.transaction_id) ? ` · ${transactionNumbers.get(item.transaction_id)}` : ''}</p>{item.note && <p className="mt-1 break-words text-sm">{item.note}</p>}</div>)}</div></details>}
                             </td>
                             <td className="border-b border-border px-4 py-4"><div className="flex min-w-32 flex-col gap-2">
                               {section.key === 'dirty' && canAdvance && <Button size="sm" disabled={processingIds.includes(room.id)} onClick={() => void advanceOne(room.id)}><Brush className="size-4" />{processingIds.includes(room.id) ? 'Memproses...' : 'Mulai Bersihkan'}</Button>}
-                              {(section.key === 'cleaning' || section.key === 'needs_action') && room.status === 'cleaning' && canAdvance && <Button size="sm" disabled={processingIds.includes(room.id)} onClick={() => setChecklistRoomId(room.id)}><ClipboardCheck className="size-4" />{section.key === 'needs_action' ? 'Periksa Kembali' : 'Telah Dibersihkan'}</Button>}
-                              {room.status !== 'ready' && canOverride && <Button variant="outline" size="sm" disabled={processingIds.includes(room.id)} onClick={() => void overrideReady(room.id, room.room_number)}>Jadikan Siap</Button>}
+                              {section.key === 'cleaning' && room.status === 'cleaning' && canAdvance && <Button size="sm" disabled={processingIds.includes(room.id)} onClick={() => setChecklistRoomId(room.id)}><ClipboardCheck className="size-4" />Telah Dibersihkan</Button>}
+                              {['dirty', 'cleaning'].includes(room.status) && canOverride && <Button variant="outline" size="sm" disabled={processingIds.includes(room.id)} onClick={() => void overrideReady(room.id, room.room_number)}>Jadikan Siap</Button>}
                             </div></td>
                           </tr>
                         );
