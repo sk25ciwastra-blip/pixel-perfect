@@ -1,0 +1,1 @@
+{"extends":"./tsconfig.employee-email.json","include":["../src/lib/employee-*.ts","../src/routes/reset-password.tsx","../src/routes/pengaturan.tsx","../src/routes/__root.tsx","../src/routeTree.gen.ts"]}

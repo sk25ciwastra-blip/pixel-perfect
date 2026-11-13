@@ -7,8 +7,10 @@ import { startEmployeeEmailSetup } from '@/lib/employee-email-setup-flow';
 import { exchangeEmployeeEmailSetup, readEmployeeSetupPublicPolicy, resumeOwnEmployeeSetup } from '@/lib/employee-email.functions';
 import { changeOwnPassword } from '@/lib/employee-secure.functions';
 import { validateOwnPasswordChange } from '@/lib/employee-enrollment';
-export const Route = createFileRoute('/reset-password')({ head: () => meta('Atur Ulang Kata Sandi', 'Perbarui kata sandi akun Baturaden 25 Homestay.'), component: Reset });
+import { createEmployeeFormIntegration } from '@/lib/employee-integration-client';
+export const Route = createFileRoute('/reset-password')({ validateSearch:(value:Record<string,unknown>)=>({mode:value['mode']==='own'?'own' as const:undefined}), head: () => meta('Atur Ulang Kata Sandi', 'Perbarui kata sandi akun Baturaden 25 Homestay.'), component: Reset });
 function Reset() {
+  const ownPassword=Route.useSearch().mode==='own';
   const navigate = useNavigate(); const [password, setPassword] = useState(''); const [message, setMessage] = useState('');
   const setupStarted=useRef(false);const setupAccess=useRef<string|null>(null);const setupLink=useRef<string|null>(null);const setupInFlight=useRef(false);const [employeeFlow,setEmployeeFlow]=useState(false);
   useEffect(()=>{
@@ -27,6 +29,14 @@ function Reset() {
   },[]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if(ownPassword){
+      if(setupInFlight.current)return;setupInFlight.current=true;
+      const controller=createEmployeeFormIntegration();
+      try{await controller.ownPassword({password});setPassword('');await supabase.auth.signOut({scope:'local'});await navigate({to:'/auth'});}
+      catch{setMessage('Tidak dapat mengganti kata sandi. Periksa sesi dan persyaratan kata sandi.');}
+      finally{controller.dispose();setupInFlight.current=false;}
+      return;
+    }
     if(employeeFlow){
       if(setupInFlight.current)return;setupInFlight.current=true;
       try{
@@ -47,5 +57,5 @@ function Reset() {
     }
     if (!window.location.hash.includes('type=recovery')) { setMessage('Tautan pengaturan ulang tidak berlaku.'); return; } const { error } = await supabase.auth.updateUser({ password }); if (error) setMessage('Tidak dapat mengganti kata sandi. Minta tautan baru.'); else await navigate({ to: '/auth' });
   }
-  return <main className="flex min-h-screen items-center justify-center bg-background px-4"><form onSubmit={submit} className="w-full max-w-sm space-y-4"><h1 className="text-2xl font-bold">Atur ulang kata sandi</h1><label className="block text-sm">Kata sandi baru<input required minLength={employeeFlow?12:8} type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-2 h-12 w-full rounded-xl border border-input bg-background px-4" /></label>{message && <p role="status">{message}</p>}<Button className="w-full">Simpan kata sandi</Button></form></main>;
+  return <main className="flex min-h-screen items-center justify-center bg-background px-4"><form onSubmit={submit} className="w-full max-w-sm space-y-4"><h1 className="text-2xl font-bold">Atur ulang kata sandi</h1><label className="block text-sm">Kata sandi baru<input required minLength={employeeFlow||ownPassword?12:8} type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-2 h-12 w-full rounded-xl border border-input bg-background px-4" /></label>{message && <p role="status">{message}</p>}<Button className="w-full">Simpan kata sandi</Button></form></main>;
 }
