@@ -1,0 +1,54 @@
+name: Private employee profile foundation validation
+on:
+  pull_request:
+    paths:
+      - src/lib/employee-private-profile.ts
+      - scripts/employee-private-profile-tests.cjs
+      - scripts/employee-private-profile-sql-tests.cjs
+      - supabase/pending/20261113233800_private_employee_profiles.sql
+      - .github/workflows/employee-private-profile-validation.yml
+permissions:
+  contents: read
+jobs:
+  scoped-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - name: Select checks affected by latest revision
+        id: scope
+        shell: bash
+        run: |
+          if git diff --quiet HEAD^ HEAD -- src/lib/employee-private-profile.ts scripts/employee-private-profile-tests.cjs package.json bun.lock bun.lockb tsconfig.json; then
+            echo "app_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "app_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated pinned PostgreSQL fixture
+        shell: bash
+        run: npm install --prefix "$RUNNER_TEMP/employee-profile-pg" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.3.14
+      - name: Test complete pending SQL and private access
+        shell: bash
+        run: BTRD25_PGLITE_MODULE="$RUNNER_TEMP/employee-profile-pg/node_modules/@electric-sql/pglite" node scripts/employee-private-profile-sql-tests.cjs
+      - uses: oven-sh/setup-bun@v2
+        if: steps.scope.outputs.app_changed == 'true'
+        with:
+          bun-version: latest
+      - name: Install locked dependencies
+        if: steps.scope.outputs.app_changed == 'true'
+        run: bun install --frozen-lockfile
+      - name: Check TypeScript
+        if: steps.scope.outputs.app_changed == 'true'
+        run: bunx tsc --noEmit
+      - name: Test employee profile contract
+        if: steps.scope.outputs.app_changed == 'true'
+        run: node --experimental-strip-types scripts/employee-private-profile-tests.cjs
+      - name: Build without deploy
+        if: steps.scope.outputs.app_changed == 'true'
+        run: bun run build
