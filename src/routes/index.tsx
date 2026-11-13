@@ -41,6 +41,7 @@ import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
 import { roomOvertimeIndicator } from "@/lib/room-overtime";
+import { hasOvertimeOccupant, showEmptyRoomState } from "@/lib/room-overtime-view";
 import { useActiveRoomStays } from "@/lib/use-active-room-stays";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 
@@ -760,7 +761,7 @@ function Ringkasan() {
                   </div>
                 </section>
               )}
-              {!activeStays.loading && !activeStays.error && statusKamarBaris.length === 0 && transaksiPerluTindakan.length === 0 ? (
+              {showEmptyRoomState(activeStays.loading, activeStays.error, statusKamarBaris.length, transaksiPerluTindakan.length) ? (
                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
                   <BedDouble className="size-8 text-gold/60" strokeWidth={1.4} />
                   <p className="mt-3 font-serif text-lg">Tidak ada kamar terisi atau Booking hari ini</p>
@@ -800,9 +801,7 @@ function Ringkasan() {
                         const sisa = terisi ? formatSisaWaktu(item?.ends_at ?? null, sekarang) : booking?.scheduled_check_in && booking?.scheduled_check_out ? formatStatusBooking(booking.scheduled_check_in, booking.scheduled_check_out, sekarang) : null;
                         // Booking stays visible, but never suggests the physical room
                         // is ready while a different, overdue check-in is still active.
-                        const kamarMasihTerisiOvertime = !terisi && transaksiPerluTindakan.some(
-                          ({ room: overtimeRoom }) => overtimeRoom?.id === room.id,
-                        );
+                        const kamarMasihTerisiOvertime = !terisi && hasOvertimeOccupant(activeStays.rows, room.id, sekarang);
                         const labelStatus = terisi ? sisa?.status === "expired" ? "Overtime" : "Terisi" : kamarMasihTerisiOvertime ? "Booking · Kamar masih terisi" : sisa?.status === "late" ? "Terlambat Datang" : sisa?.status === "expired" ? "Booking kedaluwarsa" : "Booking";
                         const kelasStatus = kamarMasihTerisiOvertime || terisi ? "text-bahaya-foreground" : sisa?.status === "late" || sisa?.status === "expired" ? "text-v0-warning" : "text-terisi-foreground";
                         const batasTimer = terisi ? item?.ends_at : sisa?.status === "booking" ? item?.scheduled_check_in : item?.scheduled_check_out;
