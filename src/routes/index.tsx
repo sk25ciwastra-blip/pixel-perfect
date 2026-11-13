@@ -40,6 +40,7 @@ import { meta } from "@/lib/meta";
 import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
+import { roomOvertimeIndicator } from "@/lib/room-overtime";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 
 export const Route = createFileRoute("/")({
@@ -302,6 +303,22 @@ function Ringkasan() {
       .sort((a, b) => a.endsAtMs - b.endsAtMs);
   }, [transaksi, kamar, guests.rows, roomTypes.rows]);
 
+  // Overtime >120 menit merupakan kasus transaksi, bukan status Housekeeping.
+  // Gunakan seluruh transaksi aktif yang terlihat, jangan hanya kartu room.status='occupied'.
+  const transaksiPerluTindakan = useMemo(() => transaksi
+    .filter((item) => roomOvertimeIndicator(item, sekarang).needsAction)
+    .map((item) => ({
+      transaksi: item,
+      room: kamar.find((roomItem) => roomItem.id === item.room_id),
+      guest: guests.rows.find((guestItem) => guestItem.id === item.guest_id),
+    }))
+    .sort((a, b) => Date.parse(a.transaksi.ends_at ?? "") - Date.parse(b.transaksi.ends_at ?? "")),
+  [transaksi, kamar, guests.rows, sekarang]);
+
+  const kamarTerisiNormal = useMemo(() => kamarTerisi.filter((item) =>
+    !roomOvertimeIndicator(item.transaksi, sekarang).excludeFromRoomStatus,
+  ), [kamarTerisi, sekarang]);
+
   const activityItems = useMemo(
     () => [...activityLogs.rows]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -463,7 +480,7 @@ function Ringkasan() {
   // Satu baris utama per kamar: stay aktif lebih dahulu, lalu booking terdekat.
   const statusKamarBaris = useMemo(
     () => kamarAktif.flatMap((room) => {
-      const terisi = kamarTerisi.find((item) => item.room?.id === room.id);
+      const terisi = kamarTerisiNormal.find((item) => item.room?.id === room.id);
       const bookings = bookingHariIni
         .filter((item) => item.room_id === room.id)
         .sort((a, b) => new Date(a.scheduled_check_in ?? 0).getTime() - new Date(b.scheduled_check_in ?? 0).getTime());
@@ -473,7 +490,7 @@ function Ringkasan() {
       const roomType = roomTypes.rows.find((typeItem) => typeItem.id === room.room_type_id);
       return [{ room, roomType, terisi, booking, bookingBerikutnya }];
     }),
-    [bookingHariIni, kamarAktif, kamarTerisi, roomTypes.rows, sekarang],
+    [bookingHariIni, kamarAktif, kamarTerisiNormal, roomTypes.rows, sekarang],
   );
 
   // Indikator: hanya memakai status/timestamp dan aturan yang sudah ada di halaman ini.
@@ -492,9 +509,9 @@ function Ringkasan() {
       persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
       terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in ?? "", item.scheduled_check_out ?? "", sekarang)?.status === "late").length,
       perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
-      overtime: statusKamarBaris.filter(({ terisi }) => terisi && formatSisaWaktu(terisi.transaksi.ends_at ?? null, sekarang).status === "expired").length,
+      overtime: transaksiPerluTindakan.length,
     };
-  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris]);
+  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris, transaksiPerluTindakan]);
 
   const indikatorStatus = [
     { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
@@ -715,6 +732,26 @@ function Ringkasan() {
                 <div role="status" className="mx-5 mb-3 space-y-1 rounded-xl border border-gold/25 bg-gold/10 px-3 py-2 text-xs sm:mx-6">
                   {bookingPeringatan.map(({ item, status }) => <p key={item.id}><span className={`font-bold ${status?.kelas}`}>{status?.label}</span> · {guests.rows.find((guest) => guest.id === item.guest_id)?.full_name ?? "Tamu"} · {item.transaction_number}</p>)}
                 </div>
+              )}
+              {transaksiPerluTindakan.length > 0 && (
+                <section aria-label="Transaksi overtime perlu tindakan" className="mx-4 mb-3 rounded-lg border border-red-500/50 p-3" role="region">
+                  <h3 className="text-sm font-bold text-red-400">PERLU TINDAKAN · Overtime lebih dari 120 menit ({transaksiPerluTindakan.length})</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">Transaksi masih aktif; kamar tidak otomatis tersedia. Selesaikan melalui detail atau Check-out yang berizin.</p>
+                  <div className="mt-2 space-y-2">
+                    {transaksiPerluTindakan.map(({ transaksi: item, room, guest }) => {
+                      const reason = room ? checkoutDisabledReason(item, room) : "Data kamar tidak tersedia.";
+                      return (
+                        <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-red-500/25 px-2 py-2 text-xs">
+                          <span className="min-w-0"><strong>Kamar {room?.room_number ?? "—"}</strong> · {guest?.full_name ?? "Tamu"} · {item.transaction_number} · batas {item.ends_at ? jamWib(item.ends_at) : "—"}</span>
+                          <span className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setDetailTransactionId(item.id)}>Detail</Button>
+                            <Button size="sm" variant="outline" disabled={Boolean(reason) || checkingOutId !== null} title={reason || "Check-out"} onClick={() => void checkOut(item.id)}>Check-out</Button>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
               )}
               {statusKamarBaris.length === 0 ? (
                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
