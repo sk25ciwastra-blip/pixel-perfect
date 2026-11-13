@@ -1,0 +1,41 @@
+const fs=require('node:fs');const cp=require('node:child_process');const path=require('node:path');const os=require('node:os');
+const {PGlite}=require(process.env.BTRD25_PGLITE_MODULE||path.join(os.tmpdir(),'BTRD25-pdf-db-test/node_modules/@electric-sql/pglite'));
+const id=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
+const dependency=(sha,p)=>cp.execFileSync('git',['show',`${sha}:${p}`],{encoding:'utf8'});
+const fn=(sql,name)=>{const m=sql.match(new RegExp(`create(?: or replace)? function public\\.${name}\\([\\s\\S]*?(?:\\$function\\$|\\$\\$);`,'i'));if(!m)throw Error('Missing fixture helper');return m[0];};
+module.exports={id,async fixture(){
+ const db=new PGlite();
+ await db.exec(`CREATE ROLE authenticated;CREATE ROLE anon;CREATE SCHEMA auth;CREATE SCHEMA storage;
+ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
+ CREATE TYPE app_role AS ENUM('owner','employee');CREATE TYPE employee_position AS ENUM('receptionist','supervisor','housekeeping','inspector','investor');
+ CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,created_at timestamptz DEFAULT now(),raw_app_meta_data jsonb DEFAULT '{}',banned_until timestamptz);
+ CREATE UNIQUE INDEX fixture_auth_email_unique ON auth.users(lower(email));
+ CREATE TABLE user_roles(user_id uuid PRIMARY KEY,role app_role);
+ CREATE TABLE employees(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid UNIQUE,name text,employee_id text UNIQUE,position employee_position,active boolean DEFAULT true,created_at timestamptz DEFAULT now());
+ CREATE TABLE finance_cash_sessions(id uuid PRIMARY KEY,opened_by uuid,status text,opened_at timestamptz DEFAULT now());
+ CREATE TABLE storage.buckets(id text PRIMARY KEY,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+ CREATE TABLE storage.objects(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),bucket_id text REFERENCES storage.buckets(id),name text UNIQUE);
+ ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+ GRANT USAGE ON SCHEMA auth,storage TO authenticated,anon;GRANT SELECT,INSERT,UPDATE,DELETE ON storage.objects TO authenticated;
+ GRANT SELECT,INSERT,UPDATE ON employees TO authenticated;`);
+ await db.exec(fn(fs.readFileSync('drizzle/migrations/0000_operational_foundation.sql','utf8'),'has_role'));
+ const role=fs.readFileSync('supabase/migrations/20261003000011_role_permission_foundation.sql','utf8');
+ await db.exec(fn(role,'has_employee_position'));await db.exec(fn(role,'can_operate'));
+ const training=fs.readFileSync('supabase/migrations/20261018000000_finance_training_enforcement.sql','utf8');
+ await db.exec(training.slice(training.indexOf('CREATE TABLE IF NOT EXISTS public.finance_training_assignments'),training.indexOf('CREATE TABLE IF NOT EXISTS public.finance_training_audit')));
+ for(const name of ['finance_training_assignment_for','finance_training_is_restricted','finance_training_session_is_valid','finance_training_context_assignment','finance_training_context_valid','finance_training_current_user_is_restricted','create_finance_training_assignment','resolve_finance_training_assignment','is_receptionist','can_frontdesk','finance_is_owner_or_supervisor','finance_is_booking_operator'])await db.exec(fn(training,name));
+ await db.exec(`REVOKE ALL ON FUNCTION finance_training_is_restricted(uuid),finance_training_context_valid(uuid),finance_training_session_is_valid(uuid,uuid) FROM PUBLIC,authenticated;
+ ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+ CREATE POLICY fixture_employee_owner ON employees FOR ALL TO authenticated USING(has_role(auth.uid(),'owner')) WITH CHECK(has_role(auth.uid(),'owner'));`);
+ for(const n of [1,2,3,4,5,6]){
+  await db.query('INSERT INTO auth.users(id,email) VALUES($1,$2)',[id(n),`fixture-${n}@example.invalid`]);
+  await db.query('INSERT INTO user_roles VALUES($1,$2)',[id(n),n===1||n===5?'owner':'employee']);
+  if(n!==1)await db.query("INSERT INTO employees(id,user_id,name,employee_id,position,active) VALUES($1,$1,'Fixture',$2,$3,$4)",[id(n),n===2?'FIXTURE-2':`LEGACY-${n}`,n===2?'supervisor':'receptionist',n!==6]);
+ }
+ for(const n of [4,5])await db.query("INSERT INTO finance_training_assignments(trainee_user_id,supervisor_user_id,starts_on,ends_on,created_by) VALUES($1,$2,current_date,current_date+1,$2)",[id(n),id(1)]);
+ await db.query("INSERT INTO finance_cash_sessions VALUES($1,$2,'OPEN',now())",[id(10),id(3)]);
+ const actor=async n=>db.query("SELECT set_config('test.actor',$1,false)",[n?id(n):'']);await actor(1);
+ await db.exec(dependency('b4a486c747202031e52a06a5cf9d67126fc83654','supabase/pending/20261113233800_private_employee_profiles.sql'));
+ await db.exec(dependency('b9460e98e56ea0a58da828f2208a468e8cdb09af','supabase/pending/20261113170814_employee_lifecycle_audit.sql'));
+ return {db,actor};
+}};
