@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useTable } from "@/lib/data-live";
+import { maintenanceIsDue } from "@/lib/maintenance-calendar";
+import { useWibCalendarDate } from "@/lib/use-wib-calendar-date";
 
 type WorkType = "linen" | "fan" | "toilet";
 
@@ -37,24 +39,8 @@ const toiletLocations = [
   { locationCode: "Toilet Superior B · 04", intervalDays: 1 },
 ];
 
-function tanggalWib() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
-function sudahJatuhTempo(lastDate: string | undefined, intervalDays: number) {
-  if (!lastDate) return true;
-
-  const today = Date.parse(tanggalWib() + "T00:00:00+07:00");
-  const last = Date.parse(lastDate + "T00:00:00+07:00");
-  return today - last >= intervalDays * 24 * 60 * 60 * 1000;
-}
-
 export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
+  const todayWib = useWibCalendarDate();
   const maintenance = useTable("housekeeping_maintenance");
   const rooms = useTable("rooms");
   const roomTypes = useTable("room_types");
@@ -173,8 +159,8 @@ export function PerawatanBerkala({ readOnly = false }: { readOnly?: boolean }) {
   }, [maintenanceRows, roomTypes.rows, rooms.rows]);
 
   const dueTasks = useMemo(
-    () => tasks.filter((task) => sudahJatuhTempo(task.last?.operational_date, task.intervalDays)),
-    [tasks],
+    () => tasks.filter((task) => maintenanceIsDue(task.last?.operational_date, task.intervalDays, todayWib)),
+    [tasks, todayWib],
   );
 
   const categories = useMemo(() => {
