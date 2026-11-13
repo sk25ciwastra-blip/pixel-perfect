@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
@@ -13,6 +13,7 @@ import { labelStatusKamar, type StatusKamar } from "@/lib/data-contoh";
 import { useTable, type Room } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
 import { usePeran } from "@/lib/peran";
+import { roomOvertimeIndicator } from "@/lib/room-overtime";
 
 export const Route = createFileRoute("/kamar")({
   head: () => meta("Status Kamar", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
@@ -88,6 +89,13 @@ function formatIssueDetails(checklist: ChecklistRow) {
 function HalamanKamar() {
   const { peran, posisiKode } = usePeran();
   const queryClient = useQueryClient();
+  const [sekarang, setSekarang] = useState(() => Date.now());
+  useEffect(() => {
+    const update = () => setSekarang(Date.now());
+    const timer = window.setInterval(update, 1000);
+    window.addEventListener("focus", update);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", update); };
+  }, []);
   const canCheckIn = bolehCheckIn(posisiKode);
   const [checkInOpen, setCheckInOpen] = useState(false);
   const rooms = useTable("rooms");
@@ -243,6 +251,9 @@ function HalamanKamar() {
                               new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
                           )[0]
                       : undefined;
+                  const transaksiOvertime = transactions.rows.find((item) =>
+                    item.room_id === room.id && roomOvertimeIndicator(item, sekarang).needsAction,
+                  );
                   const housekeepingJob =
                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
                   const checklist = latestChecklist.get(room.id);
@@ -251,7 +262,7 @@ function HalamanKamar() {
                   return (
                     <div
                       key={room.id}
-                      className="panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 hover:border-gold/50"
+                      className={`panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 ${transaksiOvertime ? "border-red-500/70 hover:border-red-500" : "hover:border-gold/50"}`}
                     >
                       <span className={`absolute inset-y-0 left-0 w-1 ${latar[status]}`} aria-hidden="true" />
                       <div className="flex items-start justify-between gap-3">
@@ -269,6 +280,11 @@ function HalamanKamar() {
                       <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${teks[status]}`}>
                         <span className={`size-1.5 rounded-full ${latar[status]}`} />{labelStatusKamar[status]}
                       </span>
+                      {transaksiOvertime && (
+                        <button type="button" className="mt-2 rounded-md border border-red-500/50 px-2 py-1 text-left text-xs font-bold text-red-400" onClick={() => setDetailTransactionId(transaksiOvertime.id)}>
+                          PERLU TINDAKAN · Overtime &gt;120 menit · Lihat transaksi
+                        </button>
+                      )}
                       <div className="mt-3 h-px bg-gradient-to-r from-gold/25 to-transparent" />
 
                       {transaction && (
