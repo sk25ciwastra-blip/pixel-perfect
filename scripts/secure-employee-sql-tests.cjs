@@ -7,13 +7,7 @@ const identity=n=>({nik:String(n).padStart(16,'0'),phone:'0'.repeat(9),emergency
  assert.equal(JSON.stringify((await db.query('SELECT * FROM employees ORDER BY id')).rows),legacy);
  await db.exec('SET ROLE authenticated');
  const begin=async n=>(await db.query('SELECT begin_employee_enrollment($1,$2) r',[id(n),'a'.repeat(64)])).rows[0].r;
- await assert.rejects(begin(20),/Format ID menunggu/);
- assert.equal((await db.query('SELECT count(*)::int n FROM employee_enrollment_requests')).rows[0].n,0);
- await db.exec('RESET ROLE');
- // TEST-ONLY formatter; never installed or treated as Owner-approved ID format.
- await db.exec("CREATE OR REPLACE FUNCTION public.format_new_employee_identifier(_number bigint) RETURNS text LANGUAGE sql IMMUTABLE AS $$ SELECT 'FIXTURE-'||$1::text $$;");
- await db.exec('SET ROLE authenticated');
- const r=await begin(20);assert.equal(r.acquired,true);assert.equal(r.generated_identifier,'FIXTURE-3');
+ const r=await begin(20);assert.equal(r.acquired,true);assert.equal(r.generated_identifier,'B25EMP-001');
  assert.equal((await begin(20)).acquired,false);
  await assert.rejects(db.query('SELECT begin_employee_enrollment($1,$2)',[id(20),'b'.repeat(64)]),/Idempotency mismatch/);
  const attach=async(req,user)=>db.query('SELECT attach_employee_enrollment_auth($1,$2)',[id(req),id(user)]);

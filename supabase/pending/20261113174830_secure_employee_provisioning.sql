@@ -1,5 +1,5 @@
 -- DRAFT ONLY. Apply AFTER PR67 b4a486c and PR68 b9460e9, never in this task.
--- ID format deliberately undecided: formatter returns NULL until Owner review.
+-- Owner decision Issue61/6862623040: B25EMP-001, global, minimum 3 digits, no year reset.
 BEGIN;
 DO $$ BEGIN
   IF current_user <> pg_get_userbyid((SELECT relowner FROM pg_class WHERE oid='public.employees'::regclass)) THEN
@@ -11,7 +11,11 @@ END $$;
 CREATE SEQUENCE public.employee_enrollment_number_seq;
 REVOKE ALL ON SEQUENCE public.employee_enrollment_number_seq FROM PUBLIC,anon,authenticated;
 CREATE FUNCTION public.format_new_employee_identifier(_number bigint) RETURNS text
-LANGUAGE sql IMMUTABLE SET search_path = '' AS $$ SELECT NULL::text $$;
+LANGUAGE sql IMMUTABLE SET search_path = '' AS $$
+  SELECT CASE WHEN _number > 0 THEN
+    'B25EMP-' || lpad(_number::text, greatest(3,length(_number::text)), '0')
+  ELSE NULL END
+$$;
 REVOKE ALL ON FUNCTION public.format_new_employee_identifier(bigint) FROM PUBLIC,anon,authenticated;
 
 ALTER TABLE public.employee_private_profiles
@@ -52,7 +56,7 @@ BEGIN
   END IF;
   LOOP
     code:=public.format_new_employee_identifier(nextval('public.employee_enrollment_number_seq'));
-    IF code IS NULL OR length(code) NOT BETWEEN 1 AND 100 THEN RAISE EXCEPTION 'Format ID menunggu keputusan Owner'; END IF;
+    IF code IS NULL OR length(code) NOT BETWEEN 1 AND 100 THEN RAISE EXCEPTION 'Hasil generator ID tidak valid'; END IF;
     EXIT WHEN NOT EXISTS(SELECT 1 FROM public.employees WHERE employee_id=code);
     n:=n+1; IF n>10000 THEN RAISE EXCEPTION 'Konflik ID perlu review'; END IF;
   END LOOP;

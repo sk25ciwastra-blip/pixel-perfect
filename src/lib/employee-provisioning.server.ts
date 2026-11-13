@@ -2,8 +2,8 @@ import type { EmployeeEnrollment } from './employee-enrollment';
 export class EnrollmentError extends Error { constructor(readonly code: string) { super(code); } }
 export type EnrollmentState = {state:string;acquired?:boolean;auth_user_id:string|null;employee_id:string|null;generated_identifier:string;delivery_state:string};
 export type ApprovedDelivery = {redirectTo:string;fingerprintKey:Uint8Array};
-// No feature flag/config mutation. Both ID format and delivery still need Owner
-// decisions + a reviewed implementation before this returns an approval.
+// No feature flag/config mutation. ID format is approved (Issue61/6862623040).
+// Delivery still needs Owner decision and verification before returning approval.
 export function approvedEmployeeDelivery(): ApprovedDelivery | null { return null; }
 export interface ProvisioningPorts {
   owner():Promise<boolean>;

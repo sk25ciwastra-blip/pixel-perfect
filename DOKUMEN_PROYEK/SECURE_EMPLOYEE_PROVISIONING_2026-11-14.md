@@ -11,7 +11,8 @@ No existing PR changed. This is a new review candidate, NOT ready for activation
 | Private profile/storage | PR67 `b4a486c747202031e52a06a5cf9d67126fc83654`, SQL `20261113233800_private_employee_profiles.sql` | Owner wrapper, private bucket/RLS; unchanged here |
 | Lifecycle | PR68 `b9460e98e56ea0a58da828f2208a468e8cdb09af`, SQL `20261113170814_employee_lifecycle_audit.sql` | REGISTERED/inactive, real Owner actor, join date, explicit Training graduation/activation; unchanged here |
 | Provisioning | New `supabase/pending/20261113174830_secure_employee_provisioning.sql` | Apply only after both reviewed dependencies and coordinated endpoint/form cutover |
-| Delivery/ID policy | Owner decisions still pending | Default SQL formatter returns NULL and server delivery approval returns null; no provisioning activation |
+| ID policy | Owner final decision 6862623040 | B25EMP-001, global sequence, minimal 3 digits, never truncated at 999 |
+| Delivery policy | Owner decision/verification still pending | Server delivery approval remains null; no provisioning activation |
 
 Tests load those exact dependency SQL snapshots from Git, without merging/changing
 their branches. `src/lib/employee-private-profile.ts` is reused byte-for-byte from
@@ -42,12 +43,14 @@ merge/deploy/SQL execution. No UI/design changes were made in this task.
   preserving leading zeros; adds birth place/date, gender bounded text, full
   address/email. Public employees keeps its existing display name, position and
   ID; no NIK/contact/birth/photo/email columns are added to shared employees.
-  There is no invented gender enum, minimum age, historic-data backfill or ID format.
+  There is no invented gender enum, minimum age or historic-data backfill. ID follows
+  the explicit Owner decision recorded below.
 - Database sequence + request lock + unique identifiers issue IDs automatically.
   Historical exact-code collisions are skipped, not renamed. IDs cannot be
   edited by application Owner/staff. Sequence gaps on rejected attempts are
-  possible; values are never reused/reset. Formatter has **no official format**
-  until Owner approves prefix/padding/start policy in a reviewed change.
+  possible; values are never reused/reset. Official formatter is `B25EMP-` plus
+  decimal integer padded to **at least** 3 digits: 001, 002, 010, 100, 999, 1000.
+  Initial new number is 001 when free; actual existing collisions are skipped.
 - Owner-scoped idempotency request stores only opaque IDs, a server-keyed HMAC
   fingerprint and state. No password/OTP/setup URL/NIK/email/contact is stored
   in its saga record. Dedicated HMAC key belongs on the server, never client input.
@@ -116,7 +119,7 @@ session. Expiry is EXPIRED_PENDING_OWNER, not PASSED; graduation and operational
 activation remain explicit under #68. No cash session, owner, payment or receipt
 is rewritten by new provisioning/identity functions. Suspension is not an Auth ban.
 
-## Executed focused evidence
+## Initial executed focused evidence (e0233bd; not rerun for ID-only revision)
 
 PASS locally:
 
@@ -130,8 +133,8 @@ PASS locally:
   corrupt/container fixtures; Owner-scoped upload and signed path/TTL; old admin
   password/active bypass absent. Mocks are NOT live Auth/mail/Storage proof.
 - `node scripts/secure-employee-sql-tests.cjs`: full exact #67 + #68 + new pending
-  SQL applied to isolated PostgreSQL/PGlite 0.3.14. Default formatter blocks before
-  account creation; TEST-ONLY formatter proves uniqueness/historical collision,
+  SQL applied to isolated PostgreSQL/PGlite 0.3.14. At that initial SHA, undecided
+  formatter blocked; the then TEST-ONLY formatter proved uniqueness/historical collision,
   read-only ID, idempotency and Auth binding (old account cannot be hijacked).
   Atomically creates private profile + inactive lifecycle/join_date; duplicate
   NIK rolls back employee/role/history. Cancel fences finalize and requires actual
@@ -158,17 +161,21 @@ NOT REACHED:
 
 ## Owner decisions / one next action
 
-1. Official employee-ID format/padding/start policy (none invented here).
-2. Approve the proposed CSPRNG + Auth one-time setup email mechanism, verified
+Official ID policy is FINAL under [Owner decision 6862623040](https://github.com/sk25ciwastra-blip/pixel-perfect/issues/61#issuecomment-6862623040):
+`B25EMP-001`, global across year/position/status/unit, minimum 3 digits, no 999 cap,
+initial 001 if free, unique/permanent/read-only. No re-confirmation needed.
+
+Still pending: approve the proposed CSPRNG + Auth one-time setup email mechanism, verified
    sender/SMTP, destination verification and exact allowed HTTPS callback.
 
-Both production gates remain closed in source/SQL. A later approved implementation
+Delivery gate remains closed in source; formatter is no longer NULL for positive IDs.
+A later approved implementation
 must load a dedicated server HMAC secret and bind the approved delivery channel;
 no feature flag is enabled/modified here. Real unconfirmed-Auth onboarding behavior
 and Auth-only setup UI must be verified before release. Existing #68 pending
 decisions (backdating/rehire/Auth ban) remain unchanged, not re-asked or overridden.
 
-**Next action:** Owner reviews those two new decisions and the coordinated
+**Next action:** Owner reviews the remaining delivery mechanism and coordinated
 cutover; keep all PRs DRAFT/NO-GO until the form/setup flow, native concurrency
 and isolated real-provider integration are verified under separate authorization.
 SQL files are review artifacts only, not permission to run Cloud migrations.
@@ -180,3 +187,32 @@ https://supabase.com/docs/reference/javascript/auth-updateuser
 
 No merge, deploy, publish, SQL Cloud, DEMO, feature flags, finance rules, global
 design, account resets or Lovable. Codex implemented all code in this candidate.
+
+## ID revision checkpoint — decision 6862623040
+
+`node scripts/secure-employee-id-tests.cjs` PASS, isolated PostgreSQL/PGlite 0.3.14:
+official formatter 1/2/10/100/999/1000/10000; first 001; historic 002 collision
+skipped; replay/mismatch does not issue a new ID; cancelled/removed reservation
+does not rewind the cursor; different-year ledger entries do not reset the global
+sequence (generator definition has no date/year reset). Local forward-only cursor
+advance checks 999 -> 1000 -> 1001. Owner cannot call sequence/formatter directly,
+type manual employeeId in enrollment, or edit existing employee IDs. Real lifecycle
+calls ACTIVATE/SUSPEND/REACTIVATE/ENDED and a position change keep the same ID and
+employee record. Historic employees/cash rows remain unchanged. Delivery approval
+is still null; no email/SMTP approval is inferred from the ID decision.
+
+No generation of new account on reactivation. Sequence/request reservations prevent
+reuse of newly issued IDs even after cancellation/deactivation; application roles
+cannot reset the sequence. **Historical limitation:** deleted codes that predate
+this generator and have no surviving employee row or archive cannot be discovered
+or reconstructed. No claim of recovering those lost numbers; review any available
+archive before eventual activation. Never reset sequence or purge issuance records.
+
+Only ID tests are rerun for this revision. CI scopes formatter/comment-only changes
+to the new ID regression, skipping unrelated service, profile/RLS, tsc and build
+PASS suites. Full integration test expectations are updated to the real formatter
+for future affected runs, with no test-only formatter replacement remaining there.
+NOT REACHED: native concurrent PostgreSQL sessions, live Cloud/browser. No psql/
+initdb/pg_ctl available on PATH in the prior environment. Sequential fixtures and
+locks/unique constraints are not a concurrent runtime proof. SQL remains pending;
+PR67/PR68 unchanged; no merge/deploy/Cloud SQL/DEMO/flags/Lovable.
