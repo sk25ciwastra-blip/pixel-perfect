@@ -1,0 +1,31 @@
+name: Assist active cash session verification
+on:
+  push:
+    branches:
+      - feat/profile-assist-active-session-20261113
+  pull_request:
+    paths:
+      - src/lib/sesi-kas.ts
+      - src/lib/select-cash-session.ts
+      - src/components/kerangka.tsx
+      - scripts/assist-cash-session-tests.cjs
+      - .github/workflows/assist-cash-session-validation.yml
+permissions:
+  contents: read
+jobs:
+  scoped-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bunx tsc --noEmit
+      - name: Verify cash session selection
+        run: node --experimental-strip-types scripts/assist-cash-session-tests.cjs
+      - name: Production build (no deploy)
+        run: bun run build

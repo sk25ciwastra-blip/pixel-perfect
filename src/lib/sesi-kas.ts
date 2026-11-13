@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTable } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
+import { selectCashSession } from '@/lib/select-cash-session';
 
 const ACTIVE_SESSION_KEY = 'baturaden25.active_finance_session_id';
+export const SESI_KAS_CONTEXT_CHANGED = 'baturaden25:finance-session-context-changed';
 
 export function setSesiKasKonteks(sessionId: string | null) {
   if (typeof window === 'undefined') return;
@@ -12,6 +14,8 @@ export function setSesiKasKonteks(sessionId: string | null) {
   } else {
     window.sessionStorage.removeItem(ACTIVE_SESSION_KEY);
   }
+  // sessionStorage's native storage event does not fire in this tab.
+  window.dispatchEvent(new Event(SESI_KAS_CONTEXT_CHANGED));
 }
 
 function bacaSesiKasKonteks() {
@@ -34,7 +38,11 @@ export function useSesiKasKonteks() {
   useEffect(() => {
     const handleStorage = () => setAssistedSessionId(bacaSesiKasKonteks());
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    window.addEventListener(SESI_KAS_CONTEXT_CHANGED, handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener(SESI_KAS_CONTEXT_CHANGED, handleStorage);
+    };
   }, []);
 
   const openSessions = useMemo(
@@ -48,22 +56,32 @@ export function useSesiKasKonteks() {
   const assistedSession = isSessionHelper
     ? openSessions.find((session) => session.id === assistedSessionId)
     : undefined;
-  const onlyOpenSession = isSessionHelper && openSessions.length === 1
-    ? openSessions[0]
-    : undefined;
-  const trainingSession = training.is_training && training.session_id
-    ? openSessions.find((session) => session.id === training.session_id)
-    : undefined;
-  const activeSession = training.is_training
-    ? trainingSession
-    : ownSession ?? assistedSession ?? onlyOpenSession;
+
+  // Explicit assistance wins over an Owner/Supervisor's own cash session.
+  // If a selected session has closed, never silently shift the cash drawer
+  // to another session until the user clears or reselects the context.
+  const activeSession = selectCashSession(
+    openSessions,
+    userId,
+    isSessionHelper,
+    assistedSessionId,
+    training.session_id,
+    training.is_training,
+  );
   const needsAssistedContext = training.is_training
-    ? !trainingSession
-    : isSessionHelper && !ownSession && openSessions.length > 1 && !assistedSession;
+    ? !activeSession
+    : isSessionHelper && (
+      (Boolean(assistedSessionId) && !assistedSession) ||
+      (!assistedSessionId && !ownSession && openSessions.length > 1)
+    );
 
   return {
     sessionId: activeSession?.id ?? '',
     activeSession,
+    openSessions,
+    ownSession,
+    assistedSessionId,
+    assistedSession,
     isSessionHelper,
     isTraining: training.is_training,
     trainingStatus: training.status,
