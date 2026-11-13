@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
@@ -13,6 +13,8 @@ import { labelStatusKamar, type StatusKamar } from "@/lib/data-contoh";
 import { useTable, type Room } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
 import { usePeran } from "@/lib/peran";
+import { roomOvertimeIndicator } from "@/lib/room-overtime";
+import { useActiveRoomStays } from "@/lib/use-active-room-stays";
 
 export const Route = createFileRoute("/kamar")({
   head: () => meta("Status Kamar", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
@@ -88,11 +90,19 @@ function formatIssueDetails(checklist: ChecklistRow) {
 function HalamanKamar() {
   const { peran, posisiKode } = usePeran();
   const queryClient = useQueryClient();
+  const [sekarang, setSekarang] = useState(() => Date.now());
+  useEffect(() => {
+    const update = () => setSekarang(Date.now());
+    const timer = window.setInterval(update, 1000);
+    window.addEventListener("focus", update);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", update); };
+  }, []);
   const canCheckIn = bolehCheckIn(posisiKode);
   const [checkInOpen, setCheckInOpen] = useState(false);
   const rooms = useTable("rooms");
   const types = useTable("room_types");
   const transactions = useTable("transactions");
+  const activeStays = useActiveRoomStays();
   const history = useTable("housekeeping_history");
   const checklists = useTable("housekeeping_checklists");
   const historyRows = history.rows;
@@ -236,13 +246,17 @@ function HalamanKamar() {
                   const roomType = types.rows.find((type) => type.id === room.room_type_id);
                   const transaction =
                     status === "terisi"
-                      ? transactions.rows
+                      ? activeStays.rows
                           .filter((item) => item.room_id === room.id && item.status === "check_in")
                           .sort(
                             (a, b) =>
                               new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
                           )[0]
                       : undefined;
+                  const transaksiOvertime = activeStays.rows.find((item) =>
+                    item.room_id === room.id && roomOvertimeIndicator(item, sekarang).needsAction,
+                  );
+                  const overtimeDataUnknown = activeStays.loading || Boolean(activeStays.error);
                   const housekeepingJob =
                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
                   const checklist = latestChecklist.get(room.id);
@@ -251,7 +265,7 @@ function HalamanKamar() {
                   return (
                     <div
                       key={room.id}
-                      className="panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 hover:border-gold/50"
+                      className={`panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 ${!overtimeDataUnknown && transaksiOvertime ? "border-red-500/70 hover:border-red-500" : "hover:border-gold/50"}`}
                     >
                       <span className={`absolute inset-y-0 left-0 w-1 ${latar[status]}`} aria-hidden="true" />
                       <div className="flex items-start justify-between gap-3">
@@ -266,9 +280,18 @@ function HalamanKamar() {
                       <p className="mt-2 truncate text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold-light/90">
                         {roomType?.name ?? "Tipe kamar belum tersedia"}
                       </p>
-                      <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${teks[status]}`}>
-                        <span className={`size-1.5 rounded-full ${latar[status]}`} />{labelStatusKamar[status]}
+                      <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${!overtimeDataUnknown && transaksiOvertime ? "text-red-400" : teks[status]}`}>
+                        <span className={`size-1.5 rounded-full ${!overtimeDataUnknown && transaksiOvertime ? "bg-red-500" : latar[status]}`} />
+                        {!overtimeDataUnknown && transaksiOvertime ? "TERISI · PERLU TINDAKAN" : labelStatusKamar[status]}
                       </span>
+                      {overtimeDataUnknown && (
+                        <span className="mt-2 text-xs text-gold-light" role="status">Data overtime belum terverifikasi</span>
+                      )}
+                      {!overtimeDataUnknown && transaksiOvertime && (
+                        <button type="button" className="mt-2 rounded-md border border-red-500/50 px-2 py-1 text-left text-xs font-bold text-red-400" onClick={() => setDetailTransactionId(transaksiOvertime.id)}>
+                          PERLU TINDAKAN · Overtime &gt;120 menit · Lihat transaksi
+                        </button>
+                      )}
                       <div className="mt-3 h-px bg-gradient-to-r from-gold/25 to-transparent" />
 
                       {transaction && (
@@ -359,7 +382,7 @@ function HalamanKamar() {
       </div>
 
       {checkInOpen && canCheckIn && <FormulirPemesanan mode="check_in" onClose={() => setCheckInOpen(false)} onSaved={async () => {
-        await Promise.all([rooms.refresh(), transactions.refresh(), queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }), queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] })]);
+        await Promise.all([rooms.refresh(), transactions.refresh(), activeStays.refresh(), queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }), queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] })]);
       }} />}
 
       {open && (
