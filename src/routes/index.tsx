@@ -760,13 +760,13 @@ function Ringkasan() {
                   </div>
                 </section>
               )}
-              {!activeStays.loading && !activeStays.error && statusKamarBaris.length === 0 ? (
+              {!activeStays.loading && !activeStays.error && statusKamarBaris.length === 0 && transaksiPerluTindakan.length === 0 ? (
                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
                   <BedDouble className="size-8 text-gold/60" strokeWidth={1.4} />
                   <p className="mt-3 font-serif text-lg">Tidak ada kamar terisi atau Booking hari ini</p>
                   <p className="mt-1 text-xs text-muted-foreground">Kamar dan Booking akan muncul di sini secara realtime.</p>
                 </div>
-              ) : !activeStays.loading && !activeStays.error ? (
+              ) : !activeStays.loading && !activeStays.error && statusKamarBaris.length > 0 ? (
                 <div className="mx-4 mb-4 max-h-[400px] min-w-0 overflow-auto rounded-lg tabel-krem shadow-lg">
                   <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-xs font-semibold [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
