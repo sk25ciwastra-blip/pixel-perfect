@@ -265,7 +265,7 @@ function HalamanKamar() {
                   return (
                     <div
                       key={room.id}
-                      className={`panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 ${transaksiOvertime ? "border-red-500/70 hover:border-red-500" : "hover:border-gold/50"}`}
+                      className={`panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 ${!overtimeDataUnknown && transaksiOvertime ? "border-red-500/70 hover:border-red-500" : "hover:border-gold/50"}`}
                     >
                       <span className={`absolute inset-y-0 left-0 w-1 ${latar[status]}`} aria-hidden="true" />
                       <div className="flex items-start justify-between gap-3">
