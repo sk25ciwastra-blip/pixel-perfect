@@ -41,6 +41,7 @@ import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
 import { roomOvertimeIndicator } from "@/lib/room-overtime";
+import { useActiveRoomStays } from "@/lib/use-active-room-stays";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 
 export const Route = createFileRoute("/")({
@@ -194,6 +195,7 @@ function Ringkasan() {
 
   const rooms = useTable("rooms");
   const transactions = useTable("transactions");
+  const activeStays = useActiveRoomStays();
   const payments = useTable("payments");
   const guests = useTable("guests");
   const roomTypes = useTable("room_types");
@@ -270,7 +272,7 @@ function Ringkasan() {
   }, [bookingAktif, sekarang]);
 
   const kamarTerisi = useMemo(() => {
-    return transaksi
+    return activeStays.rows
       .filter((item) => item.status === "check_in")
       .map((item) => {
         const room = kamar.find(
@@ -301,11 +303,11 @@ function Ringkasan() {
           item.room.status === "occupied",
       )
       .sort((a, b) => a.endsAtMs - b.endsAtMs);
-  }, [transaksi, kamar, guests.rows, roomTypes.rows]);
+  }, [activeStays.rows, kamar, guests.rows, roomTypes.rows]);
 
   // Overtime >120 menit merupakan kasus transaksi, bukan status Housekeeping.
   // Gunakan seluruh transaksi aktif yang terlihat, jangan hanya kartu room.status='occupied'.
-  const transaksiPerluTindakan = useMemo(() => transaksi
+  const transaksiPerluTindakan = useMemo(() => activeStays.rows
     .filter((item) => roomOvertimeIndicator(item, sekarang).needsAction)
     .map((item) => ({
       transaksi: item,
@@ -313,7 +315,7 @@ function Ringkasan() {
       guest: guests.rows.find((guestItem) => guestItem.id === item.guest_id),
     }))
     .sort((a, b) => Date.parse(a.transaksi.ends_at ?? "") - Date.parse(b.transaksi.ends_at ?? "")),
-  [transaksi, kamar, guests.rows, sekarang]);
+  [activeStays.rows, kamar, guests.rows, sekarang]);
 
   const kamarTerisiNormal = useMemo(() => kamarTerisi.filter((item) =>
     !roomOvertimeIndicator(item.transaksi, sekarang).excludeFromRoomStatus,
@@ -344,7 +346,7 @@ function Ringkasan() {
   }
 
   function checkoutDisabledReason(
-    item: (typeof transaksi)[number],
+    item: (typeof activeStays.rows)[number],
     room: (typeof kamar)[number] | undefined,
   ) {
     if (!checkoutRoleAllowed) return "Role ini tidak memiliki akses Check-out.";
@@ -365,13 +367,13 @@ function Ringkasan() {
   }
 
   async function checkOut(itemId: string) {
-    const item = transactions.rows.find((transaction) => transaction.id === itemId);
+    const item = activeStays.rows.find((transaction) => transaction.id === itemId);
     const room = kamar.find((roomItem) => roomItem.id === item?.room_id);
     const guest = guests.rows.find((guestItem) => guestItem.id === item?.guest_id);
 
     if (!item || !room || item.status !== "check_in" || room.status !== "occupied") {
       setDashboardMessage("Check-out gagal: transaksi atau status kamar sudah berubah.");
-      await Promise.all([transactions.refresh(), rooms.refresh()]);
+      await Promise.all([transactions.refresh(), activeStays.refresh(), rooms.refresh()]);
       return;
     }
 
@@ -405,7 +407,7 @@ function Ringkasan() {
         return;
       }
 
-      await Promise.all([transactions.refresh(), rooms.refresh(), payments.refresh()]);
+      await Promise.all([transactions.refresh(), activeStays.refresh(), rooms.refresh(), payments.refresh()]);
       setDashboardMessage(`Check-out ${item.transaction_number} berhasil. Kamar masuk alur Housekeeping.`);
     } finally {
       setCheckingOutId(null);
@@ -614,7 +616,7 @@ function Ringkasan() {
 
   const [modal, setModal] = useState<"check_in" | "booking" | "pengeluaran" | null>(null);
   const refreshSemua = async () => {
-    await Promise.all([transactions.refresh(), rooms.refresh(), payments.refresh(), guests.refresh()]);
+    await Promise.all([transactions.refresh(), activeStays.refresh(), rooms.refresh(), payments.refresh(), guests.refresh()]);
   };
 
   const bolehAksiTransaksi = !["housekeeping", "investor", "inspector"].includes(posisiKode ?? "");
@@ -733,7 +735,12 @@ function Ringkasan() {
                   {bookingPeringatan.map(({ item, status }) => <p key={item.id}><span className={`font-bold ${status?.kelas}`}>{status?.label}</span> · {guests.rows.find((guest) => guest.id === item.guest_id)?.full_name ?? "Tamu"} · {item.transaction_number}</p>)}
                 </div>
               )}
-              {transaksiPerluTindakan.length > 0 && (
+              {(activeStays.loading || activeStays.error) && (
+                <p role="status" className="mx-4 mb-3 rounded-lg border border-gold/30 px-3 py-2 text-xs text-gold-light">
+                  {activeStays.error ? `Data hunian aktif belum lengkap: ${activeStays.error}` : "Memverifikasi data hunian aktif..."}
+                </p>
+              )}
+              {!activeStays.loading && !activeStays.error && transaksiPerluTindakan.length > 0 && (
                 <section aria-label="Transaksi overtime perlu tindakan" className="mx-4 mb-3 rounded-lg border border-red-500/50 p-3" role="region">
                   <h3 className="text-sm font-bold text-red-400">PERLU TINDAKAN · Overtime lebih dari 120 menit ({transaksiPerluTindakan.length})</h3>
                   <p className="mt-1 text-xs text-muted-foreground">Transaksi masih aktif; kamar tidak otomatis tersedia. Selesaikan melalui detail atau Check-out yang berizin.</p>
@@ -753,13 +760,13 @@ function Ringkasan() {
                   </div>
                 </section>
               )}
-              {statusKamarBaris.length === 0 ? (
+              {!activeStays.loading && !activeStays.error && statusKamarBaris.length === 0 ? (
                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
                   <BedDouble className="size-8 text-gold/60" strokeWidth={1.4} />
                   <p className="mt-3 font-serif text-lg">Tidak ada kamar terisi atau Booking hari ini</p>
                   <p className="mt-1 text-xs text-muted-foreground">Kamar dan Booking akan muncul di sini secara realtime.</p>
                 </div>
-              ) : (
+              ) : !activeStays.loading && !activeStays.error ? (
                 <div className="mx-4 mb-4 max-h-[400px] min-w-0 overflow-auto rounded-lg tabel-krem shadow-lg">
                   <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-xs font-semibold [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
@@ -861,7 +868,7 @@ function Ringkasan() {
                     </tbody>
                   </table>
                 </div>
-              )}
+              ) : null}
               <div aria-label="Indikator status kamar" className="mt-auto flex flex-wrap items-center justify-center gap-1.5 px-4 pb-3 pt-1">
                 {indikatorStatus.map((status) => (
                   <span
