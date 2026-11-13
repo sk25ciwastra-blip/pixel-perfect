@@ -1,12 +1,14 @@
-name: PR63 focused verification
+name: Overtime and Booking WIB combined verification
 
 on:
   push:
     branches:
-      - feat/overtime-dashboard-kamar-20261113
+      - test/integrasi-overtime-booking-wib-20261113
   pull_request:
     paths:
       - src/routes/index.tsx
+      - src/lib/booking-arrival-wib.ts
+      - scripts/booking-arrival-wib-tests.cjs
       - src/routes/kamar.tsx
       - src/lib/room-overtime.ts
       - src/lib/room-overtime-view.ts
@@ -39,5 +41,7 @@ jobs:
         run: node --experimental-strip-types scripts/room-overtime-view-tests.cjs
       - name: Test booking and overtime view coexistence
         run: node --experimental-strip-types scripts/room-overtime-view-integration-tests.cjs
+      - name: Test WIB Booking arrival
+        run: node --experimental-strip-types scripts/booking-arrival-wib-tests.cjs
       - name: Build application (no deploy)
         run: bun run build
