@@ -5,6 +5,8 @@ import {
   IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
+import { useSesiKasKonteks, setSesiKasKonteks } from "@/lib/sesi-kas";
+import { useTable } from "@/lib/data-live";
 import { LatarHeader } from "@/components/latar-header";
 import gedungSate from "@/assets/gedung-sate-malam.jpg";
 import logoBaturaden from "@/assets/logo-baturaden-25.png.asset.json";
@@ -277,7 +279,10 @@ export function Kerangka({
 }
 
 export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
-  const { nama, posisi, keluar } = usePeran();
+  const { nama, posisi, keluar, training } = usePeran();
+  const kas = useSesiKasKonteks();
+  const daftarPetugas = useTable("employees", kas.isSessionHelper && !training.is_training);
+  const bolehBantu = kas.isSessionHelper && !training.is_training;
   const [buka, setBuka] = useState(false);
   const [yakin, setYakin] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -306,6 +311,55 @@ export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
           <p className="truncate text-sm font-semibold">{nama || "Pengguna"}</p>
           <p className="truncate text-xs text-gold">{posisi || "Pengguna"}</p>
           <div className="my-3 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
+          {bolehBantu && !yakin && (
+            <div className="mb-3 space-y-2 border-b border-gold/20 pb-3">
+              <p className="text-xs font-bold text-gold-light">Bantu Sesi Aktif</p>
+              <p className="text-[11px] text-muted-foreground">
+                Operator tetap akun Anda. Omzet dan laci kas mengikuti pemilik sesi yang dipilih.
+              </p>
+              {kas.loading ? (
+                <p role="status" className="text-xs text-muted-foreground">Memuat sesi kas...</p>
+              ) : kas.error ? (
+                <p role="alert" className="text-xs text-bahaya-foreground">Data sesi tidak dapat diverifikasi: {kas.error}</p>
+              ) : (
+                <>
+                  {kas.assistedSessionId && !kas.assistedSession && (
+                    <p role="alert" className="text-xs text-bahaya-foreground">Sesi bantuan tidak lagi OPEN. Pilih sesi lain atau keluar dari mode bantu.</p>
+                  )}
+                  <div className="max-h-40 space-y-1 overflow-y-auto">
+                    {kas.openSessions.filter((session) => session.id !== kas.ownSession?.id).map((session) => {
+                      const petugas = daftarPetugas.rows.find((employee) => employee.user_id === session.opened_by);
+                      const dipilih = kas.assistedSessionId === session.id;
+                      return (
+                        <button
+                          key={session.id}
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={dipilih}
+                          className={`w-full rounded-md border px-2 py-1.5 text-left text-xs transition ${dipilih ? "border-gold text-gold-light" : "border-border hover:bg-gold/10"}`}
+                          onClick={() => { setSesiKasKonteks(session.id); setBuka(false); }}
+                        >
+                          <span className="block font-semibold">{petugas?.name ?? `Pemilik ID ${session.opened_by.slice(0, 8)}…`}</span>
+                          <span className="text-[10px] text-muted-foreground">Sesi OPEN · {session.operational_date} {dipilih ? "· DIPILIH" : ""}</span>
+                        </button>
+                      );
+                    })}
+                    {kas.openSessions.filter((session) => session.id !== kas.ownSession?.id).length === 0 && (
+                      <p className="text-xs text-muted-foreground">Belum ada sesi petugas lain yang OPEN.</p>
+                    )}
+                  </div>
+                  {kas.assistedSessionId && (
+                    <button type="button" role="menuitem" className="w-full rounded-md border border-gold/30 px-2 py-1.5 text-left text-xs font-semibold text-gold-light hover:bg-gold/10" onClick={() => { setSesiKasKonteks(null); setBuka(false); }}>
+                      Keluar dari Bantu Sesi Aktif
+                    </button>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    {kas.assistedSession ? "Mode bantuan aktif" : kas.ownSession ? "Menggunakan sesi kas sendiri" : kas.activeSession ? "Menggunakan sesi OPEN yang tersedia" : "Tidak ada sesi kas terpilih"}
+                  </p>
+                </>
+              )}
+            </div>
+          )}
           {yakin ? (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Yakin ingin keluar dari aplikasi?</p>
