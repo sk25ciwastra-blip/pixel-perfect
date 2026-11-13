@@ -1,0 +1,30 @@
+name: Private employee profile foundation validation
+on:
+  push:
+    branches:
+      - feat/private-employee-profile-foundation-20261113
+  pull_request:
+    paths:
+      - src/lib/employee-private-profile.ts
+      - scripts/employee-private-profile-tests.cjs
+      - supabase/pending/20261113233800_private_employee_profiles.sql
+      - .github/workflows/employee-private-profile-validation.yml
+permissions:
+  contents: read
+jobs:
+  scoped-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Check TypeScript
+        run: bunx tsc --noEmit
+      - name: Test employee profile contract
+        run: node --experimental-strip-types scripts/employee-private-profile-tests.cjs
+      - name: Build without deploy
+        run: bun run build
