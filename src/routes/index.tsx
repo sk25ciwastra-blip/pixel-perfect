@@ -506,14 +506,14 @@ function Ringkasan() {
       }
     }
     return {
-      terisi: statusKamarBaris.filter((row) => row.terisi).length,
+      terisi: activeStays.loading || activeStays.error ? null : statusKamarBaris.filter((row) => row.terisi).length,
       booking: bookingHariIni.length,
       persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
       terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in ?? "", item.scheduled_check_out ?? "", sekarang)?.status === "late").length,
       perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
-      overtime: transaksiPerluTindakan.length,
+      overtime: activeStays.loading || activeStays.error ? null : transaksiPerluTindakan.length,
     };
-  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris, transaksiPerluTindakan]);
+  }, [activeStays.loading, activeStays.error, bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris, transaksiPerluTindakan]);
 
   const indikatorStatus = [
     { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
