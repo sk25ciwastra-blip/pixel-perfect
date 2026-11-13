@@ -14,6 +14,7 @@ import { useTable, type Room } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
 import { usePeran } from "@/lib/peran";
 import { roomOvertimeIndicator } from "@/lib/room-overtime";
+import { useActiveRoomStays } from "@/lib/use-active-room-stays";
 
 export const Route = createFileRoute("/kamar")({
   head: () => meta("Status Kamar", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
@@ -101,6 +102,7 @@ function HalamanKamar() {
   const rooms = useTable("rooms");
   const types = useTable("room_types");
   const transactions = useTable("transactions");
+  const activeStays = useActiveRoomStays();
   const history = useTable("housekeeping_history");
   const checklists = useTable("housekeeping_checklists");
   const historyRows = history.rows;
@@ -244,16 +246,17 @@ function HalamanKamar() {
                   const roomType = types.rows.find((type) => type.id === room.room_type_id);
                   const transaction =
                     status === "terisi"
-                      ? transactions.rows
+                      ? activeStays.rows
                           .filter((item) => item.room_id === room.id && item.status === "check_in")
                           .sort(
                             (a, b) =>
                               new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
                           )[0]
                       : undefined;
-                  const transaksiOvertime = transactions.rows.find((item) =>
+                  const transaksiOvertime = activeStays.rows.find((item) =>
                     item.room_id === room.id && roomOvertimeIndicator(item, sekarang).needsAction,
                   );
+                  const overtimeDataUnknown = activeStays.loading || Boolean(activeStays.error);
                   const housekeepingJob =
                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
                   const checklist = latestChecklist.get(room.id);
@@ -280,7 +283,10 @@ function HalamanKamar() {
                       <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${teks[status]}`}>
                         <span className={`size-1.5 rounded-full ${latar[status]}`} />{labelStatusKamar[status]}
                       </span>
-                      {transaksiOvertime && (
+                      {overtimeDataUnknown && (
+                        <span className="mt-2 text-xs text-gold-light" role="status">Data overtime belum terverifikasi</span>
+                      )}
+                      {!overtimeDataUnknown && transaksiOvertime && (
                         <button type="button" className="mt-2 rounded-md border border-red-500/50 px-2 py-1 text-left text-xs font-bold text-red-400" onClick={() => setDetailTransactionId(transaksiOvertime.id)}>
                           PERLU TINDAKAN · Overtime &gt;120 menit · Lihat transaksi
                         </button>
@@ -375,7 +381,7 @@ function HalamanKamar() {
       </div>
 
       {checkInOpen && canCheckIn && <FormulirPemesanan mode="check_in" onClose={() => setCheckInOpen(false)} onSaved={async () => {
-        await Promise.all([rooms.refresh(), transactions.refresh(), queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }), queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] })]);
+        await Promise.all([rooms.refresh(), transactions.refresh(), activeStays.refresh(), queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }), queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] })]);
       }} />}
 
       {open && (
