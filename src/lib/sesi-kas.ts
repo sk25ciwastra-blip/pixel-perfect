@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTable } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
+import { selectCashSession } from '@/lib/select-cash-session';
 
 const ACTIVE_SESSION_KEY = 'baturaden25.active_finance_session_id';
 export const SESI_KAS_CONTEXT_CHANGED = 'baturaden25:finance-session-context-changed';
@@ -55,20 +56,18 @@ export function useSesiKasKonteks() {
   const assistedSession = isSessionHelper
     ? openSessions.find((session) => session.id === assistedSessionId)
     : undefined;
-  const onlyOpenSession = isSessionHelper && openSessions.length === 1
-    ? openSessions[0]
-    : undefined;
-  const trainingSession = training.is_training && training.session_id
-    ? openSessions.find((session) => session.id === training.session_id)
-    : undefined;
+
   // Explicit assistance wins over an Owner/Supervisor's own cash session.
   // If a selected session has closed, never silently shift the cash drawer
   // to another session until the user clears or reselects the context.
-  const activeSession = training.is_training
-    ? trainingSession
-    : assistedSessionId && isSessionHelper
-      ? assistedSession
-      : ownSession ?? assistedSession ?? onlyOpenSession;
+  const activeSession = selectCashSession(
+    openSessions,
+    userId,
+    isSessionHelper,
+    assistedSessionId,
+    training.session_id,
+    training.is_training,
+  );
   const needsAssistedContext = training.is_training
     ? !trainingSession
     : isSessionHelper && (
