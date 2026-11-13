@@ -62,7 +62,7 @@ const sql=fs.readFileSync('supabase/pending/20261113174830_secure_employee_provi
  assert.equal(JSON.stringify((await db.query('SELECT * FROM employees WHERE id<>$1 ORDER BY id',[employee])).rows),legacy);
  assert.equal(JSON.stringify((await db.query('SELECT * FROM finance_cash_sessions')).rows),cash);
  const service=fs.readFileSync('src/lib/employee-provisioning.server.ts','utf8');
- assert.match(service,/approvedEmployeeDelivery\(\)[^{]*\{ return null; \}/);
+ assert.match(service,/loadEmployeeEmailApproval/); // missing/unverified config stays blocked; tested by email contract suite
  const contract=fs.readFileSync('src/lib/employee-enrollment.ts','utf8');
  assert.match(contract,/strictObject\(input,\['requestId','name','position','joinDate','identity'\]\)/);
  console.log('PASS official B25EMP 1/2/10/100/999/1000/10000; initial 001, historic collision, replay/mismatch, cancellation/archive non-reuse, date-independent global increment, readonly/permanent across position/lifecycle, unchanged legacy/cash, delivery still blocked');

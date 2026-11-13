@@ -1,10 +1,13 @@
 import type { EmployeeEnrollment } from './employee-enrollment';
+import { isVerifiedEmployeeEmailApproval, loadEmployeeEmailApproval, type EmailDeliveryApproval } from './employee-email-approval.server';
 export class EnrollmentError extends Error { constructor(readonly code: string) { super(code); } }
 export type EnrollmentState = {state:string;acquired?:boolean;auth_user_id:string|null;employee_id:string|null;generated_identifier:string;delivery_state:string};
-export type ApprovedDelivery = {redirectTo:string;fingerprintKey:Uint8Array};
+export type ApprovedDelivery = EmailDeliveryApproval;
 // No feature flag/config mutation. ID format is approved (Issue61/6862623040).
-// Delivery still needs Owner decision and verification before returning approval.
-export function approvedEmployeeDelivery(): ApprovedDelivery | null { return null; }
+// EMAIL is approved conceptually (6863917799); real config/evidence is not approved.
+export async function approvedEmployeeDelivery(): Promise<ApprovedDelivery|null> {
+  const r=await loadEmployeeEmailApproval();return r.state==='VERIFIED'?r.approval:null;
+}
 export interface ProvisioningPorts {
   owner():Promise<boolean>;
   begin(requestId:string,fingerprint:string):Promise<EnrollmentState>;
@@ -28,6 +31,7 @@ async function fingerprint(input:EmployeeEnrollment,key:Uint8Array) {
 export async function provisionEmployee(input:EmployeeEnrollment,ports:ProvisioningPorts,approval:ApprovedDelivery|null) {
   if(!await ports.owner()) throw new EnrollmentError('ACCESS_DENIED');
   if(!approval) throw new EnrollmentError('OWNER_DECISION_PENDING');
+  if(!isVerifiedEmployeeEmailApproval(approval))throw new EnrollmentError('APPROVAL_INVALID');
   const redirect=new URL(approval.redirectTo);
   if(redirect.protocol!=='https:' || redirect.username || redirect.password || redirect.search || redirect.hash) throw new EnrollmentError('APPROVAL_INVALID');
   let request:EnrollmentState;

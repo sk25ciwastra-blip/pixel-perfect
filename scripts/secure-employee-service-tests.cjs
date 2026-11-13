@@ -6,7 +6,8 @@ const media=require('../src/lib/employee-portrait.server.ts');
 const service=require('../src/lib/employee-services.server.ts');
 const id=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
 const request=()=>contracts.validateEmployeeEnrollment({requestId:id(20),name:'Fixture',position:'receptionist',joinDate:'2026-11-14',identity:{nik:'0'.repeat(16),phone:'0'.repeat(9),emergencyName:'Fixture',emergencyRelationship:'Fixture',emergencyPhone:'0'.repeat(9),birthPlace:'Fixture',birthDate:'2000-01-01',gender:'Fixture',address:'Fixture address',email:'fixture@example.invalid'}});
-const approval={redirectTo:'https://example.invalid/account/setup',fingerprintKey:crypto.getRandomValues(new Uint8Array(32))};
+// Verified synthetic email approval; no real server configuration or secret fixture.
+let approval;
 function ports(overrides={}){
  const calls=[];const state={state:'RESERVED',acquired:true,auth_user_id:null,employee_id:null,generated_identifier:'TEST-ONLY',delivery_state:'NOT_ATTEMPTED'};
  const p={owner:async()=>true,begin:async(_,fingerprint)=>{assert.match(fingerprint,/^[a-f0-9]{64}$/);return {...state};},createAuth:async(_,secret)=>{assert.ok(secret.length>=64);calls.push('create');return id(30);},attach:async()=>calls.push('attach'),finalize:async()=>{state.state='COMPLETED';state.employee_id=id(31);calls.push('finalize');return id(31);},cancel:async(_,done)=>{calls.push(done?'cancel-done':'cancel-fence');if(state.state!=='COMPLETED')state.state=done?'CANCELLED':'RECOVERY_REQUIRED';return {...state};},deleteCreatedAuth:async()=>calls.push('delete'),claimDelivery:async(_,outcome)=>{calls.push(outcome||'claim');return true;},sendSetup:async()=>calls.push('setup'),...overrides};
@@ -18,11 +19,12 @@ function png(){
  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),...chunks]);
 }
 (async()=>{
+ approval=(await require('./employee-email-test-fixture.cjs').signedFixture()).approval;
  const input=request();assert.equal(input.identity.nik,'0'.repeat(16));
  for(const extra of [{employeeId:'manual'},{password:'manual'},{actorId:id(1)},{role:'owner'},{active:true}])assert.throws(()=>contracts.validateEmployeeEnrollment({...input,...extra}));
  assert.throws(()=>contracts.validatePrivateIdentity({...input.identity,birthDate:'2026-02-30'}));
  const a=core.createInitialEmployeeSecret(),b=core.createInitialEmployeeSecret();assert.notEqual(a,b);assert.ok(a.length>=64);
- assert.equal(core.approvedEmployeeDelivery(),null);
+ assert.equal((await core.approvedEmployeeDelivery())===null,true);
  for(const role of ['Supervisor','Receptionist','Training','anon']){const {p,calls}=ports({owner:async()=>false});await assert.rejects(core.provisionEmployee(input,p,approval),/ACCESS_DENIED/);assert.deepEqual(calls,[]);}
  {const {p,calls}=ports();await assert.rejects(core.provisionEmployee(input,p,null),/OWNER_DECISION_PENDING/);assert.deepEqual(calls,[]);}
  {const {p,calls}=ports();const result=await core.provisionEmployee(input,p,approval);assert.deepEqual(calls,['create','attach','finalize','claim','setup','SENT']);assert.equal(result.delivery,'SENT');assert.equal(JSON.stringify(result).includes(input.identity.email),false);assert.equal(JSON.stringify(result).includes(input.identity.nik),false);}

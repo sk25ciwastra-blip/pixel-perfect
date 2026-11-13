@@ -11,6 +11,9 @@ permissions:
   contents: read
 jobs:
   focused:
+    # Stacked email-contract PR has its own affected-only workflow. Re-run the
+    # broader provisioning checks only when integrating toward main.
+    if: github.base_ref == 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

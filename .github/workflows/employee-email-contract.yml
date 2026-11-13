@@ -1,0 +1,41 @@
+name: Employee email security contract
+on:
+  pull_request:
+    paths:
+      - 'src/lib/employee-email*'
+      - src/lib/employee-provisioning.server.ts
+      - src/lib/employee-services.server.ts
+      - src/lib/employee-secure.functions.ts
+      - src/routes/reset-password.tsx
+      - src/routes/__root.tsx
+      - 'scripts/employee-email*'
+      - scripts/tsconfig.employee-email.json
+      - supabase/pending/20261113202919_employee_email_delivery_contract.sql
+      - .github/workflows/employee-email-contract.yml
+permissions:
+  contents: read
+jobs:
+  email-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch exact dependency snapshots, no merge
+        run: git fetch --no-tags origin b4a486c747202031e52a06a5cf9d67126fc83654 b9460e98e56ea0a58da828f2208a468e8cdb09af a8acfcf548bcba11111361f0b4e03ef82dd69c38
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bun install --frozen-lockfile
+      - name: Install isolated PostgreSQL fixture
+        run: npm install --prefix "$RUNNER_TEMP/employee-email-pg" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.3.14
+      - name: Email contract tests, fake transports only
+        run: node scripts/employee-email-contract-tests.cjs
+      - name: Pending email SQL isolated runtime
+        run: BTRD25_PGLITE_MODULE="$RUNNER_TEMP/employee-email-pg/node_modules/@electric-sql/pglite" node scripts/employee-email-sql-tests.cjs
+      - name: Email focused typecheck
+        run: bunx tsc --noEmit -p scripts/tsconfig.employee-email.json
+      - name: Build only
+        run: bun run build

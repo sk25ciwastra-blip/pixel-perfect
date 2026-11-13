@@ -1,0 +1,1 @@
+{"extends":"../tsconfig.json","compilerOptions":{"types":["vite/client","node"]},"include":["../src/lib/employee-email*.ts","../src/lib/employee-provisioning.server.ts","../src/lib/employee-services.server.ts","../src/lib/employee-secure.functions.ts","../src/routes/reset-password.tsx","../src/routes/__root.tsx","../src/routeTree.gen.ts"]}

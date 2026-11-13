@@ -3,6 +3,8 @@ import type { Database } from '@/integrations/supabase/types';
 import { EnrollmentError, type ProvisioningPorts, type EnrollmentState } from './employee-provisioning.server';
 import { verifyEmployeePortrait } from './employee-portrait.server';
 import type { validateOwnPasswordChange } from './employee-enrollment';
+import type { EmailDeliveryApproval } from './employee-email-approval.server';
+import { requestApprovedEmployeeSetupEmail } from './employee-email-delivery.server';
 type Caller=SupabaseClient<Database>;
 function enrollmentState(value:unknown):EnrollmentState {
   const r=value as EnrollmentState|null;
@@ -21,7 +23,7 @@ export async function employeeRpc(caller:Caller,name:string,args:Record<string,u
 export async function requirePrivateEmployeeOwner(caller:Caller) {
   if(await employeeRpc(caller,'can_manage_employee_private_profile')!==true)throw new EnrollmentError('ACCESS_DENIED');
 }
-export function createProvisioningPorts(caller:Caller,admin:Caller,actorId:string):ProvisioningPorts {
+export function createProvisioningPorts(caller:Caller,admin:Caller,actorId:string,approval?:EmailDeliveryApproval):ProvisioningPorts {
   return {
     owner:async()=>await employeeRpc(caller,'can_manage_employee_private_profile')===true,
     begin:async(requestId,fingerprint)=>{
@@ -49,8 +51,10 @@ export function createProvisioningPorts(caller:Caller,admin:Caller,actorId:strin
     },
     claimDelivery:async(requestId,outcome)=>await employeeRpc(caller,'claim_employee_setup_delivery',{_request_id:requestId,_outcome:outcome??null})===true,
     sendSetup:async(email,redirectTo)=>{
-      const {error}=await admin.auth.resetPasswordForEmail(email,{redirectTo});
-      if(error)throw new EnrollmentError('DELIVERY_UNKNOWN');
+      await requestApprovedEmployeeSetupEmail(approval,redirectTo,async()=>{
+        const {error}=await admin.auth.resetPasswordForEmail(email,{redirectTo});
+        if(error)throw new EnrollmentError('DELIVERY_UNKNOWN');
+      });
     },
   };
 }
