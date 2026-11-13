@@ -1,0 +1,21 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const ts = require('typescript');
+const mod={exports:{}};
+new Function('exports',ts.transpileModule(fs.readFileSync('src/lib/employee-lifecycle.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText)(mod.exports);
+const { validateEmployeeLifecycleChange: change, validateEmployeeLifecycleRead: read, validateEmployeeTrainingPreparation: prepare }=mod.exports;
+const employeeId='00000000-0000-0000-0000-000000000020';
+const request={employeeId,event:'SUSPEND',reason:'Fixture review',expectedVersion:0};
+assert.equal(change(request).event,'SUSPEND');
+for(const invalid of [null,[],{...request,actor:'spoof'},{...request,role:'owner'},{...request,password:'not-accepted'},{...request,expectedVersion:-1},{...request,expectedVersion:0.5},{...request,expectedVersion:Number.MAX_SAFE_INTEGER+1},{...request,reason:'x'},{...request,reason:'bad\u0000reason'},{...request,event:'PASSED'},{...request,effectiveOn:'2026-02-30'},{...request,effectiveOn:'2026-1-01'},{...request,joinDate:'2026-11-14'}]) assert.throws(()=>change(invalid));
+assert.equal(change({...request,event:'SET_JOIN_DATE',joinDate:'2024-02-29'}).joinDate,'2024-02-29');
+assert.throws(()=>change({...request,event:'SET_JOIN_DATE',joinDate:'2025-02-29'}));
+assert.throws(()=>prepare({employeeId,supervisorUserId:employeeId,startsOn:null,expectedVersion:0}));
+assert.equal(prepare({employeeId,supervisorUserId:employeeId,startsOn:'2026-11-14',expectedVersion:0}).startsOn,'2026-11-14');
+assert.equal(read({employeeId}).afterVersion,0);
+assert.throws(()=>read({employeeId,afterVersion:-1}));
+// The endpoint uses authenticated RPCs only; no credentials, admin client or logging.
+const endpoints=fs.readFileSync('src/lib/employee-lifecycle.functions.ts','utf8');
+assert.doesNotMatch(endpoints,/supabaseAdmin|console\.|method: 'GET'|_actor|service_role/);
+assert.equal((endpoints.match(/middleware\(\[requireSupabaseAuth\]\)/g)||[]).length,3);
+console.log('PASS lifecycle request contract: validation, actor/role injection denial, authenticated POST-only RPC boundaries');
