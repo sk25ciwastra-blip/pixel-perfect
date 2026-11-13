@@ -1,0 +1,64 @@
+name: Secure employee provisioning focused validation
+on:
+  pull_request:
+    paths:
+      - 'src/lib/employee*'
+      - 'scripts/secure-employee*'
+      - scripts/tsconfig.secure-employees.json
+      - supabase/pending/20261113174830_secure_employee_provisioning.sql
+      - .github/workflows/secure-employee-provisioning.yml
+permissions:
+  contents: read
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - name: Select affected revision checks
+        id: scope
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs'),cp=require('node:child_process');
+          const sql='supabase/pending/20261113174830_secure_employee_provisioning.sql';
+          const core='src/lib/employee-provisioning.server.ts';
+          const allowed=new Set([sql,core,'scripts/secure-employee-id-tests.cjs','scripts/secure-employee-sql-tests.cjs','DOKUMEN_PROYEK/SECURE_EMPLOYEE_PROVISIONING_2026-11-14.md','.github/workflows/secure-employee-provisioning.yml']);
+          const before=p=>cp.execFileSync('git',['show',`HEAD^:${p}`],{encoding:'utf8'});
+          const after=p=>fs.readFileSync(p,'utf8');
+          const lines=s=>s.replace(/\r/g,'').split('\n').filter(l=>!/^\s*(\/\/|--)/.test(l)).map(l=>l.trim()).filter(Boolean).join('\n');
+          const normalizeSql=s=>lines(s.replace(/(CREATE FUNCTION public\.format_new_employee_identifier\(_number bigint\)[\s\S]*?AS \$\$)[\s\S]*?(\$\$;)/,'$1 <FORMAT_BODY> $2').replace('Format ID menunggu keputusan Owner','Hasil generator ID tidak valid'));
+          const changed=cp.execFileSync('git',['diff','--name-only','HEAD^','HEAD'],{encoding:'utf8'}).trim().split('\n');
+          const onlyId=changed.every(p=>allowed.has(p)) && normalizeSql(before(sql))===normalizeSql(after(sql)) && lines(before(core))===lines(after(core));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`full=${!onlyId}\n`);
+          NODE
+      - name: Fetch exact reviewed dependency snapshots (no merge)
+        run: git fetch --no-tags origin b4a486c747202031e52a06a5cf9d67126fc83654 b9460e98e56ea0a58da828f2208a468e8cdb09af
+      - uses: oven-sh/setup-bun@v2
+        if: steps.scope.outputs.full == 'true'
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bun install --frozen-lockfile
+        if: steps.scope.outputs.full == 'true'
+      - name: Install pinned isolated PostgreSQL fixture
+        run: npm install --prefix "$RUNNER_TEMP/secure-employee-pg" --ignore-scripts --no-audit --no-fund --package-lock=false @electric-sql/pglite@0.3.14
+      - name: Focused service and recovery tests
+        if: steps.scope.outputs.full == 'true'
+        run: node scripts/secure-employee-service-tests.cjs
+      - name: Integrated pending SQL on isolated PostgreSQL
+        if: steps.scope.outputs.full == 'true'
+        run: BTRD25_PGLITE_MODULE="$RUNNER_TEMP/secure-employee-pg/node_modules/@electric-sql/pglite" node scripts/secure-employee-sql-tests.cjs
+      - name: Official employee ID regression
+        run: BTRD25_PGLITE_MODULE="$RUNNER_TEMP/secure-employee-pg/node_modules/@electric-sql/pglite" node scripts/secure-employee-id-tests.cjs
+      - name: Focused typecheck
+        if: steps.scope.outputs.full == 'true'
+        run: bunx tsc --noEmit -p scripts/tsconfig.secure-employees.json
+      - name: Build only, no deploy
+        if: steps.scope.outputs.full == 'true'
+        run: bun run build
