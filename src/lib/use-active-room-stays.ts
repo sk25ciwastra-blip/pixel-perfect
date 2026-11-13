@@ -53,7 +53,10 @@ export function useActiveRoomStays() {
       .on("postgres_changes", { event: "*", schema: "public", table: "transactions" }, () => {
         void refresh();
       })
-      .subscribe();
+      // Reconcile the gap between the initial read and Realtime subscription.
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") void refresh();
+      });
     const onFocus = () => { void refresh(); };
     window.addEventListener("focus", onFocus);
     return () => {
