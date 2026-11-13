@@ -12,6 +12,7 @@ on:
       - src/lib/active-stay-pages.ts
       - src/lib/use-active-room-stays.ts
       - scripts/active-stay-pages-tests.cjs
+      - scripts/room-overtime-view-tests.cjs
       - .github/workflows/pr63-validation.yml
 
 permissions:
@@ -32,5 +33,7 @@ jobs:
         run: bunx tsc --noEmit
       - name: Test active-stay pagination
         run: node --experimental-strip-types scripts/active-stay-pages-tests.cjs
+      - name: Test overtime view boundary
+        run: node --experimental-strip-types scripts/room-overtime-view-tests.cjs
       - name: Build application (no deploy)
         run: bun run build
