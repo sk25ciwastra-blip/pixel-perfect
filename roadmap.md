@@ -2,7 +2,7 @@
 
 ## UX Kamar — 14 November
 - [x] Legenda rapat mengikuti gambar; permukaan kartu aktif berizin menuju form Check-in, sedangkan ID transaksi sendiri membuka detail tanpa propagasi. Kamar belum tersedia tetap terlihat di form tanpa mengizinkan penyimpanan.
-- [ ] Periksa Kamar 06 membuka form dengan peringatan dan simpan nonaktif, Kamar 09 terpilih otomatis, serta ID transaksi tetap terpisah; tanpa perubahan data atau publish.
+- [x] Lima tes PASS; Kamar 06 membuka form dengan peringatan dan simpan nonaktif, memilih kamar tersedia menghapus peringatan, Kamar 09 terpilih otomatis, ID transaksi tetap terpisah; desktop/HP tanpa overflow dan build OK, tanpa perubahan data atau publish.
 - [ ] Pengaturan → Manajemen Kamar: belum ada alur existing; laporkan untuk Codex tanpa membuat fungsi administratif baru.
 
 ## Kamar — referensi Owner 14 November
