@@ -1,8 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
-## Housekeeping — toolbar et tableau uniquement
-- [ ] Séparer recherche et filtres, hauteur 38px, texte 13–14px/statut 12px, lignes 56px et colonne Aksi réservée; aucun autre panneau modifié.
-- [ ] Vérifier recherche/filtres/détail et captures Preview ordinateur/HP, tests existants, sans publication.
+## Housekeeping — toolbar dan tabel saja
+- [ ] Pisahkan pencarian/filter, tinggi 38px, teks 13–14px/status 12px, baris 56px dan kolom Aksi tetap terlihat; panel lainnya tetap.
+- [ ] Periksa pencarian/filter/detail dan screenshot Preview komputer/HP, tes existing, tanpa publikasi.
 
 ## Housekeeping — penyempurnaan visual akhir
 - [x] Perhalus header/tab, dimensi ringkasan dan ikon, tabel lebih terbaca, diagram kosong elegan, antrean dan kartu bawah; latar asli, data dan seluruh fungsi tetap. Garis stok tanpa data dihapus, titik status ganda dan tombol mata flat diperbaiki secara lokal.

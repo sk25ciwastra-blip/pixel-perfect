@@ -286,7 +286,7 @@ function Halaman() {
             <div className="hk-panel-header">
               <BedDouble className="hk-heading-icon" /><h2>{bagian === 'checklist' ? 'Tugas Petugas' : 'Status Kamar & Housekeeping'}</h2>
             </div>
-              <div className="hk-table-tools" role="toolbar" aria-label="Recherche et filtres des chambres">        <label className="hk-search">
+              <div className="hk-table-tools" role="toolbar" aria-label="Pencarian dan filter kamar">        <label className="hk-search">
           <Search className="pointer-events-none absolute left-4 top-3.5 size-5 text-muted-foreground" />
           <Input aria-label="Cari nomor kamar, TRX, atau HK" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nomor kamar, TRX, atau HK…" className="h-12 rounded-lg bg-card pl-12 text-base" />
         </label>
