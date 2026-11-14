@@ -210,8 +210,8 @@
 /* Final polish: stat alignment, solid donut, typography, actions, side panels */
 .halaman-housekeeping { font-family: var(--font-sans); }
 .hk-stat { align-items: center; }
-.hk-stat > div { align-self: center; padding-top: 0; display: flex; flex-direction: column; justify-content: center; min-height: 56px; }
-.hk-stat-label { font-size: 12px; line-height: 1.3; min-height: 2.6em; display: flex; align-items: flex-end; color: color-mix(in oklab,var(--foreground) 88%,transparent); }
+.hk-stat > div { align-self: center; padding-top: 0; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+.hk-stat-label { font-size: 12px; line-height: 1.3; min-height: 0; color: color-mix(in oklab,var(--foreground) 88%,transparent); }
 .hk-stat-value { margin-top: 4px; font-size: 29px; line-height: 1; font-variant-numeric: tabular-nums; }
 .hk-stat-icon { width: 44px; height: 44px; }
 .hk-stat-icon svg { width: 24px; height: 24px; }
@@ -257,3 +257,18 @@
 .hk-room-panel .hk-table td:last-child { background: oklch(0.965 0.012 85); }
 .hk-room-number { background: oklch(0.17 0.006 80); color: oklch(0.97 0.008 85); box-shadow: 0 2px 3px color-mix(in oklab, var(--hk-tinta) 24%, transparent); }
 .hk-table td .hk-eye-button { background: oklch(0.93 0.014 85); box-shadow: inset 0 1px 0 var(--kamar-popup-white), 0 2px 3px color-mix(in oklab, var(--hk-tinta) 16%, transparent); }
+
+/* Align the complete stat contents, retain Dashboard's text-weight hierarchy. */
+.hk-percent { top: 50%; bottom: auto; transform: translateY(-50%); }
+.hk-room-panel .hk-table td, .hk-room-panel .hk-table details { font-weight: 600; }
+.hk-room-panel .hk-table th,
+.hk-room-panel .hk-table td:nth-child(2),
+.hk-room-panel .hk-table td > span.inline-flex,
+.hk-room-panel .hk-table .hk-state { font-weight: 700; }
+
+@media (min-width: 1024px) {
+  .hk-layout { align-items: stretch; }
+  .hk-side { grid-template-rows: auto minmax(0,1fr); }
+  .hk-queue-panel { display: flex; flex-direction: column; }
+  .hk-queue-panel .hk-queue-link { margin-top: auto; }
+}
