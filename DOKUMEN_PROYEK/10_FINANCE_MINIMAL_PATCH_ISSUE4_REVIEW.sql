@@ -1,0 +1,226 @@
+-- FINANCE MINIMAL PATCH — ISSUE #4 — REVIEW ONLY
+-- STATUS: DO NOT EXECUTE
+-- This is a comment-only SQL patch manifest. It intentionally contains no
+-- executable DDL/DML/NOTIFY. Convert into an executable batch only after:
+-- (1) Owner confirms the published target ref,
+-- (2) current DB/Auth backup is verified and restorable,
+-- (3) Owner approves DP/commission values,
+-- (4) target migration ledger and schema preconditions pass.
+--
+-- Target evidence at preparation time:
+--   transactions = 9
+--   payments = 11
+--   employees = 7
+--   user_roles = 9
+--   finance_cash_sessions = absent
+--   finance_settings = absent
+--   drizzle.__drizzle_migrations latest id = 6
+--
+-- Source-of-truth candidates:
+--   supabase/migrations/20261015000000_finance_foundation.sql
+--   supabase/migrations/20261015000001_finance_150_booking_compatibility.sql
+--   supabase/migrations/20261015000002_finance_150_supervisor_alignment.sql
+--   supabase/migrations/20261015000003_booking_reference_read_privileges.sql
+--
+-- Do not replay the 46-file migration directory or copy staging wholesale.
+-- Do not include 20261006000010_correct_p4_prices.sql.
+
+------------------------------------------------------------------------------
+-- A. REQUIRED READ-ONLY PRECONDITIONS
+------------------------------------------------------------------------------
+-- Run DOKUMEN_PROYEK/09_FINANCE_SELECTIVE_PREFLIGHT_READONLY.sql first.
+-- Stop if any condition below is not evidenced:
+--   * runtime ref is confirmed to be the same Lovable database;
+--   * backup covers DB + Auth after current Owner/Supervisor accounts;
+--   * restore/retention capability is confirmed;
+--   * migration ledger is captured and reconciled;
+--   * existing rows and price/payment snapshots are exported;
+--   * public.user_roles, public.employees, public.transactions,
+--     public.payments, rooms, room_types, packages and operational_calendar
+--     are present with expected columns;
+--   * has_role, has_employee_position, is_receptionist,
+--     calculate_package_stay_times, calculate_scheduled_booking_times and
+--     get_operational_day_mode exist with compatible signatures.
+
+------------------------------------------------------------------------------
+-- B. MINIMAL SELECTIVE ORDER — EXISTING FILES, NOT REPLAYED HERE
+------------------------------------------------------------------------------
+-- B1. Finance foundation:
+--     20261015000000_finance_foundation.sql
+--     Review its 11 CREATE TABLE operations, payments/transactions ALTERs,
+--     triggers, policies, RPCs and grants against the target preflight.
+--
+-- B2. Finance compatibility:
+--     20261015000001_finance_150_booking_compatibility.sql
+--     Keep idempotency and payment/session compatibility, but HOLD its
+--     UPDATE public.finance_settings that sets minimum DP to 40% until
+--     Owner explicitly approves that value.
+--
+-- B3. Supervisor alignment:
+--     20261015000002_finance_150_supervisor_alignment.sql
+--     Use the targeted substitutions in section C below.
+--
+-- B4. Reference read privileges:
+--     20261015000003_booking_reference_read_privileges.sql
+--     Review grants/policies only after B1-B3 are compatible.
+--
+-- B5. Training, numbering and checkout migrations remain separate gates.
+--     They are not part of the minimum Buka Sesi patch.
+
+------------------------------------------------------------------------------
+-- C. TARGETED SQL CHANGES REQUIRED IN THE REVIEWED EXECUTABLE BATCH
+------------------------------------------------------------------------------
+-- C1. Explicit Supervisor operator helper
+--
+-- CREATE OR REPLACE FUNCTION public.finance_is_booking_operator(_user_id uuid)
+-- RETURNS boolean
+-- LANGUAGE sql
+-- STABLE
+-- SECURITY DEFINER
+-- SET search_path = public
+-- AS $function$
+--   SELECT public.has_role(_user_id, 'owner'::public.app_role)
+--       OR public.is_receptionist(_user_id)
+--       OR public.has_employee_position(
+--            _user_id,
+--            ARRAY['supervisor'::public.employee_position]
+--          );
+-- $function$;
+--
+-- REVOKE ALL ON FUNCTION public.finance_is_booking_operator(uuid)
+--   FROM PUBLIC, anon;
+-- GRANT EXECUTE ON FUNCTION public.finance_is_booking_operator(uuid)
+--   TO authenticated;
+--
+-- C2. create_reservation compatibility
+--
+-- The current target has the legacy signature:
+--   create_reservation(text, uuid, uuid, text, text, text, numeric, text,
+--                      text, timestamptz)
+--
+-- The published main code requires the Finance-compatible signature:
+--   create_reservation(text, uuid, uuid, text, text, text, numeric, text,
+--                      text, timestamptz, uuid, uuid)
+--
+-- Add the Finance-compatible function without silently deleting the legacy
+-- signature until callers are proven migrated. The Finance-compatible body
+-- must:
+--   * authorize with finance_is_booking_operator(auth.uid());
+--   * preserve official weekday/weekend price lookup;
+--   * preserve price_snapshot and existing transaction rows;
+--   * preserve existing payment rows;
+--   * write idempotency_key/session_id only after the columns/table exist;
+--   * keep direct transaction INSERT closed to Supervisor;
+--   * use SECURITY DEFINER with SET search_path = public;
+--   * grant EXECUTE only to authenticated.
+--
+-- Existing legacy callers must either remain supported by a wrapper or be
+-- migrated in a separately approved application release. Do not DROP the
+-- legacy function in the first compatibility batch.
+--
+-- C3. check_in_booking compatibility
+--
+-- Replace only the authorization gate of the existing function with:
+--
+--   IF NOT public.finance_is_booking_operator(auth.uid()) THEN
+--     RAISE EXCEPTION 'Akses ditolak';
+--   END IF;
+--
+-- Preserve all existing checks:
+--   * booking status;
+--   * scheduled date;
+--   * day_mode;
+--   * price_snapshot;
+--   * payment total equals price_snapshot;
+--   * active package;
+--   * ready room transition;
+--   * actual duration calculation.
+--
+-- Do not change P4 prices, package durations, or checkout calculations.
+--
+-- C4. transactions INSERT RLS
+--
+-- Do NOT add a direct Supervisor INSERT policy.
+-- Supervisor transaction creation must continue through the reviewed
+-- SECURITY DEFINER create_reservation path. The target currently exposes a
+-- SELECT policy but no direct INSERT policy; this is intentional for the
+-- minimal patch and avoids granting broad row writes.
+--
+-- If a later migration recreates transactions_insert, preserve:
+--   * Owner and approved receptionist direct policy only;
+--   * created_by = auth.uid();
+--   * no direct Supervisor INSERT grant.
+--
+-- C5. Payments
+--
+-- Preserve all 11 existing payments. Add Finance columns only with
+-- ADD COLUMN IF NOT EXISTS in the reviewed executable batch:
+--   cash_session_id, idempotency_key, charge_event_id,
+--   commission snapshots and commission_amount, as required by the
+-- existing Finance migration.
+--
+-- Do not backfill, rewrite, recalculate, or delete historical payments.
+-- Existing payment totals must be captured before and checked after.
+--
+-- C6. DP and commission
+--
+-- Do NOT execute the existing 40% UPDATE automatically:
+--
+--   UPDATE public.finance_settings
+--   SET minimum_dp_mode = 'PERCENTAGE',
+--       minimum_dp_value = 40
+--   ...
+--
+-- The executable batch must instead stop for an explicit Owner-approved
+-- DP value. No commission configuration may be seeded or overwritten.
+-- Existing transaction price_snapshot and commission fields remain the
+-- historical source for existing rows.
+--
+-- C7. P4
+--
+-- No reference to 20261006000010_correct_p4_prices.sql is allowed.
+-- No package price UPDATE, seed, recalculation or P4 correction is part of
+-- this patch.
+
+------------------------------------------------------------------------------
+-- D. GRANTS/RLS REVIEW GATE
+------------------------------------------------------------------------------
+-- Required post-patch evidence:
+--   * all Finance tables have RLS enabled;
+--   * direct Finance table INSERT/UPDATE/DELETE is revoked from PUBLIC,
+--     anon and authenticated;
+--   * Finance RPC EXECUTE is authenticated-only;
+--   * helper SECURITY DEFINER functions are not anonymous-executable;
+--   * finance_is_booking_operator validates auth.uid() through role tables;
+--   * Supervisor can read only the approved operational/Finance surfaces;
+--   * Supervisor cannot directly INSERT transactions;
+--   * Owner remains able to manage approved settings;
+--   * existing transaction/payment rows and audit numbers are unchanged.
+
+------------------------------------------------------------------------------
+-- E. BATCH, SMOKE TEST AND ROLLBACK
+------------------------------------------------------------------------------
+-- Batch order after approval:
+--   1. verified DB/Auth backup and migration-ledger snapshot;
+--   2. Finance foundation compatibility review;
+--   3. Finance settings/DP/commission explicit Owner decision;
+--   4. Finance compatibility and idempotency;
+--   5. Supervisor operator/helper and function compatibility;
+--   6. grants/RLS review;
+--   7. read-only post-check;
+--   8. only then, separately approved isolated smoke test.
+--
+-- Smoke test is NOT authorized by this file. When separately approved, it
+-- must use isolated data and validate:
+--   Owner/Supervisor -> open session -> reservation -> payment -> check-in
+--   -> checkout -> closing, with session owner/operator audit checks.
+--
+-- Rollback:
+--   * abort the transaction if a precondition fails;
+--   * if committed, restore the verified DB/Auth backup or use an audited
+--     forward-fix; do not run blind down migrations;
+--   * preserve Auth UUIDs and existing transaction/payment rows;
+--   * do not restore a snapshot older than the active Supervisor account
+--     without Owner approval.
+--
+-- FINAL STATUS: NO-GO until Owner approves the reviewed executable batch.
