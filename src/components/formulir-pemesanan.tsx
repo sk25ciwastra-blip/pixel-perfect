@@ -497,7 +497,7 @@ export function FormulirPemesanan({
                 {methods.map(m => (
                   <Bidang key={m} label={`Nominal ${m.toUpperCase()}${mode === 'booking' && minimumDp !== null && m === methods[0] ? ` (DP min. ${rupiah(minimumDp)})` : ''}`}>
                     <input required type="number" min={0} max={total > 0 ? total : undefined} step="1"
-                      value={nominal[m] ?? '0'} readOnly={mode === 'check_in' && methods.length === 1}
+                      value={nominal[m] ?? '0'}
                       onChange={e => setNominal(n => ({ ...n, [m]: e.target.value }))}
                       onFocus={e => e.currentTarget.select()} className={fieldClass} />
                   </Bidang>
