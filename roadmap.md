@@ -2,7 +2,7 @@
 
 ## Popup kamar terisi — 14 November
 - [x] Popup putih hangat dengan judul merah/hitam, ikon ranjang, bingkai dan gelombang emas mengikuti gambar; memakai nomor dan status tersimpan, tanpa mengubah kartu atau validasi.
-- [ ] Revisi tombol Pilih Kamar Lain hanya menutup popup kembali ke daftar kamar; tombol X dihapus, tampilan lain tetap. Periksa dengan sesi aktif tanpa menyimpan atau publish.
+- [x] Tombol Pilih Kamar Lain hanya menutup popup kembali ke daftar kamar; tombol X dihapus, tampilan lain tetap. Alur diperiksa dengan sesi aktif, daftar kembali tanpa form Check-in dan URL tetap; build OK, tanpa menyimpan atau publish.
 
 ## UX Kamar — 14 November
 - [x] Legenda rapat mengikuti gambar; permukaan kartu aktif berizin menuju form Check-in, sedangkan ID transaksi sendiri membuka detail tanpa propagasi. Kamar belum tersedia tetap terlihat di form tanpa mengizinkan penyimpanan.
