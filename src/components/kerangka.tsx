@@ -58,10 +58,6 @@ const bawah: Menu[] = [
   { ke: "/tamu", label: "Tamu", ikon: Users },
 ];
 
-function tanggalHariIni() {
-  return new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jakarta" }).format(new Date());
-}
-
 export function LambangTeratai({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 40" className={className} fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
@@ -182,12 +178,10 @@ export function Kerangka({
         {penuh ? children : (
         <>
           <div className="relative z-20 hidden items-center justify-end gap-4 pt-5 lg:flex">
-            <span className="text-xs tracking-wide text-muted-foreground">{tanggalHariIni()}</span>
-            <span className="h-5 w-px bg-gold/25" aria-hidden="true" />
             <MenuProfil />
           </div>
           {!tanpaJudul && (
-            <div className="relative -mx-4 mb-6 overflow-hidden px-4 lg:-mx-10 lg:px-10 lg:pt-2">
+            <div className="header-fitur relative -mx-4 mb-6 overflow-hidden px-4 lg:-mx-10 lg:px-10 lg:pt-2">
               <LatarHeader path={lokasi.path} />
               <div className="relative mx-auto flex max-w-[1480px] flex-wrap items-end justify-between gap-3 pb-6">
                 <div className="order-1 min-w-0">
