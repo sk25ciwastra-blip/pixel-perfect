@@ -1,8 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Housekeeping — header seperti Daftar Transaksi
-- [ ] Samakan font/ukuran judul, garis emas 80px, kutipan di kanan bawah dan jarak header ke isi; latar asli, panel tabel dan fungsi tetap.
-- [ ] Periksa header komputer/HP serta pencarian/detail existing, tanpa publikasi.
+- [x] Samakan font/ukuran judul, garis emas 80px, kutipan di kanan bawah dan jarak header ke isi; latar asli, panel tabel dan fungsi tetap.
+- [x] Preview komputer/HP diperiksa: garis emas, judul serif dan kutipan sejajar bawah; pencarian/filter/detail dan lima tab berjalan, empat tes PASS serta build OK, tanpa publikasi.
 
 ## Housekeeping — toolbar dan tabel saja
 - [x] Pisahkan pencarian/filter, tinggi 38px, teks 13–14px/status 12px, baris minimum 56px dan kolom Aksi tetap terlihat; panel lainnya tetap. Isi panjang membungkus tanpa bertabrakan.
