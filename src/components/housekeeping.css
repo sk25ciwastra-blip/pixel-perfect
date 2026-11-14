@@ -8,15 +8,16 @@
   font-family: var(--font-sans);
   margin-inline: -22px;
 }
-.hk-header { position: relative; margin: 0 -18px; padding: 0 18px 15px; }
+.hk-header { position: relative; margin: 0 -18px 24px; padding: 8px 40px 24px; }
 .hk-header-latar { position: absolute; inset: -70px 0 -55px; overflow: hidden; pointer-events: none; }
 .hk-header-latar img { width: 100%; height: 100%; object-fit: cover; object-position: 60% 58%; }
 .hk-header-latar::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg,var(--background),color-mix(in oklab,var(--background) 45%,transparent) 28%,transparent 65%),linear-gradient(0deg,var(--background),transparent 40%); }
-.hk-header-isi { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.hk-brand { color: var(--gold-light); font-size: 11px; font-weight: 700; letter-spacing: 0; }
-.hk-header h1 { margin: 4px 0 0; font-family: Georgia,var(--font-serif); font-size: 40px; line-height: 1.15; font-weight: 700; color: var(--foreground); }
-.hk-header-description { margin-top: 7px; font-size: 14px; color: var(--foreground); }
-.hk-header blockquote { max-width: 29ch; text-align: right; font-family: Georgia,var(--font-serif); font-size: 17px; font-style: italic; color: var(--foreground); line-height: 1.2; }
+.hk-header-isi { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.hk-brand { color: var(--gold); font-size: 10.4px; font-weight: 600; letter-spacing: 0; }
+.hk-header h1 { margin: 4px 0 0; font-family: var(--font-serif); font-size: 38.4px; line-height: 1.5; font-weight: 400; color: var(--foreground); }
+.hk-header h1::after { content: ''; display: block; width: 80px; height: 1px; margin-top: 8px; background: linear-gradient(90deg,var(--gold),transparent); }
+.hk-header-description { margin-top: 8px; font-size: 14px; line-height: 20px; color: var(--muted-foreground); }
+.hk-header blockquote { max-width: 40ch; text-align: right; font-family: var(--font-serif); font-size: 13.76px; font-style: italic; color: color-mix(in oklab,var(--foreground) 80%,transparent); line-height: 1.375; }
 .hk-tabs { position: relative; display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 17px; }
 .hk-tab { display: flex; align-items: center; justify-content: center; gap: 10px; height: 40px; min-width: 150px; padding: 8px 20px; border: 1px solid var(--hk-bingkai); border-radius: 24px; background: var(--hk-permukaan); color: var(--foreground); font-size: 13px; font-weight: 500; box-shadow: var(--hk-bayangan); }
 .hk-tab svg { width: 23px; height: 23px; }
@@ -158,4 +159,9 @@
   .hk-room-panel .hk-table td > span.inline-flex,.hk-room-panel .hk-table .hk-state { white-space: normal; }
   .hk-room-panel .hk-table td > span.inline-flex > span { flex-shrink: 0; }
   .hk-room-panel .hk-table th:last-child,.hk-room-panel .hk-table td:last-child { position: static; box-shadow: none; }
+}
+@media (max-width: 1023px) {
+  .hk-header h1 { font-size: 30px; line-height: 1.2; }
+  .hk-header-isi { gap: 12px; }
+  .hk-header blockquote { width: 100%; }
 }
