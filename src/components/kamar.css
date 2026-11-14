@@ -64,3 +64,38 @@
 }
 @media (prefers-reduced-motion: reduce) { .halaman-kamar * { transition: none; } }
 .kamar-kartu[role="button"] { cursor: pointer; }
+
+.kamar-terisi-overlay { position: fixed; inset: 0; z-index: 50; background: color-mix(in oklab, var(--navy-deep) 70%, transparent); backdrop-filter: blur(5px); }
+.kamar-terisi-popup { position: fixed; z-index: 51; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(580px, calc(100% - 36px)); min-height: 292px; display: grid; grid-template-columns: 130px minmax(0, 1fr); align-items: start; gap: 24px; padding: 44px 28px 36px 38px; border: 3px solid var(--kamar-popup-gold); border-radius: 44px; background: var(--kamar-popup-surface); color: var(--kamar-popup-ink); box-shadow: var(--kamar-popup-shadow); outline: none; }
+.kamar-terisi-gelombang { position: absolute; bottom: 0; left: 0; width: 100%; height: 95px; border-radius: 0 0 40px 40px; overflow: hidden; pointer-events: none; }
+.kamar-terisi-gelombang-lembut { fill: color-mix(in oklab, var(--kamar-popup-gold) 30%, transparent); }
+.kamar-terisi-gelombang-emas { fill: color-mix(in oklab, var(--kamar-popup-gold) 65%, var(--kamar-popup-paper)); }
+.kamar-terisi-gelombang-terang { fill: color-mix(in oklab, var(--kamar-popup-white) 40%, var(--kamar-popup-gold)); }
+.kamar-terisi-benang { fill: none; stroke: var(--kamar-popup-white); stroke-width: .65; opacity: .45; }
+.kamar-terisi-popup .kamar-terisi-tutup { position: absolute; right: 1px; top: -9px; width: 48px; height: 48px; border: 1px solid var(--kamar-popup-gold); border-radius: 50%; color: var(--kamar-popup-ink); background: var(--kamar-popup-white); box-shadow: 0 3px 5px color-mix(in oklab, var(--kamar-popup-gold-deep) 45%, transparent); }
+.kamar-terisi-popup .kamar-terisi-tutup svg { width: 28px; height: 28px; }
+.kamar-terisi-ikon { position: relative; margin-top: 28px; width: 108px; height: 98px; display: grid; place-items: center; border-radius: 23px; background: linear-gradient(160deg, color-mix(in oklab, var(--kamar-popup-red) 5%, var(--kamar-popup-white)), color-mix(in oklab, var(--kamar-popup-red) 18%, var(--kamar-popup-paper))); color: var(--kamar-popup-red); box-shadow: inset 0 1px 0 var(--kamar-popup-white); }
+.kamar-terisi-ikon > svg:not(.kamar-terisi-seruan) { width: 88px; height: 70px; filter: drop-shadow(0 2px 0 var(--kamar-popup-white)); }
+.kamar-terisi-seruan { position: absolute; top: -20px; left: -4px; width: 38px; height: 35px; color: var(--kamar-popup-gold); }
+.kamar-terisi-isi { position: relative; min-width: 0; }
+.kamar-terisi-isi::before { content: ''; position: absolute; top: 2px; left: -24px; height: 122px; width: 1px; background: color-mix(in oklab, var(--kamar-popup-gold) 40%, transparent); }
+.kamar-terisi-judul { margin: 0; font-family: Georgia, ui-serif, serif; font-size: 40px; line-height: 1.06; font-weight: 700; letter-spacing: 0; text-shadow: 0 1px 0 var(--kamar-popup-white); }
+.kamar-terisi-judul span { color: var(--kamar-popup-red); }
+.kamar-terisi-pesan { margin: 14px 0 24px; font-size: 18px; line-height: 1.4; color: var(--kamar-popup-muted); }
+.kamar-terisi-popup .kamar-terisi-pilih { width: 100%; height: 58px; gap: 12px; border-radius: 32px; border: 1px solid var(--kamar-popup-gold); background: var(--kamar-popup-button); color: var(--kamar-popup-white); font-size: 20px; font-weight: 600; box-shadow: inset 0 1px 1px var(--kamar-popup-gold), 0 3px 5px color-mix(in oklab, var(--kamar-popup-gold-deep) 30%, transparent); }
+.kamar-terisi-popup .kamar-terisi-pilih svg:first-child { width: 38px; height: 32px; color: var(--gold-light); }
+.kamar-terisi-popup .kamar-terisi-pilih svg:last-child { width: 24px; height: 24px; }
+.kamar-terisi-popup .kamar-terisi-pilih:hover { filter: brightness(1.07); }
+.kamar-terisi-popup button:focus-visible { outline: 3px solid var(--kamar-popup-gold-deep); outline-offset: 4px; }
+@media (max-width: 600px) {
+  .kamar-terisi-popup { grid-template-columns: 72px minmax(0, 1fr); gap: 18px; padding: 36px 20px 28px; min-height: 260px; border-radius: 30px; }
+  .kamar-terisi-ikon { width: 66px; height: 72px; margin-top: 16px; border-radius: 16px; }
+  .kamar-terisi-ikon > svg:not(.kamar-terisi-seruan) { width: 58px; height: 52px; }
+  .kamar-terisi-isi::before { left: -12px; height: 100px; }
+  .kamar-terisi-judul { font-size: 26px; line-height: 1.12; }
+  .kamar-terisi-pesan { font-size: 14px; margin: 12px 0 20px; }
+  .kamar-terisi-popup .kamar-terisi-pilih { height: 48px; gap: 6px; font-size: 14px; }
+  .kamar-terisi-popup .kamar-terisi-pilih svg:first-child { width: 26px; }
+  .kamar-terisi-popup .kamar-terisi-pilih svg:last-child { width: 18px; }
+  .kamar-terisi-gelombang { border-radius: 0 0 26px 26px; }
+}

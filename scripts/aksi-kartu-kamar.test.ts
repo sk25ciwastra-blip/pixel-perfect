@@ -5,9 +5,9 @@ test('Tersedia membuka Check-in hanya dengan izin existing', () => {
   expect(aksiKartuKamar({ active: true, status: 'ready' }, true)).toBe('check_in');
   expect(aksiKartuKamar({ active: true, status: 'ready' }, false)).toBe('informasi');
 });
-test('Terisi membuka form existing, bukan Detail Transaksi', () => {
-  expect(aksiKartuKamar({ active: true, status: 'occupied' }, true)).toBe('check_in');
-  expect(aksiKartuKamar({ active: true, status: 'occupied' }, false)).toBe('informasi');
+test('Terisi membuka popup kamar terisi, bukan form atau Detail Transaksi', () => {
+  expect(aksiKartuKamar({ active: true, status: 'occupied' }, true)).toBe('terisi');
+  expect(aksiKartuKamar({ active: true, status: 'occupied' }, false)).toBe('terisi');
 });
 test('Perlu dibersihkan membuka form existing tanpa melewati validasi', () => {
   expect(aksiKartuKamar({ active: true, status: 'dirty' }, true)).toBe('check_in');

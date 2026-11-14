@@ -157,6 +157,16 @@
   --header-veil: linear-gradient(90deg, var(--background), color-mix(in oklab, var(--background) 82%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 60%, transparent)), linear-gradient(0deg, var(--background), transparent 75%);
   --header-ink: color-mix(in oklab, var(--gold) 16%, transparent);
   --header-thread: color-mix(in oklab, var(--gold) 9%, transparent);
+  --kamar-popup-paper: oklch(0.975 0.012 85);
+  --kamar-popup-white: oklch(1 0 0);
+  --kamar-popup-ink: oklch(0.16 0.018 260);
+  --kamar-popup-muted: oklch(0.45 0.008 260);
+  --kamar-popup-red: oklch(0.59 0.22 27);
+  --kamar-popup-gold: oklch(0.78 0.16 83);
+  --kamar-popup-gold-deep: oklch(0.56 0.12 78);
+  --kamar-popup-surface: linear-gradient(120deg, var(--kamar-popup-paper), var(--kamar-popup-white) 57%, var(--kamar-popup-paper));
+  --kamar-popup-button: linear-gradient(175deg, oklch(0.7 0.15 83), oklch(0.57 0.13 78));
+  --kamar-popup-shadow: 0 24px 70px color-mix(in oklab, var(--navy-deep) 80%, transparent), 0 0 28px -8px var(--kamar-popup-gold), inset 0 0 0 2px var(--kamar-popup-white);
   --header-photo-veil: linear-gradient(90deg, color-mix(in oklab, var(--background) 90%, transparent), color-mix(in oklab, var(--background) 68%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 26%, transparent)), linear-gradient(0deg, var(--background), transparent 55%);
 }
 

@@ -12,6 +12,7 @@ import { DetailTransaksi } from "@/components/detail-transaksi";
 import { Kerangka } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import { aksiKartuKamar } from "@/lib/aksi-kartu-kamar";
+import { PopupKamarTerisi } from "@/components/popup-kamar-terisi";
 import { labelStatusKamar, type StatusKamar } from "@/lib/data-contoh";
 import { useTable, type Room } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
@@ -82,6 +83,7 @@ function HalamanKamar() {
 
   const [selectedRoomId, setSelectedRoomId] = useState('');
   const [informationRoom, setInformationRoom] = useState<Room | null>(null);
+  const [occupiedRoom, setOccupiedRoom] = useState<Room | null>(null);
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
   const [detailHousekeeping, setDetailHousekeeping] = useState<DetailHousekeeping | null>(null);
 
@@ -140,6 +142,10 @@ function HalamanKamar() {
 
   function openRoom(room: Room) {
     const action = aksiKartuKamar(room, canCheckIn);
+    if (action === 'terisi') {
+      setOccupiedRoom(room);
+      return;
+    }
     if (action === 'check_in') {
       setSelectedRoomId(room.id);
       setCheckInOpen(true);
@@ -341,6 +347,11 @@ function HalamanKamar() {
           </section>
         </div>
       )}
+
+      {occupiedRoom && <PopupKamarTerisi nomor={occupiedRoom.room_number} onClose={() => setOccupiedRoom(null)} onPilihKamar={() => {
+        setOccupiedRoom(null);
+        if (canCheckIn) { setSelectedRoomId(''); setCheckInOpen(true); }
+      }} />}
 
       {detailTransactionId && (
         <DetailTransaksi
