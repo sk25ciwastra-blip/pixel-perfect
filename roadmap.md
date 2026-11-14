@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Check-in Langsung — tampilan gambar Owner
+- [ ] Sesuaikan kepala hitam, isi terang, empat bagian dua kolom, font/ukuran/warna dan pengingat bawah; Booking, data, harga, pembayaran, izin dan proses simpan tetap.
+- [ ] Periksa Preview akun aktif komputer/HP, input/pilihan/angka dan pembatalan tanpa menyimpan transaksi; jalankan tes existing, tanpa publikasi.
+
 ## Housekeeping — diagram tidak menutupi label
 - [x] Tempatkan label di baris atas serta angka dan diagram di baris bawah yang terpisah; ukuran kartu, data dan fungsi tetap.
 - [x] Preview akun aktif pada lebar 1582/1280/390px: keenam label dan angka tidak beririsan dengan diagram, seluruh label berada dalam kartu; tanpa error runtime, empat tes PASS dan build OK; tanpa publikasi.
