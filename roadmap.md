@@ -2,7 +2,7 @@
 
 ## Housekeeping — diagram tidak menutupi label
 - [x] Tempatkan label di baris atas serta angka dan diagram di baris bawah yang terpisah; ukuran kartu, data dan fungsi tetap.
-- [ ] Periksa kartu komputer/HP dengan data aktif dan pastikan diagram tidak menutupi teks; tanpa publikasi.
+- [x] Preview akun aktif pada lebar 1582/1280/390px: keenam label dan angka tidak beririsan dengan diagram, seluruh label berada dalam kartu; tanpa error runtime, empat tes PASS dan build OK; tanpa publikasi.
 
 ## Housekeeping — tiga koreksi kesejajaran dan ketebalan
 - [x] Pusatkan ikon, label, angka dan persentase kartu; samakan hierarki ketebalan tabel dengan Dashboard; sejajarkan batas bawah panel antrean dan panel kamar pada desktop, tanpa perubahan data atau fungsi.
