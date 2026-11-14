@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Fragment, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { LencanaStatus } from '@/components/status-kamar';
@@ -11,17 +11,18 @@ import { usePeran } from '@/lib/peran';
 import { ChecklistHousekeeping } from '@/components/checklist-housekeeping';
 import { PerawatanBerkala } from '@/components/perawatan-berkala';
 import { Link } from '@tanstack/react-router';
-import { BedDouble, Brush, ClipboardCheck, History, Wrench, Search, Sparkles, CheckCircle2, Users, ListChecks } from 'lucide-react';
+import { BedDouble, Brush, ClipboardCheck, History, Wrench, Search, Sparkles, CheckCircle2, Users, ListChecks, Package, Layers, Eye, Clock, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import '@/components/housekeeping.css';
 import latarHousekeeping from '@/assets/header-housekeeping-linen.jpg';
 
-type BagianHk = 'status' | 'checklist' | 'perawatan' | 'riwayat';
+type BagianHk = 'status' | 'checklist' | 'perlengkapan' | 'perawatan' | 'riwayat';
 const bagianHk: { kode: BagianHk; label: string; ikon: typeof Brush }[] = [
-  { kode: 'status', label: 'Status', ikon: BedDouble },
-  { kode: 'checklist', label: 'Checklist', ikon: ClipboardCheck },
-  { kode: 'perawatan', label: 'Perawatan Berkala', ikon: Wrench },
-  { kode: 'riwayat', label: 'Riwayat Pekerjaan', ikon: History },
+  { kode: 'status', label: 'Operasional', ikon: Brush },
+  { kode: 'checklist', label: 'Tugas Petugas', ikon: Users },
+  { kode: 'perlengkapan', label: 'Perlengkapan', ikon: Package },
+  { kode: 'perawatan', label: 'Perawatan', ikon: Wrench },
+  { kode: 'riwayat', label: 'Riwayat HK', ikon: History },
 ];
 
 export const Route = createFileRoute('/housekeeping')({
@@ -50,6 +51,8 @@ function Halaman() {
   const [checklistRoomId, setChecklistRoomId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [detailRoomId, setDetailRoomId] = useState<string | null>(null);
 
   const rooms = useTable('rooms');
   const types = useTable('room_types');
@@ -107,6 +110,7 @@ function Halaman() {
   const allDirtySelected =
     dirtyRooms.length > 0 && dirtyRooms.every((room) => selectedIds.includes(room.id));
   const activeRooms = operationalRooms.filter((room) => room.active);
+  const visibleSections = sections.map(section => ({ ...section, rooms: section.rooms.filter(room => !typeFilter || room.room_type_id === typeFilter) }));
   const selesaiHariIni = new Set(
     history.rows
       .filter(
@@ -121,6 +125,16 @@ function Halaman() {
       )
       .map((item) => item.room_id),
   ).size;
+  const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+  const todayHistory = history.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.created_at)) === todayWib);
+  const startedToday = new Set(todayHistory.filter(item => item.action === 'start_cleaning').map(item => item.room_id));
+  const finishedToday = new Set(todayHistory.filter(item => item.action === 'finish_cleaning').map(item => item.room_id));
+  const progressTotal = new Set([...startedToday, ...finishedToday]).size;
+  const progress = progressTotal ? Math.round(finishedToday.size / progressTotal * 100) : 0;
+  const queueRooms = activeRooms.filter(room => room.status === 'dirty' || room.status === 'cleaning');
+
+  const linenPanel = <section className="hk-bottom-panel"><div className="hk-panel-header"><Layers /><h2>Perlengkapan &amp; Linen</h2><Link to="/housekeeping" search={{ bagian: 'perlengkapan' }} className="hk-gold-link">Lihat Detail <ChevronRight /></Link></div><div className="hk-stock-grid">{[{ label: 'Handuk', ikon: Layers }, { label: 'Sprei Set', ikon: BedDouble }, { label: 'Amenitas', ikon: Package }].map(item => <div className="hk-stock-item" key={item.label}><item.ikon /><div><p>{item.label}</p><strong>— / —</strong></div><p className="hk-stock-empty">Stok belum tersedia</p></div>)}</div></section>;
+  const maintenancePanel = <section className="hk-bottom-panel"><div className="hk-panel-header"><Wrench /><h2>Perawatan &amp; Kendala</h2></div><div className="hk-maintenance-empty"><CheckCircle2 /><div><p>Status kendala belum tersedia.</p><p className="text-muted-foreground">Riwayat perawatan dapat dilihat di tab Perawatan.</p></div><Link to="/housekeeping" search={{ bagian: 'perawatan' }} className="hk-outline-link">Lihat Perawatan <ChevronRight /></Link></div></section>;
 
   function refreshAll() {
     return Promise.all([
