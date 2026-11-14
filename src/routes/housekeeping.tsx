@@ -285,12 +285,12 @@ function Halaman() {
           <section className="hk-room-panel">
             <div className="hk-panel-header">
               <BedDouble className="hk-heading-icon" /><h2>{bagian === 'checklist' ? 'Tugas Petugas' : 'Status Kamar & Housekeeping'}</h2>
-              <div className="hk-table-tools">        <label className="hk-search">
+            </div>
+              <div className="hk-table-tools" role="toolbar" aria-label="Recherche et filtres des chambres">        <label className="hk-search">
           <Search className="pointer-events-none absolute left-4 top-3.5 size-5 text-muted-foreground" />
           <Input aria-label="Cari nomor kamar, TRX, atau HK" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nomor kamar, TRX, atau HK…" className="h-12 rounded-lg bg-card pl-12 text-base" />
         </label>
 <div className="hk-type-filters"><Button variant="ghost" size="sm" onClick={() => setTypeFilter('')} aria-pressed={!typeFilter}>Semua</Button>{types.rows.filter(type => activeRooms.some(room => room.room_type_id === type.id)).map(type => <Button key={type.id} variant="ghost" size="sm" onClick={() => setTypeFilter(type.id)} aria-pressed={typeFilter === type.id}>{type.name}</Button>)}</div></div>
-            </div>
             {canAdvance && dirtyRooms.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-gold/5 px-5 py-3">
                 <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" className="size-4 accent-primary" checked={allDirtySelected} onChange={(event) => setSelectedIds(event.target.checked ? dirtyRooms.map((room) => room.id) : [])} />Pilih Semua</label>

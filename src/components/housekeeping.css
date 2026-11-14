@@ -122,3 +122,27 @@
 
 @media (min-width: 1024px) and (max-width: 1499px) { .hk-stat { gap: 10px; padding: 10px; } .hk-stat-icon { width: 42px; height: 42px; } .hk-stat-label { font-size: 11px; } .hk-percent { width: 34px; height: 34px; font-size: 10px; } .hk-room-panel > .hk-panel-header { flex-wrap: wrap; } .hk-table-tools { flex: 1; justify-content: end; } .hk-side-panel .hk-panel-header h2 { white-space: normal; } }
 @media (max-width: 600px) { .hk-stat { height: 92px; } .hk-stat-label { font-size: 11px; } .hk-stock-grid { grid-template-columns: minmax(0,1fr); } .hk-stock-item { flex-wrap: nowrap; } .hk-stock-item .hk-stock-empty { margin-left: auto; width: auto; } .hk-panel-header h2 { white-space: normal; } .hk-tab svg { flex-shrink: 0; } .hk-percent { font-size: 10px; } }
+
+/* Table-only layout: a separate wrapping toolbar and a reserved action column. */
+.hk-room-panel > .hk-table-tools { display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 10px; margin: 0; padding: 0 13px 13px; width: 100%; }
+.hk-room-panel .hk-search { width: 260px; max-width: 100%; flex: 1 1 240px; }
+.hk-room-panel .hk-search input { height: 38px; font-size: 13px; padding-left: 36px; }
+.hk-room-panel .hk-search svg { top: 11px; left: 12px; width: 16px; height: 16px; }
+.hk-room-panel .hk-type-filters { flex: 1 1 300px; display: flex; flex-wrap: wrap; gap: 4px; overflow: visible; max-width: none; border: none; padding: 0; border-radius: 0; }
+.hk-room-panel .hk-type-filters button { height: 38px; padding: 0 12px; font-size: 12px; border: 1px solid var(--hk-bingkai); border-radius: 20px; }
+.hk-room-panel .hk-table { min-width: 820px; table-layout: fixed; font-size: 14px; }
+.hk-room-panel .hk-table th { font-size: 13px; font-weight: 600; padding: 11px 12px; }
+.hk-room-panel .hk-table td { padding: 10px 12px; overflow-wrap: anywhere; }
+.hk-room-panel .hk-table tbody tr { height: 56px; }
+.hk-room-panel .hk-table th:nth-child(1) { width: 78px; }
+.hk-room-panel .hk-table th:nth-child(2) { width: 100px; }
+.hk-room-panel .hk-table th:nth-child(3) { width: 112px; }
+.hk-room-panel .hk-table th:nth-child(4) { width: 174px; }
+.hk-room-panel .hk-table th:nth-child(5) { width: 94px; }
+.hk-room-panel .hk-table th:nth-child(7) { width: 82px; }
+.hk-room-panel .hk-table td > span.inline-flex,.hk-room-panel .hk-table .hk-state { font-size: 12px; }
+.hk-room-panel .hk-table details { font-size: 13px; }
+.hk-room-panel .hk-table th:last-child,.hk-room-panel .hk-table td:last-child { position: sticky; right: 0; z-index: 1; background: var(--hk-kertas); box-shadow: -1px 0 0 var(--border); }
+.hk-room-panel .hk-table th:last-child { background: color-mix(in oklab,var(--gold) 22%,var(--hk-kertas)); z-index: 2; }
+.hk-room-panel .hk-row-actions { min-width: 0; gap: 6px; }
+.hk-room-panel .hk-row-actions button:not(.hk-eye-button) { white-space: normal; overflow-wrap: anywhere; max-width: 100%; line-height: 1.3; }
