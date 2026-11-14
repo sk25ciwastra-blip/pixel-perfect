@@ -13,7 +13,8 @@ import { PerawatanBerkala } from '@/components/perawatan-berkala';
 import { Link } from '@tanstack/react-router';
 import { BedDouble, Brush, ClipboardCheck, History, Wrench, Search, Sparkles, CheckCircle2, Users, ListChecks } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { konteksHeader } from '@/lib/konteks-header';
+import '@/components/housekeeping.css';
+import latarHousekeeping from '@/assets/header-housekeeping-linen.jpg';
 
 type BagianHk = 'status' | 'checklist' | 'perawatan' | 'riwayat';
 const bagianHk: { kode: BagianHk; label: string; ikon: typeof Brush }[] = [
@@ -227,24 +228,18 @@ function Halaman() {
 
   return (
     <Kerangka judul="Housekeeping" tanpaJudul>
-      <header className="mb-0 mt-4 grid gap-5 border-b border-gold/20 pb-6 lg:grid-cols-[minmax(0,1fr)_minmax(220px,340px)] lg:items-center">
-        <div className="flex min-w-0 items-center gap-4">
-          <span className="ikon-bulat grid size-14 shrink-0 place-items-center text-gold-light"><Brush className="size-8" strokeWidth={1.5} /></span>
-          <div className="min-w-0">
-            <h1 className="font-serif text-3xl text-gold-light sm:text-4xl">Housekeeping</h1>
-            <p className="mt-2 text-sm text-muted-foreground">Status, Checklist, Perawatan, dan Riwayat</p>
-          </div>
+      <div className="halaman-housekeeping">
+      <header className="hk-header">
+        <div className="hk-header-latar" aria-hidden="true"><img src={latarHousekeeping} alt="" width={1536} height={512} /></div>
+        <div className="hk-header-isi">
+          <div><p className="hk-brand">BATURADEN 25 HOMESTAY</p><h1>Housekeeping</h1><p className="hk-header-description">Operasional kebersihan kamar, perlengkapan, dan perawatan.</p></div>
+          <blockquote>Kamar bersih, tamu nyaman,<br />operasional makin lancar.</blockquote>
         </div>
-        <blockquote className="border-l border-gold/50 pl-4 font-serif text-base italic leading-relaxed text-foreground/85">
-          “{konteksHeader['/housekeeping']}”
-        </blockquote>
       </header>
-
-      <nav aria-label="Bagian Housekeeping" className="mb-5 grid grid-cols-2 gap-1 border-b border-gold/20 py-2 sm:flex sm:flex-wrap">
+      <nav aria-label="Bagian Housekeeping" className="hk-tabs">
         {bagianHk.map((b) => (
-          <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }} aria-current={bagian === b.kode ? 'page' : undefined}
-            className={`flex min-h-12 min-w-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition sm:px-5 ${bagian === b.kode ? 'border-b-2 border-gold bg-gold/15 text-gold-light' : 'border-b-2 border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground'}`}>
-            <b.ikon className="size-4 shrink-0" /><span>{b.label}</span>
+          <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }} aria-current={bagian === b.kode ? 'page' : undefined} className="hk-tab">
+            <b.ikon /><span>{b.kode === 'status' ? 'Operasional' : b.label}</span>
           </Link>
         ))}
       </nav>
@@ -252,7 +247,7 @@ function Halaman() {
 
       {bagian === 'riwayat' && (
         <section className="overflow-hidden rounded-lg border border-border bg-card shadow-lembut">
-          <div className="flex items-center gap-3 border-b border-border px-5 py-4"><History className="size-5 text-gold" /><h2 className="font-serif text-xl">Riwayat Pekerjaan</h2></div>
+          <div className="hk-panel-header"><History className="size-5 text-gold" /><h2 className="font-serif text-xl">Riwayat Pekerjaan</h2></div>
           <ul className="divide-y divide-border">
             {history.rows.length === 0 && <li className="px-5 py-10 text-center text-sm text-muted-foreground">Belum ada riwayat housekeeping.</li>}
             {[...history.rows].sort((x, y) => y.created_at.localeCompare(x.created_at)).slice(0, 100).map((item) => (
@@ -270,27 +265,29 @@ function Halaman() {
       {bagian === 'perawatan' && <PerawatanBerkala readOnly={!canAdvance} />}
 
       {(bagian === 'status' || bagian === 'checklist') && (<>
-        <div className="mb-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className="hk-stats">
           {[
-            { label: 'Kamar Siap', value: activeRooms.filter((room) => room.status === 'ready').length, ikon: Sparkles, warna: 'bg-siap/30 text-siap-foreground border-siap-foreground/20' },
-            { label: 'Kamar Terisi', value: activeRooms.filter((room) => room.status === 'occupied').length, ikon: Users, warna: 'bg-terisi/30 text-terisi-foreground border-terisi-foreground/20' },
-            { label: 'Perlu Dibersihkan', value: activeRooms.filter((room) => room.status === 'dirty').length, ikon: BedDouble, warna: 'bg-bahaya/30 text-bahaya-foreground border-bahaya-foreground/20' },
-            { label: 'Selesai Hari Ini', value: selesaiHariIni, ikon: CheckCircle2, warna: 'bg-gold/10 text-gold-light border-gold/25' },
+            { label: 'Total Kamar', value: activeRooms.length, ikon: BedDouble, status: 'total' },
+            { label: 'Tersedia', value: activeRooms.filter((room) => room.status === 'ready').length, ikon: BedDouble, status: 'ready' },
+            { label: 'Terisi', value: activeRooms.filter((room) => room.status === 'occupied').length, ikon: BedDouble, status: 'occupied' },
+            { label: 'Perlu Dibersihkan', value: activeRooms.filter((room) => room.status === 'dirty').length, ikon: Brush, status: 'dirty' },
+            { label: 'Sedang Dibersihkan', value: activeRooms.filter((room) => room.status === 'cleaning').length, ikon: Sparkles, status: 'cleaning' },
+            { label: 'Selesai Hari Ini', value: selesaiHariIni, ikon: CheckCircle2, status: 'finished' },
           ].map((item) => (
-            <div key={item.label} className={`grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-lg border p-4 shadow-lembut ${item.warna}`}>
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-current/5 sm:size-12"><item.ikon className="size-6" strokeWidth={1.6} /></span>
-              <div className="min-w-0"><p className="text-2xl font-semibold tabular-nums text-foreground">{item.value}</p><p className="mt-1 text-xs leading-relaxed text-foreground/80 sm:text-sm">{item.label}</p></div>
+            <div key={item.label} className="hk-stat" data-status={item.status}>
+              <span className="hk-stat-icon"><item.ikon /></span>
+              <div><p className="hk-stat-label">{item.label}</p><p className="hk-stat-value">{item.value}</p></div>
             </div>
           ))}
         </div>
-        <label className="relative mb-5 block max-w-xl">
+        <label className="hk-search">
           <Search className="pointer-events-none absolute left-4 top-3.5 size-5 text-muted-foreground" />
           <Input aria-label="Cari nomor kamar, TRX, atau HK" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nomor kamar, TRX, atau HK…" className="h-12 rounded-lg bg-card pl-12 text-base" />
         </label>
-        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="min-w-0 overflow-hidden rounded-lg border border-border bg-card shadow-lembut">
-            <div className="flex items-center gap-3 border-b border-border px-5 py-4">
-              <ListChecks className="size-5 shrink-0 text-gold" /><div><h2 className="font-serif text-xl">{bagian === 'checklist' ? 'Pemeriksaan Kamar' : 'Daftar Kamar'}</h2><p className="mt-1 text-sm text-muted-foreground">Status terbaru dan riwayat kebersihan kamar.</p></div>
+        <div className="hk-layout">
+          <section className="hk-room-panel">
+            <div className="hk-panel-header">
+              <ListChecks className="size-5 shrink-0 text-gold" /><div><h2 className="font-serif text-xl">{bagian === 'checklist' ? 'Pemeriksaan Kamar' : 'Status Kamar & Housekeeping'}</h2><p className="mt-1 text-sm text-muted-foreground">Status terbaru dan riwayat kebersihan kamar.</p></div>
             </div>
             {canAdvance && dirtyRooms.length > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-gold/5 px-5 py-3">
@@ -298,8 +295,8 @@ function Halaman() {
                 <Button size="sm" disabled={!selectedIds.length || processingIds.length > 0} onClick={() => void startSelected()}><Brush className="size-4" />Mulai ({selectedIds.length}) Kamar</Button>
               </div>
             )}
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[650px] text-left text-sm">
+            <div className="hk-table-scroll">
+              <table className="hk-table text-left">
                 <thead><tr className="bg-secondary/60">{['Kamar', 'Tipe', 'Status', 'Riwayat Terakhir', 'Aksi'].map((title) => <th key={title} className="px-4 py-3 text-xs">{title}</th>)}</tr></thead>
                 <tbody>
                   {sections.map((section) => (
@@ -313,7 +310,7 @@ function Halaman() {
                         const shortage = housekeepingShortageNote(latestChecklist.get(room.id));
                         return (
                           <tr key={room.id} className="align-top">
-                            <td className="border-b border-border px-4 py-4"><div className="flex items-center gap-2">{section.key === 'dirty' && canAdvance && <input aria-label={`Pilih kamar ${room.room_number}`} type="checkbox" className="size-4 accent-primary" checked={selectedIds.includes(room.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...current, room.id] : current.filter((id) => id !== room.id))} />}<span className="inline-grid min-w-10 place-items-center rounded-md border border-gold/20 bg-secondary px-2 py-1.5 text-base font-semibold">{room.room_number}</span></div></td>
+                            <td className="border-b border-border px-4 py-4"><div className="flex items-center gap-2">{section.key === 'dirty' && canAdvance && <input aria-label={`Pilih kamar ${room.room_number}`} type="checkbox" className="size-4 accent-primary" checked={selectedIds.includes(room.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...current, room.id] : current.filter((id) => id !== room.id))} />}<span className="hk-room-number">{room.room_number}</span></div></td>
                             <td className="border-b border-border px-4 py-4 text-muted-foreground">{roomType?.name}</td>
                             <td className="border-b border-border px-4 py-4"><LencanaStatus status={section.label} />
                               {shortage && <details className="mt-2 max-w-48 text-xs leading-relaxed text-perlu-foreground"><summary className="cursor-pointer">Informasi kekurangan</summary><p className="mt-1 whitespace-pre-wrap break-words">{shortage}</p></details>}
@@ -335,24 +332,26 @@ function Halaman() {
               </table>
             </div>
           </section>
-          <aside className="space-y-5">
-            <section className="rounded-lg border border-border bg-card p-5 shadow-lembut">
+          <aside className="hk-side">
+            <section className="hk-side-panel">
               <div className="flex items-center gap-2"><CheckCircle2 className="size-5 text-gold" /><h2 className="font-serif text-xl">Ringkasan Hari Ini</h2></div>
               <dl className="mt-4 divide-y divide-border text-sm">
                 {[['Kamar Aktif', activeRooms.length], ['Kamar Siap', activeRooms.filter((room) => room.status === 'ready').length], ['Selesai Dibersihkan', selesaiHariIni]].map(([label, value]) => <div key={label} className="flex items-center justify-between gap-3 py-3"><dt className="text-muted-foreground">{label}</dt><dd className="text-lg font-semibold tabular-nums text-gold-light">{value}</dd></div>)}
               </dl>
             </section>
-            <section className="rounded-lg border border-border bg-card p-5 shadow-lembut">
+            <section className="hk-side-panel">
               <div className="flex items-center gap-2"><History className="size-5 text-gold" /><h2 className="font-serif text-xl">Pekerjaan Terakhir</h2></div>
               <ul className="mt-3 divide-y divide-border">
                 {history.rows.length === 0 && <li className="py-4 text-sm text-muted-foreground">Belum ada riwayat housekeeping.</li>}
                 {[...history.rows].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5).map((item) => <li key={item.id} className="py-3"><p className="text-sm font-semibold">Kamar {rooms.rows.find((r) => r.id === item.room_id)?.room_number ?? '—'}</p><p className="mt-1 text-sm text-muted-foreground">{item.action === 'start_cleaning' ? 'Mulai dibersihkan' : item.action === 'finish_cleaning' ? 'Selesai dibersihkan' : 'Override menjadi siap'}</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.performed_by_name} · {new Date(item.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</p></li>)}
               </ul>
-              <Link to="/housekeeping" search={{ bagian: 'riwayat' }} className="mt-3 flex min-h-10 items-center justify-center rounded-md border border-gold/25 px-3 text-sm font-semibold text-gold-light hover:bg-gold/10">Lihat Semua Riwayat</Link>
+              <Link to="/housekeeping" search={{ bagian: 'riwayat' }} className="hk-history-link mt-3 flex min-h-10 items-center justify-center rounded-md px-3 text-sm font-semibold">Lihat Semua Riwayat</Link>
             </section>
           </aside>
         </div>
       </>)}
+
+      </div>
 
       {checklistRoom && (
         <ChecklistHousekeeping
