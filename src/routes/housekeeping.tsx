@@ -232,7 +232,7 @@ function Halaman() {
       <header className="hk-header">
         <div className="hk-header-latar" aria-hidden="true"><img src={latarHousekeeping} alt="" width={1536} height={512} /></div>
         <div className="hk-header-isi">
-          <div><p className="hk-brand">BATURADEN 25 HOMESTAY</p><h1>Housekeeping</h1><p className="hk-header-description">Operasional kebersihan kamar, perlengkapan, dan perawatan.</p></div>
+          <div><p className="hk-brand">BATURADEN 25 HOMESTAY</p><h1>Housekeeping</h1><div className="hk-header-garis" aria-hidden="true" /><p className="hk-header-description">Operasional kebersihan kamar, perlengkapan, dan perawatan.</p></div>
           <blockquote>Kamar bersih, tamu nyaman,<br />operasional makin lancar.</blockquote>
         </div>
       </header>
