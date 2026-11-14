@@ -265,7 +265,7 @@ function HalamanKamar() {
                       {transaction && (
                         <Button
                           variant="link"
-                          className="font-mono"
+                          className="kamar-nomorator font-mono"
                           onClick={() => setDetailTransactionId(transaction.id)}
                         >
                           {transaction.transaction_number}
@@ -343,7 +343,6 @@ function HalamanKamar() {
           <div className="kamar-legenda-item kamar-lampu-nonaktif"><span className="kamar-lampu" /><strong>ABU-ABU</strong><span>· Tidak aktif</span></div>
           {rooms.rows.some((room) => room.active && room.status === 'dirty') && <div className="kamar-legenda-item kamar-lampu-perlu"><span className="kamar-lampu" /><strong>AMBER</strong><span>· Perlu dibersihkan</span></div>}
         </div>}
-        {peran === 'owner' && <div className="mt-4 flex justify-end"><Button variant="outline" size="sm" onClick={() => edit()}><Plus className="size-3.5" />Kamar</Button></div>}
 
         {!rooms.loading && !groupedRooms.length && (
           <p className="mt-8 text-center text-sm text-muted-foreground">Kamar tidak ditemukan.</p>
