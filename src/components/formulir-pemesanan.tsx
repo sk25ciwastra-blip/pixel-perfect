@@ -335,11 +335,11 @@ export function FormulirPemesanan({
         role="dialog"
         aria-modal="true"
         aria-label={judul}
-        className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${savedNumber ? 'max-w-sm' : mode === 'check_in' ? 'checkin-reference' : 'max-w-3xl'}`}
+        className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${savedNumber ? 'max-w-sm' : 'checkin-reference'}`}
       >
-        {mode === 'check_in' && !savedNumber ? <div className="ci-header">
+        {!savedNumber ? <div className="ci-header">
           <p>OPERASIONAL / TRANSAKSI BARU</p>
-          <div className="ci-header-title"><h2>Check-in Langsung</h2><span className="ci-header-id">ID otomatis setelah disimpan</span></div>
+          <div className="ci-header-title"><h2>{mode === 'booking' ? 'Reservasi' : 'Check-in Langsung'}</h2><span className="ci-header-id">ID otomatis setelah disimpan</span></div>
           <Button type="button" variant="ghost" size="icon" aria-label="Tutup" onClick={onClose}><X /></Button>
         </div> : <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold">{savedNumber && mode === 'check_in' ? 'Check-in Berhasil' : judul}</h2>
@@ -373,7 +373,7 @@ export function FormulirPemesanan({
               <Button type="button" className="mt-5" onClick={onClose}>Selesai</Button>
             )}
           </div>
-        ) : mode === 'check_in' ? (
+        ) : (
           <form onSubmit={save} className="ci-form">
             <div className="ci-grid">
               <section className="ci-pane"><h3><UserRound />Identitas Tamu</h3><div className="ci-fields">
@@ -383,184 +383,25 @@ export function FormulirPemesanan({
                 <Bidang label="Jumlah Tamu"><div className={readClass}>{jumlahTamu}</div></Bidang>
               </div>{matchedGuest && <p className="ci-notice">Tamu terdaftar: <strong>{matchedGuest.full_name}</strong>. Data lama digunakan.</p>}</section>
               <section className="ci-pane"><h3><BedDouble />Rincian Menginap</h3><div className="ci-fields">
+                {mode === 'booking' ? <>
+                <Bidang label="Pilih Kamar"><select required value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}><option value="">Pilih kamar</option>{availableRooms.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}</select></Bidang>
+                <Bidang label="Tanggal Check-in"><input required type="date" value={scheduledDate} onChange={event => setScheduledDate(event.target.value)} className={fieldClass} /></Bidang>
+                <Bidang label="Jam Check-in"><input required type="time" value={scheduledTime} onChange={event => setScheduledTime(event.target.value)} className={fieldClass} /></Bidang>
+                </> : <>
                 <Bidang label="Tipe Kamar"><select required value={activeTypeId} onChange={event => { setTypeChoice(event.target.value); handleRoomChange(''); }} className={fieldClass}><option value="">Pilih tipe kamar</option>{typesWithRooms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Bidang>
                 <Bidang label="Nomor Kamar"><select required disabled={!activeTypeId} value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}><option value="">{activeTypeId ? 'Pilih nomor kamar' : 'Pilih tipe kamar terlebih dahulu'}</option>{selectedRoomUnavailable && selectedRoom && <option value={selectedRoom.id} disabled>Kamar {selectedRoom.room_number} · Belum tersedia</option>}{roomsOfType.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}</select></Bidang>
+                </>}
                 <Bidang label="Pilih Paket"><select required disabled={!selectedRoomType?.pricing_group} value={packageId} onChange={event => handlePackageChange(event.target.value)} className={fieldClass}><option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>{paketUrut.map(pack => { const price = priceForPackage(pack.id); return <option key={pack.id} value={pack.id} disabled={price <= 0}>{pack.name}</option>; })}</select></Bidang>
                 <Bidang label={`Harga Kamar (${dayMode === 'weekday' ? 'WEEKDAY' : 'WEEKEND'})`}><div className={readClass}>{selectedPrice > 0 ? rupiah(selectedPrice) : '—'}</div></Bidang>
                 <Bidang label="TAMU TAMBAHAN (RP. 50.000/ORANG)"><input type="number" min={0} max={18} step={1} value={extraGuests} onChange={event => setExtraGuests(event.target.value)} onFocus={event => event.currentTarget.select()} className={fieldClass} /></Bidang>
               </div>{selectedRoomUnavailable && <p role="alert" className="ci-notice text-destructive">Kamar belum tersedia untuk Check-in Langsung. Pilih kamar tersedia; Check-in ganda tidak diizinkan.</p>}</section>
-              <section className="ci-pane"><h3><CreditCard />Pembayaran</h3><p className="ci-method-label">Metode Pembayaran (maks. {featureFlags.combinedPayment ? '2' : '1'})</p><div className="ci-methods">{(['Cash', 'QRIS', 'Transfer'] as MetodePembayaran[]).map(m => <Button key={m} type="button" variant="outline" aria-pressed={methods.includes(m)} disabled={!methods.includes(m) && methods.length >= 2} onClick={() => toggleMethod(m)}>{m.toUpperCase()}</Button>)}</div><div className="ci-fields">{methods.map(m => <Bidang key={m} label={`Nominal ${m.toUpperCase()}`}><input required type="number" min={0} max={total > 0 ? total : undefined} step="1" value={nominal[m] ?? '0'} readOnly={methods.length === 1} onChange={event => setNominal(n => ({ ...n, [m]: event.target.value }))} onFocus={event => event.currentTarget.select()} className={fieldClass} /></Bidang>)}</div>{methods.length > 1 && <p className="ci-notice">{featureFlags.combinedPayment ? 'Dua metode dicatat dalam satu transaksi dengan riwayat pembayaran masing-masing.' : 'Pembayaran gabungan belum diaktifkan.'}</p>}</section>
-              <section className="ci-pane"><h3><FileText />Ringkasan Pembayaran</h3><div className="ci-summary"><Baris k="Harga kamar" v={rupiah(selectedPrice)} /><Baris k={`Tamu tambahan (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} /><div className="ci-total"><span>Total Tagihan</span><span>{rupiah(total)}</span></div>{methods.map(m => <Baris key={m} k={`Dibayar ${m.toUpperCase()}`} v={rupiah(Math.max(0, Number(nominal[m]) || 0))} />)}<div className="ci-balance"><span>Sisa Tagihan</span><span>{rupiah(Math.max(0, total - paymentTotal))}</span></div></div>{extra.tambahan > 0 && !extraGuestOn && <p className="ci-notice text-destructive">Biaya tamu tambahan belum dapat disimpan sistem, menunggu persetujuan Owner.</p>}</section>
+              <section className="ci-pane"><h3><CreditCard />Pembayaran</h3><p className="ci-method-label">Metode Pembayaran (maks. {featureFlags.combinedPayment ? '2' : '1'})</p><div className="ci-methods">{(['Cash', 'QRIS', 'Transfer'] as MetodePembayaran[]).map(m => <Button key={m} type="button" variant="outline" aria-pressed={methods.includes(m)} disabled={!methods.includes(m) && methods.length >= 2} onClick={() => toggleMethod(m)}>{m.toUpperCase()}</Button>)}</div><div className="ci-fields">{methods.map(m => <Bidang key={m} label={`Nominal ${m.toUpperCase()}${mode === 'booking' && minimumDp !== null && m === methods[0] ? ` (DP min. ${rupiah(minimumDp)})` : ''}`}><input required type="number" min={0} max={total > 0 ? total : undefined} step="1" value={nominal[m] ?? '0'} readOnly={mode === 'check_in' && methods.length === 1} onChange={event => setNominal(n => ({ ...n, [m]: event.target.value }))} onFocus={event => event.currentTarget.select()} className={fieldClass} /></Bidang>)}</div>{methods.length > 1 && <p className="ci-notice">{featureFlags.combinedPayment ? 'Dua metode dicatat dalam satu transaksi dengan riwayat pembayaran masing-masing.' : 'Pembayaran gabungan belum diaktifkan.'}</p>}</section>
+              <section className="ci-pane"><h3><FileText />Ringkasan Pembayaran</h3><div className="ci-summary"><Baris k="Harga kamar" v={rupiah(selectedPrice)} /><Baris k={`Tamu tambahan (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} /><div className="ci-total"><span>Total Tagihan</span><span>{rupiah(total)}</span></div>{methods.map(m => <Baris key={m} k={`Dibayar ${m.toUpperCase()}`} v={rupiah(Math.max(0, Number(nominal[m]) || 0))} />)}<div className="ci-balance"><span>Sisa Tagihan</span><span>{rupiah(Math.max(0, total - paymentTotal))}</span></div></div>{mode === 'booking' && minimumDp !== null && <p className="ci-notice">Minimum DP {setting?.minimum_dp_mode === 'PERCENTAGE' ? `${Number(setting.minimum_dp_value)}%` : 'Owner'}: {rupiah(minimumDp)}</p>}{extra.tambahan > 0 && !extraGuestOn && <p className="ci-notice text-destructive">Biaya tamu tambahan belum dapat disimpan sistem, menunggu persetujuan Owner.</p>}</section>
             </div>
             {isTraining && <p className="ci-notice">Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.</p>}
             {selectedPrice > 0 && <p className="ci-notice">{activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.' : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.' : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}</p>}
             {error && <p role="alert" className="ci-notice text-destructive">{error}</p>}
-            <footer className="ci-footer"><p className="ci-reminder"><Info />Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan</p><div className="ci-footer-actions"><Button type="button" variant="outline" onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || dataLoading || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : 'Check-in'}</Button></div></footer>
-          </form>
-        ) : (
-          <form onSubmit={save} className="space-y-4">
-            <p className="-mt-2 text-sm text-muted-foreground">
-              ID: <span className="font-mono text-primary">Otomatis setelah disimpan</span>
-            </p>
-
-            <Judul>DETAIL INFORMATION</Judul>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-3">
-                <div className="relative">
-                  <Bidang label="Nomor WhatsApp">
-                    <input required type="tel" inputMode="tel" maxLength={16} value={phone}
-                      onFocus={() => setSearchFocus('phone')}
-                      onBlur={() => setTimeout(() => setSearchFocus(null), 150)}
-                      onChange={event => setPhone(event.target.value)}
-                      className={fieldClass} placeholder="Ketik nomor untuk mencari tamu" />
-                  </Bidang>
-                  {searchFocus === 'phone' && suggestions.length > 0 && <Saran items={suggestions} onPick={pilihTamu} />}
-                </div>
-                <div className="relative">
-                  <Bidang label="Nama Tamu">
-                    <input required={!matchedGuest} maxLength={100} value={matchedGuest?.full_name ?? name}
-                      disabled={Boolean(matchedGuest)}
-                      onFocus={() => setSearchFocus('name')}
-                      onBlur={() => setTimeout(() => setSearchFocus(null), 150)}
-                      onChange={event => setName(event.target.value)}
-                      className={fieldClass} placeholder="Ketik nama untuk mencari tamu" />
-                  </Bidang>
-                  {searchFocus === 'name' && suggestions.length > 0 && <Saran items={suggestions} onPick={pilihTamu} />}
-                </div>
-                <Bidang label="Alamat">
-                  <input required={!matchedGuest} maxLength={500} value={matchedGuest?.address ?? address}
-                    disabled={Boolean(matchedGuest)} onChange={event => setAddress(event.target.value)} className={fieldClass} />
-                </Bidang>
-                {matchedGuest && (
-                  <p className="rounded-xl bg-secondary px-3 py-2 text-xs">Tamu terdaftar: <strong>{matchedGuest.full_name}</strong>. Data lama digunakan.</p>
-                )}
-              </div>
-              <div className="space-y-3">
-                <Bidang label="Pilih Kamar">
-                  <select required value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}>
-                    <option value="">Pilih kamar siap</option>
-                    {selectedRoomUnavailable && selectedRoom && <option value={selectedRoom.id} disabled>Kamar {selectedRoom.room_number} · Belum tersedia</option>}
-                    {availableRooms.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}
-                  </select>
-                  {selectedRoomUnavailable && <p role="alert" className="mt-2 text-sm text-destructive">Kamar belum tersedia untuk Check-in Langsung. Pilih kamar tersedia; Check-in ganda tidak diizinkan.</p>}
-                </Bidang>
-                <Bidang label="Pilih Paket">
-                  <select required disabled={!selectedRoomType?.pricing_group} value={packageId}
-                    onChange={event => handlePackageChange(event.target.value)} className={fieldClass}>
-                    <option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>
-                    {packages.rows.filter(pack => pack.active).map(pack => {
-                      const price = priceForPackage(pack.id);
-                      return (
-                        <option key={pack.id} value={pack.id} disabled={price <= 0}>
-                          {pack.name}{price > 0 ? ` · ${rupiah(price)}` : ' · Harga belum tersedia'}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </Bidang>
-                <Bidang label="Jumlah Tamu">
-                  <div className={readClass}>{jumlahTamu}</div>
-                </Bidang>
-                {mode === 'booking' && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <Bidang label="Tanggal Check-in">
-                      <input required type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} className={fieldClass} />
-                    </Bidang>
-                    <Bidang label="Jam Check-in">
-                      <input required type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)} className={fieldClass} />
-                    </Bidang>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <Judul>DETAIL PAYMENT</Judul>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-3">
-                <Bidang label={`Harga Kamar (${dayMode === 'weekday' ? 'Weekday' : 'Weekend'})`}>
-                  <div className={readClass}>{selectedPrice > 0 ? rupiah(selectedPrice) : '—'}</div>
-                </Bidang>
-                <Bidang label={`Extra Guest (orang · ${rupiah(extra.tarif)}/orang)`}>
-                  <input type="number" min={0} max={18} step={1} value={extraGuests}
-                    onChange={e => setExtraGuests(e.target.value)} onFocus={e => e.currentTarget.select()} className={fieldClass} />
-                </Bidang>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Metode Pembayaran (maks. 2)</span>
-                  <div className="mt-1 grid grid-cols-3 gap-2">
-                    {(['Cash', 'QRIS', 'Transfer'] as MetodePembayaran[]).map(m => {
-                      const aktif = methods.includes(m);
-                      return (
-                        <button key={m} type="button" aria-pressed={aktif}
-                          disabled={!aktif && methods.length >= 2}
-                          onClick={() => toggleMethod(m)}
-                          className={`h-11 rounded-xl border text-sm font-semibold uppercase transition disabled:opacity-40 ${aktif ? 'border-primary bg-primary/15 text-primary' : 'border-input text-muted-foreground'}`}>
-                          {m}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                {methods.map(m => (
-                  <Bidang key={m} label={`Nominal ${m.toUpperCase()}${mode === 'booking' && minimumDp !== null && m === methods[0] ? ` (DP min. ${rupiah(minimumDp)})` : ''}`}>
-                    <input required type="number" min={0} max={total > 0 ? total : undefined} step="1"
-                      value={nominal[m] ?? '0'}
-                      onChange={e => setNominal(n => ({ ...n, [m]: e.target.value }))}
-                      onFocus={e => e.currentTarget.select()} className={fieldClass} />
-                  </Bidang>
-                ))}
-                {methods.length > 1 && (
-                  <p className="rounded-xl bg-secondary px-3 py-2 text-xs">
-                    {featureFlags.combinedPayment
-                      ? 'Dua metode disimpan atomic dalam satu transaksi dan masing-masing memiliki riwayat pembayaran sendiri.'
-                      : 'Pembayaran gabungan belum diaktifkan. Pilih satu metode sampai backend siap.'}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <Judul>PAYMENT SUMMARY</Judul>
-            <div className="rounded-xl border border-gold/25 bg-secondary/50 px-4 py-3 text-sm">
-              <Baris k="Harga kamar" v={rupiah(selectedPrice)} />
-              <Baris k={`Extra Guest (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} />
-              <div className="mt-2 flex justify-between border-t border-gold/20 pt-2 font-bold">
-                <span>Total Tagihan</span><span className="text-gold-light">{rupiah(total)}</span>
-              </div>
-              {methods.map(m => <Baris key={m} k={`Dibayar ${m.toUpperCase()}`} v={rupiah(Math.max(0, Number(nominal[m]) || 0))} />)}
-              {mode === 'booking' && (
-                <Baris k="Sisa tagihan" v={rupiah(Math.max(0, total - methods.reduce((s, m) => s + Math.max(0, Number(nominal[m]) || 0), 0)))} />
-              )}
-              {extra.tambahan > 0 && !extraGuestOn && (
-                <p className="mt-2 text-xs text-perlu-foreground">Biaya Extra Guest belum dapat disimpan sistem (menunggu persetujuan pembaruan database oleh Owner).</p>
-              )}
-              {mode === 'booking' && minimumDp !== null && (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Minimum DP {setting?.minimum_dp_mode === 'PERCENTAGE' ? `${Number(setting.minimum_dp_value)}%` : 'Owner'}: {rupiah(minimumDp)}
-                </p>
-              )}
-            </div>
-
-            {isTraining && (
-              <p className="rounded-xl bg-perlu px-3 py-2 text-sm text-perlu-foreground">
-                Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.
-              </p>
-            )}
-            {selectedPrice > 0 && (
-              <p className="rounded-xl bg-secondary px-3 py-2 text-xs">
-                {activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.'
-                  : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.'
-                  : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}
-              </p>
-            )}
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-
-            <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
-              <Button type="submit" disabled={saving || dataLoading || selectedRoomUnavailable}>
-                {saving ? 'Menyimpan…' : mode === 'booking' ? 'Booking' : 'Check-in'}
-              </Button>
-            </div>
+            <footer className="ci-footer"><p className="ci-reminder"><Info />Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan</p><div className="ci-footer-actions"><Button type="button" variant="outline" onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || dataLoading || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
           </form>
         )}
       </div>
@@ -584,15 +425,6 @@ function Saran({ items, onPick }: { items: { id: string; full_name: string; phon
         </li>
       ))}
     </ul>
-  );
-}
-
-function Judul({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 pt-1">
-      <span className="text-xs font-bold tracking-[0.2em] text-primary">{children}</span>
-      <span className="h-px flex-1 bg-gold/25" />
-    </div>
   );
 }
 

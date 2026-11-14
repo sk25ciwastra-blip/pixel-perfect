@@ -35,3 +35,6 @@
 .ci-footer-actions button[type='submit'] { background: var(--checkin-button); }
 .ci-footer-actions button[type='button'] { background: transparent; border-color: var(--checkin-border); }
 @media (max-width: 700px) { .ci-grid { grid-template-columns: minmax(0,1fr); } .ci-form { padding: 12px; } .ci-pane { padding-inline: 12px; } .ci-pane label { grid-template-columns: 125px minmax(0,1fr); } .ci-pane h3 { font-size: 20px; } .checkin-reference .ci-header { padding-inline: 18px; padding-right: 48px; } .checkin-reference .ci-header h2 { font-size: 24px; } .ci-header-title { gap: 6px; } .ci-footer { flex-wrap: wrap; } .ci-footer-actions { margin-left: auto; } }
+.checkin-reference .ci-pane label > div:has(select) { padding: 0; background: transparent; }
+.checkin-reference .ci-pane label > div[aria-readonly] { height: auto; min-height: 34px; padding-block: 6px; overflow-wrap: anywhere; }
+.checkin-reference .ci-summary .ci-expense-total > span:last-child { color: var(--destructive); }
