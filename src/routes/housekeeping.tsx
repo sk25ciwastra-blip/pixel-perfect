@@ -11,7 +11,7 @@ import { usePeran } from '@/lib/peran';
 import { ChecklistHousekeeping } from '@/components/checklist-housekeeping';
 import { PerawatanBerkala } from '@/components/perawatan-berkala';
 import { Link } from '@tanstack/react-router';
-import { BedDouble, Brush, ClipboardCheck, History, Wrench, Search, Sparkles, CheckCircle2, Users, ListChecks, Package, Layers, Eye, Clock, ChevronRight } from 'lucide-react';
+import { BedDouble, Brush, ClipboardCheck, History, Wrench, Search, Sparkles, CheckCircle2, Users, Package, Layers, Eye, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import '@/components/housekeeping.css';
 import latarHousekeeping from '@/assets/header-housekeeping-reference.jpg';
@@ -111,20 +111,6 @@ function Halaman() {
     dirtyRooms.length > 0 && dirtyRooms.every((room) => selectedIds.includes(room.id));
   const activeRooms = operationalRooms.filter((room) => room.active);
   const visibleSections = sections.map(section => ({ ...section, rooms: section.rooms.filter(room => !typeFilter || room.room_type_id === typeFilter) }));
-  const selesaiHariIni = new Set(
-    history.rows
-      .filter(
-        (item) =>
-          item.action === 'finish_cleaning' &&
-          new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Jakarta',
-          }).format(new Date(item.created_at)) ===
-            new Intl.DateTimeFormat('en-CA', {
-              timeZone: 'Asia/Jakarta',
-            }).format(new Date()),
-      )
-      .map((item) => item.room_id),
-  ).size;
   const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
   const todayHistory = history.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.created_at)) === todayWib);
   const startedToday = new Set(todayHistory.filter(item => item.action === 'start_cleaning').map(item => item.room_id));
