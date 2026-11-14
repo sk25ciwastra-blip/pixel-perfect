@@ -7,6 +7,7 @@ import { rpc, useTable } from '@/lib/data-live';
 import { useSesiKasKonteks } from '@/lib/sesi-kas';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { biayaTamuTambahan } from '@/lib/tamu-tambahan';
+import { paketTerurut, tipeKamarTerurut } from '@/lib/urutan-pilihan';
 import { featureFlags, extraGuestAktif } from '@/lib/feature-flags';
 import { ReceiptTransactionButton } from '@/components/receipt-actions';
 import {
@@ -155,11 +156,8 @@ export function FormulirPemesanan({
   const activeTypeId = typeChoice || selectedRoom?.room_type_id || '';
   const roomsOfType = availableRooms.filter(room => room.room_type_id === activeTypeId)
     .sort((a, b) => a.room_number.localeCompare(b.room_number, 'id', { numeric: true }));
-  const typesWithRooms = roomTypes.rows.filter(t => availableRooms.some(r => r.room_type_id === t.id));
-  const urutanPaket = (nama: string) => { const n = nama.toLowerCase(); const jam = n.match(/(\d+)\s*jam/);
-    if (jam) return Number(jam[1]); if (n.includes('pagi')) return 100; if (n.includes('malam')) return 101;
-    if (n.includes('harian')) return 102; if (n.includes('minggu')) return 103; return 200; };
-  const paketUrut = packages.rows.filter(pack => pack.active).sort((a, b) => urutanPaket(a.name) - urutanPaket(b.name));
+  const typesWithRooms = tipeKamarTerurut(roomTypes.rows.filter(t => availableRooms.some(r => r.room_type_id === t.id)));
+  const paketUrut = paketTerurut(packages.rows);
   const selectedRoomUnavailable = mode === 'check_in' && Boolean(selectedRoom) && !availableRooms.some(room => room.id === roomId);
 
   const dataLoading =
@@ -387,7 +385,7 @@ export function FormulirPemesanan({
               <section className="ci-pane"><h3><BedDouble />Rincian Menginap</h3><div className="ci-fields">
                 <Bidang label="Tipe Kamar"><select required value={activeTypeId} onChange={event => { setTypeChoice(event.target.value); handleRoomChange(''); }} className={fieldClass}><option value="">Pilih tipe kamar</option>{typesWithRooms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Bidang>
                 <Bidang label="Nomor Kamar"><select required disabled={!activeTypeId} value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}><option value="">{activeTypeId ? 'Pilih nomor kamar' : 'Pilih tipe kamar terlebih dahulu'}</option>{selectedRoomUnavailable && selectedRoom && <option value={selectedRoom.id} disabled>Kamar {selectedRoom.room_number} · Belum tersedia</option>}{roomsOfType.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}</select></Bidang>
-                <Bidang label="Pilih Paket"><select required disabled={!selectedRoomType?.pricing_group} value={packageId} onChange={event => handlePackageChange(event.target.value)} className={fieldClass}><option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>{paketUrut.map(pack => { const price = priceForPackage(pack.id); return <option key={pack.id} value={pack.id} disabled={price <= 0}>{pack.name}{price > 0 ? ` · ${rupiah(price)}` : ' · Harga belum tersedia'}</option>; })}</select></Bidang>
+                <Bidang label="Pilih Paket"><select required disabled={!selectedRoomType?.pricing_group} value={packageId} onChange={event => handlePackageChange(event.target.value)} className={fieldClass}><option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>{paketUrut.map(pack => { const price = priceForPackage(pack.id); return <option key={pack.id} value={pack.id} disabled={price <= 0}>{pack.name}</option>; })}</select></Bidang>
                 <Bidang label={`Harga Kamar (${dayMode === 'weekday' ? 'WEEKDAY' : 'WEEKEND'})`}><div className={readClass}>{selectedPrice > 0 ? rupiah(selectedPrice) : '—'}</div></Bidang>
                 <Bidang label="TAMU TAMBAHAN (RP. 50.000/ORANG)"><input type="number" min={0} max={18} step={1} value={extraGuests} onChange={event => setExtraGuests(event.target.value)} onFocus={event => event.currentTarget.select()} className={fieldClass} /></Bidang>
               </div>{selectedRoomUnavailable && <p role="alert" className="ci-notice text-destructive">Kamar belum tersedia untuk Check-in Langsung. Pilih kamar tersedia; Check-in ganda tidak diizinkan.</p>}</section>
