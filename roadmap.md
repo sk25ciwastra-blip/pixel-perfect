@@ -2,7 +2,7 @@
 
 ## Housekeeping — tiga koreksi kesejajaran dan ketebalan
 - [x] Pusatkan ikon, label, angka dan persentase kartu; samakan hierarki ketebalan tabel dengan Dashboard; sejajarkan batas bawah panel antrean dan panel kamar pada desktop, tanpa perubahan data atau fungsi.
-- [ ] Periksa Preview akun aktif, pencarian/riwayat, ukuran desktop/HP serta tes existing; tanpa publikasi.
+- [x] Preview akun aktif 1582×900/390×844: pusat ikon/teks/persentase dan batas bawah kedua panel terukur identik; bobot teks 600/700, pencarian 06 serta riwayat berjalan, tanpa overflow/error. Empat tes PASS dan build OK; tanpa publikasi.
 
 ## Housekeeping — warna tabel seperti Dashboard
 - [x] Tabel Status Kamar & Housekeeping memakai palet krem tabel Dashboard (latar krem, teks gelap, pemisah emas, pil kamar hitam); data, status, izin, aksi, lima tab dan panel lain tetap.
