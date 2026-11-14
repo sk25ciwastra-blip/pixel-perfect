@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Housekeeping — referensi 14 November
+- [ ] Sesuaikan header handuk, font, tab, ringkasan, tabel warm white dan panel kanan secara lokal; seluruh sumber data, izin dan aksi existing tetap.
+- [ ] Periksa empat bagian, pencarian dan tampilan komputer/HP tanpa menyimpan status atau publish.
+
 ## Header fitur — 14 November
 - [x] Sambungkan gambar latar fitur ke atas dan hapus hari/tanggal header selain Dashboard; Housekeeping tetap tanpa foto, tanggal data operasional tetap.
 - [x] Preview akun aktif 1582×900/390×844: delapan latar fitur mulai dari atas, menu profil berjalan, Housekeeping tetap tanpa foto, tanggal Dashboard tetap tampil; tanpa overflow/error dan build OK, tanpa publikasi.
