@@ -28,7 +28,7 @@
 .kamar-nomor { font-family: Georgia, ui-serif, serif; font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: 0; font-variant-numeric: lining-nums; padding-right: 14px; text-shadow: 0 1px 0 var(--foreground); }
 .kamar-tipe { margin-top: 4px; font-size: 12px; font-weight: 800; line-height: 1.2; text-transform: uppercase; overflow-wrap: anywhere; }
 .kamar-info { margin-top: 5px; font-family: var(--font-sans); font-size: 11.5px; font-weight: 650; line-height: 14.3px; overflow-wrap: anywhere; }
-.kamar-info button { color: var(--kamar-tinta); padding: 0; height: auto; min-height: 0; font-size: inherit; line-height: inherit; justify-content: start; white-space: normal; text-align: left; }
+.kamar-info button { color: var(--kamar-tinta); padding: 0; height: auto; min-height: 0; font-size: inherit; line-height: 16.7px; justify-content: start; white-space: normal; text-align: left; }
 .kamar-info button.kamar-nomorator { color: color-mix(in oklab, var(--gold-dark) 82%, var(--kamar-tinta)); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .kamar-lampu { position: absolute; z-index: 2; right: 10px; top: 7px; width: 13px; height: 13px; border-radius: 50%; background: var(--lampu); border: 1px solid color-mix(in oklab, var(--lampu) 70%, var(--kamar-tinta)); box-shadow: 0 0 7px color-mix(in oklab, var(--lampu) 40%, transparent), inset 0 2px 3px color-mix(in oklab, var(--kamar-kertas) 50%, transparent); }
 .kamar-lampu-siap { --lampu: var(--kamar-hijau); }
@@ -60,6 +60,7 @@
   .kamar-plakat { min-width: 50px; }
   .kamar-plakat .kamar-ikon-ranjang { width: 38px; height: 34px; }
   .kamar-isi { padding-left: 7px; padding-right: 7px; }
+  .kamar-info button.kamar-nomorator { font-size: 10.5px; white-space: nowrap; }
   .kamar-legenda { gap: 10px 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .halaman-kamar * { transition: none; } }
