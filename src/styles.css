@@ -168,6 +168,18 @@
   --kamar-popup-button: linear-gradient(175deg, oklch(0.7 0.15 83), oklch(0.57 0.13 78));
   --kamar-popup-shadow: 0 24px 70px color-mix(in oklab, var(--navy-deep) 80%, transparent), 0 0 28px -8px var(--kamar-popup-gold), inset 0 0 0 2px var(--kamar-popup-white);
   --header-photo-veil: linear-gradient(90deg, color-mix(in oklab, var(--background) 90%, transparent), color-mix(in oklab, var(--background) 68%, transparent) 42%, color-mix(in oklab, var(--navy-deep) 26%, transparent)), linear-gradient(0deg, var(--background), transparent 55%);
+  --checkin-paper: oklch(0.975 0.014 345);
+  --checkin-ink: oklch(0.16 0.005 260);
+  --checkin-heading: oklch(0.25 0.105 270);
+  --checkin-muted: oklch(0.45 0.008 260);
+  --checkin-border: oklch(0.81 0.018 325);
+  --checkin-panel-border: oklch(0.93 0.016 345);
+  --checkin-read: oklch(0.935 0.015 345);
+  --checkin-highlight: oklch(0.93 0.055 75);
+  --checkin-gold: oklch(0.68 0.155 75);
+  --checkin-button: linear-gradient(180deg, oklch(0.91 0.095 85), oklch(0.74 0.15 75));
+  --checkin-head: linear-gradient(180deg, var(--navy-soft), var(--navy-deep));
+  --checkin-shadow: 0 24px 80px color-mix(in oklab, var(--background) 65%, transparent);
 }
 
 .dark {
