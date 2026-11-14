@@ -102,7 +102,7 @@
 .hk-gold-link svg,.hk-outline-link svg { width: 13px; height: 13px; }
 .hk-stock-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; padding: 0 13px; }
 .hk-stock-item { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; border: 1px solid var(--hk-bingkai); border-radius: 7px; padding: 12px; background: var(--hk-permukaan); box-shadow: var(--hk-bayangan); }
-.hk-stock-item > svg { color: var(--gold-light); width: 42px; height: 42px; padding: 7px; border-radius: 50%; background: color-mix(in oklab,var(--gold) 15%,transparent); box-shadow: inset 0 1px 0 color-mix(in oklab,var(--gold-light) 18%,transparent); }
+.hk-stock-item > svg { color: var(--gold-light); width: 42px; height: 42px; flex-shrink: 0; padding: 7px; border-radius: 50%; background: color-mix(in oklab,var(--gold) 15%,transparent); box-shadow: inset 0 1px 0 color-mix(in oklab,var(--gold-light) 18%,transparent); }
 .hk-stock-item p { font-size: 12px; }
 .hk-stock-item strong { font-size: 20px; }
 .hk-stock-item .hk-stock-empty { width: 100%; padding-top: 4px; font-size: 11px; color: var(--muted-foreground); }

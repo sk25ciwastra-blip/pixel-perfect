@@ -1,8 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Housekeeping — penyempurnaan visual akhir
-- [ ] Perhalus header/tab, dimensi ringkasan dan ikon, tabel lebih terbaca, diagram kosong elegan, antrean dan kartu bawah; latar asli, data dan seluruh fungsi tetap.
-- [ ] Periksa Preview komputer/HP dan tes antrean/izin, tanpa publikasi.
+- [x] Perhalus header/tab, dimensi ringkasan dan ikon, tabel lebih terbaca, diagram kosong elegan, antrean dan kartu bawah; latar asli, data dan seluruh fungsi tetap. Garis stok tanpa data dihapus, titik status ganda dan tombol mata flat diperbaiki secara lokal.
+- [x] Preview akun aktif 1582×900, 1280×900 dan 390×844: pencarian 06, filter, detail riwayat dan lima tab berjalan; panel bawah HP diperiksa, empat tes antrean/izin PASS dan build OK, tanpa publikasi.
 
 ## Koreksi Housekeeping — susunan persis referensi
 - [x] Lima tab, enam ringkasan, tabel tujuh kolom, diagram dan antrean kanan, serta Perlengkapan & Linen / Perawatan & Kendala di bawah tampil; data tanpa sumber resmi tetap kosong, aksi existing dipertahankan.
