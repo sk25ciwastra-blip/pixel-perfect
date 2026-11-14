@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Housekeeping — tiga koreksi kesejajaran dan ketebalan
+- [x] Pusatkan ikon, label, angka dan persentase kartu; samakan hierarki ketebalan tabel dengan Dashboard; sejajarkan batas bawah panel antrean dan panel kamar pada desktop, tanpa perubahan data atau fungsi.
+- [x] Preview akun aktif 1582×900/390×844: pusat ikon/teks/persentase dan batas bawah kedua panel terukur identik; bobot teks 600/700, pencarian 06 serta riwayat berjalan, tanpa overflow/error. Empat tes PASS dan build OK; tanpa publikasi.
+
 ## Housekeeping — warna tabel seperti Dashboard
 - [x] Tabel Status Kamar & Housekeeping memakai palet krem tabel Dashboard (latar krem, teks gelap, pemisah emas, pil kamar hitam); data, status, izin, aksi, lima tab dan panel lain tetap.
 - [x] Preview akun aktif diperiksa: warna latar/teks/baris judul/pil terukur sama dengan tabel Dashboard, tanpa error runtime; empat tes antrean/izin PASS dan build OK, tanpa publikasi.
