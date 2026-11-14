@@ -33,7 +33,8 @@
 .kamar-tipe { margin-top: 4px; font-size: 12px; font-weight: 800; line-height: 1.2; text-transform: uppercase; overflow-wrap: anywhere; }
 .kamar-info { margin-top: 5px; font-family: var(--font-sans); font-size: 11.5px; font-weight: 650; line-height: 14.3px; overflow-wrap: anywhere; }
 .kamar-info button { color: var(--kamar-tinta); padding: 0; height: auto; min-height: 0; font-size: inherit; line-height: 16.7px; justify-content: start; white-space: normal; text-align: left; }
-.kamar-info button.kamar-nomorator { color: color-mix(in oklab, var(--gold-dark) 82%, var(--kamar-tinta)); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.kamar-info button.kamar-nomorator { color: color-mix(in oklab, var(--gold-dark) 82%, var(--kamar-tinta)); text-decoration: none; text-underline-offset: 2px; cursor: pointer; }
+.kamar-info button.kamar-nomorator:is(:hover, :focus, :active) { text-decoration: underline; }
 .kamar-lampu { position: absolute; z-index: 2; right: 10px; top: 7px; width: 13px; height: 13px; border-radius: 50%; background: var(--lampu); border: 1px solid color-mix(in oklab, var(--lampu) 70%, var(--kamar-tinta)); box-shadow: 0 0 7px color-mix(in oklab, var(--lampu) 40%, transparent), inset 0 2px 3px color-mix(in oklab, var(--kamar-kertas) 50%, transparent); }
 .kamar-lampu-siap { --lampu: var(--kamar-hijau); }
 .kamar-lampu-terisi { --lampu: var(--kamar-merah); }
