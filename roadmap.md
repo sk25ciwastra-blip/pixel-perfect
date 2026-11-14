@@ -2,7 +2,7 @@
 
 ## Housekeeping — permukaan premium dari tab ke panel bawah
 - [x] Perhalus relief tab, ringkasan, tabel dan panel bawah dengan sorotan satin, bayangan lembut dan teks jelas; header, data, status serta fungsi tetap.
-- [ ] Periksa Preview komputer/HP dan pencarian/riwayat dengan akun aktif, jalankan tes existing; tanpa publikasi.
+- [x] Preview komputer/HP diperiksa dengan akun aktif: pencarian 06, filter dan riwayat berjalan, tanpa teks bertabrakan/overflow/error; empat tes PASS dan build OK, tanpa publikasi.
 
 ## Housekeeping — header seperti Daftar Transaksi
 - [x] Samakan font/ukuran judul, garis emas 80px, kutipan di kanan bawah dan jarak header ke isi; latar asli, panel tabel dan fungsi tetap.
