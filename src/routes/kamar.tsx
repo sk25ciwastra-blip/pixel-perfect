@@ -142,7 +142,7 @@ function HalamanKamar() {
 
   function openRoom(room: Room) {
     const action = aksiKartuKamar(room, canCheckIn);
-    if (action === 'terisi') {
+    if (action === 'status') {
       setOccupiedRoom(room);
       return;
     }
@@ -348,7 +348,7 @@ function HalamanKamar() {
         </div>
       )}
 
-      {occupiedRoom && <PopupKamarTerisi nomor={occupiedRoom.room_number} onClose={() => setOccupiedRoom(null)} />}
+      {occupiedRoom && <PopupKamarTerisi nomor={occupiedRoom.room_number} room={occupiedRoom} onClose={() => setOccupiedRoom(null)} />}
 
       {detailTransactionId && (
         <DetailTransaksi

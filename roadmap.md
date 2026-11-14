@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Popup semua status kamar — 14 November
+- [x] Gunakan template disetujui dengan nomor dinamis dan indikator merah/amber/biru/abu; hanya aktif READY berizin membuka form. Pilih Kamar Lain hanya menutup popup, tanpa X.
+- [ ] Periksa status nyata dan tes dispatch; status/alasan perbaikan belum memiliki sumber resmi terstruktur sehingga tidak dikarang.
+
 ## Popup kamar terisi — 14 November
 - [x] Popup putih hangat dengan judul merah/hitam, ikon ranjang, bingkai dan gelombang emas mengikuti gambar; memakai nomor dan status tersimpan, tanpa mengubah kartu atau validasi.
 - [x] Tombol Pilih Kamar Lain hanya menutup popup kembali ke daftar kamar; tombol X dihapus, tampilan lain tetap. Alur diperiksa dengan sesi aktif, daftar kembali tanpa form Check-in dan URL tetap; build OK, tanpa menyimpan atau publish.
