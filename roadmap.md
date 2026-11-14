@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Housekeeping — diagram tidak menutupi label
+- [x] Tempatkan label di baris atas serta angka dan diagram di baris bawah yang terpisah; ukuran kartu, data dan fungsi tetap.
+- [x] Preview akun aktif pada lebar 1582/1280/390px: keenam label dan angka tidak beririsan dengan diagram, seluruh label berada dalam kartu; tanpa error runtime, empat tes PASS dan build OK; tanpa publikasi.
+
 ## Housekeeping — tiga koreksi kesejajaran dan ketebalan
 - [x] Pusatkan ikon, label, angka dan persentase kartu; samakan hierarki ketebalan tabel dengan Dashboard; sejajarkan batas bawah panel antrean dan panel kamar pada desktop, tanpa perubahan data atau fungsi.
 - [x] Preview akun aktif 1582×900/390×844: pusat ikon/teks/persentase dan batas bawah kedua panel terukur identik; bobot teks 600/700, pencarian 06 serta riwayat berjalan, tanpa overflow/error. Empat tes PASS dan build OK; tanpa publikasi.
