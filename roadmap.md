@@ -4,6 +4,10 @@
 - [x] Sesuaikan kepala hitam, isi terang, empat bagian dua kolom, font/ukuran/warna dan pengingat bawah; Booking, data, harga, pembayaran, izin dan proses simpan tetap.
 - [x] Preview komputer 1582×900/HP 390×844: input tamu, ringkasan awal dan Batal berjalan, tanpa overflow/runtime error; build OK, tes training dan empat tes frontend pembayaran/autofill PASS. Pilihan berharga nyata belum terverifikasi karena daftar kamar siap kosong saat pemeriksaan; tanpa transaksi baru atau publikasi. Suite readiness lengkap menemui mock aset struk lama yang belum didukung, tes formulir terkait dijalankan selektif.
 
+## Check-in Langsung — urutan pilihan & daftar paket 15 November
+- [x] Urutkan tipe kamar Standard, Superior A, Superior B, Deluxe (tipe lain di belakang) dan tampilkan daftar paket tanpa harga; harga tetap pada Harga Kamar serta Ringkasan, aturan pilih/izin/simpan tidak berubah.
+- [x] Dua tes urutan PASS; Preview akun aktif 1582×900: tipe sesuai urutan, nomor kamar terkecil per tipe (Standard 09/12, Superior A 11, Superior B 02/04, Deluxe 05/10), sembilan paket tanpa "Rp", Harga Kamar terisi, tanpa runtime error; build OK, tanpa menyimpan transaksi atau publikasi.
+
 ## Housekeeping — diagram tidak menutupi label
 - [x] Tempatkan label di baris atas serta angka dan diagram di baris bawah yang terpisah; ukuran kartu, data dan fungsi tetap.
 - [x] Preview akun aktif pada lebar 1582/1280/390px: keenam label dan angka tidak beririsan dengan diagram, seluruh label berada dalam kartu; tanpa error runtime, empat tes PASS dan build OK; tanpa publikasi.
