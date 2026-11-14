@@ -244,11 +244,16 @@ function HalamanKamar() {
                       <span className={`kamar-lampu kamar-lampu-${room.active ? status : 'nonaktif'}`} role="img" aria-label={room.active ? labelStatusKamar[status] : 'Tidak aktif'} title={room.active ? labelStatusKamar[status] : 'Tidak aktif'} />
                       <div className="kamar-plakat">
                         <svg viewBox="0 0 64 82" fill="none" stroke="currentColor" aria-hidden="true" preserveAspectRatio="none">
-                          <path d="M12 4H52Q52 10 59 10V72Q52 72 52 78H12Q12 72 5 72V10Q12 10 12 4Z" strokeWidth="1.3" />
-                          <path d="M16 1H48M1 15V67M63 15V67M16 81H48" strokeWidth=".6" opacity=".6" />
-                          <circle cx="12" cy="5" r="2" /><circle cx="52" cy="5" r="2" /><circle cx="12" cy="77" r="2" /><circle cx="52" cy="77" r="2" />
+                          <path d="M13 4H51Q51 9 58 9V73Q51 73 51 78H13Q13 73 6 73V9Q13 9 13 4Z" strokeWidth="1.1" />
+                          <path d="M15 7H49Q49 12 55 12V70Q49 70 49 75H15Q15 70 9 70V12Q15 12 15 7Z" strokeWidth=".5" opacity=".65" />
+                          <path d="M16 1H48M2 15V67M62 15V67M16 81H48" strokeWidth=".6" opacity=".5" />
+                          <circle cx="12" cy="5" r="1.8" fill="currentColor" /><circle cx="52" cy="5" r="1.8" fill="currentColor" /><circle cx="12" cy="77" r="1.8" fill="currentColor" /><circle cx="52" cy="77" r="1.8" fill="currentColor" />
                         </svg>
-                        <BedDouble className="kamar-ikon-ranjang" strokeWidth={1} />
+                        <svg className="kamar-ikon-ranjang" viewBox="0 0 54 42" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M7 21V12Q7 7 13 7H41Q47 7 47 12V21M3 33V25Q3 21 8 21H46Q51 21 51 25V33M3 28H51M3 33H51M4 33V37M50 33V37" />
+                          <path d="M10 20V17Q10 14 14 14H21Q25 14 25 17V20M29 20V17Q29 14 33 14H40Q44 14 44 17V20M6 25H48" />
+                          <path d="M8 5Q10 3 13 3H41Q44 3 46 5" strokeWidth=".65" opacity=".65" />
+                        </svg>
                         {peran === 'owner' && <Button variant="outline" size="icon" className="kamar-ubah" aria-label={`Ubah kamar ${room.room_number}`} title={`Ubah kamar ${room.room_number}`} onClick={() => edit(room)}><Pencil className="size-3" /></Button>}
                       </div>
                       <div className="kamar-isi">
