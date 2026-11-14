@@ -2191,8 +2191,6 @@ export type Database = {
       }
       is_receptionist: { Args: { _user_id: string }; Returns: boolean }
       issue_payment_receipt: { Args: { _payment_id: string }; Returns: string }
-      // Pending local migration; unavailable servers fail closed in the PDF loader.
-      read_payment_confirmation_refunds: { Args: { _transaction_id: string }; Returns: Json }
       next_expense_number: { Args: never; Returns: string }
       next_housekeeping_number: { Args: never; Returns: string }
       next_transaction_number: { Args: never; Returns: string }
@@ -2203,6 +2201,10 @@ export type Database = {
       override_room_ready:
         | { Args: { _room_id: string }; Returns: undefined }
         | { Args: { _note: string; _room_id: string }; Returns: undefined }
+      read_payment_confirmation_refunds: {
+        Args: { _transaction_id: string }
+        Returns: Json
+      }
       record_finance_expense: {
         Args: {
           _amount: number

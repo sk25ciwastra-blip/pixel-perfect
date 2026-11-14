@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
-import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen, Plus } from "lucide-react";
+import { UserRound, Brush, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen, Plus, LogIn } from "lucide-react";
+import "@/components/kamar.css";
+import { LatarHeader } from "@/components/latar-header";
+import { konteksHeader } from "@/lib/konteks-header";
 import { useQueryClient } from "@tanstack/react-query";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
 import { bolehCheckIn } from "@/lib/aksi-operasional";
@@ -29,27 +32,6 @@ const statusMap: Record<Room["status"], StatusKamar> = {
   occupied: "terisi",
   dirty: "perlu",
   cleaning: "sedang",
-};
-
-const latar: Record<StatusKamar, string> = {
-  siap: "bg-siap-foreground",
-  terisi: "bg-terisi-foreground",
-  perlu: "bg-perlu-foreground",
-  sedang: "bg-sedang-foreground",
-};
-
-const ikonStatus: Record<StatusKamar, typeof CheckCircle2> = {
-  siap: CheckCircle2,
-  terisi: UserRound,
-  perlu: Brush,
-  sedang: Sparkles,
-};
-
-const teks: Record<StatusKamar, string> = {
-  siap: "text-siap-foreground",
-  terisi: "text-terisi-foreground",
-  perlu: "text-perlu-foreground",
-  sedang: "text-sedang-foreground",
 };
 
 const kelompokKamar = [
@@ -204,15 +186,21 @@ function HalamanKamar() {
   return (
     <Kerangka
       judul="Status Kamar"
-      keterangan={`${rooms.rows.length} kamar`}
-      aksi={
-        <div className="flex flex-wrap items-center gap-2">
-          {canCheckIn && <Button className="h-11 gap-2 px-5" onClick={() => setCheckInOpen(true)}><Plus className="size-4" />Check-in</Button>}
-          {peran === "owner" && <Button className="h-11 gap-2 px-5" onClick={() => edit()}><Plus className="size-4" />Kamar</Button>}
-        </div>
-      }
+      tanpaJudul
     >
-      <div>
+      <div className="halaman-kamar">
+        <header className="kamar-header">
+          <LatarHeader path="/kamar" />
+          <div className="kamar-header-isi">
+            <div className="kamar-header-judul">
+              <p className="text-[10px] font-bold text-gold">BATURADEN 25 HOMESTAY</p>
+              <h1 className="mt-1 font-serif text-[32px] leading-tight text-foreground">Status Kamar</h1>
+              <p className="mt-1 text-xs text-foreground">Informasi ketersediaan dan kondisi kamar secara langsung</p>
+            </div>
+            <p className="kamar-header-kutipan">“{konteksHeader['/kamar']}”</p>
+            {canCheckIn && <Button className="h-10 shrink-0 gap-3 rounded-xl px-6" onClick={() => setCheckInOpen(true)}><LogIn className="size-5" />Check-in</Button>}
+          </div>
+        </header>
         {rooms.error && (
           <p role="alert" className="mt-3 text-sm text-destructive">
             {rooms.error}
@@ -221,16 +209,16 @@ function HalamanKamar() {
         {rooms.loading && <p className="mt-5 text-sm text-muted-foreground">Memuat kamar…</p>}
         {!rooms.loading && statusFilter && groupedRooms.length === 0 && <p className="panel-mewah mt-5 px-4 py-8 text-center text-sm text-muted-foreground">Tidak ada kamar dengan status ini saat ini.</p>}
 
-        <div className="mt-5 space-y-6">
+        <div className="kamar-daftar">
           {groupedRooms.map((group) => (
             <section key={group.label}>
-              <div className="mb-3 flex items-center gap-3">
+              <div className="mb-3 flex items-center gap-2">
                 <BedDouble className="size-4 text-gold" strokeWidth={1.6} />
-                <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">{group.label}</h2>
-                <span className="text-xs text-muted-foreground">{group.rooms.length} kamar</span>
-                <span className="h-px flex-1 bg-gradient-to-r from-gold/35 to-transparent" />
+                <h2 className="text-xs font-bold uppercase text-gold-light">{group.label}</h2>
+                <span className="ml-1 text-xs text-foreground">{group.rooms.length} kamar</span>
+                <span className="h-px flex-1 bg-gradient-to-r from-gold to-gold/20" />
               </div>
-              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              <div className="kamar-kelompok">
                 {group.rooms.map((room) => {
                   const status = statusMap[room.status];
                   const roomType = types.rows.find((type) => type.id === room.room_type_id);
@@ -251,40 +239,38 @@ function HalamanKamar() {
                   return (
                     <div
                       key={room.id}
-                      className="panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 hover:border-gold/50"
+                      className="kamar-kartu"
                     >
-                      <span className={`absolute inset-y-0 left-0 w-1 ${latar[status]}`} aria-hidden="true" />
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-[0.6rem] font-semibold tracking-[0.3em] text-muted-foreground">KAMAR</p>
-                          <p className="font-serif text-4xl leading-none text-foreground">{room.room_number}</p>
-                        </div>
-                        {(() => { const Ikon = ikonStatus[status]; return (
-                          <span className={`grid size-10 shrink-0 place-items-center rounded-full border border-gold/25 bg-navy-deep ${teks[status]}`}><Ikon className="size-5" strokeWidth={1.6} /></span>
-                        ); })()}
+                      <span className={`kamar-lampu kamar-lampu-${room.active ? status : 'nonaktif'}`} role="img" aria-label={room.active ? labelStatusKamar[status] : 'Tidak aktif'} title={room.active ? labelStatusKamar[status] : 'Tidak aktif'} />
+                      <div className="kamar-plakat">
+                        <svg viewBox="0 0 64 82" fill="none" stroke="currentColor" aria-hidden="true" preserveAspectRatio="none">
+                          <path d="M12 4H52Q52 10 59 10V72Q52 72 52 78H12Q12 72 5 72V10Q12 10 12 4Z" strokeWidth="1.3" />
+                          <path d="M16 1H48M1 15V67M63 15V67M16 81H48" strokeWidth=".6" opacity=".6" />
+                          <circle cx="12" cy="5" r="2" /><circle cx="52" cy="5" r="2" /><circle cx="12" cy="77" r="2" /><circle cx="52" cy="77" r="2" />
+                        </svg>
+                        <BedDouble className="kamar-ikon-ranjang" strokeWidth={1} />
+                        {peran === 'owner' && <Button variant="outline" size="icon" className="kamar-ubah" aria-label={`Ubah kamar ${room.room_number}`} title={`Ubah kamar ${room.room_number}`} onClick={() => edit(room)}><Pencil className="size-3" /></Button>}
                       </div>
-                      <p className="mt-2 truncate text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-gold-light/90">
+                      <div className="kamar-isi">
+                      <p className="kamar-nomor">{room.room_number}</p>
+                      <p className="kamar-tipe">
                         {roomType?.name ?? "Tipe kamar belum tersedia"}
                       </p>
-                      <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${teks[status]}`}>
-                        <span className={`size-1.5 rounded-full ${latar[status]}`} />{labelStatusKamar[status]}
-                      </span>
-                      <div className="mt-3 h-px bg-gradient-to-r from-gold/25 to-transparent" />
-
+                      <div className="kamar-info">
                       {transaction && (
-                        <button
-                          type="button"
-                          className="mt-3 text-left font-mono text-xs font-semibold text-primary hover:underline"
+                        <Button
+                          variant="link"
+                          className="font-mono"
                           onClick={() => setDetailTransactionId(transaction.id)}
                         >
                           {transaction.transaction_number}
-                        </button>
+                        </Button>
                       )}
 
                       {status === "siap" && housekeepingJob && (
-                        <button
-                          type="button"
-                          className="mt-3 text-left font-mono text-xs font-semibold text-primary hover:underline"
+                        <Button
+                          variant="link"
+                          className="font-mono"
                           onClick={() =>
                             setDetailHousekeeping({
                               roomNumber: room.room_number,
@@ -298,11 +284,11 @@ function HalamanKamar() {
                           }
                         >
                           {housekeepingJob.job_number}
-                        </button>
+                        </Button>
                       )}
 
                       {status === "siap" && !housekeepingJob && (
-                        <p className="mt-3 text-xs text-muted-foreground">
+                        <p>
                           {history.error || checklists.error
                             ? "Data HK resmi belum tersedia."
                             : "HK belum tercatat."}
@@ -310,15 +296,15 @@ function HalamanKamar() {
                       )}
 
                       {status === "siap" && housekeepingJob && checklists.error && (
-                        <p className="mt-3 text-xs text-muted-foreground">
+                        <p>
                           Checklist HK resmi belum tersedia.
                         </p>
                       )}
 
                       {issues.length > 0 && housekeepingJob && (
-                        <button
-                          type="button"
-                          className="mt-3 rounded-xl bg-bahaya px-3 py-2 text-left text-xs text-bahaya-foreground hover:bg-bahaya/80"
+                        <Button
+                          variant="link"
+                          className="mt-1 text-left"
                           onClick={() =>
                             setDetailHousekeeping({
                               roomNumber: room.room_number,
@@ -332,19 +318,11 @@ function HalamanKamar() {
                           }
                         >
                           ❌ {issues.join(" · ")}
-                        </button>
-                      )}
-
-                      {peran === "owner" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-4 self-start"
-                          onClick={() => edit(room)}
-                        >
-                          <Pencil className="size-3.5" /> Ubah
                         </Button>
                       )}
+
+                      </div>
+                      </div>
                     </div>
                   );
                 })}
@@ -352,6 +330,15 @@ function HalamanKamar() {
             </section>
           ))}
         </div>
+
+        {!rooms.loading && groupedRooms.length > 0 && <div className="kamar-legenda" aria-label="Keterangan status kamar">
+          <div className="kamar-legenda-item kamar-lampu-siap"><span className="kamar-lampu" /><strong>HIJAU</strong><span>· Tersedia</span></div>
+          <div className="kamar-legenda-item kamar-lampu-terisi"><span className="kamar-lampu" /><strong>MERAH</strong><span>· Terisi</span></div>
+          <div className="kamar-legenda-item kamar-lampu-sedang"><span className="kamar-lampu" /><strong>BIRU LANGIT</strong><span>· Dibersihkan</span></div>
+          <div className="kamar-legenda-item kamar-lampu-nonaktif"><span className="kamar-lampu" /><strong>ABU-ABU</strong><span>· Tidak aktif</span></div>
+          {rooms.rows.some((room) => room.active && room.status === 'dirty') && <div className="kamar-legenda-item kamar-lampu-perlu"><span className="kamar-lampu" /><strong>AMBER</strong><span>· Perlu dibersihkan</span></div>}
+        </div>}
+        {peran === 'owner' && <div className="mt-4 flex justify-end"><Button variant="outline" size="sm" onClick={() => edit()}><Plus className="size-3.5" />Kamar</Button></div>}
 
         {!rooms.loading && !groupedRooms.length && (
           <p className="mt-8 text-center text-sm text-muted-foreground">Kamar tidak ditemukan.</p>
