@@ -5,14 +5,15 @@ test('Tersedia membuka Check-in hanya dengan izin existing', () => {
   expect(aksiKartuKamar({ active: true, status: 'ready' }, true)).toBe('check_in');
   expect(aksiKartuKamar({ active: true, status: 'ready' }, false)).toBe('informasi');
 });
-test('Terisi menampilkan informasi belum tersedia, bukan detail atau Check-in ganda', () => {
-  expect(aksiKartuKamar({ active: true, status: 'occupied' }, true)).toBe('informasi');
+test('Terisi membuka form existing, bukan Detail Transaksi', () => {
+  expect(aksiKartuKamar({ active: true, status: 'occupied' }, true)).toBe('check_in');
+  expect(aksiKartuKamar({ active: true, status: 'occupied' }, false)).toBe('informasi');
 });
-test('Perlu dibersihkan belum tersedia untuk Check-in', () => {
-  expect(aksiKartuKamar({ active: true, status: 'dirty' }, true)).toBe('informasi');
+test('Perlu dibersihkan membuka form existing tanpa melewati validasi', () => {
+  expect(aksiKartuKamar({ active: true, status: 'dirty' }, true)).toBe('check_in');
 });
-test('Sedang dibersihkan belum tersedia untuk Check-in', () => {
-  expect(aksiKartuKamar({ active: true, status: 'cleaning' }, true)).toBe('informasi');
+test('Sedang dibersihkan membuka form existing tanpa melewati validasi', () => {
+  expect(aksiKartuKamar({ active: true, status: 'cleaning' }, true)).toBe('check_in');
 });
 test('Tidak aktif tidak pernah membuka Check-in atau hunian', () => {
   for (const status of ['ready', 'occupied', 'dirty', 'cleaning']) {
