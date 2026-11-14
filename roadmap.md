@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Popup kamar terisi — 14 November
+- [x] Popup putih hangat dengan judul merah/hitam, ikon ranjang, bingkai dan gelombang emas mengikuti gambar; memakai nomor dan status tersimpan, tanpa mengubah kartu atau validasi.
+- [ ] Periksa popup, pilih kamar lain, ID transaksi, dan tampilan HP dengan sesi aktif; tanpa menyimpan atau publish.
+
 ## UX Kamar — 14 November
 - [x] Legenda rapat mengikuti gambar; permukaan kartu aktif berizin menuju form Check-in, sedangkan ID transaksi sendiri membuka detail tanpa propagasi. Kamar belum tersedia tetap terlihat di form tanpa mengizinkan penyimpanan.
 - [x] Lima tes PASS; Kamar 06 membuka form dengan peringatan dan simpan nonaktif, memilih kamar tersedia menghapus peringatan, Kamar 09 terpilih otomatis, ID transaksi tetap terpisah; desktop/HP tanpa overflow dan build OK, tanpa perubahan data atau publish.
