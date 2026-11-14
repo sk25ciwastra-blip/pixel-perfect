@@ -1,0 +1,62 @@
+.halaman-kamar {
+  --kamar-kertas: oklch(0.97 0.014 85);
+  --kamar-tinta: var(--primary-foreground);
+  --kamar-emas: var(--gold-light);
+  --kamar-hijau: oklch(0.76 0.23 145);
+  --kamar-merah: oklch(0.65 0.23 25);
+  --kamar-biru: oklch(0.79 0.14 230);
+  --kamar-abu: var(--muted-foreground);
+  --kamar-peringatan: var(--perlu-foreground);
+  padding-top: 2px;
+}
+.kamar-header { margin: 0 -40px 24px; padding: 8px 40px 24px; position: relative; overflow: hidden; }
+.kamar-header-isi { position: relative; display: flex; align-items: end; gap: 16px; justify-content: space-between; }
+.kamar-header-judul { flex-shrink: 0; }
+.kamar-header-kutipan { max-width: 34ch; margin-left: auto; font-family: var(--font-serif); font-style: italic; text-align: right; font-size: 13px; line-height: 1.4; }
+.kamar-daftar { display: grid; gap: 22px; }
+.kamar-kelompok { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; }
+.kamar-kartu { position: relative; display: flex; min-height: 90px; border: 1px solid var(--gold); border-radius: 8px; background: var(--kamar-kertas); color: var(--kamar-tinta); overflow: hidden; box-shadow: var(--shadow-lembut); }
+.kamar-kartu::after { content: ''; pointer-events: none; position: absolute; inset: 0 0 0 35%; background: repeating-radial-gradient(ellipse at 100% 120%, transparent 0 9px, color-mix(in oklab, var(--gold) 9%, transparent) 10px 11px, transparent 12px 20px); }
+.kamar-plakat { width: 34%; min-width: 58px; max-width: 72px; flex-shrink: 0; position: relative; display: grid; place-items: center; background: var(--permukaan-mewah); border-right: 1px solid var(--gold); color: var(--kamar-emas); }
+.kamar-plakat svg { position: absolute; inset: 3px; width: calc(100% - 6px); height: calc(100% - 6px); }
+.kamar-plakat .kamar-ikon-ranjang { position: relative; inset: auto; width: 41px; height: 41px; }
+.kamar-isi { position: relative; z-index: 1; min-width: 0; flex: 1; padding: 7px 10px 8px; }
+.kamar-nomor { font-family: var(--font-serif); font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: 0; font-variant-numeric: lining-nums; padding-right: 14px; }
+.kamar-tipe { margin-top: 5px; font-size: 11px; font-weight: 800; line-height: 1.2; text-transform: uppercase; overflow-wrap: anywhere; }
+.kamar-info { margin-top: 5px; font-size: 10px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.kamar-info button { color: var(--kamar-tinta); padding: 0; height: auto; min-height: 0; font-size: inherit; justify-content: start; white-space: normal; text-align: left; }
+.kamar-lampu { position: absolute; z-index: 2; right: 10px; top: 7px; width: 13px; height: 13px; border-radius: 50%; background: var(--lampu); border: 1px solid color-mix(in oklab, var(--lampu) 70%, var(--kamar-tinta)); box-shadow: 0 0 7px color-mix(in oklab, var(--lampu) 40%, transparent), inset 0 2px 3px color-mix(in oklab, var(--kamar-kertas) 50%, transparent); }
+.kamar-lampu-siap { --lampu: var(--kamar-hijau); }
+.kamar-lampu-terisi { --lampu: var(--kamar-merah); }
+.kamar-lampu-sedang { --lampu: var(--kamar-biru); }
+.kamar-lampu-perlu { --lampu: var(--kamar-peringatan); }
+.kamar-lampu-nonaktif { --lampu: var(--kamar-abu); }
+.kamar-ubah { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); height: 21px; width: 24px; padding: 0; border-color: var(--gold); color: var(--kamar-emas); background: var(--navy-deep); opacity: 0; }
+.kamar-kartu:hover .kamar-ubah, .kamar-kartu:focus-within .kamar-ubah { opacity: 1; }
+.kamar-legenda { margin-top: 64px; border: 1px solid var(--gold); border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 0; padding: 9px 12px; }
+.kamar-legenda-item { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; font-size: 11px; line-height: 1.4; border-right: 1px solid var(--gold); }
+.kamar-legenda-item:last-child { border-right: 0; }
+.kamar-legenda-item .kamar-lampu { position: static; flex-shrink: 0; }
+.kamar-legenda-item strong { color: var(--lampu); font-size: 10px; }
+@media (max-width: 1199px) {
+  .kamar-kelompok { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .kamar-header-kutipan { max-width: 26ch; }
+  .kamar-legenda-item { padding: 0 10px; }
+}
+@media (max-width: 1023px) {
+  .kamar-header { margin: -24px -16px 22px; padding: 20px 16px; }
+  .kamar-kelompok { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kamar-header-isi { flex-wrap: wrap; }
+  .kamar-header-kutipan { order: 3; width: 100%; max-width: none; margin: 0; text-align: left; }
+  .kamar-ubah { opacity: 1; }
+  .kamar-legenda { margin-top: 36px; }
+}
+@media (max-width: 600px) {
+  .kamar-kelompok { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kamar-plakat { min-width: 50px; }
+  .kamar-plakat .kamar-ikon-ranjang { width: 33px; height: 33px; }
+  .kamar-isi { padding-left: 7px; padding-right: 7px; }
+  .kamar-legenda { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 0; }
+  .kamar-legenda-item { padding: 0 7px; border: 0; justify-content: start; flex-wrap: wrap; gap: 5px; }
+}
+@media (prefers-reduced-motion: reduce) { .halaman-kamar * { transition: none; } }
