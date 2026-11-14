@@ -39,9 +39,9 @@
 .kamar-ubah { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); height: 21px; width: 24px; padding: 0; border-color: var(--gold); color: var(--kamar-emas); background: var(--navy-deep); opacity: 0; }
 .kamar-kartu:hover .kamar-ubah, .kamar-kartu:focus-within .kamar-ubah { opacity: 1; }
 .kamar-legenda { margin-top: 64px; border: 1px solid var(--gold); border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 0; padding: 9px 12px; }
-.kamar-legenda-item { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; font-size: 11px; line-height: 1.4; border-right: 1px solid var(--gold); }
+.kamar-legenda-item { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; font-size: 11px; line-height: 1.4; border-right: 0; }
 .kamar-legenda-item:last-child { border-right: 0; }
-.kamar-legenda-item .kamar-lampu { position: static; flex-shrink: 0; }
+.kamar-legenda-item .kamar-lampu { position: static; flex-shrink: 0; width: 9px; height: 9px; }
 .kamar-legenda-item strong { color: var(--lampu); font-size: 10px; }
 @media (max-width: 1199px) {
   .kamar-kelompok { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -65,3 +65,4 @@
   .kamar-legenda-item { padding: 0 7px; border: 0; justify-content: start; flex-wrap: wrap; gap: 5px; }
 }
 @media (prefers-reduced-motion: reduce) { .halaman-kamar * { transition: none; } }
+.kamar-kartu[role="button"] { cursor: pointer; }

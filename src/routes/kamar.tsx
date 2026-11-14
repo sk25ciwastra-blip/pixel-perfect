@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
-import { UserRound, Brush, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen, Plus, LogIn } from "lucide-react";
+import { useMemo, useState } from "react";
+import { UserRound, Brush, BedDouble, Clock3, CalendarDays, NotebookPen, LogIn } from "lucide-react";
 import "@/components/kamar.css";
 import { LatarHeader } from "@/components/latar-header";
 import { konteksHeader } from "@/lib/konteks-header";
@@ -11,7 +11,7 @@ import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/com
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { Kerangka } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { aksiKartuKamar } from "@/lib/aksi-kartu-kamar";
 import { labelStatusKamar, type StatusKamar } from "@/lib/data-contoh";
 import { useTable, type Room } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
@@ -68,7 +68,7 @@ function formatIssueDetails(checklist: ChecklistRow) {
 }
 
 function HalamanKamar() {
-  const { peran, posisiKode } = usePeran();
+  const { posisiKode } = usePeran();
   const queryClient = useQueryClient();
   const canCheckIn = bolehCheckIn(posisiKode);
   const [checkInOpen, setCheckInOpen] = useState(false);
@@ -80,13 +80,8 @@ function HalamanKamar() {
   const historyRows = history.rows;
   const checklistRows = checklists.rows;
 
-  const [editing, setEditing] = useState<Room | null>(null);
-  const [open, setOpen] = useState(false);
-  const [nomor, setNomor] = useState("");
-  const [tipe, setTipe] = useState("");
-  const [catatan, setCatatan] = useState("");
-  const [active, setActive] = useState(true);
-  const [message, setMessage] = useState("");
+  const [selectedRoomId, setSelectedRoomId] = useState('');
+  const [informationRoom, setInformationRoom] = useState<Room | null>(null);
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
   const [detailHousekeeping, setDetailHousekeeping] = useState<DetailHousekeeping | null>(null);
 
@@ -143,44 +138,27 @@ function HalamanKamar() {
     return groups.filter((group) => group.rooms.length > 0);
   }, [rooms.rows, statusFilter]);
 
-  function edit(room?: Room) {
-    setEditing(room ?? null);
-    setNomor(room?.room_number ?? "");
-    setTipe(room?.room_type_id ?? "");
-    setCatatan(room?.notes ?? "");
-    setActive(room?.active ?? true);
-    setOpen(true);
-    setMessage("");
-  }
-
-  async function save(event: FormEvent) {
-    event.preventDefault();
-    const selectedType = tipe || types.rows[0]?.id;
-
-    if (!nomor.trim() || !selectedType) {
-      setMessage("Periksa nomor dan tipe kamar.");
+  function openRoom(room: Room, transactionId?: string) {
+    const action = aksiKartuKamar(room, canCheckIn);
+    if (action === 'check_in') {
+      setSelectedRoomId(room.id);
+      setCheckInOpen(true);
       return;
     }
-
-    const payload = {
-      room_number: nomor.trim(),
-      room_type_id: selectedType,
-      notes: catatan,
-      active,
-    };
-    const result = editing
-      ? await supabase.from("rooms").update(payload).eq("id", editing.id)
-      : await supabase.from("rooms").insert(payload);
-
-    if (result.error) {
-      setMessage(
-        result.error.code === "23505" ? "Nomor kamar sudah digunakan." : result.error.message,
-      );
+    if (action === 'hunian' && transactionId) {
+      setDetailTransactionId(transactionId);
       return;
     }
-
-    setOpen(false);
-    await rooms.refresh();
+    if (action === 'housekeeping') {
+      const item = historyRows.filter(item => item.room_id === room.id)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+      if (item) {
+        const checklist = latestChecklist.get(room.id);
+        setDetailHousekeeping({ roomNumber: room.room_number, jobNumber: item.job_number ?? 'Belum tercatat', action: item.action, note: item.note, performedBy: item.performed_by_name, createdAt: item.created_at, issues: checklist ? formatIssueDetails(checklist) : [] });
+        return;
+      }
+    }
+    setInformationRoom(room);
   }
 
   return (
@@ -199,7 +177,7 @@ function HalamanKamar() {
               <p className="mt-2 text-sm text-muted-foreground">Informasi ketersediaan dan kondisi kamar secara langsung</p>
             </div>
             <p className="kamar-header-kutipan">“{konteksHeader['/kamar']}”</p>
-            {canCheckIn && <Button className="h-10 shrink-0 gap-3 rounded-xl px-6" onClick={() => setCheckInOpen(true)}><LogIn className="size-5" />Check-in</Button>}
+            {canCheckIn && <Button className="h-10 shrink-0 gap-3 rounded-xl px-6" onClick={() => { setSelectedRoomId(''); setCheckInOpen(true); }}><LogIn className="size-5" />Check-in</Button>}
           </div>
         </header>
         {rooms.error && (
@@ -241,6 +219,10 @@ function HalamanKamar() {
                     <div
                       key={room.id}
                       className="kamar-kartu"
+                      role="button" tabIndex={0}
+                      aria-label={`Kamar ${room.room_number} · ${room.active ? labelStatusKamar[status] : 'Tidak aktif'}`}
+                      onClick={() => openRoom(room, transaction?.id)}
+                      onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openRoom(room, transaction?.id); } }}
                     >
                       <span className={`kamar-lampu kamar-lampu-${room.active ? status : 'nonaktif'}`} role="img" aria-label={room.active ? labelStatusKamar[status] : 'Tidak aktif'} title={room.active ? labelStatusKamar[status] : 'Tidak aktif'} />
                       <div className="kamar-plakat">
@@ -254,7 +236,6 @@ function HalamanKamar() {
                           <path d="M10 20V17Q10 14 14 14H21Q25 14 25 17V20M29 20V17Q29 14 33 14H40Q44 14 44 17V20M6 25H48" />
                           <path d="M8 5Q10 3 13 3H41Q44 3 46 5" strokeWidth=".65" opacity=".65" />
                         </svg>
-                        {peran === 'owner' && <Button variant="outline" size="icon" className="kamar-ubah" aria-label={`Ubah kamar ${room.room_number}`} title={`Ubah kamar ${room.room_number}`} onClick={() => edit(room)}><Pencil className="size-3" /></Button>}
                       </div>
                       <div className="kamar-isi">
                       <p className="kamar-nomor">{room.room_number}</p>
@@ -266,7 +247,7 @@ function HalamanKamar() {
                         <Button
                           variant="link"
                           className="kamar-nomorator font-mono"
-                          onClick={() => setDetailTransactionId(transaction.id)}
+                          onClick={event => { event.stopPropagation(); openRoom(room, transaction.id); }}
                         >
                           {transaction.transaction_number}
                         </Button>
@@ -276,7 +257,8 @@ function HalamanKamar() {
                         <Button
                           variant="link"
                           className="font-mono"
-                          onClick={() =>
+                          onClick={event => {
+                            event.stopPropagation();
                             setDetailHousekeeping({
                               roomNumber: room.room_number,
                               jobNumber: housekeepingJob.job_number as string,
@@ -285,8 +267,8 @@ function HalamanKamar() {
                               performedBy: housekeepingJob.performed_by_name,
                               createdAt: housekeepingJob.created_at,
                               issues,
-                            })
-                          }
+                            });
+                          }}
                         >
                           {housekeepingJob.job_number}
                         </Button>
@@ -310,7 +292,8 @@ function HalamanKamar() {
                         <Button
                           variant="link"
                           className="mt-1 text-left"
-                          onClick={() =>
+                          onClick={event => {
+                            event.stopPropagation();
                             setDetailHousekeeping({
                               roomNumber: room.room_number,
                               jobNumber: housekeepingJob.job_number as string,
@@ -319,8 +302,8 @@ function HalamanKamar() {
                               performedBy: housekeepingJob.performed_by_name,
                               createdAt: housekeepingJob.created_at,
                               issues,
-                            })
-                          }
+                            });
+                          }}
                         >
                           ❌ {issues.join(" · ")}
                         </Button>
@@ -337,11 +320,11 @@ function HalamanKamar() {
         </div>
 
         {!rooms.loading && groupedRooms.length > 0 && <div className="kamar-legenda" aria-label="Keterangan status kamar">
-          <div className="kamar-legenda-item kamar-lampu-siap"><span className="kamar-lampu" /><strong>HIJAU</strong><span>· Tersedia</span></div>
-          <div className="kamar-legenda-item kamar-lampu-terisi"><span className="kamar-lampu" /><strong>MERAH</strong><span>· Terisi</span></div>
-          <div className="kamar-legenda-item kamar-lampu-sedang"><span className="kamar-lampu" /><strong>BIRU LANGIT</strong><span>· Dibersihkan</span></div>
-          <div className="kamar-legenda-item kamar-lampu-nonaktif"><span className="kamar-lampu" /><strong>ABU-ABU</strong><span>· Tidak aktif</span></div>
-          {rooms.rows.some((room) => room.active && room.status === 'dirty') && <div className="kamar-legenda-item kamar-lampu-perlu"><span className="kamar-lampu" /><strong>AMBER</strong><span>· Perlu dibersihkan</span></div>}
+          <div className="kamar-legenda-item kamar-lampu-siap"><span className="kamar-lampu" /><span>Tersedia</span></div>
+          <div className="kamar-legenda-item kamar-lampu-terisi"><span className="kamar-lampu" /><span>Terisi</span></div>
+          <div className="kamar-legenda-item kamar-lampu-sedang"><span className="kamar-lampu" /><span>Sedang dibersihkan</span></div>
+          <div className="kamar-legenda-item kamar-lampu-nonaktif"><span className="kamar-lampu" /><span>Tidak aktif</span></div>
+          <div className="kamar-legenda-item kamar-lampu-perlu"><span className="kamar-lampu" /><span>Perlu dibersihkan</span></div>
         </div>}
 
         {!rooms.loading && !groupedRooms.length && (
@@ -349,72 +332,24 @@ function HalamanKamar() {
         )}
       </div>
 
-      {checkInOpen && canCheckIn && <FormulirPemesanan mode="check_in" onClose={() => setCheckInOpen(false)} onSaved={async () => {
+      {checkInOpen && canCheckIn && <FormulirPemesanan initialRoomId={selectedRoomId} mode="check_in" onClose={() => setCheckInOpen(false)} onSaved={async () => {
         await Promise.all([rooms.refresh(), transactions.refresh(), queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] }), queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] })]);
       }} />}
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4">
-          <form
-            onSubmit={save}
-            className="w-full max-w-md space-y-3 rounded-2xl bg-background p-5 shadow-lembut"
-          >
-            <h2 className="text-lg font-bold">{editing ? "Ubah kamar" : "Tambah kamar"}</h2>
-            <label className="block text-sm">
-              Nomor kamar
-              <input
-                required
-                value={nomor}
-                onChange={(event) => setNomor(event.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"
-              />
-            </label>
-            <label className="block text-sm">
-              Tipe kamar
-              <select
-                required
-                value={tipe}
-                onChange={(event) => setTipe(event.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"
-              >
-                <option value="" disabled>
-                  Pilih tipe kamar
-                </option>
-                {types.rows.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-sm">
-              Catatan
-              <input
-                value={catatan}
-                onChange={(event) => setCatatan(event.target.value)}
-                className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"
-              />
-            </label>
-            <label className="flex gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={active}
-                onChange={(event) => setActive(event.target.checked)}
-              />
-              Aktif
-            </label>
-            {message && (
-              <p role="alert" className="text-sm text-destructive">
-                {message}
-              </p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Batal
-              </Button>
-              <Button type="submit">Simpan</Button>
+      {informationRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm" onClick={() => setInformationRoom(null)}>
+          <section role="dialog" aria-modal="true" aria-label="Informasi Kamar" className={kelasPopupDetail} onClick={event => event.stopPropagation()}>
+            <HeaderDetail title="Informasi Kamar" nomor={informationRoom.room_number} onClose={() => setInformationRoom(null)} />
+            <div className="space-y-3 p-5">
+              <NilaiDetail label="Kamar" icon={BedDouble}>{informationRoom.room_number} · {types.rows.find(type => type.id === informationRoom.room_type_id)?.name ?? 'Tipe belum tersedia'}</NilaiDetail>
+              <NilaiDetail label="Status" icon={BedDouble}>{informationRoom.active ? labelStatusKamar[statusMap[informationRoom.status]] : 'Tidak aktif'}</NilaiDetail>
+              {informationRoom.notes && <p className="whitespace-pre-wrap text-sm">{informationRoom.notes}</p>}
+              {!informationRoom.active && <p className="text-sm text-muted-foreground">Kamar tidak aktif. Check-in tidak tersedia.</p>}
+              {informationRoom.active && ['dirty', 'cleaning'].includes(informationRoom.status) && <p className="text-sm text-muted-foreground">Riwayat Housekeeping belum tersedia untuk akses Anda.</p>}
+              {informationRoom.active && informationRoom.status === 'occupied' && <p className="text-sm text-muted-foreground">Detail hunian aktif belum tersedia untuk akses Anda.</p>}
+              <div className="flex justify-end"><Button variant="outline" onClick={() => setInformationRoom(null)}>Tutup</Button></div>
             </div>
-          </form>
+          </section>
         </div>
       )}
 
