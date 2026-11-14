@@ -259,7 +259,12 @@
 .hk-table td .hk-eye-button { background: oklch(0.93 0.014 85); box-shadow: inset 0 1px 0 var(--kamar-popup-white), 0 2px 3px color-mix(in oklab, var(--hk-tinta) 16%, transparent); }
 
 /* Align the complete stat contents, retain Dashboard's text-weight hierarchy. */
-.hk-percent { top: 50%; bottom: auto; transform: translateY(-50%); }
+.hk-stat { display: grid; grid-template-columns: auto minmax(0,1fr) auto; column-gap: 10px; row-gap: 4px; align-content: center; padding-block: 10px; }
+.hk-stat > div { display: contents; }
+.hk-stat-icon { grid-column: 1; grid-row: 1 / 3; align-self: center; }
+.hk-stat-label { grid-column: 2 / 4; grid-row: 1; overflow-wrap: normal; }
+.hk-stat-value { grid-column: 2; grid-row: 2; margin-top: 0; align-self: center; }
+.hk-percent { position: static; grid-column: 3; grid-row: 2; align-self: center; transform: none; width: 30px; height: 30px; border-width: 2px; font-size: 10px; }
 .hk-room-panel .hk-table td, .hk-room-panel .hk-table details { font-weight: 600; }
 .hk-room-panel .hk-table th,
 .hk-room-panel .hk-table td:nth-child(2),
