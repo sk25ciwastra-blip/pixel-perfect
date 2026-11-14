@@ -2,9 +2,12 @@
   --hk-kertas: var(--kamar-popup-paper);
   --hk-tinta: var(--kamar-popup-ink);
   --hk-tinta-redup: var(--kamar-popup-muted);
-  --hk-permukaan: linear-gradient(155deg, color-mix(in oklab, var(--background) 87%, var(--foreground)), var(--navy-deep) 72%);
-  --hk-bingkai: var(--gold-dark);
-  --hk-bayangan: inset 0 1px 0 color-mix(in oklab, var(--gold-light) 22%, transparent), inset 0 -1px 0 color-mix(in oklab, var(--gold-dark) 18%, transparent), 0 7px 18px -9px var(--navy-deep), 0 1px 4px color-mix(in oklab, var(--background) 65%, transparent);
+  --hk-permukaan: linear-gradient(115deg, color-mix(in oklab, var(--gold-light) 5%, transparent), transparent 42%), linear-gradient(175deg, color-mix(in oklab, var(--background) 88%, var(--foreground)), var(--navy-deep) 85%);
+  --hk-bingkai: color-mix(in oklab, var(--gold) 64%, var(--navy-deep));
+  --hk-bayangan: inset 0 1px 0 color-mix(in oklab, var(--gold-light) 30%, transparent), inset 0 -1px 0 color-mix(in oklab, var(--background) 80%, transparent), inset 1px 0 0 color-mix(in oklab, var(--gold-light) 9%, transparent), 0 10px 22px -12px var(--navy-deep), 0 3px 7px color-mix(in oklab, var(--background) 50%, transparent);
+  --hk-metal: linear-gradient(175deg, var(--gold-light), var(--gold) 57%, var(--gold-dark));
+  --hk-metal-shadow: inset 0 1px 1px color-mix(in oklab, var(--kamar-popup-white) 65%, transparent), inset 0 -2px 2px color-mix(in oklab, var(--gold-dark) 65%, transparent), 0 4px 9px color-mix(in oklab, var(--background) 60%, transparent);
+  --hk-papier: linear-gradient(170deg, var(--kamar-popup-white), var(--hk-kertas) 72%);
   font-family: var(--font-sans);
   margin-inline: 0;
 }
@@ -165,3 +168,41 @@
   .hk-header-isi { gap: 12px; }
   .hk-header blockquote { width: 100%; }
 }
+
+/* Satin surfaces and restrained relief, without changing content geometry. */
+.hk-tab { box-shadow: var(--hk-bayangan); }
+.hk-tab[aria-current="page"],.hk-room-panel .hk-type-filters button[aria-pressed="true"],.hk-gold-link { background: var(--hk-metal); box-shadow: var(--hk-metal-shadow); }
+.hk-tab:not([aria-current="page"]) svg { color: var(--gold-light); filter: drop-shadow(0 1px 2px var(--background)); }
+.hk-stat-value { text-shadow: 0 2px 2px var(--background); }
+.hk-stat-label { font-weight: 500; }
+.hk-stat-icon { box-shadow: inset 0 1px 2px color-mix(in oklab,var(--gold-light) 40%,transparent), inset 0 -3px 6px color-mix(in oklab,var(--background) 45%,transparent), 0 4px 8px color-mix(in oklab,var(--background) 65%,transparent); }
+.hk-stat[data-status="ready"] .hk-stat-icon,.hk-stat[data-status="cleaning"] .hk-stat-icon { background: radial-gradient(circle at 35% 20%,color-mix(in oklab,var(--v0-success) 30%,var(--secondary)),color-mix(in oklab,var(--v0-success) 12%,var(--navy-deep)) 80%); }
+.hk-stat[data-status="maintenance"] .hk-stat-icon { background: radial-gradient(circle at 35% 20%,color-mix(in oklab,var(--bahaya-foreground) 28%,var(--bahaya)),var(--bahaya) 80%); }
+.hk-percent { background: linear-gradient(160deg,var(--secondary),var(--navy-deep)); box-shadow: inset 0 2px 4px var(--background),0 1px 0 color-mix(in oklab,var(--gold-light) 30%,transparent); }
+.hk-panel-header h2 { text-shadow: 0 2px 3px var(--background); }
+.hk-panel-header > svg,.hk-stock-item > svg { background: radial-gradient(circle at 32% 20%,color-mix(in oklab,var(--gold-light) 25%,var(--secondary)),color-mix(in oklab,var(--gold) 9%,var(--navy-deep)) 85%); box-shadow: inset 0 1px 1px color-mix(in oklab,var(--gold-light) 35%,transparent), inset 0 -2px 4px var(--background),0 3px 6px color-mix(in oklab,var(--background) 55%,transparent); }
+.hk-side-panel .hk-panel-header { border-bottom-color: color-mix(in oklab,var(--gold) 26%,var(--background)); }
+.hk-room-panel .hk-search input { background: linear-gradient(180deg,var(--navy-deep),var(--background)); box-shadow: inset 0 2px 4px var(--navy-deep),0 1px 0 color-mix(in oklab,var(--gold-light) 15%,transparent); }
+.hk-room-panel .hk-type-filters button:not([aria-pressed="true"]) { background: var(--hk-permukaan); box-shadow: var(--hk-bayangan); }
+.hk-table-scroll { background: var(--hk-papier); box-shadow: inset 0 1px 2px color-mix(in oklab,var(--hk-tinta) 18%,transparent),0 2px 7px var(--navy-deep); }
+.hk-table thead tr { background: linear-gradient(180deg,color-mix(in oklab,var(--gold-light) 22%,var(--kamar-popup-white)),color-mix(in oklab,var(--gold) 20%,var(--hk-kertas))); }
+.hk-room-panel .hk-table th { box-shadow: inset 0 1px 0 var(--kamar-popup-white),inset 0 -1px 0 color-mix(in oklab,var(--gold) 30%,var(--hk-kertas)); }
+.hk-table tbody tr { background: var(--hk-papier); }
+.hk-table tbody tr:nth-child(even) { background: var(--hk-kertas); }
+.hk-room-number { background: linear-gradient(165deg,color-mix(in oklab,var(--navy-deep) 89%,var(--foreground)),var(--navy-deep) 75%); box-shadow: inset 0 1px 0 color-mix(in oklab,var(--foreground) 22%,transparent),inset 0 -1px 1px var(--background),0 2px 3px color-mix(in oklab,var(--hk-tinta) 18%,transparent); }
+.hk-room-panel .hk-table td > span.inline-flex,.hk-state { box-shadow: inset 0 1px 0 color-mix(in oklab,var(--kamar-popup-white) 70%,transparent),0 1px 2px color-mix(in oklab,var(--hk-tinta) 9%,transparent); }
+.hk-table td .hk-eye-button { background: var(--hk-papier); box-shadow: inset 0 1px 0 var(--kamar-popup-white),0 2px 3px color-mix(in oklab,var(--hk-tinta) 15%,transparent); }
+.hk-donut { filter: drop-shadow(0 3px 3px var(--navy-deep)); }
+.hk-progress-legend dd { font-weight: 600; }
+.hk-progress-legend dt::before { box-shadow: inset 0 1px 0 color-mix(in oklab,var(--foreground) 45%,transparent),0 0 4px color-mix(in oklab,var(--gold) 20%,transparent); }
+.hk-task-list { background: var(--hk-papier); box-shadow: inset 0 1px 0 var(--kamar-popup-white),0 3px 7px var(--navy-deep); }
+.hk-task-list li { border-bottom-color: color-mix(in oklab,var(--gold) 20%,var(--hk-kertas)); }
+.hk-task-list li:last-child { border-bottom: none; }
+.hk-task-list li > div { font-size: 13px; line-height: 1.5; }
+.hk-task-list li p { font-size: 12px; }
+.hk-queue-link,.hk-gold-link,.hk-outline-link { font-size: 12px; }
+.hk-stock-item { background: linear-gradient(175deg,color-mix(in oklab,var(--secondary) 70%,var(--background)),var(--navy-deep)); border-color: color-mix(in oklab,var(--gold) 35%,var(--background)); }
+.hk-stock-item p,.hk-maintenance-empty p { font-size: 13px; }
+.hk-stock-item .hk-stock-empty { font-size: 12px; line-height: 1.5; }
+.hk-maintenance-empty { background: var(--hk-permukaan); box-shadow: inset 0 1px 2px var(--background),0 1px 0 color-mix(in oklab,var(--gold-light) 12%,transparent); }
+.hk-outline-link { background: var(--hk-permukaan); box-shadow: var(--hk-bayangan); }
