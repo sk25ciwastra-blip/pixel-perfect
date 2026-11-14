@@ -38,15 +38,14 @@
 .kamar-lampu-nonaktif { --lampu: var(--kamar-abu); }
 .kamar-ubah { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); height: 21px; width: 24px; padding: 0; border-color: var(--gold); color: var(--kamar-emas); background: var(--navy-deep); opacity: 0; }
 .kamar-kartu:hover .kamar-ubah, .kamar-kartu:focus-within .kamar-ubah { opacity: 1; }
-.kamar-legenda { margin-top: 64px; border: 1px solid var(--gold); border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 0; padding: 9px 12px; }
-.kamar-legenda-item { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; font-size: 11px; line-height: 1.4; border-right: 0; }
+.kamar-legenda { width: 70%; max-width: 100%; margin: 64px auto 0; border: 1px solid var(--gold); border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: space-evenly; gap: 10px 16px; padding: 9px 16px; }
+.kamar-legenda-item { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0; font-size: 11px; line-height: 1.4; border-right: 0; }
 .kamar-legenda-item:last-child { border-right: 0; }
 .kamar-legenda-item .kamar-lampu { position: static; flex-shrink: 0; width: 9px; height: 9px; }
 .kamar-legenda-item strong { color: var(--lampu); font-size: 10px; }
 @media (max-width: 1199px) {
   .kamar-kelompok { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .kamar-header-kutipan { max-width: 26ch; }
-  .kamar-legenda-item { padding: 0 10px; }
 }
 @media (max-width: 1023px) {
   .kamar-header { margin: -24px -16px 22px; padding: 20px 16px; }
@@ -54,15 +53,14 @@
   .kamar-header-isi { flex-wrap: wrap; }
   .kamar-header-kutipan { order: 3; width: 100%; max-width: none; margin: 0; text-align: left; }
   .kamar-ubah { opacity: 1; }
-  .kamar-legenda { margin-top: 36px; }
+  .kamar-legenda { width: fit-content; margin-top: 36px; justify-content: center; }
 }
 @media (max-width: 600px) {
   .kamar-kelompok { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kamar-plakat { min-width: 50px; }
   .kamar-plakat .kamar-ikon-ranjang { width: 38px; height: 34px; }
   .kamar-isi { padding-left: 7px; padding-right: 7px; }
-  .kamar-legenda { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 0; }
-  .kamar-legenda-item { padding: 0 7px; border: 0; justify-content: start; flex-wrap: wrap; gap: 5px; }
+  .kamar-legenda { gap: 12px 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .halaman-kamar * { transition: none; } }
 .kamar-kartu[role="button"] { cursor: pointer; }
