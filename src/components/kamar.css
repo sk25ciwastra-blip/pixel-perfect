@@ -36,6 +36,10 @@
 .kamar-info button.kamar-nomorator { color: color-mix(in oklab, var(--gold-dark) 82%, var(--kamar-tinta)); text-decoration: none; text-underline-offset: 2px; cursor: pointer; }
 .kamar-info button.kamar-nomorator:is(:hover, :focus, :active) { text-decoration: underline; }
 .kamar-lampu { position: absolute; z-index: 2; right: 10px; top: 7px; width: 13px; height: 13px; border-radius: 50%; background: var(--lampu); border: 1px solid color-mix(in oklab, var(--lampu) 70%, var(--kamar-tinta)); box-shadow: 0 0 7px color-mix(in oklab, var(--lampu) 40%, transparent), inset 0 2px 3px color-mix(in oklab, var(--kamar-kertas) 50%, transparent); }
+.kamar-kartu > .kamar-lampu {
+  background: radial-gradient(circle at 32% 25%, color-mix(in oklab, var(--kamar-kertas) 75%, var(--lampu)), transparent 35%), radial-gradient(circle at 48% 42%, var(--lampu) 28%, color-mix(in oklab, var(--lampu) 88%, var(--kamar-kertas)) 52%, color-mix(in oklab, var(--lampu) 72%, var(--kamar-tinta)) 100%);
+  box-shadow: 0 0 4px color-mix(in oklab, var(--lampu) 48%, transparent), 0 0 8px 1px color-mix(in oklab, var(--lampu) 20%, transparent), 0 1px 2px color-mix(in oklab, var(--kamar-tinta) 22%, transparent), inset 0 1px 1px color-mix(in oklab, var(--kamar-kertas) 65%, transparent), inset 0 -1px 2px color-mix(in oklab, var(--lampu) 60%, var(--kamar-tinta));
+}
 .kamar-lampu-siap { --lampu: var(--kamar-hijau); }
 .kamar-lampu-terisi { --lampu: var(--kamar-merah); }
 .kamar-lampu-sedang { --lampu: var(--kamar-biru); }
