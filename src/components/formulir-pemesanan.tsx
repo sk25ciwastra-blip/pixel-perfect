@@ -149,6 +149,7 @@ export function FormulirPemesanan({
   const availableRooms = rooms.rows.filter(
     room => room.active && (mode === 'booking' || room.status === 'ready'),
   );
+  const selectedRoomUnavailable = mode === 'check_in' && Boolean(selectedRoom) && !availableRooms.some(room => room.id === roomId);
 
   const dataLoading =
     rooms.loading || roomTypes.loading || packages.loading || packagePrices.loading ||
@@ -401,8 +402,10 @@ export function FormulirPemesanan({
                 <Bidang label="Pilih Kamar">
                   <select required value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}>
                     <option value="">Pilih kamar siap</option>
+                    {selectedRoomUnavailable && selectedRoom && <option value={selectedRoom.id} disabled>Kamar {selectedRoom.room_number} · Belum tersedia</option>}
                     {availableRooms.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}
                   </select>
+                  {selectedRoomUnavailable && <p role="alert" className="mt-2 text-sm text-destructive">Kamar belum tersedia untuk Check-in Langsung. Pilih kamar tersedia; Check-in ganda tidak diizinkan.</p>}
                 </Bidang>
                 <Bidang label="Pilih Paket">
                   <select required disabled={!selectedRoomType?.pricing_group} value={packageId}
@@ -517,7 +520,7 @@ export function FormulirPemesanan({
 
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
-              <Button type="submit" disabled={saving || dataLoading}>
+              <Button type="submit" disabled={saving || dataLoading || selectedRoomUnavailable}>
                 {saving ? 'Menyimpan…' : mode === 'booking' ? 'Booking' : 'Check-in'}
               </Button>
             </div>
