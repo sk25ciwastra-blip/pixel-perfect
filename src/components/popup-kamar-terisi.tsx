@@ -1,13 +1,23 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowRight, BedDouble } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { statusPopupKamar } from '@/lib/aksi-kartu-kamar';
 
-export function PopupKamarTerisi({ nomor, onClose }: { nomor: string; onClose: () => void }) {
+const pesanStatus = {
+  terisi: { judul: 'Sedang Terisi', pesan: 'Silakan pilih kamar lain yang tersedia.' },
+  perlu: { judul: 'Belum Siap', pesan: 'Kamar masih perlu dibersihkan sebelum digunakan.' },
+  sedang: { judul: 'Sedang Dibersihkan', pesan: 'Silakan pilih kamar lain yang tersedia.' },
+  nonaktif: { judul: 'Tidak Tersedia', pesan: 'Silakan pilih kamar lain yang tersedia.' },
+};
+
+export function PopupKamarTerisi({ nomor, room, onClose }: { nomor: string; room: { active: boolean; status: string }; onClose: () => void }) {
+  const status = statusPopupKamar(room);
+  const pesan = pesanStatus[status];
   return (
     <Dialog.Root open onOpenChange={open => { if (!open) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="kamar-terisi-overlay" />
-        <Dialog.Content className="kamar-terisi-popup">
+        <Dialog.Content className="kamar-terisi-popup" data-status={status}>
           <svg className="kamar-terisi-gelombang" viewBox="0 0 580 140" preserveAspectRatio="none" aria-hidden="true">
             <path className="kamar-terisi-gelombang-lembut" d="M0 12C80 26 84 76 190 94S420 150 580 140H0Z" />
             <path className="kamar-terisi-gelombang-emas" d="M0 45C70 62 96 112 220 128S460 138 580 140H0Z" />
@@ -19,8 +29,8 @@ export function PopupKamarTerisi({ nomor, onClose }: { nomor: string; onClose: (
             <BedDouble strokeWidth={2.3} />
           </div>
           <div className="kamar-terisi-isi">
-            <Dialog.Title className="kamar-terisi-judul"><span>Maaf</span>, Kamar {nomor}<br />Sedang Terisi</Dialog.Title>
-            <Dialog.Description className="kamar-terisi-pesan">Silakan pilih kamar lain yang tersedia.</Dialog.Description>
+            <Dialog.Title className="kamar-terisi-judul"><span>Maaf</span>, Kamar {nomor}<br />{pesan.judul}</Dialog.Title>
+            <Dialog.Description className="kamar-terisi-pesan">{pesan.pesan}</Dialog.Description>
             <Button className="kamar-terisi-pilih" onClick={onClose}><BedDouble /><span>Pilih Kamar Lain</span><ArrowRight /></Button>
           </div>
         </Dialog.Content>
