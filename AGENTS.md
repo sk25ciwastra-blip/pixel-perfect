@@ -30,4 +30,4 @@
 - Housekeeping renders its own photo-free presentation header inside Kerangka with tanpaJudul and reuses the shared quote mapping; its room table retains existing sections, permission gates, history and operational callbacks to isolate visual revisions from other pages.
 
 - Finance presentation stays page-local in `keuangan.tsx`, retaining existing summary sources, form handlers and permission gates so visual refinements cannot change cash workflows.
-- Room-page presentation is isolated in scoped `kamar.css`; whole-card UI dispatch uses stored active/status and existing check-in permission, the reservation form accepts an optional initial room only, and no operational mutations belong in card handlers.
+- Room-page presentation is isolated in scoped `kamar.css`; card surfaces use existing check-in permission and ready/active eligibility, with unavailable-room information otherwise; transaction ID buttons alone open transaction detail and stop propagation. The form accepts an optional initial room only and retains all operational validation, keeping card handlers mutation-free.

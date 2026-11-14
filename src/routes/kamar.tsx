@@ -138,25 +138,12 @@ function HalamanKamar() {
     return groups.filter((group) => group.rooms.length > 0);
   }, [rooms.rows, statusFilter]);
 
-  function openRoom(room: Room, transactionId?: string) {
+  function openRoom(room: Room) {
     const action = aksiKartuKamar(room, canCheckIn);
     if (action === 'check_in') {
       setSelectedRoomId(room.id);
       setCheckInOpen(true);
       return;
-    }
-    if (action === 'hunian' && transactionId) {
-      setDetailTransactionId(transactionId);
-      return;
-    }
-    if (action === 'housekeeping') {
-      const item = historyRows.filter(item => item.room_id === room.id)
-        .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-      if (item) {
-        const checklist = latestChecklist.get(room.id);
-        setDetailHousekeeping({ roomNumber: room.room_number, jobNumber: item.job_number ?? 'Belum tercatat', action: item.action, note: item.note, performedBy: item.performed_by_name, createdAt: item.created_at, issues: checklist ? formatIssueDetails(checklist) : [] });
-        return;
-      }
     }
     setInformationRoom(room);
   }
@@ -221,8 +208,8 @@ function HalamanKamar() {
                       className="kamar-kartu"
                       role="button" tabIndex={0}
                       aria-label={`Kamar ${room.room_number} · ${room.active ? labelStatusKamar[status] : 'Tidak aktif'}`}
-                      onClick={() => openRoom(room, transaction?.id)}
-                      onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openRoom(room, transaction?.id); } }}
+                      onClick={() => openRoom(room)}
+                      onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openRoom(room); } }}
                     >
                       <span className={`kamar-lampu kamar-lampu-${room.active ? status : 'nonaktif'}`} role="img" aria-label={room.active ? labelStatusKamar[status] : 'Tidak aktif'} title={room.active ? labelStatusKamar[status] : 'Tidak aktif'} />
                       <div className="kamar-plakat">
@@ -247,7 +234,9 @@ function HalamanKamar() {
                         <Button
                           variant="link"
                           className="kamar-nomorator font-mono"
-                          onClick={event => { event.stopPropagation(); openRoom(room, transaction.id); }}
+                          title="Lihat Detail Transaksi"
+                          aria-label={`Lihat Detail Transaksi ${transaction.transaction_number}`}
+                          onClick={event => { event.stopPropagation(); setDetailTransactionId(transaction.id); }}
                         >
                           {transaction.transaction_number}
                         </Button>
@@ -345,8 +334,8 @@ function HalamanKamar() {
               <NilaiDetail label="Status" icon={BedDouble}>{informationRoom.active ? labelStatusKamar[statusMap[informationRoom.status]] : 'Tidak aktif'}</NilaiDetail>
               {informationRoom.notes && <p className="whitespace-pre-wrap text-sm">{informationRoom.notes}</p>}
               {!informationRoom.active && <p className="text-sm text-muted-foreground">Kamar tidak aktif. Check-in tidak tersedia.</p>}
-              {informationRoom.active && ['dirty', 'cleaning'].includes(informationRoom.status) && <p className="text-sm text-muted-foreground">Riwayat Housekeeping belum tersedia untuk akses Anda.</p>}
-              {informationRoom.active && informationRoom.status === 'occupied' && <p className="text-sm text-muted-foreground">Detail hunian aktif belum tersedia untuk akses Anda.</p>}
+              {informationRoom.active && informationRoom.status !== 'ready' && <p role="alert" className="text-sm text-muted-foreground">Kamar belum tersedia untuk Check-in Langsung. {informationRoom.status === 'occupied' ? 'Kamar masih terisi; Check-in ganda tidak diizinkan.' : 'Kamar harus berstatus tersedia terlebih dahulu.'}</p>}
+              {informationRoom.active && informationRoom.status === 'ready' && !canCheckIn && <p className="text-sm text-muted-foreground">Akses Anda tidak mengizinkan Check-in Langsung.</p>}
               <div className="flex justify-end"><Button variant="outline" onClick={() => setInformationRoom(null)}>Tutup</Button></div>
             </div>
           </section>
