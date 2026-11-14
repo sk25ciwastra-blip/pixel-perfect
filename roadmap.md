@@ -2,7 +2,7 @@
 
 ## Header fitur — 14 November
 - [x] Sambungkan gambar latar fitur ke atas dan hapus hari/tanggal header selain Dashboard; Housekeeping tetap tanpa foto, tanggal data operasional tetap.
-- [ ] Periksa halaman bergambar, Housekeeping dan Dashboard di Preview komputer/HP tanpa publikasi.
+- [x] Preview akun aktif 1582×900/390×844: delapan latar fitur mulai dari atas, menu profil berjalan, Housekeeping tetap tanpa foto, tanggal Dashboard tetap tampil; tanpa overflow/error dan build OK, tanpa publikasi.
 
 ## Penyempurnaan akhir Status Kamar — 14 November
 - [x] Perjelas ID transaksi, keterangan HK dan legenda; label Check-in Langsung serta kedalaman lembut legenda saja, tanpa perubahan kartu, popup, data atau fungsi.
