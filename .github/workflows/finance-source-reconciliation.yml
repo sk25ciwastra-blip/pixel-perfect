@@ -1,0 +1,52 @@
+name: Finance three-scenario source reconciliation
+on:
+  pull_request:
+    paths:
+      - 'scripts/finance-reconciliation-*.cjs'
+      - supabase/pending/20261114013018_finance_source_reconciliation_review.sql
+      - .github/workflows/finance-source-reconciliation.yml
+permissions:
+  contents: read
+jobs:
+  only-three-scenarios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_PASSWORD: synthetic-finance-test-only
+        ports:
+          - '127.0.0.1:55432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch locked source and previously PASS candidate, no merge
+        run: git fetch --no-tags origin 17161ef9aee2bcbf2ab702f3598a43d9b2efdcb1 3a8dd60e8337a9fb2f222fbdd81e6fba36e26245
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bun install --frozen-lockfile
+      - name: Only assisted-session, combined prerequisite/pricing, negative closing
+        env:
+          TMPDIR: ${{ runner.temp }}
+          B25_OPS_DISPOSABLE: 'YES'
+          B25_OPS_PORT: '55432'
+          B25_OPS_PASSWORD: synthetic-finance-test-only
+          B25_OPS_CONTAINER: ${{ job.services.postgres.id }}
+        run: node scripts/finance-reconciliation-tests.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: finance-reconciliation-local-only-not-live-go
+          path: |
+            ${{ runner.temp }}/b25-ops-native-*/finance-reconciliation-evidence.json
+            ${{ runner.temp }}/b25-ops-native-*/cleanup.json
+          if-no-files-found: error
+          retention-days: 14
