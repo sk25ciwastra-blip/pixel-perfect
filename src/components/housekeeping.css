@@ -41,7 +41,15 @@
 .hk-table { width: 100%; min-width: 650px; color: var(--hk-tinta); font-size: 13px; }
 .hk-table thead tr { background: color-mix(in oklab, var(--gold) 22%, var(--hk-kertas)); }
 .hk-table th { padding: 11px 12px; color: var(--hk-tinta); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.hk-table th { text-transform: none; letter-spacing: 0; }
 .hk-table td { padding: 12px; border-color: color-mix(in oklab, var(--gold) 20%, var(--hk-kertas)); }
+.hk-table td[colspan] { color: var(--hk-tinta-redup); }
+.hk-table td[colspan].text-gold-light { color: var(--hk-tinta); }
+.hk-table .text-gold, .hk-table .text-perlu-foreground { color: color-mix(in oklab, var(--gold-dark) 70%, var(--hk-tinta)); }
+.hk-table td > span.inline-flex { text-transform: none; letter-spacing: 0; }
+.hk-table td > span.bg-terisi { background: color-mix(in oklab, var(--bahaya-foreground) 20%, var(--hk-kertas)); color: var(--bahaya-foreground); }
+.hk-table td > span.bg-perlu { background: color-mix(in oklab, var(--gold) 35%, var(--hk-kertas)); color: color-mix(in oklab, var(--gold-dark) 65%, var(--hk-tinta)); }
+.hk-table td > span.bg-sedang { background: color-mix(in oklab, var(--v0-info) 20%, var(--hk-kertas)); color: color-mix(in oklab, var(--v0-info) 65%, var(--hk-tinta)); }
 .hk-table td.text-muted-foreground, .hk-table .text-muted-foreground { color: var(--hk-tinta-redup); }
 .hk-table .hk-room-number { display: inline-grid; min-width: 48px; place-items: center; padding: 3px 10px; border-radius: 5px; background: var(--navy-deep); color: var(--hk-kertas); font-family: var(--font-serif); font-size: 20px; line-height: 1.1; font-weight: 600; }
 .hk-table td > span.inline-flex { text-transform: none; letter-spacing: 0; font-size: 11px; }
