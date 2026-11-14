@@ -1,8 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## UX Kamar — 14 November
-- [ ] Rapatkan legenda mengikuti gambar; klik permukaan kartu menuju Check-in untuk kamar siap atau informasi belum tersedia, sedangkan ID transaksi sendiri membuka detail tanpa propagasi.
-- [ ] Uji pemilihan kamar tersedia, penolakan kamar terisi, klik ID transaksi terpisah dan susunan legenda desktop/HP tanpa menyimpan data atau publish.
+- [x] Legenda rapat mengikuti gambar; permukaan kartu menuju Check-in untuk kamar siap atau informasi belum tersedia, sedangkan ID transaksi sendiri membuka detail tanpa propagasi.
+- [x] Lima tes PASS; sesi aktif memilih Kamar 09 otomatis, Kamar 06 menampilkan belum tersedia, ID transaksi membuka detail sendiri; legenda desktop 472px dan HP tanpa overflow, build OK tanpa perubahan data atau publish.
 - [ ] Pengaturan → Manajemen Kamar: belum ada alur existing; laporkan untuk Codex tanpa membuat fungsi administratif baru.
 
 ## Kamar — referensi Owner 14 November
