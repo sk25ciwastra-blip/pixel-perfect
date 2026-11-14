@@ -170,7 +170,7 @@ function HalamanKamar() {
               <p className="mt-2 text-sm text-muted-foreground">Informasi ketersediaan dan kondisi kamar secara langsung</p>
             </div>
             <p className="kamar-header-kutipan">“{konteksHeader['/kamar']}”</p>
-            {canCheckIn && <Button className="h-10 shrink-0 gap-3 rounded-xl px-6" onClick={() => { setSelectedRoomId(''); setCheckInOpen(true); }}><LogIn className="size-5" />Check-in</Button>}
+            {canCheckIn && <Button className="h-10 shrink-0 gap-3 rounded-xl px-6" onClick={() => { setSelectedRoomId(''); setCheckInOpen(true); }}><LogIn className="size-5" />Check-in Langsung</Button>}
           </div>
         </header>
         {rooms.error && (
@@ -239,7 +239,7 @@ function HalamanKamar() {
                       {transaction && (
                         <Button
                           variant="link"
-                          className="kamar-nomorator font-mono"
+                          className="kamar-nomorator"
                           title="Lihat Detail Transaksi"
                           aria-label={`Lihat Detail Transaksi ${transaction.transaction_number}`}
                           onClick={event => { event.stopPropagation(); setDetailTransactionId(transaction.id); }}
@@ -251,7 +251,6 @@ function HalamanKamar() {
                       {status === "siap" && housekeepingJob && (
                         <Button
                           variant="link"
-                          className="font-mono"
                           onClick={event => {
                             event.stopPropagation();
                             setDetailHousekeeping({

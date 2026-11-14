@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Penyempurnaan akhir Status Kamar — 14 November
+- [x] Perjelas ID transaksi, keterangan HK dan legenda; label Check-in Langsung serta kedalaman lembut legenda saja, tanpa perubahan kartu, popup, data atau fungsi.
+- [x] Preview akun aktif 1582×900 dan 390×844: ukuran kartu dan posisi/ukuran legenda identik sebelum/sesudah; tombol membuka form existing, popup hanya menutup kembali dan ID membuka detail. Tanpa overflow/error, 6 tes PASS, build OK; tanpa menyimpan atau publish.
+
 ## Popup semua status kamar — 14 November
 - [x] Gunakan template disetujui dengan nomor dinamis dan indikator merah/amber/biru/abu; hanya aktif READY berizin membuka form. Pilih Kamar Lain hanya menutup popup, tanpa X.
 - [x] Kamar terisi dan perlu dibersihkan diuji dengan data nyata, nomor dinamis, tutup kembali ke daftar, READY membuka form dan HP tanpa overflow; 6 tes PASS, build OK. Sedang dibersihkan/tidak aktif diuji helper karena belum ada baris nyata; status/alasan perbaikan belum memiliki sumber resmi terstruktur sehingga tidak dikarang.
