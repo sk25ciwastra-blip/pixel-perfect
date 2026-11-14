@@ -193,9 +193,10 @@ function HalamanKamar() {
           <LatarHeader path="/kamar" />
           <div className="kamar-header-isi">
             <div className="kamar-header-judul">
-              <p className="text-[10px] font-bold text-gold">BATURADEN 25 HOMESTAY</p>
-              <h1 className="mt-1 font-serif text-[32px] leading-tight text-foreground">Status Kamar</h1>
-              <p className="mt-1 text-xs text-foreground">Informasi ketersediaan dan kondisi kamar secara langsung</p>
+              <p className="text-[0.65rem] font-semibold tracking-[0.3em] text-gold">BATURADEN 25 HOMESTAY</p>
+              <h1 className="mt-1 font-serif text-3xl text-foreground lg:text-[2.4rem]">Status Kamar</h1>
+              <div className="mt-2 h-px w-20 bg-gradient-to-r from-gold to-transparent" aria-hidden="true" />
+              <p className="mt-2 text-sm text-muted-foreground">Informasi ketersediaan dan kondisi kamar secara langsung</p>
             </div>
             <p className="kamar-header-kutipan">“{konteksHeader['/kamar']}”</p>
             {canCheckIn && <Button className="h-10 shrink-0 gap-3 rounded-xl px-6" onClick={() => setCheckInOpen(true)}><LogIn className="size-5" />Check-in</Button>}
