@@ -38,7 +38,7 @@ function page(rows, area='status', position='owner') {
   const icons = new Proxy({}, {get:()=>()=>null});
   const api = load('src/routes/housekeeping.tsx', {
     '@/components/housekeeping.css': {},
-    '@/assets/header-housekeeping-linen.jpg': {default:'housekeeping-fixture.jpg'},
+    '@/assets/header-housekeeping-reference.jpg': {default:'housekeeping-fixture.jpg'},
     '@tanstack/react-router': {createFileRoute:()=>options=>({...options,useSearch:()=>({bagian:area})}),Link:stub},
     '@/components/kerangka': {Kerangka:({children})=>React.createElement('main',null,children)},
     '@/components/ui/button': {Button:({children,disabled})=>React.createElement('button',{disabled},children)},
