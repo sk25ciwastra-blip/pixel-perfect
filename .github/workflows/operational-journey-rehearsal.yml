@@ -1,0 +1,54 @@
+name: Operational isolated journey and blocker evidence
+on:
+  pull_request:
+    paths:
+      - 'scripts/operational-*.cjs'
+      - 'scripts/audit-published-runtime*'
+      - scripts/fixtures/operational-catalog.sql
+      - supabase/reconciliation/operational_readonly_preflight_20261114.sql
+      - .github/workflows/operational-journey-rehearsal.yml
+permissions:
+  contents: read
+jobs:
+  isolated-evidence-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_PASSWORD: synthetic-ops-test-only
+        ports:
+          - '127.0.0.1:55432:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: bun install --frozen-lockfile
+      - name: Static audit privacy contract, fake HTTP only
+        run: node scripts/audit-published-runtime.test.cjs
+      - name: Reproduce current-main journey and source blockers; success is not GO
+        env:
+          TMPDIR: ${{ runner.temp }}
+          B25_OPS_DISPOSABLE: 'YES'
+          B25_OPS_PORT: '55432'
+          B25_OPS_PASSWORD: synthetic-ops-test-only
+          B25_OPS_CONTAINER: ${{ job.services.postgres.id }}
+        run: node scripts/operational-journey-rehearsal.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: operational-blocker-evidence-not-release-go
+          path: |
+            ${{ runner.temp }}/b25-ops-native-*/operational-evidence.json
+            ${{ runner.temp }}/b25-ops-native-*/cleanup.json
+          if-no-files-found: error
+          retention-days: 14
