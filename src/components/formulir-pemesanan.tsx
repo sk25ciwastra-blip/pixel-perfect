@@ -31,10 +31,12 @@ function Bidang({ label, children, lebar }: { label: string; children: ReactNode
 
 export function FormulirPemesanan({
   mode,
+  initialRoomId = '',
   onClose,
   onSaved,
 }: {
   mode: Mode;
+  initialRoomId?: string;
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
@@ -50,7 +52,7 @@ export function FormulirPemesanan({
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [extraGuests, setExtraGuests] = useState('0');
-  const [roomId, setRoomId] = useState('');
+  const [roomId, setRoomId] = useState(initialRoomId);
   const [packageId, setPackageId] = useState('');
   const [dayMode, setDayMode] = useState<DayMode>('weekday');
   const [scheduledDate, setScheduledDate] = useState('');
