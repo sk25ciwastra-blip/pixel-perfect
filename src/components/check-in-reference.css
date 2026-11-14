@@ -29,7 +29,7 @@
 .ci-notice { margin-top: 12px; font-size: 12px; line-height: 1.5; }
 .ci-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 8px 0; margin-top: 18px; border-top: 1px solid var(--checkin-panel-border); }
 .ci-reminder { display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 20px; }
-.ci-reminder svg { width: 22px; height: 22px; color: var(--checkin-gold); flex-shrink: 0; }
+.ci-reminder svg { width: 22px; height: 22px; color: var(--destructive); flex-shrink: 0; }
 .ci-footer-actions { display: flex; gap: 12px; flex-shrink: 0; }
 .ci-footer-actions button { min-width: 96px; height: 42px; font-size: 16px; font-weight: 800; color: var(--checkin-ink); }
 .ci-footer-actions button[type='submit'] { background: var(--checkin-button); }
