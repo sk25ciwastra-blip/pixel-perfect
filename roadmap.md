@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Reservasi dan Kas Keluar — template Check-in Langsung
+- [x] Samakan kepala hitam, isi terang, font, empat bagian dua kolom dan tombol bawah; tanggal/jam, DP, CASH, sumber pilihan, izin dan penyimpanan tetap.
+- [ ] Periksa kedua form di Preview komputer/HP dan tes terkait tanpa menyimpan transaksi atau publikasi.
+
 ## Check-in Langsung — tampilan gambar Owner
 - [x] Sesuaikan kepala hitam, isi terang, empat bagian dua kolom, font/ukuran/warna dan pengingat bawah; Booking, data, harga, pembayaran, izin dan proses simpan tetap.
 - [x] Preview komputer 1582×900/HP 390×844: input tamu, ringkasan awal dan Batal berjalan, tanpa overflow/runtime error; build OK, tes training dan empat tes frontend pembayaran/autofill PASS. Pilihan berharga nyata belum terverifikasi karena daftar kamar siap kosong saat pemeriksaan; tanpa transaksi baru atau publikasi. Suite readiness lengkap menemui mock aset struk lama yang belum didukung, tes formulir terkait dijalankan selektif.

@@ -2,6 +2,8 @@ import { rpc } from "@/lib/data-live";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Info,
+  CreditCard,
   ArrowDownLeft,
   ArrowUpRight,
   X,
@@ -1287,11 +1289,15 @@ function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved
   );
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm" onClick={onClose}>
-      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "max-w-3xl"}`}>
-        <div className="mb-4 flex items-center justify-between gap-3">
+      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "checkin-reference"}`}>
+        {nomor === null ? <div className="ci-header">
+          <p>OPERASIONAL / PENGELUARAN BARU</p>
+          <div className="ci-header-title"><h2 id="judul-pengeluaran">Kas Keluar</h2><span className="ci-header-id">ID otomatis setelah disimpan</span></div>
+          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Tutup"><X /></Button>
+        </div> : <div className="mb-4 flex items-center justify-between gap-3">
           <h2 id="judul-pengeluaran" className="text-lg font-bold">Form Kas Keluar</h2>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Tutup"><X className="size-4" /></Button>
-        </div>
+        </div>}
         {nomor !== null ? (
           <div className="mt-4 text-center">
             <p className="font-semibold text-siap-foreground">Pengeluaran tersimpan.</p>
@@ -1299,43 +1305,27 @@ function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved
             <Button type="button" onClick={onClose} className="mt-4">Selesai</Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            <p className="-mt-2 text-sm text-muted-foreground">ID: <span className="font-mono text-primary">Otomatis setelah disimpan</span></p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-3">
-                <label className={kelasLabel}><span className={judulLabel}>Jenis Pengeluaran</span>
-                  <Pilih nilai={kategori} ubah={setKategori} daftar={daftarJenis} kosong="Pilih jenis" />
-                </label>
-                <label className={kelasLabel}><span className={judulLabel}>Keperluan Siapa</span>
-                  <Pilih nilai={keperluan} ubah={setKeperluan} daftar={daftarKeperluan} kosong="Pilih keperluan" />
-                </label>
-              </div>
-              <div className="space-y-3">
-                <div className={kelasLabel}><span className={judulLabel}>Metode Pembayaran</span>
-                  <div className={`${kelasKunci} font-semibold`} aria-readonly="true">CASH</div>
-                </div>
-                <div className={kelasLabel}><span className={judulLabel}>Nama Sesi Kas Aktif</span>
-                  <div className={`${kelasKunci} truncate`} aria-readonly="true">{!sessionId ? "Belum ada sesi kas aktif" : namaSesi || "Sesi kas aktif"}</div>
-                </div>
-              </div>
+          <div className="ci-form">
+            <div className="ci-grid">
+              <section className="ci-pane"><h3><ReceiptText />Rincian Pengeluaran</h3><div className="ci-fields">
+                <label className={kelasLabel}><span className={judulLabel}>Jenis Pengeluaran</span><Pilih nilai={kategori} ubah={setKategori} daftar={daftarJenis} kosong="Pilih jenis" /></label>
+                <label className={kelasLabel}><span className={judulLabel}>Keperluan Siapa</span><Pilih nilai={keperluan} ubah={setKeperluan} daftar={daftarKeperluan} kosong="Pilih keperluan" /></label>
+                <label className={kelasLabel}><span className={judulLabel}>Untuk Pembayaran Apa?</span><input required maxLength={200} value={untukApa} onChange={(e) => setUntukApa(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Keterangan pembayaran" /></label>
+              </div>{!daftarSiap && !opsi.loading && <p className="ci-notice">{pesanBelum}</p>}</section>
+              <section className="ci-pane"><h3><CircleDollarSign />Sesi Kas</h3><div className="ci-fields">
+                <label className={kelasLabel}><span className={judulLabel}>Nama Sesi Kas Aktif</span><div className={kelasKunci} aria-readonly="true">{!sessionId ? "Belum ada sesi kas aktif" : namaSesi || "Sesi kas aktif"}</div></label>
+              </div></section>
+              <section className="ci-pane"><h3><CreditCard />Pembayaran</h3><div className="ci-fields">
+                <label className={kelasLabel}><span className={judulLabel}>Metode Pembayaran</span><div className={`${kelasKunci} font-semibold`} aria-readonly="true">CASH</div></label>
+                <label className={kelasLabel}><span className={judulLabel}>Nominal Pengeluaran (Rp)</span><input required type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} /></label>
+              </div></section>
+              <section className="ci-pane"><h3><FileText />Ringkasan Pengeluaran</h3><div className="ci-summary"><div className="ci-total ci-expense-total"><span>Total Kas Keluar</span><span aria-readonly="true">{rupiah(Number(nominal) > 0 ? Number(nominal) : 0)}</span></div></div></section>
             </div>
-            {!daftarSiap && !opsi.loading && <p className="rounded-xl bg-perlu px-3 py-2 text-xs text-perlu-foreground">{pesanBelum}</p>}
-            <label className={kelasLabel}><span className={judulLabel}>Untuk Pembayaran Apa?</span>
-              <input required maxLength={200} value={untukApa} onChange={(e) => setUntukApa(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Contoh: beli seblak, bayar air mineral" />
-            </label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className={kelasLabel}><span className={judulLabel}>Nominal Pengeluaran (Rp)</span>
-                <input required type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} />
-              </label>
-              <div className={kelasLabel}><span className={judulLabel}>Total Kas Keluar</span>
-                <div className={`${kelasKunci} font-bold text-bahaya-foreground`} aria-readonly="true">{rupiah(Number(nominal) > 0 ? Number(nominal) : 0)}</div>
-              </div>
-            </div>
-            {pesan && <p role="alert" className="rounded-xl bg-bahaya px-3 py-2 text-sm text-bahaya-foreground">{pesan}</p>}
-            <div className="flex justify-end gap-2 pt-1">
+            {pesan && <p role="alert" className="ci-notice text-destructive">{pesan}</p>}
+            <footer className="ci-footer"><p className="ci-reminder"><Info />Pastikan rincian dan nominal pengeluaran sudah sesuai</p><div className="ci-footer-actions">
               <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
               <Button type="submit" disabled={simpan || !daftarSiap}>{simpan ? "Menyimpan…" : "Simpan Pengeluaran"}</Button>
-            </div>
+            </div></footer>
           </div>
         )}
       </form>
