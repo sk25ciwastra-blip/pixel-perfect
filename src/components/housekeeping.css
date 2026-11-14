@@ -53,7 +53,7 @@
 .hk-table td { padding: 10px 10px; border-bottom: 1px solid color-mix(in oklab,var(--gold) 22%,var(--hk-kertas)); vertical-align: middle; }
 .hk-table td[colspan],.hk-table .text-muted-foreground { color: var(--hk-tinta-redup); }
 .hk-table .text-gold,.hk-table .text-perlu-foreground { color: var(--kamar-popup-gold-deep); }
-.hk-room-number { display: inline-grid; min-width: 49px; height: 28px; place-items: center; border-radius: 5px; background: var(--navy-deep); color: var(--hk-kertas); font-family: Georgia,var(--font-serif); font-size: 20px; line-height: 1; font-weight: 600; }
+.hk-room-number { display: inline-grid; min-width: 46px; height: 30px; place-items: center; border-radius: 7px; background: var(--navy-deep); color: var(--hk-kertas); font-family: var(--font-sans); font-size: 14px; line-height: 1; font-weight: 700; letter-spacing: 0.02em; }
 .hk-table td > span.inline-flex,.hk-state { display: inline-flex; align-items: center; gap: 4px; border-radius: 15px; padding: 4px 9px; font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: 0; white-space: nowrap; }
 .hk-table td > span.bg-terisi { background: color-mix(in oklab,var(--kamar-popup-red) 18%,var(--hk-kertas)); color: var(--kamar-popup-red); }
 .hk-table td > span.bg-perlu,.hk-state[data-state="dirty"] { background: color-mix(in oklab,var(--gold) 33%,var(--hk-kertas)); color: var(--kamar-popup-gold-deep); }
@@ -133,7 +133,7 @@
 .hk-room-panel .hk-type-filters button { height: 38px; padding: 0 12px; font-size: 12px; border: 1px solid var(--hk-bingkai); border-radius: 20px; }
 .hk-room-panel .hk-table { min-width: 820px; table-layout: fixed; font-size: 14px; }
 .hk-room-panel .hk-table th { font-size: 13px; font-weight: 600; padding: 11px 12px; }
-.hk-room-panel .hk-table td { padding: 10px 12px; overflow-wrap: anywhere; }
+.hk-room-panel .hk-table td { padding: 10px 12px; overflow-wrap: anywhere; font-weight: 500; }
 .hk-room-panel .hk-table tbody tr { height: 56px; }
 .hk-room-panel .hk-table th:nth-child(1) { width: 78px; }
 .hk-room-panel .hk-table th:nth-child(2) { width: 100px; }
