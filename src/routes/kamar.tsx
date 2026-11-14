@@ -245,8 +245,7 @@ function HalamanKamar() {
                       <div className="kamar-plakat">
                         <svg viewBox="0 0 64 82" fill="none" stroke="currentColor" aria-hidden="true" preserveAspectRatio="none">
                           <path d="M13 4H51Q51 9 58 9V73Q51 73 51 78H13Q13 73 6 73V9Q13 9 13 4Z" strokeWidth="1.1" />
-                          <path d="M15 7H49Q49 12 55 12V70Q49 70 49 75H15Q15 70 9 70V12Q15 12 15 7Z" strokeWidth=".5" opacity=".65" />
-                          <path d="M16 1H48M2 15V67M62 15V67M16 81H48" strokeWidth=".6" opacity=".5" />
+                          <path d="M16 1H48M2 15V67M62 15V67M16 81H48" strokeWidth=".5" opacity=".3" />
                           <circle cx="12" cy="5" r="1.8" fill="currentColor" /><circle cx="52" cy="5" r="1.8" fill="currentColor" /><circle cx="12" cy="77" r="1.8" fill="currentColor" /><circle cx="52" cy="77" r="1.8" fill="currentColor" />
                         </svg>
                         <svg className="kamar-ikon-ranjang" viewBox="0 0 54 42" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
