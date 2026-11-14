@@ -348,10 +348,7 @@ function HalamanKamar() {
         </div>
       )}
 
-      {occupiedRoom && <PopupKamarTerisi nomor={occupiedRoom.room_number} onClose={() => setOccupiedRoom(null)} onPilihKamar={() => {
-        setOccupiedRoom(null);
-        if (canCheckIn) { setSelectedRoomId(''); setCheckInOpen(true); }
-      }} />}
+      {occupiedRoom && <PopupKamarTerisi nomor={occupiedRoom.room_number} onClose={() => setOccupiedRoom(null)} />}
 
       {detailTransactionId && (
         <DetailTransaksi
