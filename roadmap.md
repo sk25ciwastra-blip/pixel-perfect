@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Housekeeping — warna tabel seperti Dashboard
+- [x] Tabel Status Kamar & Housekeeping memakai palet krem tabel Dashboard (latar krem, teks gelap, pemisah emas, pil kamar hitam); data, status, izin, aksi, lima tab dan panel lain tetap.
+- [x] Preview akun aktif diperiksa: warna latar/teks/baris judul/pil terukur sama dengan tabel Dashboard, tanpa error runtime; empat tes antrean/izin PASS dan build OK, tanpa publikasi.
+
 ## Housekeeping — permukaan premium dari tab ke panel bawah
 - [x] Perhalus relief tab, ringkasan, tabel dan panel bawah dengan sorotan satin, bayangan lembut dan teks jelas; header, data, status serta fungsi tetap.
 - [x] Preview komputer/HP diperiksa dengan akun aktif: pencarian 06, filter dan riwayat berjalan, tanpa teks bertabrakan/overflow/error; empat tes PASS dan build OK, tanpa publikasi.
