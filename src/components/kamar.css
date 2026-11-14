@@ -10,6 +10,10 @@
   padding-top: 2px;
 }
 .kamar-header { margin: 0 -40px 24px; padding: 8px 40px 24px; position: relative; overflow: hidden; }
+@media (min-width: 1024px) {
+  .kamar-header { overflow: visible; }
+  .kamar-header > .latar-priangan-foto { top: -72px; }
+}
 .kamar-header-isi { position: relative; display: flex; align-items: end; gap: 16px; justify-content: space-between; }
 .kamar-header-judul { flex-shrink: 0; }
 .kamar-header-kutipan { max-width: 34ch; margin-left: auto; font-family: var(--font-serif); font-style: italic; text-align: right; font-size: 13px; line-height: 1.4; }
