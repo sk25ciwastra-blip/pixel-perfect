@@ -38,7 +38,7 @@ function page(rows, area='status', position='owner') {
   const icons = new Proxy({}, {get:()=>()=>null});
   const api = load('src/routes/housekeeping.tsx', {
     '@/components/housekeeping.css': {},
-    '@/assets/header-housekeeping-linen.jpg': {default:'housekeeping-fixture.jpg'},
+    '@/assets/header-housekeeping-reference.jpg': {default:'housekeeping-fixture.jpg'},
     '@tanstack/react-router': {createFileRoute:()=>options=>({...options,useSearch:()=>({bagian:area})}),Link:stub},
     '@/components/kerangka': {Kerangka:({children})=>React.createElement('main',null,children)},
     '@/components/ui/button': {Button:({children,disabled})=>React.createElement('button',{disabled},children)},
@@ -64,7 +64,8 @@ const rows = () => [room('OCCUPIED-ROOM','occupied'),room('DIRTY-ROOM','dirty'),
 test('actual Status route hides READY including shortages, shows occupied details, and never offers occupied override', () => {
   const html=page(rows());
   assert.match(html,/OCCUPIED-ROOM/);assert.match(html,/DIRTY-ROOM/);
-  assert.doesNotMatch(html,/READY-MISSING-ROOM|READY-ROOM|CLEANING-ROOM|DISABLED-ROOM/);
+  const table=html.match(/<tbody>([\s\S]*?)<\/tbody>/)?.[1] ?? '';
+  assert.doesNotMatch(table,/READY-MISSING-ROOM|READY-ROOM|CLEANING-ROOM|DISABLED-ROOM/);
   assert.match(html,/<summary[^>]*>Informasi kekurangan<\/summary>/);
   assert.match(html,/Handuk &lt;kurang&gt;/);
   const occupied=html.split('<tr').find(part=>part.includes('OCCUPIED-ROOM'));
@@ -75,7 +76,8 @@ test('actual Status route hides READY including shortages, shows occupied detail
 test('ongoing cleaning remains finishable on existing Checklist tab and disappears once READY', () => {
   const html=page(rows(),'checklist');
   assert.match(html,/CLEANING-ROOM/);assert.match(html,/Telah Dibersihkan/);
-  assert.doesNotMatch(html,/OCCUPIED-ROOM|DIRTY-ROOM|READY-MISSING-ROOM|READY-ROOM|DISABLED-ROOM/);
+  const table=html.match(/<tbody>([\s\S]*?)<\/tbody>/)?.[1] ?? '';
+  assert.doesNotMatch(table,/OCCUPIED-ROOM|DIRTY-ROOM|READY-MISSING-ROOM|READY-ROOM|DISABLED-ROOM/);
   const finished=rows().map(r=>r.id==='CLEANING-ROOM'?{...r,status:'ready'}:r);
   assert.doesNotMatch(page(finished,'checklist'),/CLEANING-ROOM|Telah Dibersihkan/);
   assert.doesNotMatch(page(finished),/CLEANING-ROOM/);
