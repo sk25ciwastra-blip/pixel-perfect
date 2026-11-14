@@ -237,3 +237,23 @@
 @media (max-width: 1350px) and (min-width: 1024px) { .hk-stat-icon { width: 36px; height: 36px; } .hk-stat-icon svg { width: 20px; height: 20px; } .hk-stat-value { font-size: 28px; } .hk-stat-label { font-size: 12px; } }
 @media (max-width: 600px) { .hk-stat-icon { width: 34px; height: 34px; } .hk-stat-value { font-size: 28px; } .hk-stat-label { font-size: 12px; } .hk-panel-header h2 { font-size: 22px; } }
 .hk-progress-panel[data-empty="true"] .hk-donut-value { display: none; }
+
+/* Tabel Housekeeping memakai palet krem tabel Dashboard (tabel-krem): latar krem, teks gelap, pemisah emas. */
+.hk-table-scroll {
+  --hk-kertas: oklch(0.965 0.012 85);
+  --hk-tinta: oklch(0.2 0.01 80);
+  --hk-tinta-redup: oklch(0.42 0.012 80);
+  --hk-papier: oklch(0.965 0.012 85);
+  background: oklch(0.965 0.012 85);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--gold) 20%, transparent), 0 2px 7px color-mix(in oklab, var(--hk-tinta) 26%, transparent);
+}
+.hk-table { color: var(--hk-tinta); }
+.hk-table thead tr { background: oklch(0.925 0.02 85); }
+.hk-room-panel .hk-table th { color: var(--hk-tinta); box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--gold) 24%, transparent); }
+.hk-table tbody tr, .hk-table tbody tr:nth-child(even) { background: oklch(0.965 0.012 85); }
+.hk-table tbody tr:hover { background: color-mix(in oklab, var(--gold) 5%, oklch(0.965 0.012 85)); }
+.hk-table td { border-bottom-color: color-mix(in oklab, var(--gold) 12%, transparent); }
+.hk-room-panel .hk-table th:last-child { background: oklch(0.925 0.02 85); }
+.hk-room-panel .hk-table td:last-child { background: oklch(0.965 0.012 85); }
+.hk-room-number { background: oklch(0.17 0.006 80); color: oklch(0.97 0.008 85); box-shadow: 0 2px 3px color-mix(in oklab, var(--hk-tinta) 24%, transparent); }
+.hk-table td .hk-eye-button { background: oklch(0.93 0.014 85); box-shadow: inset 0 1px 0 var(--kamar-popup-white), 0 2px 3px color-mix(in oklab, var(--hk-tinta) 16%, transparent); }

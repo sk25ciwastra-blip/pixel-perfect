@@ -297,7 +297,7 @@ function Halaman() {
                 <Button size="sm" disabled={!selectedIds.length || processingIds.length > 0} onClick={() => void startSelected()}><Brush className="size-4" />Mulai ({selectedIds.length}) Kamar</Button>
               </div>
             )}
-            <div className="hk-table-scroll">
+            <div className="hk-table-scroll tabel-krem">
               <table className="hk-table text-left">
                 <thead><tr className="bg-secondary/60">{['No. Kamar', 'Tipe', 'Status Kamar', 'Status HK', 'Petugas', 'Waktu / Catatan', 'Aksi'].map((title) => <th key={title} className="px-4 py-3 text-xs">{title}</th>)}</tr></thead>
                 <tbody>
