@@ -236,3 +236,4 @@
 .hk-maintenance-empty { margin: 0 14px; padding: 18px 16px; gap: 14px; }
 @media (max-width: 1350px) and (min-width: 1024px) { .hk-stat-icon { width: 36px; height: 36px; } .hk-stat-icon svg { width: 20px; height: 20px; } .hk-stat-value { font-size: 28px; } .hk-stat-label { font-size: 12px; } }
 @media (max-width: 600px) { .hk-stat-icon { width: 34px; height: 34px; } .hk-stat-value { font-size: 28px; } .hk-stat-label { font-size: 12px; } .hk-panel-header h2 { font-size: 22px; } }
+.hk-progress-panel[data-empty="true"] .hk-donut-value { display: none; }
