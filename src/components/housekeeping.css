@@ -206,3 +206,33 @@
 .hk-stock-item .hk-stock-empty { font-size: 12px; line-height: 1.5; }
 .hk-maintenance-empty { background: var(--hk-permukaan); box-shadow: inset 0 1px 2px var(--background),0 1px 0 color-mix(in oklab,var(--gold-light) 12%,transparent); }
 .hk-outline-link { background: var(--hk-permukaan); box-shadow: var(--hk-bayangan); }
+
+/* Final polish: stat alignment, solid donut, typography, actions, side panels */
+.halaman-housekeeping { font-family: var(--font-sans); }
+.hk-stat { align-items: center; }
+.hk-stat > div { align-self: center; padding-top: 0; display: flex; flex-direction: column; justify-content: center; min-height: 56px; }
+.hk-stat-label { font-size: 12px; line-height: 1.3; min-height: 2.6em; display: flex; align-items: flex-end; color: color-mix(in oklab,var(--foreground) 88%,transparent); }
+.hk-stat-value { margin-top: 4px; font-size: 29px; line-height: 1; font-variant-numeric: tabular-nums; }
+.hk-stat-icon { width: 44px; height: 44px; }
+.hk-stat-icon svg { width: 24px; height: 24px; }
+.hk-panel-header h2 { font-family: var(--font-serif); font-size: 23px; font-weight: 500; }
+.hk-side-panel .hk-panel-header h2, .hk-room-panel > .hk-panel-header h2 { font-size: 22px; }
+.hk-donut circle { stroke-width: 12px; stroke-linecap: round; }
+.hk-donut-track, .hk-progress-panel[data-empty="true"] .hk-donut-track { stroke: color-mix(in oklab,var(--gold) 22%,var(--secondary)); stroke-dasharray: none; stroke-linecap: butt; }
+.hk-donut-caption, .hk-progress-panel[data-empty="true"] .hk-donut-caption { font-size: 12px; font-family: var(--font-sans); }
+.hk-donut-number { font-family: var(--font-sans); }
+.hk-room-panel .hk-table { font-size: 14px; }
+.hk-room-panel .hk-table th { font-size: 13px; vertical-align: middle; }
+.hk-room-panel .hk-table td { vertical-align: middle; }
+.hk-table details, .hk-table td .text-muted-foreground, .hk-table td small { font-size: 12px; color: var(--hk-tinta-redup); }
+.hk-table td button { min-height: 36px; font-size: 12px; }
+.hk-table td .hk-eye-button { width: 36px; height: 36px; min-width: 36px; }
+.hk-progress-body { padding: 10px 2px 2px; gap: 16px; }
+.hk-progress-legend, .hk-task-list li > div, .hk-stock-item p, .hk-maintenance-empty p { font-size: 13px; }
+.hk-task-list li { padding: 11px 14px; }
+.hk-task-list li p, .hk-stock-item .hk-stock-empty, .hk-queue-link, .hk-gold-link, .hk-outline-link { font-size: 12px; }
+.hk-queue-link { padding-top: 10px; }
+.hk-stock-item { padding: 14px; gap: 12px; }
+.hk-maintenance-empty { margin: 0 14px; padding: 18px 16px; gap: 14px; }
+@media (max-width: 1350px) and (min-width: 1024px) { .hk-stat-icon { width: 36px; height: 36px; } .hk-stat-icon svg { width: 20px; height: 20px; } .hk-stat-value { font-size: 28px; } .hk-stat-label { font-size: 12px; } }
+@media (max-width: 600px) { .hk-stat-icon { width: 34px; height: 34px; } .hk-stat-value { font-size: 28px; } .hk-stat-label { font-size: 12px; } .hk-panel-header h2 { font-size: 22px; } }
