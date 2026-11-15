@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useTable, type Room, type RoomType } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 import { meta } from '@/lib/meta';
 import '@/components/paket-harga.css';
 export const Route=createFileRoute('/tipe-kamar')({head:()=>meta('Tipe Kamar','Pengelolaan tipe dan daftar kamar Baturaden 25 Homestay.'),component:Halaman});
@@ -28,7 +29,11 @@ function lantaiAsli(r:Room):number|null{
 }
 
 /** Lantai hanya ditampilkan bila data aslinya tersedia; — bila belum. */
-function lantai(r:Room):string{const v=lantaiAsli(r);return v===null?'—':String(v)}
+function teksLantai(r:Room):string{const v=lantaiAsli(r);return v===null?'—':String(v)}
+
+// Lantai boleh ikut tersimpan begitu kolomnya ada; tipe bawaan belum memuatnya.
+type KamarBaru=Tables<'rooms'>['Insert']&{lantai?:number|null};
+type KamarUbah=Tables<'rooms'>['Update']&{lantai?:number|null};
 
 function Halaman(){
  const {peran}=usePeran();const owner=peran==='owner';
@@ -48,8 +53,10 @@ function Halaman(){
   if((kamar.rows as Room[]).some(r=>r.room_number.trim().toLowerCase()===n.toLowerCase()&&r.id!==item?.id)){setPesan('Nomor kamar sudah digunakan.');return}
   let lt:number|null=null;
   if(lantai.trim()!==''){const v=Number(lantai.trim());if(!Number.isInteger(v)||v<1){setPesan('Lantai harus bilangan bulat, minimal 1.');return}lt=v}
-  const isi=adaLantai?{lantai:lt}:{};
-  const res=item?await supabase.from('rooms').update({room_number:n,...isi}).eq('id',item.id):await supabase.from('rooms').insert({room_number:n,room_type_id:terpilih.id,...isi});
+  const isi:{lantai?:number|null}=adaLantai?{lantai:lt}:{};
+  const ubahData:KamarUbah={room_number:n,...isi};
+  const tambahData:KamarBaru={room_number:n,room_type_id:terpilih.id,...isi};
+  const res=item?await supabase.from('rooms').update(ubahData).eq('id',item.id):await supabase.from('rooms').insert(tambahData);
   if(res.error)setPesan(res.error.message);else{setOpen(false);await kamar.refresh()}}
  async function alih(r:Room){setInfo('');
   if(r.active&&dipakai(r)){setInfo(`Kamar ${r.room_number} sedang digunakan atau memiliki booking aktif, sehingga tidak dapat dinonaktifkan.`);return}
@@ -68,7 +75,7 @@ function Halaman(){
      {kamarTipe(terpilih.id).length===0?<tr><td colSpan={6} className="ph-kosong">Belum ada kamar untuk tipe ini.</td></tr>:kamarTipe(terpilih.id).map(r=><tr key={r.id}>
       <td><span className="ph-nama">{r.room_number}</span></td>
       <td><span className="ph-slot">{terpilih.name}</span></td>
-      <td><span className="ph-slot">{lantai(r)}</span></td>
+      <td><span className="ph-slot">{teksLantai(r)}</span></td>
       <td><span className={`ph-pil ${r.active?'ph-pil-aktif':'ph-pil-nonaktif'}`}>{r.active?'Aktif':'Nonaktif'}</span></td>
       <td><span className="ph-slot">{waktuWib(r.updated_at)}</span></td>
       <td>{owner?<div className="tk-aksi"><button type="button" className="ph-ubah" onClick={()=>ubah(r)}>Ubah</button>
