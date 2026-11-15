@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Booking — pilihan tipe kamar
+- [x] Hilangkan kolom input Tamu Tambahan hanya pada Booking; gunakan pilihan tipe lalu nomor terurut seperti Check-in, dengan sumber kamar Booking, tanggal/jam, DP dan penyimpanan tetap.
+- [x] Preview akun aktif komputer/HP: input Tamu Tambahan tidak tampil di Booking, empat tipe berurutan dan nomor terkecil per tipe, paket/tanggal/jam/DP dapat dipilih; Check-in tetap memiliki input Tamu Tambahan. Dua tes urutan PASS, tanpa runtime error, build OK; tanpa menyimpan transaksi atau publikasi.
+
 ## Reservasi dan Kas Keluar — template Check-in Langsung
 - [x] Samakan kepala hitam, isi terang, font, empat bagian dua kolom dan tombol bawah; tanggal/jam, DP, CASH, sumber pilihan, izin dan penyimpanan tetap.
 - [x] Preview akun aktif 1582×900/390×844: empat bagian tampil tanpa overflow/error, Reservasi memilih kamar/paket/tanggal/jam dan DP tetap dapat diisi, Kas Keluar menampilkan nominal Rp25.000; Batal menutup kedua form. Tes urutan, training, keuangan dan frontend DP PASS; build OK. Pilihan pengeluaran tetap belum tersedia seperti sebelumnya; tanpa transaksi baru atau publikasi.
