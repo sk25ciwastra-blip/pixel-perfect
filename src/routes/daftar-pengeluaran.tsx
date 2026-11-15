@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SubPengaturan } from '@/components/pengaturan-sub';
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Kerangka } from "@/components/kerangka";
@@ -22,10 +23,10 @@ function Halaman() {
   const { posisiKode } = usePeran();
   const opsi = useTable("finance_expense_options", posisiKode === "owner");
   if (posisiKode !== "owner") {
-    return <Kerangka judul="Daftar Pengeluaran"><p className="text-sm text-muted-foreground">Halaman ini khusus Owner.</p></Kerangka>;
+    return <Kerangka judul="Daftar Pengeluaran"><SubPengaturan><p className="text-sm text-muted-foreground">Halaman ini khusus Owner.</p></SubPengaturan></Kerangka>;
   }
   return (
-    <Kerangka judul="Daftar Pengeluaran" keterangan="Pilihan untuk Form Pengeluaran">
+    <Kerangka judul="Daftar Pengeluaran" keterangan="Pilihan untuk Form Pengeluaran"><SubPengaturan>
       {opsi.error ? (
         <p className="rounded-2xl border border-gold/25 bg-card px-4 py-6 text-sm text-muted-foreground">
           Daftar belum bisa dipakai: pembaruan database untuk fitur ini sudah disiapkan dan menunggu persetujuan Owner.
@@ -36,7 +37,7 @@ function Halaman() {
           <Kelompok judul="Keperluan untuk Siapa" kind="keperluan" rows={opsi.rows as Opsi[]} refresh={opsi.refresh} />
         </div>
       )}
-    </Kerangka>
+    </SubPengaturan></Kerangka>
   );
 }
 
