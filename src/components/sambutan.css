@@ -14,6 +14,9 @@
   cursor: pointer;
 }
 
+.sambutan-layar[data-fase='masuk'] { opacity: 1; }
+.sambutan-layar[data-fase='masuk'] > * { opacity: 0; }
+.sambutan-layar > * { transition: opacity 320ms ease; }
 .sambutan-layar[data-fase='tampil'] {
   opacity: 1;
 }
