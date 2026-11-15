@@ -237,3 +237,7 @@
 ## Detail Transaksi — final riwayat, jejak waktu, dan kepala 16 November
 - [x] Tiap baris riwayat memakai tiga baris: judul + tanggal bernama hari, lalu metode · nominal (atau "Oleh : nama") + jam "06.48 WIB", lalu "Oleh : nama" untuk baris pembayaran; "Oleh :" selalu tampil dan "—" bila nama pencatat tidak tersimpan, tanpa mengarang nama.
 - [x] Kepala dan kaki jadi satu baris penuh "Dibuat pada : Kamis, 12 November 2026 | 06.48 WIB" dan "Terakhir diubah : Kamis, 12 November 2026 | 07.25 WIB"; garis emas vertikal sesudah nomor transaksi dihapus. Hanya tampilan — data, hak akses, dan fungsi tetap; 7 tes waktu PASS, build OK, tanpa error runtime, tanpa publikasi.
+
+## Detail Transaksi — efek kursor tiga tombol kaki 16 November
+- [x] Bukti Digital, Cetak Struk, dan Tutup memakai efek kursor yang sama: naik 1px, permukaan lebih terang, kilau emas lebih kuat, transisi .16s, berhenti saat ditekan, tanpa perpindahan pada reduced-motion. Hanya tampilan — data, hak akses, dan fungsi tetap.
+- [x] Diuji dengan akun aktif 1582×900: Bukti Digital dan Tutup terukur naik 1px + latar berubah saat kursor diarahkan; Cetak Struk memakai aturan yang sama tetapi tetap diam karena tombolnya sedang nonaktif (fitur cetak 58 mm belum diaktifkan) — dibuktikan dengan melepas nonaktif di browser uji, efeknya identik. Build OK, tanpa error runtime, tanpa publikasi.
