@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ambilSambutan, sapaanUntuk } from '@/lib/sambutan';
 import { usePeran } from '@/lib/peran';
-import gambarSambutan from '@/assets/sambutan-bertugas.png.asset.json';
+import gambarSambutan from '@/assets/sambutan-panel.png';
 import '@/components/sambutan.css';
 
 const TAHAN_MS = 2000;

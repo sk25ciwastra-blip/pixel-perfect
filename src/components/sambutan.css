@@ -265,4 +265,17 @@
 }
 
 .sambutan-layar { background: #000; }
-.sambutan-gambar { display:block; width:min(92vw, 1000px); max-height:92vh; height:auto; object-fit:contain; border-radius:28px; }
+.sambutan-gambar {
+  display: block;
+  width: min(86vw, 560px);
+  max-height: 82vh;
+  height: auto;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 0 34px color-mix(in oklch, var(--gold) 34%, transparent))
+    drop-shadow(0 26px 48px rgb(0 0 0 / 0.85));
+}
+
+@media (max-width: 700px) {
+  .sambutan-gambar { width: min(92vw, 420px); }
+}
