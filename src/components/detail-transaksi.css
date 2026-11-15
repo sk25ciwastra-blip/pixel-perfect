@@ -53,17 +53,20 @@
 .dtx-hubungi { display: inline-flex; align-items: center; gap: 5px; height: 25px; padding: 0 10px 0 7px; border-radius: 999px; background: #FFFFFF; border: 1px solid var(--dtx-garis); color: var(--premium-success); font-size: 12px; font-weight: 700; box-shadow: 0 3px 8px -5px color-mix(in oklab, var(--gold-dark) 70%, transparent); cursor: pointer; }
 .dtx-hubungi svg { width: 16px; height: 16px; }
 .dtx-hubungi:disabled { opacity: .5; cursor: not-allowed; }
-.dtx-jenis { display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: .02em; background: linear-gradient(180deg, #FBE7C5, #F4D29E); border: 1px solid color-mix(in oklab, var(--primary) 55%, transparent); line-height: 1.7; }
+.dtx-jenis { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: 0; background: color-mix(in oklab, var(--dtx-jenis-warna) 14%, var(--dtx-kartu)); color: var(--dtx-jenis-warna); border: 1px solid color-mix(in oklab, var(--dtx-jenis-warna) 35%, transparent); line-height: 1.7; }
+.dtx-jenis-booking { --dtx-jenis-warna: var(--premium-info); }
+.dtx-jenis-langsung { --dtx-jenis-warna: var(--premium-success); }
 
 .dtx-dua { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; }
 .dtx-dua .dtx-baris { grid-template-columns: 100px 10px minmax(0, 1fr); }
 .dtx-dua .dtx-baris > span:last-child { white-space: nowrap; overflow-wrap: normal; }
 .dtx-menginap { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 4px 8px; }
-.dtx-menginap .dtx-baris { grid-template-columns: 90px 8px minmax(0, 1fr); align-items: start; font-size: 12px; }
-.dtx-menginap .dtx-baris:nth-child(even) { grid-template-columns: 104px 8px minmax(0, 1fr); }
-.dtx-menginap .dtx-baris > span:first-child { font-weight: 600; }
+.dtx-menginap .dtx-baris { grid-template-columns: 106px 10px minmax(0, 1fr); align-items: start; font-family: var(--font-sans); font-size: 13px; }
+.dtx-menginap .dtx-baris:nth-child(even) { grid-template-columns: 116px 10px minmax(0, 1fr); }
+.dtx-menginap .dtx-baris > span:first-child { font-weight: 400; }
+.dtx-menginap .dtx-baris > span:nth-child(2) { position: relative; z-index: 1; color: var(--dtx-tinta); text-align: center; }
 .dtx-waktu-menginap { display: flex; flex-direction: column; padding: 3px 5px; border-radius: 8px; background: var(--dtx-peach-lembut); line-height: 1.4; }
-.dtx-waktu-menginap strong { font-weight: 700; white-space: nowrap; }
+.dtx-waktu-menginap strong { font-weight: 700; }
 .dtx-waktu-menginap > span { white-space: nowrap; }
 .dtx-ekstra { margin-top: 10px; column-gap: 10px; }
 .dtx-kotak { border-radius: 7px; overflow: hidden; background: var(--dtx-peach-lembut); border: 1px solid color-mix(in oklab, var(--primary) 22%, transparent); padding-bottom: 4px; }
