@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## ID transaksi tabel krem lebih jelas — 15 November
+- [x] Perdalam warna emas nomor transaksi di tabel Status Kamar Dashboard dan perbesar sedikit teksnya agar terbaca jelas; pemutusan nomor di tanda hubung, isi, klik, izin dan proses tetap.
+- [x] Preview akun aktif: kontras terukur 5,6:1 terhadap latar krem (sebelumnya 3,4:1), teks 11px tebal, nomor pecah menjadi "BTRDTRX-" dan "000025" tanpa digit terpotong, klik tetap membuka detail, tanpa runtime error, build OK; tanpa publikasi.
+
 ## Nomor transaksi emas di tabel krem — 15 November
 - [x] Ganti warna nomor transaksi di tabel Status Kamar Dashboard dari abu-abu gelap menjadi emas; isi, klik, izin dan proses tetap.
 - [x] Preview akun aktif: warna terukur emas kaya dan terbaca di latar krem, klik tetap membuka detail, tanpa runtime error, build OK; tanpa publikasi.

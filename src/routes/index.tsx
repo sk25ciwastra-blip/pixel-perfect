@@ -776,7 +776,7 @@ function Ringkasan() {
                                   <p className="truncate text-xs font-bold uppercase" title={guest.full_name}>{guest.full_name}</p>
                                 </>
                               ) : <span className="text-muted-foreground">—</span>}
-                              {item && <Button variant="link" className="mt-0.5 h-auto max-w-full whitespace-normal break-all p-0 font-mono text-[10px] font-bold leading-snug text-gold-krem" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>}
+                              {item && <Button variant="link" className="mt-0.5 h-auto max-w-full whitespace-normal break-words p-0 font-mono text-[11px] font-bold tracking-tight leading-snug text-gold-krem underline-offset-2 hover:underline focus-visible:underline" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>}
                             </td>
                             <td className="px-1 py-2">
                               {item ? (
