@@ -1,4 +1,4 @@
-/* Opening aplikasi — logo reveal premium, scoped, murni CSS, total ±2 detik. */
+/* Opening aplikasi — logo reveal premium, scoped, CSS/SVG, total ±4 detik. */
 
 .opening-layar {
   position: fixed;
@@ -21,7 +21,7 @@
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  overflow: hidden;
+  overflow: visible;
   padding: 24px 40px;
 }
 
@@ -85,24 +85,106 @@
   to { opacity: 1; transform: translateY(0); letter-spacing: 0.32em; }
 }
 
-/* Kilau emas halus menyapu satu kali setelah logo menyatu. */
-.opening-kilau {
+/* Golden Light Trail: jejak cahaya melengkung tanpa bidang persegi. */
+.opening-logo-bungkus { position: relative; line-height: 0; }
+
+/* Logo dasar tanpa ikon ceklis; ceklis resmi dimunculkan terpisah. */
+.opening-logo-dasar {
+  clip-path: polygon(0 0, 100% 0, 100% 53%, 84.4% 53%, 84.4% 100%, 0 100%);
+}
+
+.opening-logo-ceklis {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -40%;
-  width: 38%;
-  background: linear-gradient(105deg, transparent, color-mix(in oklch, var(--gold-light) 55%, transparent) 50%, transparent);
-  filter: blur(6px);
+  inset: 0;
+  width: 100%;
+  height: auto;
+  clip-path: inset(53% 0 0 84.4%);
+  transform-origin: 90.6% 74%;
   opacity: 0;
-  animation: opening-kilau 600ms ease-in-out 950ms forwards;
+  transform: scale(0.35);
+  filter: blur(3px) brightness(1.6);
+  animation: opening-ceklis 420ms cubic-bezier(0.2, 1.4, 0.4, 1) 2380ms forwards;
+}
+
+@keyframes opening-ceklis {
+  to { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); }
+}
+
+.opening-jejak {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
   pointer-events: none;
 }
 
-@keyframes opening-kilau {
-  0% { opacity: 0; left: -40%; }
-  25% { opacity: 1; }
-  100% { opacity: 0; left: 102%; }
+.opening-ekor {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dashoffset: var(--awal);
+  opacity: 0;
+  animation:
+    opening-jejak 900ms cubic-bezier(0.45, 0.05, 0.35, 1) 800ms forwards,
+    opening-jejak-pudar 260ms ease-out 1640ms forwards;
+}
+.opening-ekor-1 { stroke: var(--gold); stroke-width: 7; filter: blur(4px); --redup: 0.18; }
+.opening-ekor-2 { stroke: var(--gold); stroke-width: 4; filter: blur(1.5px); --redup: 0.4; }
+.opening-ekor-3 { stroke: var(--gold-light); stroke-width: 3; --redup: 0.8; }
+.opening-ekor-kepala { stroke: #fff6dc; stroke-width: 8; filter: drop-shadow(0 0 6px var(--gold-light)); --redup: 1; }
+
+@keyframes opening-jejak {
+  0% { stroke-dashoffset: var(--awal); opacity: 0; }
+  15% { opacity: var(--redup); }
+  100% { stroke-dashoffset: var(--akhir); opacity: var(--redup); }
+}
+@keyframes opening-jejak-pudar { from { opacity: var(--redup); } to { opacity: 0; } }
+
+/* Bola emas kecil memantul dua kali, lalu melebur menjadi ceklis. */
+.opening-bola {
+  position: absolute;
+  left: 90.6%;
+  top: 74%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6dc, var(--gold-light) 40%, var(--gold) 70%, color-mix(in oklch, var(--gold) 60%, #000));
+  box-shadow: 0 0 10px color-mix(in oklch, var(--gold-light) 70%, transparent), 0 3px 4px rgb(0 0 0 / 0.6);
+  opacity: 0;
+  animation: opening-bola 760ms linear 1660ms forwards;
+}
+
+@keyframes opening-bola {
+  0% { opacity: 1; transform: translateY(0) scale(1.15, 0.85); }
+  22% { transform: translateY(-22px) scale(0.95, 1.05); animation-timing-function: ease-in; }
+  42% { transform: translateY(0) scale(1.15, 0.85); animation-timing-function: ease-out; }
+  58% { transform: translateY(-9px) scale(1); animation-timing-function: ease-in; }
+  72% { opacity: 1; transform: translateY(0) scale(1.1, 0.9); }
+  100% { opacity: 0; transform: scale(3.2); }
+}
+
+/* Kilau lembut berbentuk lingkaran sesaat setelah ceklis terbentuk. */
+.opening-kilau-ceklis {
+  position: absolute;
+  left: 90.6%;
+  top: 74%;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklch, var(--gold-light) 70%, transparent), transparent 65%);
+  opacity: 0;
+  transform: scale(0.4);
+  animation: opening-kilau-ceklis 700ms ease-out 2700ms forwards;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+@keyframes opening-kilau-ceklis {
+  0% { opacity: 0; transform: scale(0.4); }
+  35% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1.5); }
 }
 
 /* Logo utuh bertahan sesaat, lalu overlay fade out (ditangani data-menutup). */
@@ -111,7 +193,10 @@
   .opening-logo,
   .opening-garis,
   .opening-kata,
-  .opening-kilau {
+  .opening-logo-ceklis,
+  .opening-ekor,
+  .opening-bola,
+  .opening-kilau-ceklis {
     animation-duration: 1ms;
     animation-delay: 0ms;
   }
