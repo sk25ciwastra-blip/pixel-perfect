@@ -7,7 +7,7 @@ import logoBaturaden from '@/assets/logo-baturaden-25.png.asset.json';
 import karakter from '@/assets/karakter-manajemen.png';
 import '@/components/sambutan.css';
 
-const TAHAN_MS = 1200;
+const TAHAN_MS = 2600;
 const FADE_MS = 320;
 
 function Daun({ flip = false }: { flip?: boolean }) {
@@ -36,15 +36,21 @@ export function Sambutan() {
   const timer = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const tutup = useCallback(() => {
-    setFase((f) => (f === 'tampil' || f === 'masuk' ? 'tutup' : f));
+    setFase((f) => (f === 'tampil' ? 'tutup' : f));
   }, []);
 
+  // Tunggu semua gambar termuat agar sambutan tampil utuh sebelum hitungan dimulai.
   useEffect(() => {
-    const t1 = setTimeout(() => setFase('tampil'), 30);
-    const t2 = setTimeout(() => setFase('tutup'), 30 + TAHAN_MS);
-    const t3 = setTimeout(() => setFase('selesai'), 30 + TAHAN_MS + FADE_MS);
-    timer.current = [t1, t2, t3];
-    return () => timer.current.forEach(clearTimeout);
+    let batal = false;
+    const muat = (src: string) => new Promise<void>((r) => { const i = new Image(); i.onload = i.onerror = () => r(); i.src = src; });
+    const cadangan = new Promise<void>((r) => setTimeout(r, 2500));
+    Promise.race([Promise.all([panorama.url, logoBaturaden.url, karakter].map(muat)), cadangan]).then(() => {
+      if (batal) return;
+      const t1 = setTimeout(() => setFase('tampil'), 30);
+      const t2 = setTimeout(() => setFase('tutup'), 30 + TAHAN_MS);
+      timer.current = [t1, t2];
+    });
+    return () => { batal = true; timer.current.forEach(clearTimeout); };
   }, []);
 
   useEffect(() => {

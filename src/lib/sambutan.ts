@@ -16,9 +16,6 @@ export function ambilSambutan(): boolean {
   try {
     if (sessionStorage.getItem(KUNCI) !== '1') return false;
     sessionStorage.removeItem(KUNCI);
-    // Muat ulang dengan sesi aktif tidak boleh menampilkan sambutan.
-    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    if (nav?.type === 'reload') return false;
     return true;
   } catch {
     return false;
