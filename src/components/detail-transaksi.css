@@ -146,12 +146,16 @@
 .dtx-tombol, .dtx-cetak button { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; border-radius: 8px; background: linear-gradient(180deg, #FFFFFF, #F8F4EC); border: 1px solid var(--dtx-garis); color: var(--dtx-tinta); font-size: 13px; font-weight: 700; box-shadow: 0 1px 0 #FFFFFF inset, 0 6px 14px -9px color-mix(in oklab, var(--gold-dark) 85%, transparent); cursor: pointer; }
 .dtx-tombol svg, .dtx-cetak button svg { width: 16px; height: 16px; color: var(--dtx-emas); }
 .dtx-tombol .dtx-panah { width: 15px; height: 15px; color: var(--dtx-tinta); }
-.dtx-tombol:hover, .dtx-cetak button:hover { background: #FFFFFF; transform: translateY(-1px); }
+.dtx-tombol:hover, .dtx-cetak button:not(:disabled):hover { background: #FFFFFF; transform: translateY(-1px); }
 .dtx-pdf { position: relative; }
 .dtx-pdf-menu { position: absolute; z-index: 6; bottom: calc(100% + 8px); left: 0; width: 280px; padding: 10px; border-radius: 9px; background: #FFFFFF; border: 1px solid var(--dtx-garis); box-shadow: 0 18px 40px -16px color-mix(in oklab, var(--navy-deep) 55%, transparent); color: var(--dtx-tinta); }
 .dtx-tutup { height: 34px; min-width: 104px; padding: 0 18px; border-radius: 8px; background: linear-gradient(180deg, #1D1A16, #050505); color: #FFFFFF; font-size: 14px; font-weight: 700; border: 1.5px solid var(--primary); box-shadow: 0 0 10px -2px color-mix(in oklab, var(--primary) 70%, transparent), 0 8px 16px -8px var(--navy-deep); cursor: pointer; }
+/* Efek kursor seragam untuk ketiga tombol kaki: naik 1px + permukaan lebih terang. */
+.dtx-tombol, .dtx-cetak button, .dtx-tutup { transition: transform .16s ease, background .16s ease, box-shadow .16s ease; }
+.dtx-tutup:hover { background: linear-gradient(180deg, #34302A, #0B0A08); box-shadow: 0 0 14px -2px color-mix(in oklab, var(--primary) 85%, transparent), 0 10px 18px -8px var(--navy-deep); transform: translateY(-1px); }
+.dtx-tombol:active, .dtx-cetak button:not(:disabled):active, .dtx-tutup:active { transform: translateY(0); }
 .dtx-tutup:focus-visible, .dtx-tombol:focus-visible, .dtx-hubungi:focus-visible, .dtx-lihat:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .dtx-tombol:hover, .dtx-cetak button:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .dtx-tombol:hover, .dtx-cetak button:hover, .dtx-tutup:hover { transform: none; } }
 
 @media (max-width: 900px) {
   .dtx-grid { grid-template-columns: minmax(0, 1fr); }
