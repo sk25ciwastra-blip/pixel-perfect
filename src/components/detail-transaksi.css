@@ -74,7 +74,7 @@
 .dtx-dua .dtx-baris > span:last-child { white-space: nowrap; overflow-wrap: normal; }
 .dtx-menginap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 5px 12px; }
 .dtx-menginap .dtx-baris { grid-template-columns: 94px 9px minmax(0, 1fr); align-items: center; font-family: var(--font-sans); font-size: 12px; }
-.dtx-menginap .dtx-baris:nth-child(even) { grid-template-columns: 99px 9px minmax(0, 1fr); border-left: 1px solid color-mix(in oklab, var(--primary) 26%, transparent); padding-left: 6px; }
+.dtx-menginap .dtx-baris:nth-child(even) { grid-template-columns: 99px 9px minmax(0, 1fr); border-left: 1px solid color-mix(in oklab, var(--gold-dark) 30%, transparent); padding-left: 6px; }
 .dtx-menginap .dtx-baris > span:first-child { font-weight: 400; white-space: normal; letter-spacing: -.01em; }
 .dtx-menginap .dtx-baris > span:nth-child(2) { position: relative; z-index: 1; color: var(--dtx-tinta); text-align: center; }
 .dtx-waktu-menginap { display: flex; flex-direction: column; gap: 1px; padding: 2px 3px; border-radius: 8px; background: linear-gradient(180deg, #FDF8EF 0%, var(--dtx-peach-lembut) 100%); border: 1px solid color-mix(in oklab, var(--gold-dark) 26%, transparent); line-height: 1.35; box-shadow: inset 0 1px 0 #FFFFFF, 0 2px 5px -4px color-mix(in oklab, var(--gold-dark) 60%, transparent); }
