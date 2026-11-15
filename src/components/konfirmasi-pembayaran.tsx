@@ -9,14 +9,15 @@ const wib = (v: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZon
 
 /** PDF + WhatsApp manual steps; server revalidates role, Training and the chosen transaction. */
 export function AksiPdfStruk({ hook, transactionId, ringkas = false }: { hook: Hook; transactionId: string; ringkas?: boolean }) {
-  const [busy, setBusy] = useState<'' | 'pdf' | 'wa'>('');
+  const [busy, setBusy] = useState<'' | 'pdf' | 'jpg' | 'wa'>('');
   const [unduh, setUnduh] = useState(false);
   const [pesan, setPesan] = useState('');
   if (!hook.pdfAvailable) return <p className="rounded-lg border border-gold/25 px-3 py-2 text-xs text-muted-foreground">PDF untuk Owner, Supervisor aktif, dan Receptionist aktif; Training tidak diizinkan. Cetak Struk/Selesai tetap tersedia.</p>;
-  const jalankan = async (jenis: 'pdf' | 'wa') => {
+  const jalankan = async (jenis: 'pdf' | 'jpg' | 'wa') => {
     if (busy) return; setBusy(jenis); setPesan('');
     try {
       if (jenis === 'pdf') { await hook.download(transactionId); setUnduh(true); setPesan('PDF dibuat. Periksa folder unduhan perangkat.'); }
+      else if (jenis === 'jpg') { await hook.downloadJpg(transactionId); setPesan('JPG dibuat. Periksa folder unduhan perangkat.'); }
       else await hook.openWhatsApp(transactionId);
     } catch (e) { if (jenis === 'pdf') setUnduh(false); setPesan(e instanceof Error ? e.message : 'Gagal.'); }
     finally { setBusy(''); }
@@ -24,10 +25,14 @@ export function AksiPdfStruk({ hook, transactionId, ringkas = false }: { hook: H
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2">
-        <Button type="button" variant="outline" size="sm" disabled={!!busy} onClick={() => void jalankan('pdf')}><Download />{busy === 'pdf' ? 'Menyiapkan...' : ringkas ? 'Unduh' : '1. Unduh PDF'}</Button>
-        <Button type="button" variant="outline" size="sm" disabled={!!busy || !unduh} onClick={() => void jalankan('wa')}><MessageCircle />{ringkas ? 'WhatsApp' : '2. Buka WhatsApp'}</Button>
+        <Button type="button" variant="outline" size="sm" disabled={!!busy} onClick={() => void jalankan('pdf')}><Download />{busy === 'pdf' ? 'Menyiapkan...' : ringkas ? 'Unduh PDF' : '1. Unduh PDF'}</Button>
+        {ringkas ? (
+          <Button type="button" variant="outline" size="sm" disabled={!!busy} onClick={() => void jalankan('jpg')}><Download />{busy === 'jpg' ? 'Menyiapkan...' : 'Unduh JPG'}</Button>
+        ) : (
+          <Button type="button" variant="outline" size="sm" disabled={!!busy || !unduh} onClick={() => void jalankan('wa')}><MessageCircle />2. Buka WhatsApp</Button>
+        )}
       </div>
-      <p className="text-[11px] text-muted-foreground">{ringkas ? 'Unduh bukti pembayaran atau bagikan kepada tamu melalui WhatsApp.' : 'Lampirkan PDF secara manual. Belum otomatis terkirim.'}</p>
+      <p className="text-[11px] text-muted-foreground">{ringkas ? 'Unduh bukti pembayaran dalam format PDF atau JPG, lalu bagikan kepada tamu melalui WhatsApp.' : 'Lampirkan PDF secara manual. Belum otomatis terkirim.'}</p>
       {pesan && <p role="status" className="text-xs text-foreground/90">{pesan}</p>}
     </div>
   );
