@@ -250,15 +250,13 @@ export function DetailTransaksi({
                       <span className="dtx-kartu-kiri">
                         {e.metode
                           ? <>{e.metode} <span aria-hidden>·</span> <b>{rupiah(e.jumlah ?? 0)}</b></>
-                          : e.oleh
-                            ? <>Oleh : <b>{e.oleh}</b></>
-                            : e.ket
-                              ? <em>{e.ket}</em>
-                              : null}
+                          : e.ket
+                            ? <em>{e.ket}</em>
+                            : <>Oleh : <b>{e.oleh ?? '—'}</b></>}
                       </span>
                       <span className="dtx-kartu-kanan">{e.waktu ? `${jamWib(e.waktu)} WIB` : ''}</span>
                     </div>
-                    {e.metode && e.oleh && <p className="dtx-kartu-oleh">Oleh : <b>{e.oleh}</b></p>}
+                    {e.metode && <p className="dtx-kartu-oleh">Oleh : <b>{e.oleh ?? '—'}</b></p>}
                     {e.metode && e.ket && <p><em>{e.ket}</em></p>}
                   </div>
                 </li>)}</ol>
