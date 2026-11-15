@@ -68,6 +68,7 @@
   --color-gold: var(--gold);
   --color-gold-light: var(--gold-light);
   --color-gold-dark: var(--gold-dark);
+  --color-gold-krem: var(--gold-krem);
   --color-v0-success: var(--v0-success);
   --color-v0-info: var(--v0-info);
   --color-v0-warning: var(--v0-warning);
@@ -384,6 +385,7 @@
   --navy-deep: oklch(0.925 0.02 85);
   --gold-light: oklch(0.32 0.03 75);
   --gold: oklch(0.55 0.11 75);
+  --gold-krem: oklch(0.62 0.14 78);      /* emas kaya & terbaca untuk teks kecil di latar krem */
   --bahaya-foreground: oklch(0.55 0.21 27);
   --terisi-foreground: oklch(0.45 0.15 245);
   --secondary: oklch(0.9 0.015 85);
