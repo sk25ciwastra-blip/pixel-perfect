@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useTable, type Room, type RoomType } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
 import { supabase } from '@/integrations/supabase/client';
-import type { Tables } from '@/integrations/supabase/types';
+import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { meta } from '@/lib/meta';
 import '@/components/paket-harga.css';
 export const Route=createFileRoute('/tipe-kamar')({head:()=>meta('Tipe Kamar','Pengelolaan tipe dan daftar kamar Baturaden 25 Homestay.'),component:Halaman});
@@ -32,8 +32,8 @@ function lantaiAsli(r:Room):number|null{
 function teksLantai(r:Room):string{const v=lantaiAsli(r);return v===null?'—':String(v)}
 
 // Lantai boleh ikut tersimpan begitu kolomnya ada; tipe bawaan belum memuatnya.
-type KamarBaru=Tables<'rooms'>['Insert']&{lantai?:number|null};
-type KamarUbah=Tables<'rooms'>['Update']&{lantai?:number|null};
+type KamarBaru=TablesInsert<'rooms'>&{lantai?:number|null};
+type KamarUbah=TablesUpdate<'rooms'>&{lantai?:number|null};
 
 function Halaman(){
  const {peran}=usePeran();const owner=peran==='owner';
