@@ -60,6 +60,16 @@ function Baris({ label, children }: { label: string; children: ReactNode }) {
   return <div className="dtx-baris"><span>{label}</span><span>:</span><span>{children}</span></div>;
 }
 
+function WaktuMenginap({ value }: { value: string | null }) {
+  if (!value) return <>—</>;
+  const tanggal = new Date(value);
+  if (Number.isNaN(tanggal.getTime())) return <>—</>;
+  return <span className="dtx-waktu-menginap">
+    <strong>{tanggal.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</strong>
+    <span>{tanggal.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })} WIB</span>
+  </span>;
+}
+
 export function DetailTransaksi({
   transactionId,
   onClose,
@@ -198,19 +208,15 @@ export function DetailTransaksi({
               </Panel>
 
               <Panel judul="Rincian Menginap" ikon={BedDouble} isi>
-                <div className="dtx-dua">
-                  <div>
+                <div className="dtx-menginap">
                     <Baris label="No. Kamar">{room?.room_number ?? '—'}</Baris>
-                    <Baris label="Tipe Kamar">{roomType?.name?.toUpperCase() ?? '—'}</Baris>
-                    <Baris label="Jadwal Check-in">{waktuWib(transaction.scheduled_check_in)}</Baris>
-                    <Baris label="Batas Sewa">{waktuWib(transaction.scheduled_check_out)}</Baris>
-                  </div>
-                  <div>
                     <Baris label="Kode Paket">{kodePaket(packageItem?.name)}</Baris>
+                    <Baris label="Tipe Kamar">{roomType?.name?.toUpperCase() ?? '—'}</Baris>
                     <Baris label="Jenis Transaksi"><span className="dtx-jenis">{viaBooking ? 'BOOKING' : 'CHECK-IN LANGSUNG'}</span></Baris>
-                    <Baris label="Check-in Aktual">{waktuWib(transaction.started_at)}</Baris>
-                    <Baris label="Check-out Aktual">{waktuWib(transaction.checked_out_at)}</Baris>
-                  </div>
+                    <Baris label="Jadwal Check-in"><WaktuMenginap value={transaction.scheduled_check_in} /></Baris>
+                    <Baris label="Check-in Aktual"><WaktuMenginap value={transaction.started_at} /></Baris>
+                    <Baris label="Batas Sewa"><WaktuMenginap value={transaction.scheduled_check_out} /></Baris>
+                    <Baris label="Check-out Aktual"><WaktuMenginap value={transaction.checked_out_at} /></Baris>
                 </div>
                 <div className="dtx-dua dtx-ekstra">
                   <div className="dtx-kotak"><h4>EXTEND</h4><Baris label="Kode Paket">—</Baris><Baris label="Batas Check-out">—</Baris><Baris label="Dibuat Oleh">—</Baris></div>
