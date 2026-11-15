@@ -34,19 +34,6 @@ const KELOMPOK_RESMI = [
 
 function jam(t?: string|null){return t?t.slice(0,5).replace(':','.'):''}
 
-/** Durasi/Slot dari data waktu asli paket. Murni presentasi. */
-function durasiSlot(p:Package):string{
- if(p.time_mode==='fixed_window'){
-  const besok=p.name.toLowerCase().includes('harian')?' (besok)':'';
-  return `${jam(p.slot_start_time)}–${jam(p.checkout_time)}${besok}`;
- }
- if(p.time_mode==='fixed_days_checkout'){
-  const hari=Math.round(Number(p.duration_minutes)/1440);
-  return `${hari} hari · check-out ${jam(p.checkout_time)}`;
- }
- return `${p.duration_minutes} menit`;
-}
-
 /** Tanggal/jam WIB dari stempel waktu asli; — bila kosong. */
 function waktuWib(t?:string|null):string{
  if(!t)return '—';const d=new Date(t);if(isNaN(d.getTime()))return '—';
@@ -170,6 +157,9 @@ function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packag
      </select>}
 </label>
 <label className="block text-sm">Durasi
- <input value={item?durasiSlot(item):durasi?`${durasi} menit`:'—'} readOnly className="mt-1 h-11 w-full rounded-xl border border-input bg-muted px-3"/>
+ <input value={durasi?`${durasi} menit`:'—'} readOnly className="mt-1 h-11 w-full rounded-xl border border-input bg-muted px-3"/>
 </label>
-{[['Harga Weekday',hargaWeekday,setHargaWeekday],['Harga Weekend',hargaWeekend,setHargaWeekend],['Deskripsi',deskripsi,setDeskripsi]].map(([label,value,setter])=><label key={label as string} className="block text-sm">{label as string}<input required={label!=='Deskripsi'} type={label==='Harga Weekday'||label==='Harga Weekend'?'number':'text'} min={label==='Harga Weekday'||label==='Harga Weekend'?'0':undefined} value={value as string} onChange={e=>(setter as (s:string)=>void)(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>)}{item&&(Number(hargaItem?.weekday_price??item.weekday_price)!==Number(hargaWeekday)||Number(hargaItem?.weekend_price??item.weekend_price)!==Number(hargaWeekend))&&<label className="block text-sm">Alasan perubahan harga<input required value={alasan} onChange={e=>setAlasan(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>}<label className="flex gap-2 text-sm"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/>Aktif</label>{groupeForm&&<p className="text-sm text-muted-foreground">Penyimpanan paket khusus tipe kamar belum tersedia. Tidak ada data yang diubah.</p>}{!item&&PAKET_RESMI.every(p=>rows.some(r=>r.name===p.name))&&<p className="text-sm text-muted-foreground">Semua 9 paket resmi sudah tersedia; paket yang sama tidak dapat ditambahkan kembali.</p>}{message&&<p role="alert" className="text-sm text-destructive">{message}</p>}<div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Batal</Button><Button disabled={!!groupeForm||!nama}>Simpan</Button></div></form></div>}</SubPengaturan></Kerangka>}
+<label className="block text-sm">Jam Berlaku
+ <input value={item?jamBerlaku(item):'—'} readOnly className="mt-1 h-11 w-full rounded-xl border border-input bg-muted px-3"/>
+</label>
+{[['Harga Weekday',hargaWeekday,setHargaWeekday],['Harga Weekend',hargaWeekend,setHargaWeekend]].map(([label,value,setter])=><label key={label as string} className="block text-sm">{label as string}<input required type="number" min="0" value={value as string} onChange={e=>(setter as (s:string)=>void)(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>)}{item&&(Number(hargaItem?.weekday_price??item.weekday_price)!==Number(hargaWeekday)||Number(hargaItem?.weekend_price??item.weekend_price)!==Number(hargaWeekend))&&<label className="block text-sm">Alasan perubahan harga<input required value={alasan} onChange={e=>setAlasan(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>}<label className="flex gap-2 text-sm"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/>Aktif</label>{groupeForm&&<p className="text-sm text-muted-foreground">Penyimpanan paket khusus tipe kamar belum tersedia. Tidak ada data yang diubah.</p>}{!item&&PAKET_RESMI.every(p=>rows.some(r=>r.name===p.name))&&<p className="text-sm text-muted-foreground">Semua 9 paket resmi sudah tersedia; paket yang sama tidak dapat ditambahkan kembali.</p>}{message&&<p role="alert" className="text-sm text-destructive">{message}</p>}<div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Batal</Button><Button disabled={!!groupeForm||!nama}>Simpan</Button></div></form></div>}</SubPengaturan></Kerangka>}
