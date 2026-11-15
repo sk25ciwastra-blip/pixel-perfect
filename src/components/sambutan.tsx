@@ -21,7 +21,7 @@ export function Sambutan() {
     let batal = false;
     const muat = (src: string) => new Promise<void>((r) => { const i = new Image(); i.onload = i.onerror = () => r(); i.src = src; });
     const cadangan = new Promise<void>((r) => setTimeout(r, 2500));
-    Promise.race([Promise.all([gambarSambutan.url].map(muat)), cadangan]).then(() => {
+    Promise.race([Promise.all([gambarSambutan].map(muat)), cadangan]).then(() => {
       if (batal) return;
       const t1 = setTimeout(() => setFase('tampil'), 30);
       const t2 = setTimeout(() => setFase('tutup'), 30 + TAHAN_MS);
@@ -54,7 +54,7 @@ export function Sambutan() {
       aria-label={`${sapaan.judul} ${sapaan.pesan}`}
       onClick={tutup}
     >
-      <img src={gambarSambutan.url} alt="" aria-hidden="true" className="sambutan-gambar" />
+      <img src={gambarSambutan} alt="" aria-hidden="true" className="sambutan-gambar" />
     </div>
   );
 }
