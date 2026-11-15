@@ -246,3 +246,7 @@
 - [x] Tanggal dan jam pada setiap baris Riwayat Transaksi & Penanganan diturunkan 1px (12px → 11px) dan ditebalkan (700), tanpa mengubah isi, urutan, atau data.
 - [x] Diuji dengan akun aktif 1280×1800: terukur 11px/700 pada "Kamis, 12 Nov 2026" dan "06.48 WIB", lima baris riwayat tampil penuh, tidak ada teks terpotong, popup tetap 940px, build OK, tanpa error runtime, tanpa publikasi.
 - [x] Tanggal bernama hari pada baris riwayat dikembalikan ke ketebalan biasa (400) sambil tetap 11px; hanya jam "06.48 WIB" yang ditebalkan (700). Terukur 11px/400 dan 11px/700 di preview, tanpa error runtime, tanpa publikasi.
+
+## Detail Transaksi — judul baris riwayat 16 November
+- [x] Judul baris "Riwayat Transaksi & Penanganan" diganti murni teks: "Booking dibuat" → RESERVASI, "Pembayaran DP" → DOWN PAYMENT (DP), "Pelunasan" → FINAL PAYMENT, "Check-in dilakukan" → CHECK-IN, "Check-out" → CHECK-OUT. Urutan, sumber data, jam, dan "Oleh :" tidak berubah.
+- [x] Diuji dengan akun aktif: kelima baris tampil persis (RESERVASI, DOWN PAYMENT (DP), FINAL PAYMENT, CHECK-IN, CHECK-OUT), popup tetap 940px tanpa gulir, tidak ada teks terpotong, tanpa error konsol, tanpa publikasi.
