@@ -141,3 +141,6 @@
   .dtx-pdf, .dtx-cetak, .dtx-tombol, .dtx-cetak button, .dtx-tutup { width: 100%; justify-content: center; }
   .dtx-pdf-menu { width: 100%; }
 }
+.dtx .dtx-tabel th { text-transform: none; letter-spacing: 0; color: var(--dtx-tinta); font-size: 15px; font-weight: 700; }
+.dtx-dua > div:last-child .dtx-baris { grid-template-columns: 136px 12px minmax(0, 1fr); }
+.dtx-cetak button:disabled { opacity: .55; cursor: not-allowed; transform: none; }

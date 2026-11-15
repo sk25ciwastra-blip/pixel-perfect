@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
   UserRound, NotebookPen, BedDouble, DoorOpen, CalendarDays, ReceiptText,
-  CircleDollarSign, History, CreditCard, Flag, Download, ChevronDown, X, type LucideIcon,
+  CircleDollarSign, History, CreditCard, Flag, Download, ChevronDown, Printer, X, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
 import '@/components/operasional-krem.css';
@@ -16,6 +16,7 @@ import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 import { waktuWib } from '@/lib/waktu-transaksi';
 import { ReceiptTransactionButton } from '@/components/receipt-actions';
+import { featureFlags } from '@/lib/feature-flags';
 
 type DetailTransaksiProps = {
   transactionId: string;
@@ -263,7 +264,9 @@ export function DetailTransaksi({
               <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital (PDF)<ChevronDown className="dtx-panah" /></button>
               {bukaPdf && <div className="dtx-pdf-menu"><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} /></div>}
             </div>
-            <span className="dtx-cetak"><ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk (58 mm)" /></span>
+            <span className="dtx-cetak">{featureFlags.receipt58mm
+              ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk (58 mm)" />
+              : <button type="button" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer />Cetak Struk (58 mm)</button>}</span>
             <button type="button" className="dtx-tutup" onClick={onClose}>Tutup</button>
           </div>
         </footer>
