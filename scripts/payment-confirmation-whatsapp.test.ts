@@ -49,7 +49,6 @@ test('JPG download needs no prior PDF, rechecks the ledger, and rejects while bu
   await actions.downloadJpg('fixture'); // No 'Unduh PDF dahulu' gate for JPG.
   expect(events).toEqual(['saved-jpg']);
   await expect(actions.openWhatsApp('fixture')).rejects.toThrow('Unduh PDF dahulu'); // JPG does not unlock WhatsApp.
-  deps.load = async () => ({ ...document(), ledgerRevision: 'changed' }) as ConfirmationDocument;
   deps.load = (() => { let calls = 0; return async () => (++calls === 2 ? { ...document(), ledgerRevision: 'changed' } : document()) as ConfirmationDocument; })();
   await expect(actions.downloadJpg('fixture')).rejects.toThrow('berubah');
   const read = deferred<ConfirmationDocument>();
