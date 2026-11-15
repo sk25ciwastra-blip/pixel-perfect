@@ -44,6 +44,23 @@ test('WA requires successful PDF download for the same transaction before reserv
   expect(events).toEqual(['saved']);
 });
 
+test('JPG download needs no prior PDF, rechecks the ledger, and rejects while busy', async () => {
+  const { actions, deps, events } = setup();
+  await actions.downloadJpg('fixture'); // No 'Unduh PDF dahulu' gate for JPG.
+  expect(events).toEqual(['saved-jpg']);
+  await expect(actions.openWhatsApp('fixture')).rejects.toThrow('Unduh PDF dahulu'); // JPG does not unlock WhatsApp.
+  deps.load = async () => ({ ...document(), ledgerRevision: 'changed' }) as ConfirmationDocument;
+  deps.load = (() => { let calls = 0; return async () => (++calls === 2 ? { ...document(), ledgerRevision: 'changed' } : document()) as ConfirmationDocument; })();
+  await expect(actions.downloadJpg('fixture')).rejects.toThrow('berubah');
+  const read = deferred<ConfirmationDocument>();
+  deps.load = () => read.promise;
+  const pending = actions.downloadJpg('fixture');
+  await expect(actions.downloadJpg('fixture')).rejects.toThrow('sedang');
+  await expect(actions.download('fixture')).rejects.toThrow('sedang');
+  read.resolve(document());
+  await pending;
+});
+
 test('reserves synchronously before fresh access read and navigates only after it succeeds', async () => {
   const { actions, deps, events } = setup();
   await actions.download('fixture');
