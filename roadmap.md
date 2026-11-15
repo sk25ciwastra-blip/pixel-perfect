@@ -1,5 +1,10 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Opening aplikasi menggantikan layar sambutan — 15 November
+- [x] Hapus layar sambutan pasca-login beserta seluruh file dan pemicunya (`sambutan.tsx/.css`, `lib/sambutan.ts`, aset karakter/panel, pemanggilan di auth.tsx dan __root.tsx, font Great Vibes).
+- [x] Opening baru `src/components/opening.tsx` + `opening.css`: latar hitam, logo resmi utuh (Baturaden 25 putih, Homestay+verifikasi emas, MANAJEMEN emas), elemen muncul terpisah lalu menyatu, kilau emas satu kali, fade out — murni CSS, total ±2 detik, sekali per sesi (sessionStorage), tidak tampil pada navigasi internal; dukung reduced-motion.
+- [x] Preview teruji: belum login → opening lalu halaman login; sudah login → opening lalu langsung Dashboard; klik menu Kamar tidak memunculkan opening lagi; tanpa error runtime, build OK; login/role/otorisasi/sidebar/header tidak berubah; tanpa publikasi.
+
 ## Halaman Pengaturan — 15 November
 - [x] Dashboard menu Owner di `src/routes/pengaturan.tsx` (satu-satunya file berubah): tiga kelompok serif (Operasional, Keuangan, Akun & Keamanan), kartu warm white semi-3D dengan medali ikon hitam-emas, grid 3 kolom desktop / 1 kolom HP; Kerangka, sidebar, dan latar header asli tidak disentuh.
 - [x] Hanya rute sah yang dapat diklik: Tipe Kamar, Paket & Harga, Daftar Pengeluaran, Minimum DP & Komisi, Rekening Owner (5 kartu aktif); Manajemen Kamar, Profil Homestay, Metode Pembayaran, Keamanan tampil nonaktif berlencana "Belum tersedia" tanpa link palsu.
