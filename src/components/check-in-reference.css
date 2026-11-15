@@ -38,3 +38,52 @@
 .checkin-reference .ci-pane label > div:has(select) { padding: 0; background: transparent; }
 .checkin-reference .ci-pane label > div[aria-readonly] { height: auto; min-height: 34px; padding-block: 6px; overflow-wrap: anywhere; }
 .checkin-reference .ci-summary .ci-expense-total > span:last-child { color: var(--destructive); }
+
+/* Cash-expense reference: full-width session and summary, paired detail/payment. */
+.expense-reference { border-color: var(--checkin-border); }
+.expense-reference .ci-header { min-height: 82px; padding: 10px 30px 14px; }
+.expense-reference .ci-header p { font-size: 13px; line-height: 20px; }
+.expense-reference .ci-header h2 { font-size: 30px; line-height: 36px; }
+.expense-reference .ci-header-id { font-size: 12px; padding: 6px 10px; }
+.expense-reference .ci-form { padding: 12px 16px 16px; }
+.expense-reference .ci-grid { grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); gap: 14px 12px; }
+.expense-reference .ci-pane { padding: 10px 16px; border-color: color-mix(in oklab, var(--checkin-gold) 28%, var(--checkin-paper)); }
+.expense-reference .ci-pane h3 { margin-bottom: 8px; padding-bottom: 14px; font-size: 22px; line-height: 28px; }
+.expense-reference .ci-pane h3 svg { width: 30px; height: 30px; }
+.expense-reference .ci-pane label { grid-template-columns: 155px minmax(0,1fr); gap: 10px; }
+.expense-reference .ci-pane input,.expense-reference .ci-pane select { height: 36px; padding-inline: 12px; }
+.expense-reference .ci-pane select:disabled { opacity: 1; color: var(--checkin-muted); }
+.expense-reference .ci-pane label > div[aria-readonly] { min-height: 36px; }
+.expense-reference .ci-fields { gap: 8px; }
+.expense-reference .expense-session,.expense-reference .expense-summary { grid-column: 1 / -1; display: grid; align-items: center; gap: 26px; }
+.expense-reference .expense-session { grid-template-columns: 150px minmax(0,1fr); }
+.expense-reference .expense-session h3,.expense-reference .expense-summary h3 { margin: 0; padding-bottom: 10px; }
+.expense-reference .expense-session .ci-fields,.expense-reference .expense-summary .ci-summary { border-left: 1px solid var(--checkin-border); padding-left: 26px; }
+.expense-reference .expense-session label { grid-template-columns: 145px minmax(0,1fr); }
+.expense-reference .expense-payment .ci-fields { margin-top: 20px; }
+.expense-reference .expense-payment label { grid-template-columns: 150px minmax(0,1fr); }
+.expense-reference .expense-notice { display: flex; align-items: center; gap: 12px; margin-top: 8px; border: 1px solid color-mix(in oklab, var(--checkin-gold) 25%, var(--checkin-paper)); border-radius: 8px; padding: 6px 10px; background: var(--checkin-highlight); font-size: 13px; line-height: 18px; }
+.expense-reference .expense-notice svg { width: 22px; height: 22px; flex-shrink: 0; color: var(--checkin-gold); }
+.expense-reference .expense-summary { grid-template-columns: 310px minmax(0,1fr); padding-block: 12px; }
+.expense-reference .expense-summary .ci-total { padding: 10px 14px; min-height: 46px; align-items: center; font-size: 22px; line-height: 26px; border: 1px solid color-mix(in oklab, var(--checkin-gold) 35%, var(--checkin-highlight)); }
+.expense-reference .ci-footer { margin-top: 16px; padding: 14px 8px 0; border-color: var(--checkin-border); gap: 14px; }
+.expense-reference .ci-reminder { font-size: 14px; line-height: 20px; }
+.expense-reference .ci-footer-actions button { height: 42px; min-width: 110px; }
+.expense-reference .ci-footer-actions button[type='submit'] { min-width: 200px; border: 1px solid var(--checkin-gold); }
+@media (max-width: 700px) {
+  .expense-reference .ci-header { padding-inline: 18px; padding-right: 48px; }
+  .expense-reference .ci-header h2 { font-size: 26px; }
+  .expense-reference .ci-form { padding: 12px; }
+  .expense-reference .ci-grid { grid-template-columns: minmax(0,1fr); }
+  .expense-reference .ci-pane { padding: 10px 12px; }
+  .expense-reference .ci-pane label,.expense-reference .expense-session label,.expense-reference .expense-payment label { grid-template-columns: minmax(0,1fr); gap: 5px; }
+  .expense-reference .expense-session,.expense-reference .expense-summary { grid-template-columns: minmax(0,1fr); gap: 10px; }
+  .expense-reference .expense-session .ci-fields,.expense-reference .expense-summary .ci-summary { border-left: 0; padding-left: 0; }
+  .expense-reference .expense-payment .ci-fields { margin-top: 8px; }
+  .expense-reference .expense-summary h3 { font-size: 20px; }
+  .expense-reference .expense-summary .ci-total { font-size: 19px; }
+  .expense-reference .ci-footer { padding-inline: 0; }
+  .expense-reference .ci-footer-actions { width: 100%; gap: 8px; }
+  .expense-reference .ci-footer-actions button { min-width: 0; flex: 1; }
+  .expense-reference .ci-footer-actions button[type='submit'] { min-width: 0; flex: 2; font-size: 14px; }
+}
