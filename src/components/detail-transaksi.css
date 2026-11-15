@@ -55,6 +55,18 @@
 .dtx-hubungi:disabled { opacity: .5; cursor: not-allowed; }
 .dtx-jenis { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: 0; background: color-mix(in oklab, var(--dtx-jenis-warna) 14%, var(--dtx-kartu)); color: var(--dtx-jenis-warna); border: 1px solid color-mix(in oklab, var(--dtx-jenis-warna) 35%, transparent); line-height: 1.7; }
 .dtx-jenis-booking { --dtx-jenis-warna: var(--premium-info); }
+.dtx-jenis-booking {
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--premium-info) 5%, var(--dtx-kartu)) 0%,
+    color-mix(in oklab, var(--premium-info) 12%, var(--dtx-kartu)) 45%,
+    color-mix(in oklab, var(--premium-info) 26%, var(--dtx-kartu)) 100%);
+  border-color: color-mix(in oklab, var(--premium-info) 42%, var(--dtx-kartu));
+  box-shadow: inset 0 1px 0 var(--dtx-kartu),
+    inset 0 -1px 1px color-mix(in oklab, var(--premium-info) 25%, transparent),
+    0 2px 2px -1px color-mix(in oklab, var(--premium-info) 38%, transparent),
+    0 4px 9px -4px color-mix(in oklab, var(--premium-info) 35%, transparent);
+  text-shadow: 0 1px 0 color-mix(in oklab, var(--dtx-kartu) 85%, transparent);
+}
 .dtx-jenis-langsung { --dtx-jenis-warna: var(--premium-success); }
 
 .dtx-dua { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; }
