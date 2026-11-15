@@ -129,7 +129,7 @@ function Halaman(){const {rows,refresh,error}=useTable('packages');const hargaTi
    .filter((x):x is BarisKelompok=>!!x.paket)
    .sort((a,b)=>urutanPaket(a.paket.name)-urutanPaket(b.paket.name));
   const dikenal=KELOMPOK_RESMI.map(k=>({label:k.label,baris:barisPer(k.key)}));
-  const kunciDikenal=new Set(KELOMPOK_RESMI.map(k=>k.key));
+  const kunciDikenal=new Set<string>(KELOMPOK_RESMI.map(k=>k.key));
   const lainnya=[...new Set(hargaTipe.rows.map(h=>h.pricing_group).filter(g=>!kunciDikenal.has(g)))]
    .map(g=>({label:g.charAt(0).toUpperCase()+g.slice(1),baris:barisPer(g)}));
   return [...dikenal,...lainnya];
