@@ -1,0 +1,1 @@
+- Employee private identity lives in Owner-only RLS `employee_profiles` and the private `employee-photos` bucket; employee IDs are generated server-side in `createEmployee`, keeping sensitive data out of `employees`.
