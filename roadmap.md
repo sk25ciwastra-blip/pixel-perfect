@@ -2,7 +2,7 @@
 
 ## Booking — pilihan tipe kamar
 - [x] Hilangkan kolom input Tamu Tambahan hanya pada Booking; gunakan pilihan tipe lalu nomor terurut seperti Check-in, dengan sumber kamar Booking, tanggal/jam, DP dan penyimpanan tetap.
-- [ ] Periksa Booking dengan akun aktif dan regresi Check-in tanpa menyimpan transaksi atau publikasi.
+- [x] Preview akun aktif komputer/HP: input Tamu Tambahan tidak tampil di Booking, empat tipe berurutan dan nomor terkecil per tipe, paket/tanggal/jam/DP dapat dipilih; Check-in tetap memiliki input Tamu Tambahan. Dua tes urutan PASS, tanpa runtime error, build OK; tanpa menyimpan transaksi atau publikasi.
 
 ## Reservasi dan Kas Keluar — template Check-in Langsung
 - [x] Samakan kepala hitam, isi terang, font, empat bagian dua kolom dan tombol bawah; tanggal/jam, DP, CASH, sumber pilihan, izin dan penyimpanan tetap.
