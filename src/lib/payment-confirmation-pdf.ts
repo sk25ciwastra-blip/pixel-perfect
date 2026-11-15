@@ -1,155 +1,229 @@
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, degrees, rgb, setCharacterSpacing } from 'pdf-lib';
 import type { PDFPage } from 'pdf-lib';
 import { confirmationMoney, type PaymentConfirmation } from './payment-confirmation';
 
-export const CONFIRMATION_LOGO = '/assets/Logo_Resmi_BTRD25_Transparan.png';
+export const CONFIRMATION_LOGO = '/assets/Logo_Resmi_BTRD25_Gelap.png';
 
-/** Byte generator only. Lovable can change layout here without altering the data model. */
+/** Byte generator only. Layout follows the approved white–blue "Payment Confirmation" template. */
 export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, logoPng: Uint8Array) {
   const pdf = await PDFDocument.create();
   pdf.setTitle('Payment Confirmation');
   pdf.setAuthor(data.business.name);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const serif = await pdf.embedFont(StandardFonts.TimesRomanBold);
+  const script = await pdf.embedFont(StandardFonts.TimesRomanBoldItalic);
   const logo = await pdf.embedPng(logoPng);
-  const gold = rgb(0.72, 0.56, 0.24);
-  const goldSoft = rgb(0.93, 0.88, 0.76);
-  const ink = rgb(0.08, 0.08, 0.08);
-  const muted = rgb(0.38, 0.37, 0.34);
-  const width = 841.89, height = 595.28, left = 36, bottom = 46, top = height - 112;
-  const colGap = 28, leftW = 360, rightX = left + leftW + colGap, rightW = width - left - rightX;
+  const blue = rgb(0.09, 0.42, 0.89);
+  const blueSoft = rgb(0.85, 0.92, 0.99);
+  const bluePale = rgb(0.95, 0.975, 1);
+  const line = rgb(0.86, 0.89, 0.93);
+  const ink = rgb(0.07, 0.08, 0.1);
+  const muted = rgb(0.25, 0.27, 0.31);
+  const green = rgb(0.13, 0.6, 0.2);
+  const greenSoft = rgb(0.9, 0.97, 0.89);
+  const amber = rgb(0.8, 0.5, 0.05);
+  const amberSoft = rgb(1, 0.95, 0.85);
+  const red = rgb(0.8, 0.18, 0.18);
+  const redSoft = rgb(0.99, 0.91, 0.91);
+  const width = 841.89, height = 595.28;
+  const panelTop = height - 150, panelBottom = 98, bottom = panelBottom + 4;
+  const LX = 28, LW = 392, RX = 432, RW = width - 28 - RX;
+
+  function clean(text: string) { return text.replace(/[\r\n\t\u0000-\u001f]/g, ' '); }
+  function wrap(text: string, maxWidth: number, size = 9, f = font) {
+    const lines: string[] = [];
+    let current = '';
+    for (const character of clean(text)) {
+      try {
+        if (f.widthOfTextAtSize(current + character, size) > maxWidth && current) { lines.push(current); current = ''; }
+        f.encodeText(character);
+      } catch {
+        throw new Error('Karakter dokumen belum didukung font PDF. Jangan mengganti nama tamu; minta penambahan font Unicode.');
+      }
+      current += character;
+    }
+    lines.push(current);
+    return lines;
+  }
+  function spaced(page: PDFPage, text: string, x: number, y: number, size: number, f: typeof font, gap: number, color = ink) {
+    page.pushOperators(setCharacterSpacing(gap));
+    page.drawText(text, { x, y, size, font: f, color });
+    page.pushOperators(setCharacterSpacing(0));
+    return x + spacedWidth(text, size, f, gap) + gap;
+  }
+  function spacedWidth(text: string, size: number, f: typeof font, gap: number) {
+    return [...text].reduce((w, ch) => w + f.widthOfTextAtSize(ch, size) + gap, 0) - gap;
+  }
+  const right = (page: PDFPage, text: string, xr: number, y: number, size: number, f = font, color = ink) =>
+    page.drawText(text, { x: xr - f.widthOfTextAtSize(text, size), y, size, font: f, color });
+  const when = (v: string) => v.replace(', ', ' · ');
+  const invoiceDate = data.generatedAt.split(',')[0]!.toUpperCase();
+
   const pages: PDFPage[] = [];
   function pageAt(index: number) {
     while (pages.length <= index) {
       const page = pdf.addPage([width, height]);
       page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 1, 1) });
-      page.drawRectangle({ x: 0, y: height - 6, width, height: 6, color: ink });
-      const size = logo.scaleToFit(110, 54);
-      page.drawImage(logo, { x: left, y: height - 26 - size.height, width: size.width, height: size.height });
-      const title = 'PAYMENT CONFIRMATION';
-      page.drawText(title, { x: width - left - bold.widthOfTextAtSize(title, 20), y: height - 52, size: 20, font: bold, color: ink });
-      const sub = data.transactionNumber;
-      page.drawText(sub, { x: width - left - font.widthOfTextAtSize(sub, 10), y: height - 68, size: 10, font, color: gold });
-      page.drawLine({ start: { x: left, y: height - 88 }, end: { x: width - left, y: height - 88 }, color: gold, thickness: 0.8 });
-      if (pages.length > 0) page.drawText('(continued)', { x: left, y: height - 102, size: 8, font, color: muted });
+      // Soft petal decoration, top right.
+      for (const [rot, op] of [[20, 0.5], [45, 0.42], [70, 0.36], [95, 0.3], [-5, 0.3]] as const) {
+        page.drawEllipse({ x: width - 40, y: height - 40, xScale: 150, yScale: 34, rotate: degrees(rot), color: blueSoft, opacity: op });
+      }
+      const size = logo.scaleToFit(170, 86);
+      page.drawImage(logo, { x: 46, y: height - 30 - size.height, width: size.width, height: size.height });
+      page.drawLine({ start: { x: 238, y: height - 40 }, end: { x: 238, y: height - 124 }, color: blue, thickness: 1.4 });
+      spaced(page, 'PAYMENT CONFIRMATION', 255, height - 64, 22, serif, 1.6);
+      spaced(page, 'THANK YOU FOR YOUR PAYMENT', 256, height - 84, 10, bold, 3.2, blue);
+      spaced(page, 'Your payment has been received and your booking', 257, height - 102, 11, font, 0.6, muted);
+      spaced(page, 'has been confirmed.', 257, height - 118, 11, font, 0.6, muted);
+      const xr = width - 34;
+      const lbl = 'INVOICE NO.';
+      spaced(page, lbl, xr - spacedWidth(lbl, 8, font, 1.4), height - 74, 8, font, 1.4);
+      right(page, data.transactionNumber, xr, height - 94, 15, bold);
+      page.drawRectangle({ x: xr - 36, y: height - 106, width: 36, height: 2.4, color: blue });
+      spaced(page, invoiceDate, xr - spacedWidth(invoiceDate, 9.5, font, 1.2), height - 124, 9.5, font, 1.2);
+      for (const [x, w] of [[LX, LW], [RX, RW]] as const) {
+        page.drawRectangle({ x, y: panelBottom, width: w, height: panelTop - panelBottom, color: rgb(0.99, 0.995, 1), borderColor: blueSoft, borderWidth: 0.9, opacity: 0.96 });
+      }
+      if (pages.length > 0) page.drawText('(continued)', { x: LX + 14, y: panelTop - 14, size: 7.5, font, color: muted });
       pages.push(page);
     }
     return pages[index]!;
   }
-  function clean(text: string) { return text.replace(/[\r\n\t\u0000-\u001f]/g, ' '); }
-  function wrap(text: string, maxWidth: number, size = 9, f = font) {
-    const lines: string[] = [];
-    let line = '';
-    for (const character of clean(text)) {
-      try {
-        if (f.widthOfTextAtSize(line + character, size) > maxWidth && line) { lines.push(line); line = ''; }
-        f.encodeText(character);
-      } catch {
-        throw new Error('Karakter dokumen belum didukung font PDF. Jangan mengganti nama tamu; minta penambahan font Unicode.');
-      }
-      line += character;
-    }
-    lines.push(line);
-    return lines;
-  }
-  /** Column cursor: overflowing content continues in the same column on the next page. */
-  function cursor(x: number) { return { x, page: 0, y: top }; }
+  function cursor(x: number) { return { x, page: 0, y: panelTop - 34 }; }
   type Cursor = ReturnType<typeof cursor>;
   function need(c: Cursor, h: number, onBreak?: () => void) {
-    if (c.y - h < bottom) { c.page++; c.y = top; onBreak?.(); }
+    if (c.y - h < bottom) { c.page++; c.y = panelTop - 34; onBreak?.(); }
   }
-  function section(c: Cursor, title: string, w: number) {
+  function heading(c: Cursor, title: string, x: number, w: number) {
     need(c, 30);
     const p = pageAt(c.page);
-    p.drawText(title, { x: c.x, y: c.y, size: 9, font: bold, color: gold });
-    p.drawLine({ start: { x: c.x, y: c.y - 5 }, end: { x: c.x + w, y: c.y - 5 }, color: goldSoft, thickness: 0.6 });
-    c.y -= 20;
-  }
-  function field(c: Cursor, label: string, value: string, w: number) {
-    const labelW = 128;
-    const lines = wrap(value, w - labelW - 6, 9.5, bold);
-    for (let i = 0; i < lines.length; i++) {
-      need(c, 14);
-      const p = pageAt(c.page);
-      if (i === 0) p.drawText(label, { x: c.x, y: c.y, size: 8.5, font, color: muted });
-      p.drawText(lines[i]!, { x: c.x + labelW, y: c.y, size: 9.5, font: bold, color: ink });
-      c.y -= 13;
-    }
-    c.y -= 4;
-  }
-  function row(c: Cursor, values: string[], widths: number[], heading = false, onBreak?: () => void) {
-    const columns = values.map((value, i) => wrap(value, widths[i]! - 8, 8.5, heading ? bold : font));
-    const lines = Math.max(...columns.map(col => col.length));
-    for (let line = 0; line < lines; line++) {
-      need(c, 13, onBreak);
-      const p = pageAt(c.page);
-      let x = c.x;
-      columns.forEach((column, index) => {
-        const text = column[line] ?? '';
-        const isAmount = index === values.length - 1 && values.length > 1;
-        const f = heading ? bold : font;
-        const tx = isAmount ? x + widths[index]! - f.widthOfTextAtSize(text, 8.5) : x;
-        p.drawText(text, { x: tx, y: c.y, size: 8.5, font: f, color: heading ? gold : ink });
-        x += widths[index]!;
-      });
-      c.y -= 12;
-    }
-    c.y -= 3;
-    if (!heading) pageAt(c.page).drawLine({ start: { x: c.x, y: c.y + 6 }, end: { x: c.x + widths.reduce((a, b) => a + b, 0), y: c.y + 6 }, color: goldSoft, thickness: 0.4 });
+    spaced(p, title, x, c.y, 13, serif, 1.1);
+    p.drawLine({ start: { x, y: c.y - 10 }, end: { x: x + w, y: c.y - 10 }, color: blue, thickness: 1.4 });
+    c.y -= 30;
   }
 
-  // Left: identity and stay details.
-  const L = cursor(left);
-  section(L, 'HOMESTAY', leftW);
-  field(L, 'Homestay', [data.business.name, data.business.address, data.business.city, data.business.whatsapp].filter(Boolean).join(' | '), leftW);
-  field(L, 'Document date', data.generatedAt, leftW);
-  section(L, 'GUEST', leftW);
-  field(L, 'Guest', data.guest.name, leftW);
-  if (data.guest.phone) field(L, 'WhatsApp', data.guest.phone, leftW);
-  field(L, 'Guests / Extra Guest', `${data.guests.total} / ${data.guests.extra}`, leftW);
-  section(L, 'STAY DETAILS', leftW);
-  field(L, 'Room', `${data.room.type} / ${data.room.number}`, leftW);
-  field(L, 'Package', `${data.package.code} ${data.package.name}`, leftW);
-  field(L, 'Booking schedule', `${data.times.scheduledCheckIn} - ${data.times.scheduledCheckOut}`, leftW);
-  field(L, 'Actual check-in', data.times.actualCheckIn, leftW);
-  field(L, 'Checkout deadline', data.times.checkoutDeadline, leftW);
-  field(L, 'Actual checkout', data.times.actualCheckOut, leftW);
+  // ---------- Left: guest & reservation ----------
+  const L = cursor(LX + 18);
+  const lw = LW - 36;
+  heading(L, 'GUEST & RESERVATION DETAILS', L.x, lw);
+  const methods = [...new Set(data.history.filter(h => h.type !== 'refund').map(h => h.method))].join(', ') || '—';
+  const fields: [string, string][] = [
+    ['Guest Name', data.guest.name],
+    ['Room / Type', `${data.room.number} / ${data.room.type}`],
+    ['Package', data.package.code || data.package.name],
+    ['Check-in', when(data.times.actualCheckIn !== '-' ? data.times.actualCheckIn : data.times.scheduledCheckIn)],
+    ['Check-out', when(data.times.actualCheckOut !== '-' ? data.times.actualCheckOut : data.times.checkoutDeadline)],
+    ['Payment Method', methods],
+    ['Extra Guest', `${data.guests.extra} person · ${confirmationMoney(data.totals.extraGuest)}`],
+  ];
+  const valueX = L.x + 170;
+  for (const [label, value] of fields) {
+    const lines = wrap(value, L.x + lw - valueX, 11.5);
+    lines.forEach((text, i) => {
+      need(L, 30);
+      const p = pageAt(L.page);
+      if (i === 0) {
+        p.drawRectangle({ x: L.x + 2, y: L.y - 6, width: 15, height: 15, borderColor: blue, borderWidth: 1.2, color: bluePale });
+        p.drawCircle({ x: L.x + 9.5, y: L.y + 1.5, size: 2.2, color: blue });
+        p.drawText(label, { x: L.x + 42, y: L.y - 2, size: 10.5, font, color: ink });
+        p.drawText(':', { x: L.x + 152, y: L.y - 2, size: 10.5, font, color: ink });
+      }
+      p.drawText(text, { x: valueX, y: L.y - 2, size: 11.5, font, color: ink });
+      L.y -= i === lines.length - 1 ? 14 : 15;
+    });
+    pageAt(L.page).drawLine({ start: { x: L.x, y: L.y }, end: { x: L.x + lw, y: L.y }, color: line, thickness: 0.6 });
+    L.y -= 17;
+  }
 
-  // Right: summary and payment history.
-  const R = cursor(rightX);
-  const p0 = pageAt(0);
-  const boxH = 64, boxW = (rightW - 12) / 2;
-  const box = (x: number, label: string, value: string, dark: boolean) => {
-    p0.drawRectangle({ x, y: R.y - boxH + 10, width: boxW, height: boxH, color: dark ? ink : rgb(0.985, 0.98, 0.965), borderColor: gold, borderWidth: 0.7 });
-    p0.drawText(label, { x: x + 12, y: R.y - 8, size: 8, font: bold, color: gold });
-    p0.drawText(value, { x: x + 12, y: R.y - 32, size: 15, font: bold, color: dark ? rgb(1, 1, 1) : ink });
+  // ---------- Right: summary, status, history ----------
+  const R = cursor(RX + 14);
+  const rw = RW - 28, rr = R.x + rw;
+  heading(R, 'PAYMENT SUMMARY', R.x + 4, rw - 4);
+  let p = pageAt(0);
+  R.y += 6;
+  p.drawText('DESCRIPTION', { x: R.x + 6, y: R.y, size: 8.5, font, color: ink });
+  right(p, 'AMOUNT', rr - 6, R.y, 8.5, font);
+  p.drawLine({ start: { x: R.x, y: R.y - 8 }, end: { x: rr, y: R.y - 8 }, color: line, thickness: 0.6 });
+  R.y -= 26;
+  const summary: [string, string][] = [
+    [`Room Package (${data.package.code || data.package.name})`, confirmationMoney(data.totals.room)],
+  ];
+  if (data.guests.extra > 0) summary.push([`Extra Guest (${data.guests.extra} person)`, confirmationMoney(data.totals.extraGuest)]);
+  for (const [label, value] of summary) {
+    p.drawText(label, { x: R.x + 6, y: R.y, size: 11, font, color: ink });
+    right(p, value, rr - 6, R.y, 11, font);
+    p.drawLine({ start: { x: R.x, y: R.y - 10 }, end: { x: rr, y: R.y - 10 }, color: line, thickness: 0.6 });
+    R.y -= 23;
+  }
+  R.y -= 6;
+  p.drawRectangle({ x: R.x - 2, y: R.y - 12, width: rw + 4, height: 30, color: blueSoft });
+  p.drawText('Grand Total', { x: R.x + 8, y: R.y - 3, size: 14, font: serif, color: ink });
+  right(p, confirmationMoney(data.totals.bill), rr - 8, R.y - 3, 16, serif);
+  R.y -= 32;
+  p.drawText('Amount Paid', { x: R.x + 8, y: R.y, size: 11, font, color: ink });
+  right(p, confirmationMoney(data.totals.netPaid), rr - 8, R.y, 11, font);
+  R.y -= 16;
+  const st = data.totals.status;
+  const [stColor, stSoft, stNote] = st === 'PAID' ? [green, greenSoft, ['Transaction completed', 'successfully.']]
+    : st === 'PARTIALLY PAID' ? [amber, amberSoft, ['Remaining balance', confirmationMoney(data.totals.remaining)]]
+    : [red, redSoft, ['No payment recorded', 'yet.']];
+  p.drawRectangle({ x: R.x - 2, y: R.y - 56, width: rw + 4, height: 56, color: stSoft, borderColor: stColor, borderWidth: 0.5, borderOpacity: 0.4 });
+  p.drawCircle({ x: R.x + 32, y: R.y - 28, size: 19, borderColor: stColor, borderWidth: 2.6 });
+  if (st === 'PAID') p.drawSvgPath('M -8 0 L -2 6 L 9 -6', { x: R.x + 32, y: R.y - 28, borderColor: stColor, borderWidth: 2.8 });
+  else p.drawText('!', { x: R.x + 29, y: R.y - 35, size: 18, font: bold, color: stColor });
+  p.drawText('Payment Status', { x: R.x + 72, y: R.y - 19, size: 9, font, color: ink });
+  p.drawText(st, { x: R.x + 72, y: R.y - 44, size: st === 'PAID' ? 22 : 15, font: bold, color: stColor });
+  const divX = R.x + 196;
+  p.drawLine({ start: { x: divX, y: R.y - 12 }, end: { x: divX, y: R.y - 44 }, color: stColor, thickness: 0.9 });
+  p.drawText(stNote[0]!, { x: divX + 15, y: R.y - 24, size: 9, font, color: ink });
+  p.drawText(stNote[1]!, { x: divX + 15, y: R.y - 38, size: 9, font, color: ink });
+  R.y -= 80;
+  p.drawText('PAYMENT HISTORY', { x: R.x - 2, y: R.y, size: 12, font: serif, color: ink });
+  R.y -= 10;
+  const cols = [R.x + 4, R.x + 112, R.x + 196];
+  const head = () => {
+    const pg = pageAt(R.page);
+    pg.drawRectangle({ x: R.x - 2, y: R.y - 16, width: rw + 4, height: 20, color: blueSoft, opacity: 0.8 });
+    ['DATE & TIME', 'METHOD', 'AMOUNT'].forEach((t, i) => pg.drawText(t, { x: cols[i]!, y: R.y - 9, size: 7.5, font, color: ink }));
+    right(pg, 'STATUS', rr - 16, R.y - 9, 7.5, font);
+    R.y -= 30;
   };
-  box(rightX, 'NET PAID', confirmationMoney(data.totals.netPaid), true);
-  box(rightX + boxW + 12, 'OUTSTANDING', confirmationMoney(data.totals.remaining), false);
-  R.y -= boxH + 8;
-  field(R, 'Payment status', data.totals.status, rightW);
-  field(R, 'Total bill', confirmationMoney(data.totals.bill), rightW);
-  field(R, 'Room charge', confirmationMoney(data.totals.room), rightW);
-  field(R, 'Extra Guest charge', `${confirmationMoney(data.totals.extraGuest)} (${data.guests.extra} x ${confirmationMoney(data.guests.unitPrice)})`, rightW);
-  field(R, 'Gross payments / Refunds', `${confirmationMoney(data.totals.grossPaid)} / ${confirmationMoney(data.totals.refunded)}`, rightW);
-  field(R, 'Credit', confirmationMoney(data.totals.credit), rightW);
-  section(R, 'PAYMENT HISTORY (WIB)', rightW);
-  const tableWidths = [118, 92, 70, rightW - 280];
-  const head = () => row(R, ['DATE', 'TYPE', 'METHOD', 'AMOUNT'], tableWidths, true);
   head();
-  if (!data.history.length) row(R, ['No payments recorded'], [rightW]);
-  for (const payment of data.history) {
-    row(R, [payment.date, payment.kind, payment.method,
-      `${payment.type === 'refund' ? '-' : ''}${confirmationMoney(payment.amount)}`], tableWidths, false, head);
+  if (!data.history.length) { pageAt(R.page).drawText('No payments recorded', { x: cols[0]!, y: R.y, size: 9, font, color: muted }); R.y -= 20; }
+  for (const h of data.history) {
+    const methodLines = wrap(h.method, 80, 9);
+    const rowH = 10 + methodLines.length * 11;
+    need(R, rowH, head);
+    const pg = pageAt(R.page);
+    pg.drawText(when(h.date), { x: cols[0]!, y: R.y, size: 9, font, color: ink });
+    methodLines.forEach((m, i) => pg.drawText(m, { x: cols[1]!, y: R.y - i * 11, size: 9, font, color: ink }));
+    pg.drawText(`${h.type === 'refund' ? '-' : ''}${confirmationMoney(h.amount)}`, { x: cols[2]!, y: R.y, size: 9, font, color: ink });
+    const isRefund = h.type === 'refund';
+    const tag = isRefund ? 'REFUND' : 'PAID';
+    const tw = 62;
+    pg.drawRectangle({ x: rr - tw, y: R.y - 5, width: tw, height: 16, color: isRefund ? redSoft : greenSoft, borderColor: isRefund ? redSoft : greenSoft, borderWidth: 0 });
+    pg.drawText(tag, { x: rr - tw / 2 - bold.widthOfTextAtSize(tag, 9) / 2, y: R.y - 0.5, size: 9, font: bold, color: isRefund ? red : green });
+    pg.drawLine({ start: { x: R.x - 2, y: R.y - rowH + 12 }, end: { x: rr + 2, y: R.y - rowH + 12 }, color: line, thickness: 0.5 });
+    R.y -= rowH;
   }
+  p = pageAt(0);
+
+  // ---------- Footer on every page ----------
   const lastPage = Math.max(L.page, R.page);
   const all = pages.slice(0, lastPage + 1);
-  const thanks = 'Thank you for your visit. This document summarizes the stored transaction and payment history.';
-  all.forEach((p, index) => {
-    p.drawLine({ start: { x: left, y: 34 }, end: { x: width - left, y: 34 }, color: goldSoft, thickness: 0.6 });
-    p.drawText(thanks, { x: left, y: 20, size: 8, font, color: muted });
-    const n = `Page ${index + 1} / ${all.length}`;
-    p.drawText(n, { x: width - left - font.widthOfTextAtSize(n, 8), y: 20, size: 8, font, color: ink });
+  const addr = clean([data.business.address, data.business.city].filter(Boolean).join(', '));
+  all.forEach((pg, index) => {
+    pg.drawLine({ start: { x: 28, y: 86 }, end: { x: width - 28, y: 86 }, color: blue, thickness: 1.3 });
+    pg.drawText('Thank you for staying with us', { x: 46, y: 46, size: 24, font: script, color: blue });
+    spaced(pg, 'WE LOOK FORWARD TO WELCOMING YOU AGAIN', 60, 24, 7, font, 2.4);
+    pg.drawLine({ start: { x: 505, y: 72 }, end: { x: 505, y: 22 }, color: blue, thickness: 1.3 });
+    pg.drawCircle({ x: 552, y: 61, size: 5, color: blue });
+    pg.drawCircle({ x: 552, y: 61, size: 1.8, color: rgb(1, 1, 1) });
+    pg.drawText(addr, { x: 572, y: 57, size: 9, font, color: ink, maxWidth: 240 });
+    pg.drawCircle({ x: 552, y: 37, size: 6, borderColor: blue, borderWidth: 1.2 });
+    pg.drawText(`WhatsApp ${clean(data.business.whatsapp)}`, { x: 572, y: 33, size: 9, font, color: ink });
+    if (all.length > 1) right(pg, `Page ${index + 1} / ${all.length}`, width - 30, 10, 7, font, muted);
   });
   return pdf.save();
 }
