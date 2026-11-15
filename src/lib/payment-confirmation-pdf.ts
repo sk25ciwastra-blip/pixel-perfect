@@ -156,6 +156,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
     p.drawLine({ start: { x: R.x, y: R.y - 10 }, end: { x: rr, y: R.y - 10 }, color: line, thickness: 0.6 });
     R.y -= 23;
   }
+  R.y -= 6;
   p.drawRectangle({ x: R.x - 2, y: R.y - 12, width: rw + 4, height: 30, color: blueSoft });
   p.drawText('Grand Total', { x: R.x + 8, y: R.y - 3, size: 14, font: serif, color: ink });
   right(p, confirmationMoney(data.totals.bill), rr - 8, R.y - 3, 16, serif);
