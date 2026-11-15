@@ -5,7 +5,8 @@ import {
   Info, Car, CalendarPlus, Stamp, MapPin, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
-import { LambangTeratai } from '@/components/kerangka';
+import { Button } from '@/components/ui/button';
+import '@/components/operasional-krem.css';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
 import { openWhatsApp } from '@/lib/whatsapp';
@@ -58,54 +59,21 @@ const labelJenisPembayaran: Record<string, string> = {
   payment: 'Pembayaran',
 };
 
-const kelasPopup = 'flex max-h-[calc(100dvh-2rem)] w-full max-w-[1100px] flex-col overflow-hidden rounded-2xl border border-gold/45 bg-background text-sm shadow-lembut';
+const kelasPopup = 'operasional-krem flex max-h-[calc(100dvh-2rem)] w-full max-w-[1000px] flex-col overflow-hidden text-sm';
 
 function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIcon; children: ReactNode }) {
-  return (
-    <section className="min-w-0">
-      <h3 className="mb-1.5 flex items-center gap-2 border-b border-gold/25 pb-1 text-[12px] font-bold uppercase tracking-[0.16em] text-gold-light">
-        <Ikon className="size-4 shrink-0 text-gold" strokeWidth={1.6} />
-        <span className="min-w-0 truncate">{judul}</span>
-      </h3>
-      <div className="space-y-1">{children}</div>
-    </section>
-  );
+  return <section className="ok-panel"><h3><Ikon /><span>{judul}</span></h3>{children}</section>;
 }
 
-function Baris({ label, ikon: Ikon, nada = '', rataAtas = false, children }: { label: string; ikon: LucideIcon; nada?: string; rataAtas?: boolean; children: ReactNode }) {
-  return (
-    <div className={`flex min-w-0 gap-1.5 text-[13px] leading-snug ${rataAtas ? 'items-start' : 'items-baseline'}`}>
-      <Ikon className={`size-3.5 shrink-0 text-gold ${rataAtas ? 'mt-[2px]' : 'self-center'}`} strokeWidth={1.6} />
-      <span className="w-[5.6rem] shrink-0 text-muted-foreground">{label}</span>
-      <span className="shrink-0 text-muted-foreground">:</span>
-      <span className={`min-w-0 flex-1 break-words font-medium ${nada || 'text-foreground'}`}>{children}</span>
-    </div>
-  );
+function Baris({ label, children }: { label: string; ikon: LucideIcon; nada?: string; rataAtas?: boolean; children: ReactNode }) {
+  return <div className="ok-baris"><span>{label}</span><span>:</span><span>{children}</span></div>;
 }
 
-function Kepala({ nomor, statusLabel, statusDot }: { nomor: string; statusLabel: string; statusDot: string }) {
-  return (
-    <header className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-2 border-b border-gold/30 bg-navy-deep px-5 py-3 sm:px-7">
-      <div className="flex shrink-0 items-center gap-3">
-        <LambangTeratai className="h-9 w-12 shrink-0 text-gold" />
-        <div className="leading-none">
-          <p className="font-serif text-[17px] leading-[1.05] text-foreground">
-            Baturaden <span className="text-gold-light">25</span><br />Homestay
-          </p>
-          <p className="mt-1 text-[0.55rem] font-semibold tracking-[0.32em] text-gold">MANAJEMEN</p>
-        </div>
-      </div>
-      <span className="hidden h-12 w-px shrink-0 bg-gold/35 sm:block" aria-hidden="true" />
-      <div className="order-last min-w-0 basis-full sm:order-none sm:basis-auto sm:flex-1">
-        <h2 className="font-serif text-2xl leading-tight sm:text-[28px]">Detail Transaksi</h2>
-        <p className="mt-0.5 font-mono text-[12px] tracking-[0.22em] text-gold">REG: {nomor}</p>
-      </div>
-      <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-[12px] font-semibold uppercase tracking-wide text-gold-light sm:ml-0">
-        <span className={`size-2 rounded-full ${statusDot}`} />
-        {statusLabel}
-      </span>
-    </header>
-  );
+function Kepala({ nomor, statusLabel, statusDot, dibuat }: { nomor: string; statusLabel: string; statusDot: string; dibuat: string }) {
+  return <header className="ok-kepala">
+    <div className="min-w-0"><p>TRANSAKSI / ARSIP OPERASIONAL</p><div className="flex flex-wrap items-center gap-3"><h2>Detail Transaksi</h2><span className="ok-nomor font-mono break-all">{nomor}</span></div></div>
+    <div className="ok-meta"><span className="inline-flex items-center gap-2 rounded-md border border-primary/50 px-3 py-1 text-xs font-semibold text-primary"><span className={`size-2 rounded-full ${statusDot}`} />{statusLabel}</span><p>Dibuat pada: {dibuat}</p></div>
+  </header>;
 }
 
 export function DetailTransaksi({
@@ -204,190 +172,68 @@ export function DetailTransaksi({
 
   const bolehHubungi = bolehHubungiTamu(posisiKode, guest?.phone);
 
-  const ringkasan = [
-    { label: 'Total Harga', nilai: rupiah(total), nada: 'text-gold-light' },
-    { label: 'Uang Muka', nilai: rupiah(uangMuka), nada: 'text-siap-foreground' },
-    { label: 'Sisa Pembayaran', nilai: rupiah(remaining), nada: 'text-bahaya-foreground' },
-  ];
-
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4">
       <div role="dialog" aria-modal="true" aria-label="Detail transaksi" className={kelasPopup}>
-        <Kepala
-          nomor={transaction.transaction_number}
+        <Kepala nomor={transaction.transaction_number} dibuat={waktuWib(transaction.created_at)}
           statusLabel={transaction.status === 'booking' ? 'Menunggu Check-in' : labelStatusTransaksi[transaction.status] ?? transaction.status}
-          statusDot={warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}
-        />
-
-        <div className="min-h-0 flex-1 overflow-y-auto bg-[#F7F6F3] p-5 sm:px-7 text-foreground [--bahaya-foreground:oklch(0.5_0.14_25)] [--foreground:oklch(0.22_0.02_75)] [--gold-light:oklch(0.52_0.1_78)] [--gold:oklch(0.6_0.1_78)] [--muted-foreground:oklch(0.4_0.02_75)] [--perlu-foreground:oklch(0.55_0.12_75)] [--siap-foreground:oklch(0.45_0.1_152)] [--terisi-foreground:oklch(0.45_0.08_240)]">
-          <div className="grid items-start gap-y-4 lg:grid-cols-3 lg:divide-x lg:divide-gold/20 lg:[&>*]:px-5 lg:[&>*:first-child]:pl-0 lg:[&>*:last-child]:pr-0">
-            <div className="min-w-0">
-              <Seksi judul="Informasi Tamu" ikon={UserRound}>
+          statusDot={warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'} />
+        <div className="ok-isi">
+          <div className="ok-grid">
+            <div className="ok-kolom">
+              <Seksi judul="Identitas Tamu" ikon={UserRound}>
                 <Baris label="Nama" ikon={UserRound}>{guest?.full_name ?? 'Tamu'}</Baris>
-                <Baris label="No. HP" ikon={Phone}>
-                  <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="tabular-nums">{guest?.phone ?? '—'}</span>
-                    <button
-                      type="button"
-                      disabled={!bolehHubungi}
-                      aria-label="Hubungi tamu via WhatsApp"
-                      title={guest?.phone ? 'Hubungi tamu via WhatsApp' : 'Nomor WhatsApp belum lengkap'}
-                      onClick={() => guest?.phone && openWhatsApp(guest.phone)}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-siap-foreground/35 bg-siap/25 px-2.5 py-0.5 text-[11px] font-semibold text-siap-foreground transition-colors hover:border-siap-foreground/70 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <IkonWhatsApp className="size-3" />
-                      Hubungi
-                    </button>
-                  </span>
-                </Baris>
-                <Baris label="Alamat" ikon={MapPin} rataAtas>{guest?.address || '—'}</Baris>
-                <Baris label="Catatan" ikon={NotebookPen}>{guest?.notes || '—'}</Baris>
+                <Baris label="No. HP" ikon={Phone}><span className="flex flex-wrap items-center gap-2"><span>{guest?.phone ?? '—'}</span><Button type="button" variant="outline" size="sm" disabled={!bolehHubungi} aria-label="Hubungi tamu via WhatsApp" title={guest?.phone ? 'Hubungi tamu via WhatsApp' : 'Nomor WhatsApp belum lengkap'} onClick={() => guest?.phone && openWhatsApp(guest.phone)} className="h-6 px-2 text-[10px] text-siap-foreground"><IkonWhatsApp />Hubungi</Button></span></Baris>
+                <Baris label="Alamat" ikon={MapPin}>{guest?.address || '—'}</Baris>
               </Seksi>
-
-            </div>
-            <div className="min-w-0">
-              <Seksi judul="Detail Kamar & Paket" ikon={BedDouble}>
-                <Baris label="Kamar" ikon={BedDouble}>{room?.room_number ?? '—'}</Baris>
-                <Baris label="Tipe Kamar" ikon={DoorOpen}>{roomType?.name ?? '—'}</Baris>
-                <Baris label="Paket" ikon={Package}>{kodePaket(packageItem?.name)}</Baris>
-                <Baris label="Jenis Hari" ikon={CalendarDays}>{transaction.day_mode?.toUpperCase() ?? '—'}</Baris>
-                <Baris label="Jumlah Tamu" ikon={Users}>{transaction.guest_count ?? 'Belum tersedia'}</Baris>
-              </Seksi>
-
-            </div>
-            <div className="min-w-0">
-              <Seksi judul="Jadwal & Status" ikon={Clock3}>
-                <Baris label="Check-in" ikon={Car}>{waktuWib(transaction.started_at)}</Baris>
-                <Baris label="Check-out" ikon={CalendarDays}>{waktuWib(transaction.checked_out_at)}</Baris>
-                <Baris label="Durasi" ikon={Timer}>{durasiWib(transaction.scheduled_check_in, transaction.scheduled_check_out)}</Baris>
-                <Baris label="Status" ikon={Stamp}>
-                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-gold/30 bg-gold/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-gold-light">
-                    <span className={`size-1.5 rounded-full ${warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'}`} />
-                    {labelStatusTransaksi[transaction.status] ?? transaction.status}
-                  </span>
-                </Baris>
-                <Baris label="Dibuat pada" ikon={CalendarPlus}>{waktuWib(transaction.created_at)}</Baris>
-                <Baris label="Dibuat oleh" ikon={UserRound}>{creator?.name ?? '—'}</Baris>
-              </Seksi>
-            </div>
-          </div>
-          <div className="my-4 h-px bg-gold/25" aria-hidden="true" />
-          <div className="grid items-start gap-y-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:divide-x lg:divide-gold/20">
-            <div className="min-w-0 lg:pr-6">
-              <Seksi judul="Rincian Harga" ikon={ReceiptText}>
-                <div className="overflow-hidden rounded-xl border border-gold/25 bg-white/70">
-                <table className="w-full text-[12.5px] [&_td:first-child]:pl-3 [&_th:first-child]:pl-3 [&_td:last-child]:pr-3 [&_th:last-child]:pr-3">
-                  <thead>
-                    <tr className="bg-gold/10 text-[11px] font-semibold uppercase tracking-wide text-gold-light">
-                      <th className="py-1 text-left font-medium">Deskripsi</th>
-                      <th className="py-1 text-center font-medium">Qty</th>
-                      <th className="py-1 text-right font-medium">Harga</th>
-                      <th className="py-1 text-right font-medium">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-gold/15">
-                      <td className="py-1.5 pr-2">Paket {kodePaket(packageItem?.name)}</td>
-                      <td className="py-1.5 text-center tabular-nums">1</td>
-                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0))}</td>
-                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0))}</td>
-                    </tr>
-                    {Number(transaction.extra_guest_charge) > 0 && <tr className="border-t border-gold/15">
-                      <td className="py-1.5 pr-2">Extra Guest</td>
-                      <td className="py-1.5 text-center tabular-nums">{transaction.extra_guest_count}</td>
-                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(transaction.extra_guest_unit_price)}</td>
-                      <td className="py-1.5 text-right whitespace-nowrap tabular-nums">{rupiah(transaction.extra_guest_charge)}</td>
-                    </tr>}
-                  </tbody>
-                </table>
-                <div className="flex items-center justify-between gap-3 border-t border-gold/30 bg-gold/15 px-3 py-2">
-                  <span className="text-[12px] font-semibold uppercase tracking-wide text-gold-light">Total Harga</span>
-                  <strong className="whitespace-nowrap text-[17px] font-bold tabular-nums text-foreground">{rupiah(total)}</strong>
-                </div>
-                </div>
-              </Seksi>
-
-            </div>
-            <div className="min-w-0 lg:pl-6">
-              <Seksi judul="Pembayaran" ikon={CircleDollarSign}>
-                <div className="divide-y divide-gold/25 rounded-xl border border-gold/30 bg-white/60 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-                  {ringkasan.map(item => (
-                    <div key={item.label} className="flex min-w-0 items-baseline justify-between gap-2 px-3 py-3 sm:block sm:px-2 sm:text-center">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</p>
-                      <p className={`text-[17px] font-bold tabular-nums sm:mt-1.5 sm:whitespace-nowrap ${item.nada}`}>{item.nilai}</p>
-                    </div>
-                  ))}
-                </div>
-              </Seksi>
-
-            </div>
-          </div>
-          <div className="my-4 h-px bg-gold/25" aria-hidden="true" />
-          <div className="grid items-start gap-y-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)] lg:divide-x lg:divide-gold/20">
-            <div className="min-w-0 lg:pr-6">
-              <Seksi judul="Riwayat Pembayaran" ikon={History}>
-                {transactionPayments.length === 0 ? (
-                  <p className="text-[12.5px] text-muted-foreground">Belum ada pembayaran tercatat.</p>
-                ) : (
-                  <div className="overflow-hidden rounded-xl border border-gold/25 bg-white/70 px-3">
-                    <table className="w-full text-[12.5px]">
-                      <thead>
-                        <tr className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                          <th className="py-1 pr-1 text-left font-medium">#</th>
-                          <th className="py-1 pr-1 text-left font-medium">Tanggal</th>
-                          <th className="py-1 pr-2 text-right font-medium">Jumlah</th>
-                          <th className="py-1 pr-1 text-left font-medium">Metode</th>
-                          <th className="py-1 pr-1 text-left font-medium">Oleh</th>
-                          <th className="py-1 pr-1 text-left font-medium">Jenis</th>
-                          <th className="py-1 text-left font-medium">Catatan</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {transactionPayments.map((payment, index) => {
-                          const recorder = employees.rows.find(item => item.user_id === payment.recorded_by);
-                          return (
-                            <tr key={payment.id} className="border-t border-gold/15 align-top">
-                              <td className="py-1.5 pr-1 tabular-nums text-muted-foreground">{index + 1}</td>
-                              <td className="py-1.5 pr-1 whitespace-nowrap">
-                                <span className="block">{tanggalWib(payment.created_at)}</span>
-                                <span className="block text-muted-foreground">{jamWib(payment.created_at)}</span>
-                              </td>
-                              <td className="py-1.5 pr-2 text-right whitespace-nowrap font-semibold tabular-nums text-siap-foreground">{rupiah(Number(payment.amount))}</td>
-                              <td className="py-1.5 pr-1 whitespace-nowrap">{payment.method}</td>
-                              <td className="py-1.5 pr-1 break-words">{recorder?.name ?? '—'}</td>
-                              <td className="py-1.5 whitespace-nowrap">{labelJenisPembayaran[payment.kind] ?? payment.kind}</td>
-                              <td className="py-1.5 text-muted-foreground"><ReceiptPrintButton paymentId={payment.id} /></td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+              <Seksi judul="Rincian Menginap" ikon={BedDouble}>
+                <div className="ok-rincian">
+                  <div>
+                    <Baris label="No. Kamar" ikon={BedDouble}>{room?.room_number ?? '—'}</Baris>
+                    <Baris label="Tipe Kamar" ikon={DoorOpen}>{roomType?.name ?? '—'}</Baris>
+                    <Baris label="Jadwal Check-in" ikon={CalendarDays}>{waktuWib(transaction.scheduled_check_in)}</Baris>
+                    <Baris label="Batas Sewa" ikon={CalendarDays}>{waktuWib(transaction.scheduled_check_out)}</Baris>
+                    <Baris label="Durasi" ikon={Timer}>{durasiWib(transaction.scheduled_check_in, transaction.scheduled_check_out)}</Baris>
                   </div>
-                )}
+                  <div>
+                    <Baris label="Kode Paket" ikon={Package}>{kodePaket(packageItem?.name)}</Baris>
+                    <Baris label="Dibuat oleh" ikon={UserRound}>{creator?.name ?? '—'}</Baris>
+                    <Baris label="Check-in Aktual" ikon={Car}>{waktuWib(transaction.started_at)}</Baris>
+                    <Baris label="Check-out Aktual" ikon={CalendarDays}>{waktuWib(transaction.checked_out_at)}</Baris>
+                    <Baris label="Jumlah Tamu" ikon={Users}>{transaction.guest_count ?? 'Belum tersedia'}</Baris>
+                    <Baris label="Jenis Hari" ikon={CalendarDays}>{transaction.day_mode?.toUpperCase() ?? '—'}</Baris>
+                  </div>
+                </div>
+              </Seksi>
+              <Seksi judul="Sesi Kas & Perubahan" ikon={Info}>
+                <Baris label="Sesi Kas" ikon={ReceiptText}>{sesiKas ? `${sesiKas.status === 'OPEN' ? 'Terbuka' : 'Ditutup'} · ${tanggalWib(`${sesiKas.operational_date}T00:00:00+07:00`)}` : '—'}</Baris>
+                <div className="mt-3 flex flex-wrap items-center gap-2"><ReceiptHistoryButton transactionNumber={transaction.transaction_number} /><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} /></div>
               </Seksi>
             </div>
-            <div className="flex min-w-0 flex-col gap-4 lg:self-stretch lg:pl-6">
-              <Seksi judul="Sesi Kas & Perubahan" ikon={Info}>
-                <Baris label="Sesi Kas" ikon={ReceiptText}>
-                  {sesiKas
-                    ? `${sesiKas.status === 'OPEN' ? 'Terbuka' : 'Ditutup'} · ${tanggalWib(`${sesiKas.operational_date}T00:00:00+07:00`)}`
-                    : '—'}
-                </Baris>
-                <Baris label="Terakhir diubah" ikon={Clock3}>{waktuWib(transaction.updated_at)}</Baris>
+            <div className="ok-kolom">
+              <Seksi judul="Pembayaran" ikon={CircleDollarSign}>
+                <div className="ok-payment"><span>Total Tagihan</span><span>{rupiah(total)}</span></div>
+                <div className="ok-payment"><span>Uang Muka</span><span>{rupiah(uangMuka)}</span></div>
+                <div className="ok-payment font-bold"><span>Total Dibayar</span><span>{rupiah(totalPaid)}</span></div>
+                <div className="ok-total mt-2"><span>Sisa Tagihan</span><strong>{rupiah(remaining)}</strong></div>
               </Seksi>
-
-              <ReceiptHistoryButton transactionNumber={transaction.transaction_number} />
-              <AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} />
-              <button
-                type="button"
-                onClick={onClose}
-                className="mt-auto inline-flex w-full items-center justify-center rounded-full border border-gold/50 bg-navy-deep px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-[#F2D184] transition-colors hover:bg-navy"
-              >
-                Tutup
-              </button>
+              <Seksi judul="Riwayat Pembayaran" ikon={History}>
+                {transactionPayments.length === 0 ? <p className="text-xs text-muted-foreground">Belum ada pembayaran tercatat.</p> : <div className="ok-history">{transactionPayments.map(payment => {
+                  const recorder = employees.rows.find(item => item.user_id === payment.recorded_by);
+                  return <div key={payment.id} className="ok-history-item"><div className="ok-history-top"><span>{labelJenisPembayaran[payment.kind] ?? payment.kind}</span><span>{rupiah(Number(payment.amount))}</span></div><div className="ok-history-meta"><span>{payment.method} · {recorder?.name ?? '—'}</span><span>{tanggalWib(payment.created_at)} {jamWib(payment.created_at)}</span></div><ReceiptPrintButton paymentId={payment.id} /></div>;
+                })}</div>}
+              </Seksi>
+              <Seksi judul="Catatan" ikon={NotebookPen}><p className="break-words text-xs leading-relaxed">{guest?.notes || 'Tidak ada catatan.'}</p></Seksi>
             </div>
           </div>
+          <div className="ok-table-wrap"><Seksi judul="Rincian Transaksi" ikon={ReceiptText}>
+            <table><thead><tr><th>Deskripsi</th><th>Jumlah</th><th>Harga</th><th>Subtotal</th></tr></thead><tbody>
+              <tr><td>Paket {kodePaket(packageItem?.name)}</td><td>1</td><td>{rupiah(transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0))}</td><td>{rupiah(transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0))}</td></tr>
+              {Number(transaction.extra_guest_charge) > 0 && <tr><td>Tamu Tambahan</td><td>{transaction.extra_guest_count}</td><td>{rupiah(transaction.extra_guest_unit_price)}</td><td>{rupiah(transaction.extra_guest_charge)}</td></tr>}
+            </tbody></table><div className="ok-total mt-2"><span>Total Transaksi</span><strong>{rupiah(total)}</strong></div>
+          </Seksi></div>
         </div>
+        <footer className="ok-pied"><p><strong>Terakhir diubah:</strong> {waktuWib(transaction.updated_at)}</p><Button type="button" className="ok-noir" onClick={onClose}>Tutup</Button></footer>
       </div>
     </div>
   );
