@@ -43,8 +43,8 @@ function ReceiptAction({ paymentIds, transactionNumber, label }: {
   </span>;
 }
 
-export function ReceiptTransactionButton({ transactionNumber }: { transactionNumber: string }) {
-  return <ReceiptAction transactionNumber={transactionNumber} label="Cetak Struk" />;
+export function ReceiptTransactionButton({ transactionNumber, label = 'Cetak Struk' }: { transactionNumber: string; label?: string }) {
+  return <ReceiptAction transactionNumber={transactionNumber} label={label} />;
 }
 
 export function ReceiptPrintButton({ paymentId }: { paymentId: string }) {
