@@ -1,0 +1,43 @@
+/* Tampilan daftar Paket & Harga: kelompok per tipe kamar, tabel warm white.
+   Hanya presentasi — data, harga, dan fungsi simpan tidak berubah. */
+
+.ph-kelompok{margin-bottom:28px}
+.ph-judul{display:flex;align-items:center;gap:14px;margin:0 2px 12px}
+.ph-judul h2{margin:0;font-family:var(--font-serif,serif);font-size:22px;font-weight:600;letter-spacing:.01em;color:var(--gold);text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.ph-judul-garis{flex:1;height:1px;background:linear-gradient(90deg,color-mix(in oklab,var(--gold) 70%,transparent),transparent)}
+.ph-jumlah{font-size:12px;font-weight:600;color:color-mix(in oklab,var(--gold) 80%,transparent)}
+
+.ph-tabel{overflow-x:auto;border-radius:16px;border:1px solid color-mix(in oklab,var(--gold) 45%,transparent);
+ background:linear-gradient(160deg,#fdfaf4 0%,#f8f4ec 55%,#efe7d8 100%);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -2px 0 color-mix(in oklab,var(--gold) 18%,transparent),0 10px 24px -14px rgba(0,0,0,.6),0 2px 6px -2px rgba(0,0,0,.35)}
+.ph-tabel table{width:100%;min-width:640px;border-collapse:collapse}
+.ph-tabel th{padding:11px 16px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b5f4d;
+ background:rgba(255,255,255,.45);border-bottom:1px solid color-mix(in oklab,var(--gold) 38%,transparent)}
+.ph-tabel td{padding:12px 16px;font-size:14px;color:#1d1a16;border-bottom:1px solid color-mix(in oklab,var(--gold) 18%,transparent);vertical-align:middle}
+.ph-tabel tbody tr:last-child td{border-bottom:none}
+.ph-tabel tbody tr{transition:background .15s ease}
+.ph-tabel tbody tr:hover{background:rgba(255,255,255,.5)}
+
+.ph-nama{font-weight:700;font-size:14px;color:#1d1a16}
+.ph-slot{font-size:13px;font-weight:600;color:#5b5348;white-space:nowrap}
+.ph-harga{font-weight:700;font-size:14px;color:var(--gold-krem);white-space:nowrap}
+.ph-harga-kecil{display:block;font-size:11px;font-weight:600;color:#8a7d68}
+
+.ph-pil{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.ph-pil::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+.ph-pil-aktif{color:#2e7d4f;background:color-mix(in oklab,#2e7d4f 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in oklab,#2e7d4f 35%,transparent)}
+.ph-pil-nonaktif{color:#8a7d68;background:color-mix(in oklab,#8a7d68 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in oklab,#8a7d68 35%,transparent)}
+
+.ph-ubah{display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 16px;border-radius:999px;border:none;cursor:pointer;
+ font-size:12px;font-weight:700;color:var(--gold);
+ background:radial-gradient(circle at 35% 30%,#3a332a,#0d0c0b 75%);
+ box-shadow:inset 0 1px 1px rgba(255,255,255,.16),0 0 0 1px color-mix(in oklab,var(--gold) 65%,transparent),0 4px 10px -5px rgba(0,0,0,.7);
+ transition:transform .18s ease,box-shadow .18s ease}
+.ph-ubah:hover,.ph-ubah:focus-visible{transform:translateY(-1px);outline:none;box-shadow:inset 0 1px 1px rgba(255,255,255,.16),0 0 0 1px var(--gold),0 0 14px -4px color-mix(in oklab,var(--gold) 60%,transparent)}
+
+.ph-kosong{padding:22px 16px;font-size:13px;font-weight:600;color:#5b5348;text-align:center}
+
+@media (max-width:640px){
+ .ph-judul h2{font-size:19px}
+ .ph-tabel th,.ph-tabel td{padding:10px 12px}
+}

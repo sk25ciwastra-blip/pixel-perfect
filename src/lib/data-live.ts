@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 export type Room = Database['public']['Tables']['rooms']['Row'];
 export type Package = Database['public']['Tables']['packages']['Row'];
+export type PackageRoomTypePrice = Database['public']['Tables']['package_room_type_prices']['Row'];
 export type Guest = Database['public']['Tables']['guests']['Row'];
 export type RoomType = Database['public']['Tables']['room_types']['Row'];
 export type Employee = Database['public']['Tables']['employees']['Row'];
