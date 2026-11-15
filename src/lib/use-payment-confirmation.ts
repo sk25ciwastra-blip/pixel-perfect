@@ -39,6 +39,22 @@ export function usePaymentConfirmation() {
       if (!active.current) throw new Error('Sesi berubah; unduhan dibatalkan.');
       return () => downloadConfirmationBytes(bytes, data.transactionNumber);
     },
+    downloadJpg: async (data) => {
+      const { CONFIRMATION_LOGO, CONFIRMATION_FONTS, generatePaymentConfirmationPdf } = await import('./payment-confirmation-pdf');
+      const { confirmationPdfToJpg, downloadConfirmationJpg } = await import('./payment-confirmation-jpg');
+      const response = await fetch(CONFIRMATION_LOGO, { credentials: 'same-origin' });
+      if (!response.ok) throw new Error('Logo resmi PDF tidak tersedia.');
+      const fontEntries = await Promise.all(Object.entries(CONFIRMATION_FONTS).map(async ([key, url]) => {
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Font PDF tidak tersedia.');
+        return [key, new Uint8Array(await res.arrayBuffer())] as const;
+      }));
+      const fonts = Object.fromEntries(fontEntries) as unknown as Parameters<typeof generatePaymentConfirmationPdf>[2];
+      const bytes = await generatePaymentConfirmationPdf(data, new Uint8Array(await response.arrayBuffer()), fonts);
+      const jpg = await confirmationPdfToJpg(bytes);
+      if (!active.current) throw new Error('Sesi berubah; unduhan dibatalkan.');
+      return () => downloadConfirmationJpg(jpg, data.transactionNumber);
+    },
     reserveWhatsApp: reserveConfirmationWhatsAppWindow,
     thermalEnabled: () => featureFlags.receipt58mm,
     print: async (number) => {

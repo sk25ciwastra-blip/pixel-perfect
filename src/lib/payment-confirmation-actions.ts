@@ -17,6 +17,7 @@ export type ConfirmationDependencies = {
   refreshCheckIn: (id: string, number: string) => Promise<RefreshedCheckIn>;
   load: (id: string) => Promise<ConfirmationDocument>;
   download: (data: ConfirmationDocument) => Promise<() => void>;
+  downloadJpg: (data: ConfirmationDocument) => Promise<() => void>;
   reserveWhatsApp: () => ConfirmationWhatsAppWindow;
   print: (number: string) => Promise<void>;
   thermalEnabled: () => boolean;
@@ -74,6 +75,23 @@ export function createPaymentConfirmationActions(deps: ConfirmationDependencies)
       return data;
     } finally { busy = false; }
   }
+  async function downloadJpg(transactionId: string) {
+    if (busy) throw new Error('Dokumen sedang disiapkan.');
+    const current = generation;
+    busy = true;
+    try {
+      const data = await deps.load(transactionId);
+      if (data.transactionId !== transactionId) throw new Error('Dokumen transaksi tidak cocok.');
+      if (generation !== current) throw new Error('Permintaan dokumen sudah ditutup.');
+      const save = await deps.downloadJpg(data);
+      if (generation !== current) throw new Error('Permintaan dokumen sudah ditutup.');
+      const latest = await deps.load(transactionId); // Recheck access/ledger after rendering, before saving.
+      if (generation !== current || latest.transactionId !== transactionId || latest.ledgerRevision !== data.ledgerRevision ||
+        latest.guest.phone !== data.guest.phone) throw new Error('Data atau sesi berubah; unduh JPG kembali.');
+      save();
+      return data;
+    } finally { busy = false; }
+  }
   async function openWhatsApp(transactionId: string) {
     if (downloaded?.id !== transactionId) throw new Error('Unduh PDF dahulu, lalu lampirkan manual di WhatsApp.');
     if (busy) throw new Error('Dokumen sedang disiapkan.');
@@ -103,5 +121,5 @@ export function createPaymentConfirmationActions(deps: ConfirmationDependencies)
     if (!deps.thermalEnabled()) throw new Error('Cetak struk 58mm belum diaktifkan.');
     return deps.print(transactionNumber);
   }
-  return { captureCheckInSuccess, download, openWhatsApp, print, clear };
+  return { captureCheckInSuccess, download, downloadJpg, openWhatsApp, print, clear };
 }
