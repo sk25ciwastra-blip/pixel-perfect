@@ -18,6 +18,7 @@ function setup() {
     changed: () => {}, thermalEnabled: () => false, print: async () => {},
     refreshCheckIn: async () => { throw new Error('not used'); },
     load: async () => document(), download: async () => () => { events.push('saved'); },
+    downloadJpg: async () => () => { events.push('saved-jpg'); },
     reserveWhatsApp: () => {
       events.push('reserved');
       return { close: () => { closed = true; events.push('closed'); }, navigate: phone => {
