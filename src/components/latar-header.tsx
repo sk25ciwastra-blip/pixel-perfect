@@ -20,6 +20,7 @@ const temaHeader: Record<string, { tema: string; gambar: string; posisi: string 
   '/laporan': { tema: 'priangan', gambar: laporan, posisi: 'object-[60%_55%] lg:object-[50%_55%]' },
   '/karyawan': { tema: 'ukiran', gambar: tim, posisi: 'object-[65%_50%] lg:object-[50%_50%]' },
   '/pengaturan': { tema: 'pendopo', gambar: pengaturan, posisi: 'object-[60%_45%] lg:object-[50%_45%]' },
+  '/paket': { tema: 'pendopo', gambar: pengaturan, posisi: 'object-[60%_45%] lg:object-[50%_45%]' },
 };
 
 export function LatarHeader({ path }: { path: string; dashboard?: boolean }) {
