@@ -84,7 +84,7 @@ test('incomplete/denied/mismatched data fails closed, phone redaction, determini
   expect(() => buildPaymentConfirmation(input)).toThrow('tidak cocok');
 });
 
-const logo = new Uint8Array(readFileSync('public/assets/Logo_Resmi_BTRD25_Gelap.png'));
+const logo = new Uint8Array(readFileSync('public/assets/Logo_BTRD25_Wordmark_Gelap.png'));
 async function pdfText(pdf: PDFDocument) {
   let result = '';
   for (const page of pdf.getPages()) {
