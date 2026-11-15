@@ -1675,6 +1675,7 @@ export type Database = {
           base_price: number
           created_at: string
           id: string
+          lantai: number | null
           notes: string
           room_number: string
           room_type_id: string
@@ -1686,6 +1687,7 @@ export type Database = {
           base_price?: number
           created_at?: string
           id?: string
+          lantai?: number | null
           notes?: string
           room_number: string
           room_type_id: string
@@ -1697,6 +1699,7 @@ export type Database = {
           base_price?: number
           created_at?: string
           id?: string
+          lantai?: number | null
           notes?: string
           room_number?: string
           room_type_id?: string

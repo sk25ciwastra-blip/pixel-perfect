@@ -6,8 +6,7 @@ import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { useTable, type Room, type RoomType } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
-import { supabase } from '@/integrations/supabase/client';
-import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+ import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
 import '@/components/paket-harga.css';
 export const Route=createFileRoute('/tipe-kamar')({head:()=>meta('Tipe Kamar','Pengelolaan tipe dan daftar kamar Baturaden 25 Homestay.'),component:Halaman});
@@ -21,12 +20,8 @@ function waktuWib(t?:string|null):string{
  return new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(d).replace(/\./g,':')+' WIB';
 }
 
-/** Lantai asli hanya ada bila kolomnya tersedia; null bila belum dicatat. */
-function lantaiAsli(r:Room):number|null{
- const v=(r as {lantai?:unknown}).lantai;
- if(v===null||v===undefined||v==='')return null;
- const n=Number(v);return Number.isFinite(n)?n:null;
-}
+/** Lantai asli kamar; null bila belum dicatat. */
+function lantaiAsli(r:Room):number|null{return r.lantai??null}
 
 /** Lantai hanya ditampilkan bila data aslinya tersedia; — bila belum. */
 function teksLantai(r:Room):string{const v=lantaiAsli(r);return v===null?'—':String(v)}
@@ -41,8 +36,6 @@ function Halaman(){
  const [nomor,setNomor]=useState('');const [lantai,setLantai]=useState('');const [pesan,setPesan]=useState('');const [sibuk,setSibuk]=useState<string|null>(null);const [info,setInfo]=useState('');
  const daftarTipe=useMemo(()=>TIPE_RESMI.map(n=>(tipe.rows as RoomType[]).find(t=>t.name.trim().toLowerCase()===n)).filter((t):t is RoomType=>!!t),[tipe.rows]);
  const terpilih=daftarTipe.find(t=>t.id===pilih)??null;
- // Lantai dapat disimpan hanya bila kolomnya sudah ada di basis data.
- const adaLantai=kamar.rows.length>0&&'lantai'in(kamar.rows[0] as object);
  const kamarTipe=(id:string)=>(kamar.rows as Room[]).filter(r=>r.room_type_id===id).sort(nomorUrut);
  const dipakai=(r:Room)=>r.status==='occupied'||(trx.rows as {room_id:string;status:string}[]).some(t=>t.room_id===r.id&&(t.status==='check_in'||t.status==='booking'));
  function ubah(r?:Room){setItem(r??null);setNomor(r?.room_number??'');const l=r?lantaiAsli(r):null;setLantai(l===null?'':String(l));setPesan('');setOpen(true)}
@@ -51,9 +44,7 @@ function Halaman(){
   if((kamar.rows as Room[]).some(r=>r.room_number.trim().toLowerCase()===n.toLowerCase()&&r.id!==item?.id)){setPesan('Nomor kamar sudah digunakan.');return}
   let lt:number|null=null;
   if(lantai.trim()!==''){const v=Number(lantai.trim());if(!Number.isInteger(v)||v<1){setPesan('Lantai harus bilangan bulat, minimal 1.');return}lt=v}
-  const ubahData={room_number:n,...(adaLantai?{lantai:lt}:{})} as unknown as TablesUpdate<'rooms'>;
-  const tambahData={room_number:n,room_type_id:terpilih.id,...(adaLantai?{lantai:lt}:{})} as unknown as TablesInsert<'rooms'>;
-  const res=item?await supabase.from('rooms').update(ubahData).eq('id',item.id):await supabase.from('rooms').insert(tambahData);
+  const res=item?await supabase.from('rooms').update({room_number:n,lantai:lt}).eq('id',item.id):await supabase.from('rooms').insert({room_number:n,room_type_id:terpilih.id,lantai:lt});
   if(res.error)setPesan(res.error.message);else{setOpen(false);await kamar.refresh()}}
  async function alih(r:Room){setInfo('');
   if(r.active&&dipakai(r)){setInfo(`Kamar ${r.room_number} sedang digunakan atau memiliki booking aktif, sehingga tidak dapat dinonaktifkan.`);return}
@@ -87,9 +78,7 @@ function Halaman(){
     <p className="mt-1 text-xs text-muted-foreground">Terkunci mengikuti tipe yang Anda pilih dan tidak dapat diubah di sini.</p>
    </div>
    <label className="block text-sm">No. Kamar<input required value={nomor} onChange={e=>setNomor(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>
-   <label className="block text-sm">Lantai<input type="number" min={1} step={1} value={lantai} disabled={!adaLantai} onChange={e=>setLantai(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3 disabled:opacity-60"/>
-    {!adaLantai&&<p className="mt-1 text-xs text-muted-foreground">Belum dapat disimpan karena penyimpanan lantai belum diaktifkan.</p>}
-   </label>
+   <label className="block text-sm">Lantai<input type="number" min={1} step={1} value={lantai} onChange={e=>setLantai(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>
    {pesan&&<p role="alert" className="text-sm text-destructive">{pesan}</p>}
    <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Batal</Button><Button>Simpan</Button></div></form></div>}
  </SubPengaturan></Kerangka>}
