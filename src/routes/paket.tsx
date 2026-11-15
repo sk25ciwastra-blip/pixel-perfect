@@ -55,9 +55,19 @@ function waktuWib(t?:string|null):string{
 
 type BarisKelompok={harga:PackageRoomTypePrice;paket:Package};
 
+/** Jam berlaku dari kolom waktu tersimpan; paket berdurasi tidak memiliki slot tetap. */
+function jamBerlaku(p:Package):string{
+ if(p.time_mode==='fixed_window' && p.slot_start_time && p.checkout_time){
+  const mulai=jam(p.slot_start_time);const selesai=jam(p.checkout_time);
+  return `${mulai}–${selesai}${selesai< mulai?' (besok)':''}`;
+ }
+ if(p.time_mode==='fixed_days_checkout' && p.checkout_time)return `Keluar ${jam(p.checkout_time)}`;
+ return '—';
+}
+
 /** Tabel warm white daftar paket satu tipe kamar. Hanya tampilan. */
 function TabelKelompok({baris,onUbah}:{baris:BarisKelompok[];onUbah:(p:Package,h:PackageRoomTypePrice)=>void}){
- return <div className="ph-tabel"><table><thead><tr><th>Nama Paket</th><th>Durasi/Slot</th><th>Harga Weekday</th><th>Harga Weekend</th><th>Status</th><th>Terakhir Diubah</th><th><span className="sr-only">Aksi</span></th></tr></thead><tbody>{baris.length===0?<tr><td colSpan={7} className="ph-kosong">Belum ada harga paket untuk tipe ini.</td></tr>:baris.map(({harga,paket})=><tr key={harga.id}><td><span className="ph-nama">{paket.name}</span></td><td><span className="ph-slot">{durasiSlot(paket)}</span></td><td><span className="ph-harga">{rupiah(Number(harga.weekday_price))}</span></td><td><span className="ph-harga">{rupiah(Number(harga.weekend_price))}</span></td><td><span className={`ph-pil ${paket.active?'ph-pil-aktif':'ph-pil-nonaktif'}`}>{paket.active?'Aktif':'Nonaktif'}</span></td><td><span className="ph-slot">{waktuWib(harga.updated_at)}</span></td><td className="text-right"><button type="button" className="ph-ubah" onClick={()=>onUbah(paket,harga)}>Ubah</button></td></tr>)}</tbody></table></div>;
+ return <div className="ph-tabel ph-tabel-paket"><table><thead><tr><th>Nama Paket</th><th>Durasi</th><th>Jam Berlaku</th><th>Weekday</th><th>Weekend</th><th>Status</th><th>Terakhir Diubah</th><th>Aksi</th></tr></thead><tbody>{baris.length===0?<tr><td colSpan={8} className="ph-kosong">Belum ada harga paket untuk tipe ini.</td></tr>:baris.map(({harga,paket})=><tr key={harga.id}><td><span className="ph-nama">{paket.name}</span></td><td><span className="ph-slot">{paket.duration_minutes ? `${paket.duration_minutes} menit` : '—'}</span></td><td><span className="ph-slot">{jamBerlaku(paket)}</span></td><td><span className="ph-harga">{rupiah(Number(harga.weekday_price))}</span></td><td><span className="ph-harga">{rupiah(Number(harga.weekend_price))}</span></td><td><span className={`ph-pil ${paket.active?'ph-pil-aktif':'ph-pil-nonaktif'}`}>{paket.active?'Aktif':'Nonaktif'}</span></td><td><span className="ph-slot">{waktuWib(harga.updated_at)}</span></td><td className="text-right"><Button type="button" variant="ghost" className="ph-ubah" onClick={()=>onUbah(paket,harga)}>Ubah</Button></td></tr>)}</tbody></table></div>;
 }
 
 function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packages');const hargaTipe=useTable('package_room_type_prices');const history=useTable('package_price_history');const [item,setItem]=useState<Package|null>(null);const [open,setOpen]=useState(false);const [hargaItem,setHargaItem]=useState<PackageRoomTypePrice|null>(null);const [tipeForm,setTipeForm]=useState<string|null>(null);const [groupeForm,setGroupeForm]=useState<string|null>(null);const [tipe,setTipe]=useState<string|null>(null);const [nama,setNama]=useState('');const [durasi,setDurasi]=useState('120');const [hargaWeekday,setHargaWeekday]=useState('0');const [hargaWeekend,setHargaWeekend]=useState('0');const [alasan,setAlasan]=useState('');const [deskripsi,setDeskripsi]=useState('');const [active,setActive]=useState(true);const [message,setMessage]=useState('');
