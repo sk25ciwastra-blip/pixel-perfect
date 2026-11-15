@@ -195,3 +195,15 @@
 .ok-detail .ok-kotak .ok-baris { grid-template-columns: 112px 10px minmax(0,1fr); }
 .ok-detail .ok-baris > span:first-of-type { white-space: nowrap; }
 .ok-detail .ok-kepala h2 { background: none; color: var(--premium-paper); text-shadow: 0 1px 0 color-mix(in oklab, var(--primary) 45%, transparent), 0 3px 8px color-mix(in oklab, var(--navy-deep) 90%, transparent); }
+/* Revisi: warm white, cahaya tepi header, ikon tanpa kotak, tabel HP terbaca */
+.ok-detail, .ok-detail .ok-isi { background: #F7F6F3; }
+.ok-detail .ok-panel { background: linear-gradient(165deg, #FFFFFF 0%, #F7F6F3 100%); }
+.ok-detail .ok-panel:hover { background: linear-gradient(165deg, #FFFFFF 0%, #F7F6F3 100%); }
+.ok-detail .ok-kotak, .ok-detail .ok-total, .ok-detail .ok-table-wrap th { background: #F1EFEA; }
+.ok-detail .ok-kepala { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 45%, transparent), inset 0 0 18px -4px color-mix(in oklab, var(--primary) 55%, transparent), 0 6px 14px -6px color-mix(in oklab, var(--primary) 50%, transparent); border-radius: 10px 10px 0 0; }
+.ok-detail .ok-panel h3 svg { padding: 0; width: 24px; height: 24px; background: none; box-shadow: none; border-radius: 0; color: var(--gold-dark); filter: drop-shadow(0 1px 1px color-mix(in oklab, var(--gold-dark) 35%, transparent)); }
+@media (max-width: 640px) {
+  .ok-detail .ok-table-wrap .ok-tabel-gulir { overflow-x: auto; max-height: none; }
+  .ok-detail .ok-table-wrap table { min-width: 560px; table-layout: auto; }
+  .ok-detail .ok-table-wrap th, .ok-detail .ok-table-wrap td { white-space: nowrap; word-break: normal; }
+}
