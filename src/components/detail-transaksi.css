@@ -58,6 +58,13 @@
 .dtx-dua { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; }
 .dtx-dua .dtx-baris { grid-template-columns: 100px 10px minmax(0, 1fr); }
 .dtx-dua .dtx-baris > span:last-child { white-space: nowrap; overflow-wrap: normal; }
+.dtx-menginap { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: 4px 8px; }
+.dtx-menginap .dtx-baris { grid-template-columns: 90px 8px minmax(0, 1fr); align-items: start; font-size: 12px; }
+.dtx-menginap .dtx-baris:nth-child(even) { grid-template-columns: 104px 8px minmax(0, 1fr); }
+.dtx-menginap .dtx-baris > span:first-child { font-weight: 600; }
+.dtx-waktu-menginap { display: flex; flex-direction: column; padding: 3px 5px; border-radius: 8px; background: var(--dtx-peach-lembut); line-height: 1.4; }
+.dtx-waktu-menginap strong { font-weight: 700; white-space: nowrap; }
+.dtx-waktu-menginap > span { white-space: nowrap; }
 .dtx-ekstra { margin-top: 10px; column-gap: 10px; }
 .dtx-kotak { border-radius: 7px; overflow: hidden; background: var(--dtx-peach-lembut); border: 1px solid color-mix(in oklab, var(--primary) 22%, transparent); padding-bottom: 4px; }
 .dtx-kotak h4 { font-size: 12px; font-weight: 800; padding: 3px 10px; background: linear-gradient(180deg, var(--dtx-peach), color-mix(in oklab, var(--dtx-peach) 70%, var(--dtx-peach-lembut))); margin-bottom: 3px; }
@@ -132,6 +139,16 @@
   .dtx-panel { padding: 10px 12px 12px; }
   .dtx-panel h3 { font-size: 16px; }
   .dtx-dua { grid-template-columns: minmax(0, 1fr); }
+  .dtx-menginap { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+  .dtx-menginap .dtx-baris, .dtx-menginap .dtx-baris:nth-child(even) { grid-template-columns: 106px 10px minmax(0, 1fr); font-size: 13px; }
+  .dtx-menginap .dtx-baris:nth-child(1) { order: 1; }
+  .dtx-menginap .dtx-baris:nth-child(3) { order: 2; }
+  .dtx-menginap .dtx-baris:nth-child(5) { order: 3; }
+  .dtx-menginap .dtx-baris:nth-child(7) { order: 4; }
+  .dtx-menginap .dtx-baris:nth-child(2) { order: 5; }
+  .dtx-menginap .dtx-baris:nth-child(4) { order: 6; }
+  .dtx-menginap .dtx-baris:nth-child(6) { order: 7; }
+  .dtx-menginap .dtx-baris:nth-child(8) { order: 8; }
   .dtx-ekstra { row-gap: 8px; }
   .dtx-baris, .dtx-dua .dtx-baris, .dtx-ekstra .dtx-baris { grid-template-columns: 106px 10px minmax(0, 1fr); font-size: 13px; }
   .dtx-dua .dtx-baris > span:last-child { white-space: normal; }
