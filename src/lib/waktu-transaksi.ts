@@ -32,6 +32,35 @@ export function jamWib(value: string | null) {
   });
 }
 
+// Nama hari + tanggal singkat untuk baris riwayat: "Kamis, 12 Nov 2026".
+export function tanggalHariWib(value: string | null) {
+  if (!value) return '—';
+
+  return new Date(value).toLocaleDateString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    weekday: 'long',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+// Jejak waktu lengkap untuk header/footer:
+// "Kamis, 12 November 2026 | 06.48 WIB".
+export function jejakWib(value: string | null) {
+  if (!value) return '—';
+
+  const tanggal = new Date(value).toLocaleDateString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  return `${tanggal} | ${jamWib(value)} WIB`;
+}
+
 // Durasi tetap berasal dari jadwal paket; actual checkout hanya mengisi
 // timestamp Check-out dan tidak mengubah perhitungan durasi yang disetujui.
 export function durasiWib(awal: string | null, akhir: string | null) {

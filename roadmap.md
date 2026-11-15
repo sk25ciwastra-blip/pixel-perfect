@@ -233,3 +233,7 @@
 ## Detail Transaksi — penanda Booking dan menu Bukti Digital 16 November
 - [x] Penanda BOOKING dikecilkan (70×18px, tulisan 11px) dan cahaya dibatasi (bayangan 6px -3px) sehingga tidak menyentuh baris teks di atas/bawahnya; CHECK-IN LANGSUNG ikut ramping.
 - [x] Menu Bukti Digital kini dua tombol "Unduh" dan "WhatsApp" dengan keterangan "Unduh bukti pembayaran atau bagikan kepada tamu melalui WhatsApp."; dialog Check-in lama tetap memakai label aslinya. Hanya tampilan — data, hak akses, fungsi unduh/WhatsApp, dan alur kas tidak berubah; build OK, tanpa error runtime, tanpa publikasi.
+
+## Detail Transaksi — final riwayat, jejak waktu, dan kepala 16 November
+- [x] Tiap baris riwayat memakai tiga baris: judul + tanggal bernama hari, lalu metode · nominal (atau "Oleh : nama") + jam "06.48 WIB", lalu "Oleh : nama" untuk baris pembayaran; "Oleh :" selalu tampil dan "—" bila nama pencatat tidak tersimpan, tanpa mengarang nama.
+- [x] Kepala dan kaki jadi satu baris penuh "Dibuat pada : Kamis, 12 November 2026 | 06.48 WIB" dan "Terakhir diubah : Kamis, 12 November 2026 | 07.25 WIB"; garis emas vertikal sesudah nomor transaksi dihapus. Hanya tampilan — data, hak akses, dan fungsi tetap; 7 tes waktu PASS, build OK, tanpa error runtime, tanpa publikasi.

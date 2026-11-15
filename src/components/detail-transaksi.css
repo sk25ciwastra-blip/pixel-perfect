@@ -37,7 +37,6 @@
 .dtx-judul { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
 .dtx-judul h2 { color: #FFFFFF; font-size: 20px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; }
 .dtx-nomor { font-family: var(--font-mono, ui-monospace, monospace); color: #F4EFE6; font-size: 13px; letter-spacing: .1em; padding: 2px 9px; border-radius: 5px; background: #2A2723; }
-.dtx-garis { width: 2px; height: 22px; border-radius: 2px; background: var(--primary); margin-left: 5px; }
 .dtx-meta { text-align: right; flex-shrink: 0; }
 .dtx-status { display: inline-block; color: #FFFFFF; font-size: 13px; font-weight: 700; letter-spacing: .03em; padding: 3px 14px; border-radius: 6px; border: 1.5px solid var(--premium-success); background: color-mix(in oklab, var(--premium-success) 14%, #0B0A08); box-shadow: 0 0 10px -2px color-mix(in oklab, var(--premium-success) 70%, transparent); }
 .dtx-status-booking { border-color: var(--primary); background: color-mix(in oklab, var(--primary) 14%, #0B0A08); box-shadow: 0 0 10px -2px color-mix(in oklab, var(--primary) 70%, transparent); }
@@ -112,6 +111,10 @@
 .dtx-kartu-atas { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .dtx-kartu-atas strong { font-size: 13px; font-weight: 800; }
 .dtx-kartu-atas span { font-size: 12px; white-space: nowrap; color: var(--dtx-tinta); }
+.dtx-kartu-bawah { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.dtx-kartu-kiri { min-width: 0; overflow-wrap: anywhere; }
+.dtx-kartu-kanan { font-size: 12px; white-space: nowrap; color: var(--dtx-tinta); }
+.dtx-kartu-oleh { font-size: 12px; }
 .dtx-kartu b { color: var(--dtx-emas); font-weight: 700; }
 .dtx-nada-hijau .dtx-kartu { background: var(--dtx-hijau-lembut); }
 .dtx-nada-abu .dtx-kartu { background: var(--dtx-abu); color: var(--dtx-redup); }
@@ -188,7 +191,6 @@
 .dtx-cetak button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 .dtx-dua { column-gap: 12px; }
 @media (max-width: 640px) {
-  .dtx-garis { display: none; }
   .dtx-kepala { gap: 10px; }
   .dtx-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
   .dtx-meta p { margin-top: 0; font-size: 12px; }
