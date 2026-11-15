@@ -43,7 +43,12 @@ export function Opening() {
     <div className="opening-layar" data-menutup={menutup || undefined} aria-hidden="true">
       <div className="opening-kunci">
         <div className="opening-logo-bungkus">
-          <img src={logoBaturaden.url} alt="" className="opening-logo opening-logo-dasar" />
+          <img src={logoBaturaden.url} alt="" className="opening-logo opening-logo-atas" />
+          <img src={logoBaturaden.url} alt="" className="opening-logo-lapis opening-logo-bawah" />
+          <span
+            className="opening-sapuan"
+            style={{ maskImage: `url(${logoBaturaden.url})`, WebkitMaskImage: `url(${logoBaturaden.url})` }}
+          />
           <img src={logoBaturaden.url} alt="" className="opening-logo-ceklis" />
           <svg className="opening-jejak" viewBox="0 0 900 287" aria-hidden="true">
             {EKOR.map((e) => (

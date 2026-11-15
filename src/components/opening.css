@@ -88,9 +88,55 @@
 /* Golden Light Trail: jejak cahaya melengkung tanpa bidang persegi. */
 .opening-logo-bungkus { position: relative; line-height: 0; }
 
-/* Logo dasar tanpa ikon ceklis; ceklis resmi dimunculkan terpisah. */
-.opening-logo-dasar {
-  clip-path: polygon(0 0, 100% 0, 100% 53%, 84.4% 53%, 84.4% 100%, 0 100%);
+.opening-logo-bungkus { perspective: 700px; }
+
+/* Baturaden 25: kedalaman semi-3D, zoom halus, blur ke tajam. */
+.opening-logo-atas {
+  clip-path: inset(0 0 48% 0);
+  transform-origin: 50% 25%;
+  transform: translateZ(-120px) rotateX(18deg) scale(1.18);
+  filter: blur(8px) brightness(1.4);
+  animation: opening-atas 900ms cubic-bezier(0.2, 0.85, 0.25, 1) 120ms forwards;
+}
+@keyframes opening-atas {
+  60% { opacity: 1; filter: blur(1px) brightness(1.12); }
+  to { opacity: 1; transform: translateZ(0) rotateX(0) scale(1); filter: blur(0) brightness(1); }
+}
+
+/* Homestay: menyusul dengan efek terangkat (bayangan menyempit saat mendarat). */
+.opening-logo-lapis { position: absolute; inset: 0; width: 100%; height: auto; }
+.opening-logo-bawah {
+  clip-path: polygon(0 48%, 100% 48%, 100% 53%, 84.4% 53%, 84.4% 100%, 0 100%);
+  opacity: 0;
+  transform: translateY(14px) scale(0.96);
+  filter: blur(3px) drop-shadow(0 14px 10px rgb(0 0 0 / 0.9));
+  animation: opening-bawah 700ms cubic-bezier(0.2, 0.9, 0.3, 1.15) 620ms forwards;
+}
+@keyframes opening-bawah {
+  55% { opacity: 1; transform: translateY(-4px) scale(1.02); filter: blur(0) drop-shadow(0 10px 8px rgb(0 0 0 / 0.8)); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) drop-shadow(0 2px 2px rgb(0 0 0 / 0.6)); }
+}
+
+/* Kilau emas menyapu permukaan huruf Homestay saja (dimask oleh bentuk logo). */
+.opening-sapuan {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 48%, 100% 48%, 100% 53%, 84.4% 53%, 84.4% 100%, 0 100%);
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  background: linear-gradient(105deg, transparent 38%, color-mix(in oklch, var(--gold-light) 80%, transparent) 47%, #fff6dc 50%, color-mix(in oklch, var(--gold-light) 80%, transparent) 53%, transparent 62%);
+  background-size: 250% 100%;
+  background-position: 120% 0;
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: opening-sapuan 900ms ease-in-out 1150ms forwards;
+  pointer-events: none;
+}
+@keyframes opening-sapuan {
+  0% { opacity: 0; background-position: 120% 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; background-position: -20% 0; }
 }
 
 .opening-logo-ceklis {
@@ -128,10 +174,10 @@
     opening-jejak 900ms cubic-bezier(0.45, 0.05, 0.35, 1) 800ms forwards,
     opening-jejak-pudar 260ms ease-out 1640ms forwards;
 }
-.opening-ekor-1 { stroke: var(--gold); stroke-width: 7; filter: blur(4px); --redup: 0.18; }
-.opening-ekor-2 { stroke: var(--gold); stroke-width: 4; filter: blur(1.5px); --redup: 0.4; }
-.opening-ekor-3 { stroke: var(--gold-light); stroke-width: 3; --redup: 0.8; }
-.opening-ekor-kepala { stroke: #fff6dc; stroke-width: 8; filter: drop-shadow(0 0 6px var(--gold-light)); --redup: 1; }
+.opening-ekor-1 { stroke: var(--gold); stroke-width: 34; filter: blur(14px); --redup: 0.22; }
+.opening-ekor-2 { stroke: var(--gold); stroke-width: 18; filter: blur(7px); --redup: 0.42; }
+.opening-ekor-3 { stroke: var(--gold-light); stroke-width: 9; filter: blur(2.5px); --redup: 0.75; }
+.opening-ekor-kepala { stroke: #fff6dc; stroke-width: 20; filter: blur(3px) drop-shadow(0 0 14px var(--gold-light)); --redup: 1; }
 
 @keyframes opening-jejak {
   0% { stroke-dashoffset: var(--awal); opacity: 0; }
@@ -145,9 +191,9 @@
   position: absolute;
   left: 90.6%;
   top: 74%;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fff6dc, var(--gold-light) 40%, var(--gold) 70%, color-mix(in oklch, var(--gold) 60%, #000));
   box-shadow: 0 0 10px color-mix(in oklch, var(--gold-light) 70%, transparent), 0 3px 4px rgb(0 0 0 / 0.6);
@@ -191,6 +237,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .opening-logo,
+  .opening-logo-bawah,
+  .opening-sapuan,
   .opening-garis,
   .opening-kata,
   .opening-logo-ceklis,
