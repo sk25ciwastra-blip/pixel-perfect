@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
+import { PDFDocument, StandardFonts, degrees, rgb, setCharacterSpacing } from 'pdf-lib';
 import type { PDFPage } from 'pdf-lib';
 import { confirmationMoney, type PaymentConfirmation } from './payment-confirmation';
 
@@ -47,8 +47,10 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
     return lines;
   }
   function spaced(page: PDFPage, text: string, x: number, y: number, size: number, f: typeof font, gap: number, color = ink) {
-    for (const ch of text) { page.drawText(ch, { x, y, size, font: f, color }); x += f.widthOfTextAtSize(ch, size) + gap; }
-    return x;
+    page.pushOperators(setCharacterSpacing(gap));
+    page.drawText(text, { x, y, size, font: f, color });
+    page.pushOperators(setCharacterSpacing(0));
+    return x + spacedWidth(text, size, f, gap) + gap;
   }
   function spacedWidth(text: string, size: number, f: typeof font, gap: number) {
     return [...text].reduce((w, ch) => w + f.widthOfTextAtSize(ch, size) + gap, 0) - gap;
