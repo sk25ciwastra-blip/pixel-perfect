@@ -1,0 +1,166 @@
+/* Detail transaksi — referensi "Detail Transaksi Hotel Booking" (presentasi saja) */
+.dtx {
+  --dtx-kertas: #F7F4EE;
+  --dtx-kartu: #FFFDFA;
+  --dtx-peach: #F8E4C4;
+  --dtx-peach-lembut: #FBF2E4;
+  --dtx-abu: #EFECE7;
+  --dtx-hijau-lembut: #E4F2DE;
+  --dtx-tinta: #1C1915;
+  --dtx-redup: #5F584E;
+  --dtx-emas: var(--gold-dark);
+  --dtx-garis: color-mix(in oklab, var(--primary) 26%, transparent);
+  display: flex; flex-direction: column; width: 100%; max-width: 1100px;
+  max-height: calc(100dvh - 1.5rem); overflow: hidden;
+  background: var(--dtx-kertas); color: var(--dtx-tinta);
+  border: 2px solid color-mix(in oklab, var(--primary) 45%, var(--navy-deep));
+  border-radius: 16px;
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--navy-deep) 92%, transparent), 0 30px 80px -20px var(--navy-deep);
+  font-family: var(--font-sans); font-size: 14px;
+}
+.dtx-kepala {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  padding: 16px 26px 18px;
+  background: linear-gradient(180deg, #17140F 0%, #0B0A08 100%);
+  border-bottom: 5px solid transparent;
+  border-image: linear-gradient(90deg, var(--gold-dark), var(--primary), var(--gold-dark)) 1;
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--primary) 30%, transparent);
+}
+.dtx-jejak { color: #F4EFE6; font-size: 12px; font-weight: 600; letter-spacing: .01em; margin-bottom: 4px; }
+.dtx-judul { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.dtx-judul h2 { color: #FFFFFF; font-size: 28px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; }
+.dtx-nomor { font-family: var(--font-mono, ui-monospace, monospace); color: #F4EFE6; font-size: 16px; letter-spacing: .1em; padding: 4px 12px; border-radius: 6px; background: #2A2723; }
+.dtx-garis { width: 3px; height: 30px; border-radius: 2px; background: var(--primary); margin-left: 10px; }
+.dtx-meta { text-align: right; flex-shrink: 0; }
+.dtx-status { display: inline-block; color: #FFFFFF; font-size: 16px; font-weight: 700; letter-spacing: .03em; padding: 5px 20px; border-radius: 8px; border: 2px solid var(--premium-success); background: color-mix(in oklab, var(--premium-success) 14%, #0B0A08); box-shadow: 0 0 12px -2px color-mix(in oklab, var(--premium-success) 70%, transparent); }
+.dtx-status-booking { border-color: var(--primary); background: color-mix(in oklab, var(--primary) 14%, #0B0A08); box-shadow: 0 0 12px -2px color-mix(in oklab, var(--primary) 70%, transparent); }
+.dtx-status-cancelled { border-color: var(--premium-danger); background: color-mix(in oklab, var(--premium-danger) 14%, #0B0A08); box-shadow: 0 0 12px -2px color-mix(in oklab, var(--premium-danger) 70%, transparent); }
+.dtx-meta p { color: var(--primary); font-size: 13px; margin-top: 10px; }
+
+.dtx-isi { padding: 18px 18px 6px; overflow-y: auto; min-height: 0; }
+.dtx-grid { display: grid; grid-template-columns: minmax(0, 1.28fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.dtx-kolom { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dtx-panel { position: relative; min-width: 0; padding: 14px 20px 16px; border-radius: 14px; background: linear-gradient(180deg, #FFFFFF 0%, var(--dtx-kartu) 100%); border: 1px solid var(--dtx-garis); box-shadow: 0 1px 0 #FFFFFF inset, 0 10px 24px -16px color-mix(in oklab, var(--gold-dark) 70%, transparent), 0 2px 6px -3px color-mix(in oklab, var(--navy-deep) 18%, transparent); }
+.dtx-kolom > .dtx-panel:last-child { flex: 1; }
+.dtx-panel h3 { position: relative; display: flex; align-items: center; gap: 12px; font-size: 21px; font-weight: 800; letter-spacing: -.01em; color: var(--dtx-tinta); padding-bottom: 12px; margin-bottom: 10px; }
+.dtx-panel h3::after { content: ''; position: absolute; left: 0; bottom: 2px; width: 82px; height: 4px; border-radius: 3px; background: linear-gradient(90deg, var(--gold-dark), var(--primary)); }
+.dtx-panel h3 svg { width: 26px; height: 26px; color: var(--dtx-emas); stroke-width: 1.7; flex-shrink: 0; }
+
+.dtx-baris { display: grid; grid-template-columns: 136px 12px minmax(0, 1fr); align-items: center; font-size: 15px; line-height: 1.95; }
+.dtx-baris > span:first-child { color: var(--dtx-tinta); white-space: nowrap; }
+.dtx-baris > span:last-child { color: var(--dtx-tinta); overflow-wrap: anywhere; }
+.dtx-hp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.dtx-hubungi { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px 0 8px; border-radius: 999px; background: #FFFFFF; border: 1px solid var(--dtx-garis); color: var(--premium-success); font-size: 13px; font-weight: 700; box-shadow: 0 3px 8px -5px color-mix(in oklab, var(--gold-dark) 70%, transparent); cursor: pointer; }
+.dtx-hubungi svg { width: 20px; height: 20px; }
+.dtx-hubungi:disabled { opacity: .5; cursor: not-allowed; }
+.dtx-jenis { display: inline-block; padding: 1px 14px; border-radius: 999px; font-size: 14px; font-weight: 800; letter-spacing: .02em; background: linear-gradient(180deg, #FBE7C5, #F4D29E); border: 1px solid color-mix(in oklab, var(--primary) 55%, transparent); line-height: 1.7; }
+
+.dtx-dua { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 18px; }
+.dtx-dua .dtx-baris { grid-template-columns: 124px 12px minmax(0, 1fr); }
+.dtx-dua .dtx-baris > span:last-child { white-space: nowrap; overflow-wrap: normal; }
+.dtx-ekstra { margin-top: 14px; column-gap: 14px; }
+.dtx-kotak { border-radius: 8px; overflow: hidden; background: var(--dtx-peach-lembut); border: 1px solid color-mix(in oklab, var(--primary) 22%, transparent); padding-bottom: 6px; }
+.dtx-kotak h4 { font-size: 15px; font-weight: 800; padding: 5px 14px; background: linear-gradient(180deg, var(--dtx-peach), color-mix(in oklab, var(--dtx-peach) 70%, var(--dtx-peach-lembut))); margin-bottom: 4px; }
+.dtx-kotak .dtx-baris { padding: 0 14px; font-size: 14px; line-height: 1.85; }
+.dtx-ekstra .dtx-baris { grid-template-columns: 118px 12px minmax(0, 1fr); }
+
+.dtx-bayar { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; padding: 3px 4px; }
+.dtx-dibayar { font-weight: 700; font-size: 16px; }
+.dtx-dibayar strong { font-weight: 800; }
+.dtx-total { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; padding: 7px 12px; border-radius: 6px; background: linear-gradient(90deg, var(--dtx-abu), color-mix(in oklab, var(--dtx-abu) 50%, #FFFFFF)); font-size: 16px; font-weight: 800; box-shadow: inset 0 1px 0 #FFFFFF, 0 2px 6px -4px color-mix(in oklab, var(--navy-deep) 30%, transparent); }
+.dtx-total strong { color: var(--dtx-emas); font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.dtx-total-besar strong { font-size: 21px; }
+
+.dtx-linimasa { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dtx-linimasa li { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 14px; align-items: center; }
+.dtx-linimasa li:not(:last-child)::before { content: ''; position: absolute; left: 22px; top: 50%; height: calc(100% + 8px); width: 2px; background: var(--primary); }
+.dtx-bulat { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FDF1DE, var(--dtx-peach)); box-shadow: 0 0 0 3px var(--dtx-kartu), 0 4px 10px -5px color-mix(in oklab, var(--gold-dark) 80%, transparent); }
+.dtx-bulat svg { width: 22px; height: 22px; color: var(--dtx-emas); stroke-width: 1.8; }
+.dtx-kartu { border-radius: 8px; padding: 7px 12px; background: var(--dtx-peach-lembut); font-size: 14px; line-height: 1.4; }
+.dtx-kartu-atas { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.dtx-kartu-atas strong { font-size: 15px; font-weight: 800; }
+.dtx-kartu-atas span { font-size: 13px; white-space: nowrap; color: var(--dtx-tinta); }
+.dtx-kartu b { color: var(--dtx-emas); font-weight: 700; }
+.dtx-nada-hijau .dtx-kartu { background: var(--dtx-hijau-lembut); }
+.dtx-nada-abu .dtx-kartu { background: var(--dtx-abu); color: var(--dtx-redup); }
+.dtx-nada-abu .dtx-bulat { background: radial-gradient(circle at 35% 30%, #FAFAF8, #E6E3DE); }
+.dtx-nada-abu .dtx-bulat svg { color: var(--dtx-tinta); }
+.dtx-nada-abu em { color: var(--dtx-redup); }
+
+.dtx-catatan-kepala { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.dtx-catatan-isi { font-size: 15px; line-height: 1.6; overflow-wrap: anywhere; }
+.dtx-lihat { font-size: 13px; padding: 4px 14px; border-radius: 8px; border: 1.5px solid var(--gold-dark); color: var(--gold-dark); background: #FFFFFF; cursor: pointer; white-space: nowrap; }
+.dtx-semua { position: absolute; z-index: 5; right: 8px; bottom: calc(100% - 52px); width: min(290px, 85vw); background: #FFFFFF; border-radius: 10px; padding: 12px 16px; border: 1px solid var(--dtx-garis); box-shadow: 0 18px 40px -16px color-mix(in oklab, var(--navy-deep) 50%, transparent); font-size: 13px; }
+.dtx-semua-kepala { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; }
+.dtx-semua-kepala svg { width: 16px; height: 16px; }
+.dtx-semua-item { margin-bottom: 10px; }
+.dtx-semua-item p { color: var(--dtx-redup); margin-bottom: 2px; }
+
+.dtx-tabel { overflow-x: auto; }
+.dtx-tabel table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.dtx-tabel th { background: var(--dtx-abu); font-weight: 700; padding: 7px 10px; text-align: center; white-space: nowrap; }
+.dtx-tabel th:first-child { border-radius: 6px 0 0 6px; text-align: left; padding-left: 16px; }
+.dtx-tabel th:last-child { border-radius: 0 6px 6px 0; text-align: right; padding-right: 16px; }
+.dtx-tabel td { padding: 8px 10px; text-align: center; border-bottom: 1px solid color-mix(in oklab, var(--primary) 20%, transparent); }
+.dtx-tabel td:first-child { text-align: left; padding-left: 24px; }
+.dtx-tabel td:last-child { text-align: right; padding-right: 16px; white-space: nowrap; }
+
+.dtx-pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 18px 0; padding: 12px 4px 16px; border-top: 1px solid color-mix(in oklab, var(--primary) 25%, transparent); font-size: 15px; }
+.dtx-pied strong { font-weight: 800; }
+.dtx-aksi { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.dtx-tombol, .dtx-cetak button { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 22px; border-radius: 10px; background: linear-gradient(180deg, #FFFFFF, #F8F4EC); border: 1px solid var(--dtx-garis); color: var(--dtx-tinta); font-size: 15px; font-weight: 700; box-shadow: 0 1px 0 #FFFFFF inset, 0 6px 14px -9px color-mix(in oklab, var(--gold-dark) 85%, transparent); cursor: pointer; }
+.dtx-tombol svg, .dtx-cetak button svg { width: 20px; height: 20px; color: var(--dtx-emas); }
+.dtx-tombol .dtx-panah { width: 18px; height: 18px; color: var(--dtx-tinta); }
+.dtx-tombol:hover, .dtx-cetak button:hover { background: #FFFFFF; transform: translateY(-1px); }
+.dtx-pdf { position: relative; }
+.dtx-pdf-menu { position: absolute; z-index: 6; bottom: calc(100% + 8px); left: 0; width: 300px; padding: 12px; border-radius: 10px; background: #FFFFFF; border: 1px solid var(--dtx-garis); box-shadow: 0 18px 40px -16px color-mix(in oklab, var(--navy-deep) 55%, transparent); color: var(--dtx-tinta); }
+.dtx-tutup { height: 44px; min-width: 132px; padding: 0 26px; border-radius: 10px; background: linear-gradient(180deg, #1D1A16, #050505); color: #FFFFFF; font-size: 16px; font-weight: 700; border: 2px solid var(--primary); box-shadow: 0 0 10px -2px color-mix(in oklab, var(--primary) 70%, transparent), 0 8px 16px -8px var(--navy-deep); cursor: pointer; }
+.dtx-tutup:focus-visible, .dtx-tombol:focus-visible, .dtx-hubungi:focus-visible, .dtx-lihat:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .dtx-tombol:hover, .dtx-cetak button:hover { transform: none; } }
+
+@media (max-width: 900px) {
+  .dtx-grid { grid-template-columns: minmax(0, 1fr); }
+  .dtx-kolom > .dtx-panel:last-child { flex: none; }
+}
+@media (max-width: 640px) {
+  .dtx { border-radius: 12px; }
+  .dtx-kepala { flex-wrap: wrap; padding: 14px 16px; }
+  .dtx-meta { text-align: left; }
+  .dtx-judul h2 { font-size: 22px; }
+  .dtx-nomor { font-size: 13px; }
+  .dtx-isi { padding: 12px 10px 4px; }
+  .dtx-panel { padding: 12px 14px 14px; }
+  .dtx-panel h3 { font-size: 18px; }
+  .dtx-dua { grid-template-columns: minmax(0, 1fr); }
+  .dtx-ekstra { row-gap: 10px; }
+  .dtx-baris, .dtx-dua .dtx-baris, .dtx-ekstra .dtx-baris { grid-template-columns: 118px 10px minmax(0, 1fr); font-size: 14px; }
+  .dtx-dua .dtx-baris > span:last-child { white-space: normal; }
+  .dtx-tabel table { min-width: 480px; font-size: 14px; }
+  .dtx-pied { margin: 4px 10px 0; }
+  .dtx-aksi { width: 100%; }
+  .dtx-pdf, .dtx-cetak, .dtx-tombol, .dtx-cetak button, .dtx-tutup { width: 100%; justify-content: center; }
+  .dtx-pdf-menu { width: 100%; }
+}
+.dtx .dtx-tabel th { text-transform: none; letter-spacing: 0; color: var(--dtx-tinta); font-size: 15px; font-weight: 700; }
+.dtx-dua > div:last-child .dtx-baris { grid-template-columns: 136px 12px minmax(0, 1fr); }
+.dtx-cetak button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.dtx-dua { column-gap: 12px; }
+@media (max-width: 640px) {
+  .dtx-garis { display: none; }
+  .dtx-kepala { gap: 10px; }
+  .dtx-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+  .dtx-meta p { margin-top: 0; font-size: 12px; }
+  .dtx-status { font-size: 13px; padding: 3px 12px; }
+  .dtx-baris { align-items: start; }
+  .dtx-pied { padding: 8px 2px 10px; gap: 8px; font-size: 13px; }
+  .dtx-aksi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dtx-tombol, .dtx-cetak button, .dtx-tutup { height: 38px; font-size: 13px; padding: 0 10px; gap: 6px; }
+  .dtx-tutup { grid-column: 1 / -1; }
+  .dtx-pdf-menu { width: min(300px, 86vw); }
+}
+@media (max-width: 640px) {
+  .dtx-dua > div:last-child .dtx-baris { grid-template-columns: 118px 10px minmax(0, 1fr); }
+  .dtx-hp { row-gap: 4px; }
+  .dtx-tombol, .dtx-cetak button { white-space: nowrap; font-size: 12px; }
+  .dtx-tombol svg, .dtx-cetak button svg { width: 16px; height: 16px; }
+}

@@ -1,12 +1,11 @@
 import { useState, type ReactNode } from 'react';
 import {
-  UserRound, Phone, NotebookPen, BedDouble, DoorOpen, Package,
-  CalendarDays, Timer, ReceiptText, CircleDollarSign, History,
-  Car, MapPin, X, type LucideIcon,
+  UserRound, NotebookPen, BedDouble, DoorOpen, CalendarDays, ReceiptText,
+  CircleDollarSign, History, CreditCard, Flag, Download, ChevronDown, Printer, X, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
-import { Button } from '@/components/ui/button';
 import '@/components/operasional-krem.css';
+import '@/components/detail-transaksi.css';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
 import { openWhatsApp } from '@/lib/whatsapp';
@@ -15,8 +14,9 @@ import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 import { AksiPdfStruk } from '@/components/konfirmasi-pembayaran';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
-import { durasiWib, jamWib, tanggalWib, waktuWib } from '@/lib/waktu-transaksi';
-import { ReceiptPrintButton, ReceiptHistoryButton } from '@/components/receipt-actions';
+import { waktuWib } from '@/lib/waktu-transaksi';
+import { ReceiptTransactionButton } from '@/components/receipt-actions';
+import { featureFlags } from '@/lib/feature-flags';
 
 type DetailTransaksiProps = {
   transactionId: string;
@@ -47,33 +47,17 @@ const labelStatusTransaksi: Record<string, string> = {
   cancelled: 'Dibatalkan',
 };
 
-const warnaTitikStatus: Record<string, string> = {
-  booking: 'bg-perlu-foreground',
-  check_in: 'bg-terisi-foreground',
-  check_out: 'bg-siap-foreground',
-  cancelled: 'bg-bahaya-foreground',
-};
-
 const labelJenisPembayaran: Record<string, string> = {
   dp: 'DP',
   payment: 'Pelunasan',
 };
 
-const kelasPopup = 'operasional-krem flex max-h-[calc(100dvh-2rem)] w-full max-w-[940px] flex-col overflow-hidden text-sm ok-detail';
-
-function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIcon; children: ReactNode }) {
-  return <section className="ok-panel"><h3><Ikon /><span>{judul}</span></h3>{children}</section>;
+function Panel({ judul, ikon: Ikon, isi, children }: { judul: string; ikon: LucideIcon; isi?: boolean; children: ReactNode }) {
+  return <section className={`dtx-panel${isi ? ' dtx-isi-penuh' : ''}`}><h3><Ikon /><span>{judul}</span></h3>{children}</section>;
 }
 
-function Baris({ label, children }: { label: string; ikon: LucideIcon; nada?: string; rataAtas?: boolean; children: ReactNode }) {
-  return <div className="ok-baris"><span>{label}</span><span>:</span><span>{children}</span></div>;
-}
-
-function Kepala({ nomor, statusLabel, statusDot, dibuat }: { nomor: string; statusLabel: string; statusDot: string; dibuat: string }) {
-  return <header className="ok-kepala">
-    <div className="min-w-0"><p>TRANSAKSI / ARSIP OPERASIONAL</p><div className="flex flex-wrap items-center gap-3"><h2>Detail Transaksi</h2><span className="ok-nomor font-mono break-all">{nomor}</span><span className="ok-garis" aria-hidden /></div></div>
-    <div className="ok-meta"><span className="inline-flex items-center gap-2 rounded-md border border-primary/50 px-3 py-1 text-xs font-semibold text-primary">{statusLabel.toUpperCase()}<span className={`sr-only ${statusDot}`} /></span><p>Dibuat pada : {dibuat}</p></div>
-  </header>;
+function Baris({ label, children }: { label: string; children: ReactNode }) {
+  return <div className="dtx-baris"><span>{label}</span><span>:</span><span>{children}</span></div>;
 }
 
 export function DetailTransaksi({
@@ -94,7 +78,9 @@ export function DetailTransaksi({
   const { posisiKode } = usePeran();
   const konfirmasi = usePaymentConfirmation();
   const notes = useTable('guest_notes', !restricted && !!transaction?.guest_id, { column: 'guest_id', value: transaction?.guest_id ?? '' });
+  const logs = useTable('activity_logs', !restricted, { column: 'entity_id', value: transactionId });
   const [lihatCatatan, setLihatCatatan] = useState(false);
+  const [bukaPdf, setBukaPdf] = useState(false);
 
   if (!transaction) {
     return null;
@@ -170,72 +156,120 @@ export function DetailTransaksi({
 
 
   const catatan = [...notes.rows].sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
-  const metode = [...new Set(transactionPayments.map(item => item.method.toUpperCase() === 'CASH' ? 'Cash' : item.method.toUpperCase()))].join(' + ');
   const bolehHubungi = bolehHubungiTamu(posisiKode, guest?.phone);
+  const namaPegawai = (uid: string | null | undefined) => employees.rows.find(item => item.user_id === uid)?.name;
+  const viaBooking = !!transaction.scheduled_check_in;
+  const logCheckout = logs.rows.find(item => item.action === 'check_out');
+
+  type Peristiwa = { key: string; waktu: string | null; judul: string; ikon: LucideIcon; nada?: 'hijau' | 'abu' | undefined; metode?: string | undefined; jumlah?: number | undefined; oleh?: string | undefined; ket?: string | undefined };
+  const peristiwa: Peristiwa[] = ([
+    { key: 'buat', waktu: transaction.created_at, judul: viaBooking ? 'Booking dibuat' : 'Transaksi dibuat', ikon: CalendarDays, oleh: creator?.name },
+    ...transactionPayments.map(p => ({ key: p.id, waktu: p.created_at, judul: p.kind === 'dp' ? 'Pembayaran DP' : labelJenisPembayaran[p.kind] ?? p.kind, ikon: CreditCard, metode: p.method.toUpperCase(), jumlah: Number(p.amount), oleh: namaPegawai(p.recorded_by) })),
+    ...(transaction.started_at ? [{ key: 'in', waktu: transaction.started_at, judul: 'Check-in dilakukan', ikon: DoorOpen, nada: 'hijau' as const, oleh: viaBooking ? undefined : creator?.name }] : []),
+  ] as Peristiwa[]).sort((a, b) => new Date(a.waktu ?? 0).getTime() - new Date(b.waktu ?? 0).getTime());
+  if (transaction.status !== 'cancelled') peristiwa.push(transaction.checked_out_at
+    ? { key: 'out', waktu: transaction.checked_out_at, judul: 'Check-out dilakukan', ikon: Flag, oleh: namaPegawai(logCheckout?.user_id) }
+    : { key: 'out', waktu: null, judul: 'Check-out', ikon: Flag, nada: 'abu', ket: 'Belum dilakukan' });
+
+  const status = transaction.status === 'booking' ? 'Menunggu Check-in' : labelStatusTransaksi[transaction.status] ?? transaction.status;
+  const hargaDasar = transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-4">
-      <div role="dialog" aria-modal="true" aria-label="Detail transaksi" className={kelasPopup}>
-        <Kepala nomor={transaction.transaction_number} dibuat={waktuWib(transaction.created_at)}
-          statusLabel={transaction.status === 'booking' ? 'Menunggu Check-in' : labelStatusTransaksi[transaction.status] ?? transaction.status}
-          statusDot={warnaTitikStatus[transaction.status] ?? 'bg-muted-foreground'} />
-        <div className="ok-isi">
-          <div className="ok-grid">
-            <div className="ok-kolom">
-              <Seksi judul="Identitas Tamu" ikon={UserRound}>
-                <Baris label="Nama" ikon={UserRound}>{guest?.full_name ?? 'Tamu'}</Baris>
-                <Baris label="No. HP" ikon={Phone}><span className="flex flex-wrap items-center gap-2"><span>{guest?.phone ?? '—'}</span><Button type="button" variant="outline" size="sm" disabled={!bolehHubungi} aria-label="Hubungi tamu via WhatsApp" title={guest?.phone ? 'Hubungi tamu via WhatsApp' : 'Nomor WhatsApp belum lengkap'} onClick={() => guest?.phone && openWhatsApp(guest.phone)} className="h-6 px-2 text-[10px] text-siap-foreground"><IkonWhatsApp />Hubungi</Button></span></Baris>
-                <Baris label="Alamat" ikon={MapPin}>{guest?.address || '—'}</Baris>
-              </Seksi>
-              <Seksi judul="Rincian Menginap" ikon={BedDouble}>
-                <div className="ok-rincian">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 backdrop-blur-sm p-3 sm:p-4">
+      <div role="dialog" aria-modal="true" aria-label="Detail transaksi" className="operasional-krem dtx">
+        <header className="dtx-kepala">
+          <div className="min-w-0">
+            <p className="dtx-jejak">TRANSAKSI / ARSIP OPERASIONAL</p>
+            <div className="dtx-judul"><h2>Detail Transaksi</h2><span className="dtx-nomor">{transaction.transaction_number}</span><span className="dtx-garis" aria-hidden /></div>
+          </div>
+          <div className="dtx-meta">
+            <span className={`dtx-status dtx-status-${transaction.status}`}>{status.toUpperCase()}</span>
+            <p>Dibuat pada : {waktuWib(transaction.created_at)}</p>
+          </div>
+        </header>
+
+        <div className="dtx-isi">
+          <div className="dtx-grid">
+            <div className="dtx-kolom">
+              <Panel judul="Identitas Tamu" ikon={UserRound}>
+                <Baris label="Nama">{guest?.full_name ?? 'Tamu'}</Baris>
+                <Baris label="No. HP"><span className="dtx-hp"><span>{guest?.phone ?? '—'}</span><button type="button" className="dtx-hubungi" disabled={!bolehHubungi} aria-label="Hubungi tamu via WhatsApp" title={guest?.phone ? 'Hubungi tamu via WhatsApp' : 'Nomor WhatsApp belum lengkap'} onClick={() => guest?.phone && openWhatsApp(guest.phone)}><IkonWhatsApp />Hubungi</button></span></Baris>
+                <Baris label="Alamat">{guest?.address || '—'}</Baris>
+              </Panel>
+
+              <Panel judul="Rincian Menginap" ikon={BedDouble} isi>
+                <div className="dtx-dua">
                   <div>
-                    <Baris label="No. Kamar" ikon={BedDouble}>{room?.room_number ?? '—'}</Baris>
-                    <Baris label="Tipe Kamar" ikon={DoorOpen}>{roomType?.name?.toUpperCase() ?? '—'}</Baris>
-                    <Baris label="Jadwal Check-in" ikon={CalendarDays}>{waktuWib(transaction.scheduled_check_in)}</Baris>
-                    <Baris label="Batas Sewa" ikon={CalendarDays}>{waktuWib(transaction.scheduled_check_out)}</Baris>
+                    <Baris label="No. Kamar">{room?.room_number ?? '—'}</Baris>
+                    <Baris label="Tipe Kamar">{roomType?.name?.toUpperCase() ?? '—'}</Baris>
+                    <Baris label="Jadwal Check-in">{waktuWib(transaction.scheduled_check_in)}</Baris>
+                    <Baris label="Batas Sewa">{waktuWib(transaction.scheduled_check_out)}</Baris>
                   </div>
                   <div>
-                    <Baris label="Kode Paket" ikon={Package}>{kodePaket(packageItem?.name)}</Baris>
-                    <Baris label="Dibuat oleh" ikon={UserRound}>{creator?.name ?? '—'}</Baris>
-                    <Baris label="Check-in Aktual" ikon={Car}>{waktuWib(transaction.started_at)}</Baris>
-                    <Baris label="Check-out Aktual" ikon={CalendarDays}>{waktuWib(transaction.checked_out_at)}</Baris>
+                    <Baris label="Kode Paket">{kodePaket(packageItem?.name)}</Baris>
+                    <Baris label="Jenis Transaksi"><span className="dtx-jenis">{viaBooking ? 'BOOKING' : 'CHECK-IN LANGSUNG'}</span></Baris>
+                    <Baris label="Check-in Aktual">{waktuWib(transaction.started_at)}</Baris>
+                    <Baris label="Check-out Aktual">{waktuWib(transaction.checked_out_at)}</Baris>
                   </div>
                 </div>
-                <div className="ok-rincian ok-ekstra">
-                  <div className="ok-kotak"><h4>EXTEND</h4><Baris label="Kode Paket" ikon={Package}>—</Baris><Baris label="Batas Check-out" ikon={CalendarDays}>—</Baris><Baris label="Dibuat Oleh" ikon={UserRound}>—</Baris></div>
-                  <div className="ok-kotak"><h4>OVERTIME</h4><Baris label="Batas Check-out" ikon={CalendarDays}>—</Baris><Baris label="Kelebihan Waktu" ikon={Timer}>—</Baris><Baris label="Dibuat Oleh" ikon={UserRound}>—</Baris></div>
+                <div className="dtx-dua dtx-ekstra">
+                  <div className="dtx-kotak"><h4>EXTEND</h4><Baris label="Kode Paket">—</Baris><Baris label="Batas Check-out">—</Baris><Baris label="Dibuat Oleh">—</Baris></div>
+                  <div className="dtx-kotak"><h4>OVERTIME</h4><Baris label="Batas Check-out">—</Baris><Baris label="Kelebihan Waktu">—</Baris><Baris label="Dibuat Oleh">—</Baris></div>
                 </div>
-              </Seksi>
+              </Panel>
+
+              <Panel judul="Rincian Transaksi" ikon={ReceiptText}>
+                <div className="dtx-tabel"><table><thead><tr><th>No.</th><th>Tipe Kamar</th><th>No. Kamar</th><th>Paket</th><th>Jumlah</th></tr></thead><tbody>
+                  <tr><td>1</td><td>{roomType?.name?.toUpperCase() ?? '—'}</td><td>{room?.room_number ?? '—'}</td><td>{kodePaket(packageItem?.name)}</td><td>{rupiah(hargaDasar)}</td></tr>
+                  {Number(transaction.extra_guest_charge) > 0 && <tr><td>2</td><td colSpan={3}>Tamu Tambahan × {transaction.extra_guest_count}</td><td>{rupiah(transaction.extra_guest_charge)}</td></tr>}
+                </tbody></table></div>
+                <div className="dtx-total dtx-total-besar"><span>Total Transaksi</span><strong>{rupiah(total)}</strong></div>
+              </Panel>
             </div>
-            <div className="ok-kolom">
-              <Seksi judul="Pembayaran" ikon={CircleDollarSign}>
-                <div className="ok-payment"><span>Total Tagihan</span><span>{rupiah(total)}</span></div>
-                <div className="ok-payment"><span>DP</span><span>{rupiah(uangMuka)}</span></div>
-                <div className="ok-payment ok-dibayar"><span>Total Dibayar</span><strong>{rupiah(totalPaid)}</strong></div>
-                <div className="ok-total mt-2"><span>Sisa Tagihan</span><strong>{rupiah(remaining)}</strong></div>
-              </Seksi>
-              <Seksi judul="Riwayat Pembayaran" ikon={History}>
-                {transactionPayments.length === 0 ? <p className="text-xs text-muted-foreground">Belum ada pembayaran tercatat.</p> : <div className="ok-history">{transactionPayments.map(payment => {
-                  const recorder = employees.rows.find(item => item.user_id === payment.recorded_by);
-                  return <div key={payment.id} className="ok-history-item"><div className="ok-history-top"><span>{labelJenisPembayaran[payment.kind] ?? payment.kind}</span><span>{rupiah(Number(payment.amount))}</span></div><div className="ok-history-meta"><span>{payment.method}{recorder ? ` · ${recorder.name}` : ''}</span><span>{tanggalWib(payment.created_at)} {jamWib(payment.created_at)}</span></div><ReceiptPrintButton paymentId={payment.id} /></div>;
-                })}</div>}
-              </Seksi>
-              <section className="ok-panel ok-catatan-panel"><div className="ok-catatan-kepala"><h3><NotebookPen /><span>Catatan</span></h3>{catatan.length > 0 && <button type="button" className="ok-lihat" aria-expanded={lihatCatatan} onClick={() => setLihatCatatan(v => !v)}>Lihat semua ({catatan.length})</button>}</div>
-                <p className="break-words text-[13px] leading-relaxed">{catatan[0]?.body || guest?.notes || 'Tidak ada catatan.'}</p>
-                {lihatCatatan && <div className="ok-semua-catatan" role="dialog" aria-label="Semua catatan"><div className="ok-semua-kepala"><strong>Semua Catatan</strong><button type="button" aria-label="Tutup catatan" onClick={() => setLihatCatatan(false)}><X /></button></div>
-                  {catatan.map(n => <div key={n.id} className="ok-catatan-item"><p>{n.created_at ? waktuWib(n.created_at) : 'Waktu tidak diketahui'} · {n.author_name ?? 'Penulis tidak diketahui'}{n.author_role ? ` (${n.author_role})` : ''}</p><strong>{n.body}</strong></div>)}</div>}
+
+            <div className="dtx-kolom">
+              <Panel judul="Pembayaran" ikon={CircleDollarSign}>
+                <div className="dtx-bayar"><span>Total Tagihan</span><span>{rupiah(total)}</span></div>
+                <div className="dtx-bayar"><span>DP</span><span>{rupiah(uangMuka)}</span></div>
+                <div className="dtx-bayar dtx-dibayar"><span>Total Dibayar</span><strong>{rupiah(totalPaid)}</strong></div>
+                <div className="dtx-total"><span>Sisa Tagihan</span><strong>{rupiah(remaining)}</strong></div>
+              </Panel>
+
+              <Panel judul="Riwayat Transaksi & Penanganan" ikon={History}>
+                <ol className="dtx-linimasa">{peristiwa.map(e => <li key={e.key} className={e.nada ? `dtx-nada-${e.nada}` : undefined}>
+                  <span className="dtx-bulat"><e.ikon /></span>
+                  <div className="dtx-kartu">
+                    <div className="dtx-kartu-atas"><strong>{e.judul}</strong><span>{e.waktu ? waktuWib(e.waktu) : '—'}</span></div>
+                    {e.metode && <p>{e.metode} <span aria-hidden>•</span> <b>{rupiah(e.jumlah ?? 0)}</b></p>}
+                    {e.oleh && <p>oleh <b>{e.oleh}</b></p>}
+                    {e.ket && <p><em>{e.ket}</em></p>}
+                  </div>
+                </li>)}</ol>
+              </Panel>
+
+              <section className="dtx-panel dtx-catatan">
+                <div className="dtx-catatan-kepala"><h3><NotebookPen /><span>Catatan</span></h3>{catatan.length > 0 && <button type="button" className="dtx-lihat" aria-expanded={lihatCatatan} onClick={() => setLihatCatatan(v => !v)}>Lihat semua ({catatan.length})</button>}</div>
+                <p className="dtx-catatan-isi">{catatan[0]?.body || guest?.notes || 'Tidak ada catatan.'}</p>
+                {lihatCatatan && <div className="dtx-semua" role="dialog" aria-label="Semua catatan"><div className="dtx-semua-kepala"><strong>Semua Catatan</strong><button type="button" aria-label="Tutup catatan" onClick={() => setLihatCatatan(false)}><X /></button></div>
+                  {catatan.map(n => <div key={n.id} className="dtx-semua-item"><p>{n.created_at ? waktuWib(n.created_at) : 'Waktu tidak diketahui'} · {n.author_name ?? 'Penulis tidak diketahui'}{n.author_role ? ` (${n.author_role})` : ''}</p><strong>{n.body}</strong></div>)}</div>}
               </section>
             </div>
           </div>
-          <div className="ok-table-wrap"><Seksi judul="Rincian Transaksi" ikon={ReceiptText}>
-            <div className="ok-tabel-gulir"><table><thead><tr><th>No.</th><th>Tipe Kamar</th><th>No. Kamar</th><th>Paket</th><th>Metode Pembayaran</th><th>Jumlah</th></tr></thead><tbody>
-              <tr><td>1</td><td>{roomType?.name?.toUpperCase() ?? '—'}</td><td>{room?.room_number ?? '—'}</td><td>{kodePaket(packageItem?.name)}</td><td>{metode || '—'}</td><td>{rupiah(transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0))}</td></tr>
-              {Number(transaction.extra_guest_charge) > 0 && <tr><td>2</td><td colSpan={3}>Tamu Tambahan × {transaction.extra_guest_count}</td><td>{metode || '—'}</td><td>{rupiah(transaction.extra_guest_charge)}</td></tr>}
-            </tbody></table></div><div className="ok-total ok-total-besar mt-2"><span>Total Transaksi</span><strong>{rupiah(total)}</strong></div>
-          </Seksi></div>
         </div>
-        <footer className="ok-pied"><p className="ok-diubah"><strong>Terakhir diubah :</strong> {waktuWib(transaction.updated_at)}</p><div className="flex flex-wrap items-center gap-2"><ReceiptHistoryButton transactionNumber={transaction.transaction_number} /><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} /><Button type="button" className="ok-noir" onClick={onClose}>Tutup</Button></div></footer>
+
+        <footer className="dtx-pied">
+          <p><strong>Terakhir diubah :</strong> {waktuWib(transaction.updated_at)}</p>
+          <div className="dtx-aksi">
+            <div className="dtx-pdf">
+              <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital (PDF)<ChevronDown className="dtx-panah" /></button>
+              {bukaPdf && <div className="dtx-pdf-menu"><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} /></div>}
+            </div>
+            <span className="dtx-cetak">{featureFlags.receipt58mm
+              ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk (58 mm)" />
+              : <button type="button" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer />Cetak Struk (58 mm)</button>}</span>
+            <button type="button" className="dtx-tutup" onClick={onClose}>Tutup</button>
+          </div>
+        </footer>
       </div>
     </div>
   );
