@@ -14,7 +14,7 @@ import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 import { AksiPdfStruk } from '@/components/konfirmasi-pembayaran';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
-import { waktuWib } from '@/lib/waktu-transaksi';
+import { waktuWib, jejakWib, tanggalHariWib, jamWib } from '@/lib/waktu-transaksi';
 import { ReceiptTransactionButton } from '@/components/receipt-actions';
 import { featureFlags } from '@/lib/feature-flags';
 
@@ -190,7 +190,7 @@ export function DetailTransaksi({
         <header className="dtx-kepala">
           <div className="min-w-0">
             <p className="dtx-jejak">TRANSAKSI / ARSIP OPERASIONAL</p>
-            <div className="dtx-judul"><h2>Detail Transaksi</h2><span className="dtx-nomor">{transaction.transaction_number}</span><span className="dtx-garis" aria-hidden /></div>
+            <div className="dtx-judul"><h2>Detail Transaksi</h2><span className="dtx-nomor">{transaction.transaction_number}</span></div>
           </div>
           <div className="dtx-meta">
             <span className={`dtx-status dtx-status-${transaction.status}`}>{status.toUpperCase()}</span>
