@@ -1,8 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Jam berlaku paket — 16 November
-- [ ] Terapkan batas check-in 2/4/6 jam sesuai Owner tanpa mengubah durasi atau transaksi lama.
-- [ ] Format WIB dan dua pilihan jam pada popup, verifikasi aturan serta tampilan.
+- [x] Terapkan batas check-in 2/4/6 jam sesuai Owner tanpa mengubah durasi atau transaksi lama; 12 pemeriksaan batas aktual lulus.
+- [x] Format WIB dan dua pilihan jam pada popup; 7 tes lulus, tampilan komputer/HP diperiksa. Pilihan mengikuti aturan tetap; penyimpanan paket per tipe tetap belum tersedia.
 
 ## Opening aplikasi menggantikan layar sambutan — 15 November
 - [x] Hapus layar sambutan pasca-login beserta seluruh file dan pemicunya (`sambutan.tsx/.css`, `lib/sambutan.ts`, aset karakter/panel, pemanggilan di auth.tsx dan __root.tsx, font Great Vibes).
