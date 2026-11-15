@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
   UserRound, NotebookPen, BedDouble, DoorOpen, CalendarDays, ReceiptText,
-  CircleDollarSign, History, CreditCard, Flag, Download, ChevronDown, Printer, X, type LucideIcon,
+  CircleDollarSign, History, CreditCard, Flag, Download, ChevronDown, Printer, X, Clock, SquarePlus, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
 import '@/components/operasional-krem.css';
@@ -65,8 +65,8 @@ function WaktuMenginap({ value }: { value: string | null }) {
   const tanggal = new Date(value);
   if (Number.isNaN(tanggal.getTime())) return <>—</>;
   return <span className="dtx-waktu-menginap">
-    <strong>{tanggal.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</strong>
-    <span>{tanggal.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })} WIB</span>
+    <strong><CalendarDays />{tanggal.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}</strong>
+    <span><Clock />{tanggal.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })} WIB</span>
   </span>;
 }
 
@@ -219,8 +219,8 @@ export function DetailTransaksi({
                     <Baris label="Check-out Aktual"><WaktuMenginap value={transaction.checked_out_at} /></Baris>
                 </div>
                 <div className="dtx-dua dtx-ekstra">
-                  <div className="dtx-kotak"><h4>EXTEND</h4><Baris label="Kode Paket">—</Baris><Baris label="Batas Check-out">—</Baris><Baris label="Dibuat Oleh">—</Baris></div>
-                  <div className="dtx-kotak"><h4>OVERTIME</h4><Baris label="Batas Check-out">—</Baris><Baris label="Kelebihan Waktu">—</Baris><Baris label="Dibuat Oleh">—</Baris></div>
+                  <div className="dtx-kotak"><h4><SquarePlus />EXTEND</h4><Baris label="Kode Paket">—</Baris><Baris label="Batas Check-out">—</Baris><Baris label="Dibuat Oleh">—</Baris></div>
+                  <div className="dtx-kotak"><h4><Clock />OVERTIME</h4><Baris label="Batas Check-out">—</Baris><Baris label="Kelebihan Waktu">—</Baris><Baris label="Dibuat Oleh">—</Baris></div>
                 </div>
               </Panel>
 
