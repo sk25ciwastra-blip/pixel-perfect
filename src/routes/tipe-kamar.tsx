@@ -20,12 +20,8 @@ function waktuWib(t?:string|null):string{
  return new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(d).replace(/\./g,':')+' WIB';
 }
 
-/** Lantai asli hanya ada bila kolomnya tersedia; null bila belum dicatat. */
-function lantaiAsli(r:Room):number|null{
- const v=(r as {lantai?:unknown}).lantai;
- if(v===null||v===undefined||v==='')return null;
- const n=Number(v);return Number.isFinite(n)?n:null;
-}
+/** Lantai asli kamar; null bila belum dicatat. */
+function lantaiAsli(r:Room):number|null{return r.lantai??null}
 
 /** Lantai hanya ditampilkan bila data aslinya tersedia; — bila belum. */
 function teksLantai(r:Room):string{const v=lantaiAsli(r);return v===null?'—':String(v)}
