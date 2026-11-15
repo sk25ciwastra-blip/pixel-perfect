@@ -71,6 +71,13 @@
       "when": 1794767080280,
       "tag": "0009_room_floor",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794768425689,
+      "tag": "0010_short_package_checkin_windows",
+      "breakpoints": true
     }
   ]
 }

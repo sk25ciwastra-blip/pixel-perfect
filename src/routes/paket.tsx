@@ -6,7 +6,7 @@ import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { useTable, type Package, type PackageRoomTypePrice } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
-import { hargaFormPaket } from '@/lib/paket-form';
+import { hargaFormPaket, jamPaket, pilihanJam, teksJamWib } from '@/lib/paket-form';
 import { urutanPaket } from '@/lib/urutan-pilihan';
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
@@ -32,8 +32,6 @@ const KELOMPOK_RESMI = [
  { key: 'deluxe', label: 'Deluxe' },
 ] as const;
 
-function jam(t?: string|null){return t?t.slice(0,5).replace(':','.'):''}
-
 /** Tanggal/jam WIB dari stempel waktu asli; — bila kosong. */
 function waktuWib(t?:string|null):string{
  if(!t)return '—';const d=new Date(t);if(isNaN(d.getTime()))return '—';
@@ -42,14 +40,10 @@ function waktuWib(t?:string|null):string{
 
 type BarisKelompok={harga:PackageRoomTypePrice;paket:Package};
 
-/** Jam berlaku dari kolom waktu tersimpan; paket berdurasi tidak memiliki slot tetap. */
 function jamBerlaku(p:Package):string{
- if(p.time_mode==='fixed_window' && p.slot_start_time && p.checkout_time){
-  const mulai=jam(p.slot_start_time);const selesai=jam(p.checkout_time);
-  return `${mulai}–${selesai}${selesai< mulai?' (besok)':''}`;
- }
- if(p.time_mode==='fixed_days_checkout' && p.checkout_time)return `Keluar ${jam(p.checkout_time)}`;
- return '—';
+ const {mulai,selesai}=jamPaket(p);
+ if(mulai&&selesai)return `${teksJamWib(mulai)} - ${teksJamWib(selesai)}${selesai<mulai?' (besok)':''}`;
+ return selesai?`Keluar ${teksJamWib(selesai)}`:'—';
 }
 
 /** Tabel warm white daftar paket satu tipe kamar. Hanya tampilan. */
@@ -159,7 +153,9 @@ function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packag
 <label className="block text-sm">Durasi
  <input value={durasi?`${durasi} menit`:'—'} readOnly className="mt-1 h-11 w-full rounded-xl border border-input bg-muted px-3"/>
 </label>
-<label className="block text-sm">Jam Berlaku
- <input value={item?jamBerlaku(item):'—'} readOnly className="mt-1 h-11 w-full rounded-xl border border-input bg-muted px-3"/>
-</label>
+<fieldset><legend className="text-sm">Jam Berlaku</legend><div className="mt-1 grid grid-cols-2 gap-3">{([['mulai','Jam Mulai'],['selesai','Jam Selesai']] as const).map(([key,label])=>{
+ const nilai=jamPaket(item??rows.find(p=>p.name===nama)??null)[key];
+ const opsi=[...new Set([...pilihanJam,...(nilai?[nilai]:[])])].sort();
+ return <label key={key} className="block text-sm">{label}<select aria-label={label} value={nilai} disabled className="mt-1 h-11 w-full rounded-xl border border-input bg-muted px-3"><option value="">—</option>{opsi.map(j=><option key={j} value={j}>{teksJamWib(j)}</option>)}</select></label>;
+ })}</div></fieldset>
 {[['Harga Weekday',hargaWeekday,setHargaWeekday],['Harga Weekend',hargaWeekend,setHargaWeekend]].map(([label,value,setter])=><label key={label as string} className="block text-sm">{label as string}<input required type="number" min="0" value={value as string} onChange={e=>(setter as (s:string)=>void)(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>)}{item&&(Number(hargaItem?.weekday_price??item.weekday_price)!==Number(hargaWeekday)||Number(hargaItem?.weekend_price??item.weekend_price)!==Number(hargaWeekend))&&<label className="block text-sm">Alasan perubahan harga<input required value={alasan} onChange={e=>setAlasan(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>}<label className="flex gap-2 text-sm"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/>Aktif</label>{groupeForm&&<p className="text-sm text-muted-foreground">Penyimpanan paket khusus tipe kamar belum tersedia. Tidak ada data yang diubah.</p>}{!item&&PAKET_RESMI.every(p=>rows.some(r=>r.name===p.name))&&<p className="text-sm text-muted-foreground">Semua 9 paket resmi sudah tersedia; paket yang sama tidak dapat ditambahkan kembali.</p>}{message&&<p role="alert" className="text-sm text-destructive">{message}</p>}<div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Batal</Button><Button disabled={!!groupeForm||!nama}>Simpan</Button></div></form></div>}</SubPengaturan></Kerangka>}
