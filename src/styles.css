@@ -182,6 +182,14 @@
   --checkin-button: linear-gradient(180deg, oklch(0.91 0.095 85), oklch(0.74 0.15 75));
   --checkin-head: linear-gradient(180deg, var(--navy-soft), var(--navy-deep));
   --checkin-shadow: 0 24px 80px color-mix(in oklab, var(--background) 65%, transparent);
+  --premium-paper: oklch(0.98 0.009 85);
+  --premium-surface: oklch(0.994 0.004 85);
+  --premium-ink: oklch(0.2 0.006 80);
+  --premium-muted: oklch(0.46 0.008 80);
+  --premium-line: oklch(0.81 0.045 80 / 0.65);
+  --premium-highlight: oklch(0.94 0.037 80);
+  --premium-shadow: 0 22px 70px color-mix(in oklab, var(--navy-deep) 48%, transparent), inset 0 1px 0 var(--premium-surface);
+  --premium-panel-shadow: 0 2px 7px color-mix(in oklab, var(--gold-dark) 7%, transparent), inset 0 1px 0 var(--premium-surface);
 }
 
 .dark {
