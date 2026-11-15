@@ -152,7 +152,14 @@ function AccessGate({ children }: { children: ReactNode }) {
   const { siap, masuk, peran, posisiKode } = usePeran();
   const location = useLocation();
   const navigate = useNavigate();
-  const [tampilSambutan] = useState(() => perluSambutan());
+  const [tampilSambutan, setTampilSambutan] = useState(false);
+
+  // Sambutan hanya setelah sesi dan hak akses tervalidasi (masuk === true).
+  useEffect(() => {
+    if (siap && masuk && !tampilSambutan && perluSambutan()) {
+      setTampilSambutan(true);
+    }
+  }, [siap, masuk, tampilSambutan]);
 
   const publicPage =
     location.pathname === '/auth' ||
@@ -236,7 +243,7 @@ function AccessGate({ children }: { children: ReactNode }) {
   return (
     <>
       {children}
-      {tampilSambutan && <Sambutan />}
+      {tampilSambutan && masuk && <Sambutan />}
     </>
   );
 }
