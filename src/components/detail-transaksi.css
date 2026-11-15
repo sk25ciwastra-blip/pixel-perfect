@@ -60,7 +60,7 @@
 .dtx-hubungi { display: inline-flex; align-items: center; gap: 5px; height: 25px; padding: 0 10px 0 7px; border-radius: 999px; background: #FFFFFF; border: 1px solid var(--dtx-garis); color: var(--premium-success); font-size: 12px; font-weight: 700; box-shadow: 0 3px 8px -5px color-mix(in oklab, var(--gold-dark) 70%, transparent); cursor: pointer; }
 .dtx-hubungi svg { width: 16px; height: 16px; }
 .dtx-hubungi:disabled { opacity: .5; cursor: not-allowed; }
-.dtx-jenis { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; letter-spacing: 0; background: color-mix(in oklab, var(--dtx-jenis-warna) 14%, var(--dtx-kartu)); color: var(--dtx-jenis-warna); border: 1px solid color-mix(in oklab, var(--dtx-jenis-warna) 35%, transparent); line-height: 1.7; }
+.dtx-jenis { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0; background: color-mix(in oklab, var(--dtx-jenis-warna) 14%, var(--dtx-kartu)); color: var(--dtx-jenis-warna); border: 1px solid color-mix(in oklab, var(--dtx-jenis-warna) 35%, transparent); line-height: 1.45; }
 .dtx-jenis-booking { --dtx-jenis-warna: oklch(0.55 0.16 248); }
 .dtx-jenis-booking {
   background: linear-gradient(180deg,
@@ -71,9 +71,8 @@
   color: #F6FAFF;
   box-shadow: inset 0 1px 0 color-mix(in oklab, #FFFFFF 45%, transparent),
     inset 0 -1px 1px color-mix(in oklab, var(--dtx-jenis-warna) 45%, transparent),
-    0 2px 2px -1px color-mix(in oklab, var(--dtx-jenis-warna) 38%, transparent),
-    0 4px 10px -4px color-mix(in oklab, var(--dtx-jenis-warna) 45%, transparent),
-    0 0 11px -3px color-mix(in oklab, var(--dtx-jenis-warna) 55%, transparent);
+    0 1px 2px -1px color-mix(in oklab, var(--dtx-jenis-warna) 38%, transparent),
+    0 0 6px -3px color-mix(in oklab, var(--dtx-jenis-warna) 55%, transparent);
   text-shadow: 0 1px 1px color-mix(in oklab, var(--dtx-jenis-warna) 55%, transparent);
 }
 .dtx-jenis-langsung { --dtx-jenis-warna: var(--premium-success); }

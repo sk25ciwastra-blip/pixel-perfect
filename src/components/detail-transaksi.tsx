@@ -268,7 +268,7 @@ export function DetailTransaksi({
           <div className="dtx-aksi">
             <div className="dtx-pdf">
               <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital<ChevronDown className="dtx-panah" /></button>
-              {bukaPdf && <div className="dtx-pdf-menu"><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} /></div>}
+              {bukaPdf && <div className="dtx-pdf-menu"><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} ringkas /></div>}
             </div>
             <span className="dtx-cetak">{featureFlags.receipt58mm
               ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk" />

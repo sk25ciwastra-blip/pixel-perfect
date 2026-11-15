@@ -8,7 +8,7 @@ type Hook = ReturnType<typeof usePaymentConfirmation>;
 const wib = (v: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(v)) + ' WIB' : '—';
 
 /** PDF + WhatsApp manual steps; server revalidates role, Training and the chosen transaction. */
-export function AksiPdfStruk({ hook, transactionId }: { hook: Hook; transactionId: string }) {
+export function AksiPdfStruk({ hook, transactionId, ringkas = false }: { hook: Hook; transactionId: string; ringkas?: boolean }) {
   const [busy, setBusy] = useState<'' | 'pdf' | 'wa'>('');
   const [unduh, setUnduh] = useState(false);
   const [pesan, setPesan] = useState('');
@@ -24,10 +24,10 @@ export function AksiPdfStruk({ hook, transactionId }: { hook: Hook; transactionI
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2">
-        <Button type="button" variant="outline" size="sm" disabled={!!busy} onClick={() => void jalankan('pdf')}><Download />{busy === 'pdf' ? 'Menyiapkan...' : '1. Unduh PDF'}</Button>
-        <Button type="button" variant="outline" size="sm" disabled={!!busy || !unduh} onClick={() => void jalankan('wa')}><MessageCircle />2. Buka WhatsApp</Button>
+        <Button type="button" variant="outline" size="sm" disabled={!!busy} onClick={() => void jalankan('pdf')}><Download />{busy === 'pdf' ? 'Menyiapkan...' : ringkas ? 'Unduh' : '1. Unduh PDF'}</Button>
+        <Button type="button" variant="outline" size="sm" disabled={!!busy || !unduh} onClick={() => void jalankan('wa')}><MessageCircle />{ringkas ? 'WhatsApp' : '2. Buka WhatsApp'}</Button>
       </div>
-      <p className="text-[11px] text-muted-foreground">Lampirkan PDF secara manual. Belum otomatis terkirim.</p>
+      <p className="text-[11px] text-muted-foreground">{ringkas ? 'Unduh bukti pembayaran atau bagikan kepada tamu melalui WhatsApp.' : 'Lampirkan PDF secara manual. Belum otomatis terkirim.'}</p>
       {pesan && <p role="status" className="text-xs text-foreground/90">{pesan}</p>}
     </div>
   );
