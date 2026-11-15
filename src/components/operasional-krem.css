@@ -135,3 +135,7 @@
 .ok-diubah { font-size: 15px; }
 .ok-pied .ok-noir { font-size: 16px; height: 40px; min-width: 100px; font-weight: 700; }
 @media (max-width: 700px) { .ok-baris { grid-template-columns: 112px 8px minmax(0,1fr); font-size: 13px; } .ok-semua-catatan { right: 0; } }
+.ok-rincian .ok-baris { grid-template-columns: 128px 10px minmax(0,1fr); }
+.ok-rincian .ok-baris > span:last-of-type { white-space: nowrap; overflow-wrap: normal; }
+.ok-table-wrap th { text-transform: none; letter-spacing: 0; color: var(--premium-ink); }
+@media (max-width: 700px) { .ok-rincian .ok-baris > span:last-of-type { white-space: normal; } }

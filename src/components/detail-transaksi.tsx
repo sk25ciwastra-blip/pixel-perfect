@@ -55,8 +55,8 @@ const warnaTitikStatus: Record<string, string> = {
 };
 
 const labelJenisPembayaran: Record<string, string> = {
-  dp: 'Uang Muka',
-  payment: 'Pembayaran',
+  dp: 'DP',
+  payment: 'Pelunasan',
 };
 
 const kelasPopup = 'operasional-krem flex max-h-[calc(100dvh-2rem)] w-full max-w-[1000px] flex-col overflow-hidden text-sm';
