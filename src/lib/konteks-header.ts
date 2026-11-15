@@ -11,4 +11,8 @@ export const konteksHeader: Record<string, string> = {
   "/laporan": "Catatan hari ini adalah cermin yang menuntun keputusan esok agar lebih tepat.",
   "/karyawan": "Tim yang tepat di posisi yang tepat membuat pelayanan terasa ringan dan tulus.",
   "/pengaturan": "Aturan yang jelas membuat pekerjaan tenang dan pelayanan tetap konsisten dari hari ke hari.",
+  "/paket": "Harga yang tertata rapi memudahkan tamu memilih dan tim melayani dengan yakin.",
+  "/tipe-kamar": "Setiap tipe kamar adalah janji kenyamanan yang berbeda untuk setiap kebutuhan tamu.",
+  "/daftar-pengeluaran": "Pengeluaran yang tercatat jelas menjaga kas tetap sehat dan mudah dipertanggungjawabkan.",
+  "/pengaturan-keuangan": "Kebijakan kas yang disepakati bersama membuat setiap transaksi berjalan tanpa ragu.",
 };

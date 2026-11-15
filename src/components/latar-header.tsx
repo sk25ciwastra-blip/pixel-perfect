@@ -21,6 +21,9 @@ const temaHeader: Record<string, { tema: string; gambar: string; posisi: string 
   '/karyawan': { tema: 'ukiran', gambar: tim, posisi: 'object-[65%_50%] lg:object-[50%_50%]' },
   '/pengaturan': { tema: 'pendopo', gambar: pengaturan, posisi: 'object-[60%_45%] lg:object-[50%_45%]' },
   '/paket': { tema: 'pendopo', gambar: pengaturan, posisi: 'object-[60%_45%] lg:object-[50%_45%]' },
+  '/tipe-kamar': { tema: 'pendopo', gambar: pengaturan, posisi: 'object-[60%_45%] lg:object-[50%_45%]' },
+  '/daftar-pengeluaran': { tema: 'pendopo', gambar: pengaturan, posisi: 'object-[60%_45%] lg:object-[50%_45%]' },
+  '/pengaturan-keuangan': { tema: 'pendopo', gambar: pengaturan, posisi: 'object-[60%_45%] lg:object-[50%_45%]' },
 };
 
 export function LatarHeader({ path }: { path: string; dashboard?: boolean }) {
