@@ -67,6 +67,7 @@
 .ok-form-head h2 { font: 600 28px/1.25 var(--font-serif); color: var(--premium-paper); }
 .ok-form-head > div { font-size: 12px; margin-top: 7px; color: var(--premium-paper); }
 .ok-form .ok-panel h3 { font: 600 20px/1.3 var(--font-serif); }
+.ok-form .ok-pied { justify-content: flex-end; }
 .ok-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 20px; }
 .ok-field { display: block; min-width: 0; font-size: 12px; font-weight: 600; }
 .ok-field > span { display: block; margin-bottom: 6px; }
