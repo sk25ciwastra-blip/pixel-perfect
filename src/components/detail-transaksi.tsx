@@ -160,12 +160,12 @@ export function DetailTransaksi({
   const viaBooking = !!transaction.scheduled_check_in;
   const logCheckout = logs.rows.find(item => item.action === 'check_out');
 
-  type Peristiwa = { key: string; waktu: string | null; judul: string; ikon: LucideIcon; nada?: 'hijau' | 'abu'; metode?: string; jumlah?: number; oleh?: string; ket?: string };
-  const peristiwa: Peristiwa[] = [
+  type Peristiwa = { key: string; waktu: string | null; judul: string; ikon: LucideIcon; nada?: 'hijau' | 'abu' | undefined; metode?: string | undefined; jumlah?: number | undefined; oleh?: string | undefined; ket?: string | undefined };
+  const peristiwa: Peristiwa[] = ([
     { key: 'buat', waktu: transaction.created_at, judul: viaBooking ? 'Booking dibuat' : 'Transaksi dibuat', ikon: CalendarDays, oleh: creator?.name },
     ...transactionPayments.map(p => ({ key: p.id, waktu: p.created_at, judul: p.kind === 'dp' ? 'Pembayaran DP' : labelJenisPembayaran[p.kind] ?? p.kind, ikon: CreditCard, metode: p.method.toUpperCase(), jumlah: Number(p.amount), oleh: namaPegawai(p.recorded_by) })),
     ...(transaction.started_at ? [{ key: 'in', waktu: transaction.started_at, judul: 'Check-in dilakukan', ikon: DoorOpen, nada: 'hijau' as const, oleh: viaBooking ? undefined : creator?.name }] : []),
-  ].sort((a, b) => new Date(a.waktu ?? 0).getTime() - new Date(b.waktu ?? 0).getTime());
+  ] as Peristiwa[]).sort((a, b) => new Date(a.waktu ?? 0).getTime() - new Date(b.waktu ?? 0).getTime());
   if (transaction.status !== 'cancelled') peristiwa.push(transaction.checked_out_at
     ? { key: 'out', waktu: transaction.checked_out_at, judul: 'Check-out dilakukan', ikon: Flag, oleh: namaPegawai(logCheckout?.user_id) }
     : { key: 'out', waktu: null, judul: 'Check-out', ikon: Flag, nada: 'abu', ket: 'Belum dilakukan' });
