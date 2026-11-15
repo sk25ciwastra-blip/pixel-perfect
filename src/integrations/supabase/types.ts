@@ -44,6 +44,62 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_profiles: {
+        Row: {
+          address: string
+          birth_date: string | null
+          birth_place: string
+          created_at: string
+          emergency_name: string
+          emergency_phone: string
+          emergency_relation: string
+          employee_id: string
+          gender: string
+          nik: string
+          phone: string
+          photo_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string
+          birth_date?: string | null
+          birth_place?: string
+          created_at?: string
+          emergency_name?: string
+          emergency_phone?: string
+          emergency_relation?: string
+          employee_id: string
+          gender?: string
+          nik?: string
+          phone?: string
+          photo_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          birth_date?: string | null
+          birth_place?: string
+          created_at?: string
+          emergency_name?: string
+          emergency_phone?: string
+          emergency_relation?: string
+          employee_id?: string
+          gender?: string
+          nik?: string
+          phone?: string
+          photo_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_profiles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           active: boolean
