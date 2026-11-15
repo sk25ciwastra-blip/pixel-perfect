@@ -250,3 +250,6 @@
 ## Detail Transaksi — judul baris riwayat 16 November
 - [x] Judul baris "Riwayat Transaksi & Penanganan" diganti murni teks: "Booking dibuat" → RESERVASI, "Pembayaran DP" → DOWN PAYMENT (DP), "Pelunasan" → FINAL PAYMENT, "Check-in dilakukan" → CHECK-IN, "Check-out" → CHECK-OUT. Urutan, sumber data, jam, dan "Oleh :" tidak berubah.
 - [x] Diuji dengan akun aktif: kelima baris tampil persis (RESERVASI, DOWN PAYMENT (DP), FINAL PAYMENT, CHECK-IN, CHECK-OUT), popup tetap 940px tanpa gulir, tidak ada teks terpotong, tanpa error konsol, tanpa publikasi.
+
+## Detail Transaksi — font judul 16 November
+- [x] Judul "Detail Transaksi" jadi serif Playfair Display (keluarga font + lining-nums sama persis dengan judul halaman Tim & Akses), 28px, semibold 600, warm white #F7F6F3, sama di HP dan desktop. Hanya judul — elemen, font lain, warna, tata letak, dan fungsi tidak berubah; terukur di preview, popup tetap 940px tanpa gulir, tanpa error konsol, tanpa publikasi.
