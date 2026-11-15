@@ -241,3 +241,7 @@
 ## Detail Transaksi — efek kursor tiga tombol kaki 16 November
 - [x] Bukti Digital, Cetak Struk, dan Tutup memakai efek kursor yang sama: naik 1px, permukaan lebih terang, kilau emas lebih kuat, transisi .16s, berhenti saat ditekan, tanpa perpindahan pada reduced-motion. Hanya tampilan — data, hak akses, dan fungsi tetap.
 - [x] Diuji dengan akun aktif 1582×900: Bukti Digital dan Tutup terukur naik 1px + latar berubah saat kursor diarahkan; Cetak Struk memakai aturan yang sama tetapi tetap diam karena tombolnya sedang nonaktif (fitur cetak 58 mm belum diaktifkan) — dibuktikan dengan melepas nonaktif di browser uji, efeknya identik. Build OK, tanpa error runtime, tanpa publikasi.
+
+## Detail Transaksi — font tanggal/jam riwayat 16 November
+- [x] Tanggal dan jam pada setiap baris Riwayat Transaksi & Penanganan diturunkan 1px (12px → 11px) dan ditebalkan (700), tanpa mengubah isi, urutan, atau data.
+- [x] Diuji dengan akun aktif 1280×1800: terukur 11px/700 pada "Kamis, 12 Nov 2026" dan "06.48 WIB", lima baris riwayat tampil penuh, tidak ada teks terpotong, popup tetap 940px, build OK, tanpa error runtime, tanpa publikasi.
