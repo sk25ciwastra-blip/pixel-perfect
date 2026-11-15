@@ -115,9 +115,9 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
       }
       // Logo wordmark + tagline.
       const cx = 137;
-      const logoH = 37;
+      const logoH = 45;
       const logoW = (logoH * logo.width) / logo.height;
-      page.drawImage(logo, { x: cx - logoW / 2 + 4, y: 509, width: logoW, height: logoH });
+      page.drawImage(logo, { x: cx - logoW / 2 + 4, y: 505, width: logoW, height: logoH });
       const dw = 'DAILY & WEEKLY';
       const dwW = spacedWidth(dw, 6.8, bold, 1.8);
       spaced(page, dw, cx - dwW / 2, 496, 6.8, bold, 1.8);
