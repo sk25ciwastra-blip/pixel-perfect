@@ -53,7 +53,7 @@ function TabelKelompok({baris,onUbah}:{baris:BarisKelompok[];onUbah:(p:Package)=
  return <div className="ph-tabel"><table><thead><tr><th>Nama Paket</th><th>Durasi/Slot</th><th>Harga Weekday</th><th>Harga Weekend</th><th>Status</th><th><span className="sr-only">Aksi</span></th></tr></thead><tbody>{baris.length===0?<tr><td colSpan={6} className="ph-kosong">Belum ada harga paket untuk tipe ini.</td></tr>:baris.map(({harga,paket})=><tr key={harga.id}><td><span className="ph-nama">{paket.name}</span></td><td><span className="ph-slot">{durasiSlot(paket)}</span></td><td><span className="ph-harga">{rupiah(Number(harga.weekday_price))}</span></td><td><span className="ph-harga">{rupiah(Number(harga.weekend_price))}</span></td><td><span className={`ph-pil ${paket.active?'ph-pil-aktif':'ph-pil-nonaktif'}`}>{paket.active?'Aktif':'Nonaktif'}</span></td><td className="text-right"><button type="button" className="ph-ubah" onClick={()=>onUbah(paket)}>Ubah</button></td></tr>)}</tbody></table></div>;
 }
 
-function Halaman(){const {rows,refresh,error}=useTable('packages');const hargaTipe=useTable('package_room_type_prices');const history=useTable('package_price_history');const [item,setItem]=useState<Package|null>(null);const [open,setOpen]=useState(false);const [tipe,setTipe]=useState<string|null>(null);const [nama,setNama]=useState('');const [durasi,setDurasi]=useState('120');const [hargaWeekday,setHargaWeekday]=useState('0');const [hargaWeekend,setHargaWeekend]=useState('0');const [alasan,setAlasan]=useState('');const [deskripsi,setDeskripsi]=useState('');const [active,setActive]=useState(true);const [message,setMessage]=useState('');
+function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packages');const hargaTipe=useTable('package_room_type_prices');const history=useTable('package_price_history');const [item,setItem]=useState<Package|null>(null);const [open,setOpen]=useState(false);const [tipe,setTipe]=useState<string|null>(null);const [nama,setNama]=useState('');const [durasi,setDurasi]=useState('120');const [hargaWeekday,setHargaWeekday]=useState('0');const [hargaWeekend,setHargaWeekend]=useState('0');const [alasan,setAlasan]=useState('');const [deskripsi,setDeskripsi]=useState('');const [active,setActive]=useState(true);const [message,setMessage]=useState('');
  function edit(p?:Package){
   const pilihan=p
    ? PAKET_RESMI.find(x=>x.name===p.name)
@@ -140,7 +140,7 @@ function Halaman(){const {rows,refresh,error}=useTable('packages');const hargaTi
    .map(g=>({label:g.charAt(0).toUpperCase()+g.slice(1),baris:barisPer(g)}));
   return [...dikenal,...lainnya];
  })();
- const adaHargaTipe=hargaTipe.rows.length>0;
+ const adaHargaTipe=!muatPaket&&!hargaTipe.loading&&hargaTipe.rows.length>0;
  const terpilih=kelompok.find(k=>k.label===tipe)??null;
 
  const riwayat=<><h2 className="mt-8 mb-3 text-xs font-semibold uppercase text-muted-foreground">Riwayat harga</h2><Daftar>{history.rows.map(h=><li key={h.id} className="px-4 py-3 text-sm">{rows.find(p=>p.id===h.package_id)?.name??'Paket'} · {h.price_type==='weekday'?'Weekday':h.price_type==='weekend'?'Weekend':'Harga lama'} · {rupiah(Number(h.old_price))} → {rupiah(Number(h.new_price))}<p className="text-xs text-muted-foreground">{h.reason} · {new Date(h.changed_at).toLocaleDateString('id-ID')}</p></li>)}</Daftar></>;
