@@ -486,7 +486,7 @@ Terima kasih.`;
                     </div>
                     <div className="flex min-w-0 flex-col justify-center gap-0.5">
                       <p className="truncate text-[15px] font-semibold">{guest?.full_name ?? 'Tamu'}{phoneLast4 ? ` - ${phoneLast4}` : ''}</p>
-                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-[13px] font-medium text-gold hover:underline">
+                      <button type="button" onClick={() => setDetailBookingId(booking.id)} className="block max-w-full truncate text-left text-[13px] font-medium text-gold-krem hover:underline">
                         {booking.transaction_number}
                       </button>
                     </div>
