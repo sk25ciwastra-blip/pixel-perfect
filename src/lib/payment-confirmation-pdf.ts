@@ -180,7 +180,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   R.y -= 80;
   p.drawText('PAYMENT HISTORY', { x: R.x - 2, y: R.y, size: 12, font: serif, color: ink });
   R.y -= 10;
-  const cols = [R.x + 4, R.x + 116, R.x + 178];
+  const cols = [R.x + 4, R.x + 112, R.x + 196];
   const head = () => {
     const pg = pageAt(R.page);
     pg.drawRectangle({ x: R.x - 2, y: R.y - 16, width: rw + 4, height: 20, color: blueSoft, opacity: 0.8 });
@@ -191,7 +191,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   head();
   if (!data.history.length) { pageAt(R.page).drawText('No payments recorded', { x: cols[0]!, y: R.y, size: 9, font, color: muted }); R.y -= 20; }
   for (const h of data.history) {
-    const methodLines = wrap(h.method, 56, 9);
+    const methodLines = wrap(h.method, 80, 9);
     const rowH = 10 + methodLines.length * 11;
     need(R, rowH, head);
     const pg = pageAt(R.page);
