@@ -253,3 +253,6 @@
 
 ## Detail Transaksi — font judul 16 November
 - [x] Judul "Detail Transaksi" jadi serif Playfair Display (keluarga font + lining-nums sama persis dengan judul halaman Tim & Akses), 28px, semibold 600, warm white #F7F6F3, sama di HP dan desktop. Hanya judul — elemen, font lain, warna, tata letak, dan fungsi tidak berubah; terukur di preview, popup tetap 940px tanpa gulir, tanpa error konsol, tanpa publikasi.
+
+## Tim & Akses — hapus submenu 16 November
+- [x] Submenu posisi (Receptionist/Housekeeping/Supervisor/Inspector/Investor) dihapus dari item sidebar Tim & Akses; menu jadi satu item tunggal, daftar tim utuh (8 anggota), halaman lain tidak berubah, tanpa error konsol, tanpa publikasi.
