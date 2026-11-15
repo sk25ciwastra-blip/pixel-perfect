@@ -158,3 +158,9 @@
   .dtx-tutup { grid-column: 1 / -1; }
   .dtx-pdf-menu { width: min(300px, 86vw); }
 }
+@media (max-width: 640px) {
+  .dtx-dua > div:last-child .dtx-baris { grid-template-columns: 118px 10px minmax(0, 1fr); }
+  .dtx-hp { row-gap: 4px; }
+  .dtx-tombol, .dtx-cetak button { white-space: nowrap; font-size: 12px; }
+  .dtx-tombol svg, .dtx-cetak button svg { width: 16px; height: 16px; }
+}
