@@ -675,7 +675,7 @@ function Ringkasan() {
                 <div className="mt-4 grid grid-cols-3 gap-1.5">
                   <TombolAksi ikon={LogIn} judul="CHECK-IN" utama onClick={() => setModal("check_in")} />
                   <TombolAksi ikon={CalendarPlus} judul="RESERVASI" onClick={() => setModal("booking")} />
-                  <TombolAksi ikon={ReceiptText} judul="KAS KELUAR" onClick={() => setModal("pengeluaran")} />
+                  <TombolAksi ikon={ReceiptText} judul="EXPENSE" onClick={() => setModal("pengeluaran")} />
                 </div>
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -1292,7 +1292,7 @@ function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved
       <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "checkin-reference expense-reference"}`}>
         {nomor === null ? <div className="ci-header">
           <p>OPERASIONAL / PENGELUARAN BARU</p>
-          <div className="ci-header-title"><h2 id="judul-pengeluaran">Kas Keluar</h2><span className="ci-header-id">ID otomatis setelah disimpan</span></div>
+          <div className="ci-header-title"><h2 id="judul-pengeluaran">EXPENSE</h2><span className="ci-header-id">ID otomatis setelah disimpan</span></div>
           <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Tutup"><X /></Button>
         </div> : <div className="mb-4 flex items-center justify-between gap-3">
           <h2 id="judul-pengeluaran" className="text-lg font-bold">Form Kas Keluar</h2>
