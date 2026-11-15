@@ -221,3 +221,7 @@
 
 # Revisi lanjutan (di luar tahapan)
 - [x] Keuangan: susun ulang layout — KPI → Sesi Kas → dua kolom (Closing | Setoran/Refund) → Aktivitas Keuangan & Ringkasan Hari Ini → Pengaturan Owner; seluruh field, konfirmasi setoran, dan aturan closing dipertahankan.
+
+## Rincian Menginap — susunan gambar 16 November
+- [x] Susun ulang Rincian Menginap sesuai gambar: dua kolom berpisah garis emas tipis, judul bergaris penuh, tanggal satu baris dalam kotak hangat berikon kalender dengan jam WIB di bawahnya berikon jam, EXTEND berikon tambah dan OVERTIME berikon jam; urutan isian, data, hak akses dan fungsi tetap.
+- [x] Preview akun aktif 1582×900 dan 390×844: tidak ada teks terpotong (kotak tanggal 152/140px dari kebutuhan 144/132px), popup 940×784 tanpa gulir di komputer, EXTEND dan OVERTIME utuh di HP, tanpa error runtime dan build OK; tanpa perubahan database atau publikasi.
