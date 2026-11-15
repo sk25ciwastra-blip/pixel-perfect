@@ -144,3 +144,17 @@
 .dtx .dtx-tabel th { text-transform: none; letter-spacing: 0; color: var(--dtx-tinta); font-size: 15px; font-weight: 700; }
 .dtx-dua > div:last-child .dtx-baris { grid-template-columns: 136px 12px minmax(0, 1fr); }
 .dtx-cetak button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.dtx-dua { column-gap: 12px; }
+@media (max-width: 640px) {
+  .dtx-garis { display: none; }
+  .dtx-kepala { gap: 10px; }
+  .dtx-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+  .dtx-meta p { margin-top: 0; font-size: 12px; }
+  .dtx-status { font-size: 13px; padding: 3px 12px; }
+  .dtx-baris { align-items: start; }
+  .dtx-pied { padding: 8px 2px 10px; gap: 8px; font-size: 13px; }
+  .dtx-aksi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dtx-tombol, .dtx-cetak button, .dtx-tutup { height: 38px; font-size: 13px; padding: 0 10px; gap: 6px; }
+  .dtx-tutup { grid-column: 1 / -1; }
+  .dtx-pdf-menu { width: min(300px, 86vw); }
+}
