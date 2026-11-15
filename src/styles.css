@@ -99,6 +99,7 @@
   --gold: oklch(0.76 0.115 82);           /* #D6AD52 */
   --gold-light: oklch(0.87 0.105 88);     /* #F2D184 */
   --gold-dark: oklch(0.6 0.1 78);
+  --gold-krem: oklch(0.46 0.12 70);      /* emas tua & terbaca untuk nomor transaksi di latar terang */
   --v0-success: oklch(0.72 0.15 152);
   --v0-info: oklch(0.7 0.12 240);
   --v0-warning: oklch(0.8 0.14 75);
@@ -385,7 +386,6 @@
   --navy-deep: oklch(0.925 0.02 85);
   --gold-light: oklch(0.32 0.03 75);
   --gold: oklch(0.55 0.11 75);
-  --gold-krem: oklch(0.46 0.12 70);      /* emas kaya & terbaca untuk teks kecil di latar krem */
   --bahaya-foreground: oklch(0.55 0.21 27);
   --terisi-foreground: oklch(0.45 0.15 245);
   --secondary: oklch(0.9 0.015 85);

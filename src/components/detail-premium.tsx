@@ -6,7 +6,7 @@ import gedungSate from '@/assets/gedung-sate-malam.jpg';
 export function HeaderDetail({ title, nomor, onClose, panorama = false }: { title: string; nomor: string; onClose: () => void; panorama?: boolean }) {
   return <header className="relative isolate overflow-hidden border-b border-gold/25 bg-navy-deep px-5 py-5 sm:px-6 sm:py-6">
     {panorama && <img src={gedungSate} alt="" aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 -z-10 h-full w-1/2 object-cover object-center opacity-20 [mask-image:linear-gradient(to_right,transparent,black)]" />}
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p><h2 className="mt-2 break-words font-serif text-3xl leading-tight sm:text-4xl">{title}</h2><p className="mt-2 break-all font-mono text-xs text-muted-foreground sm:text-sm">ID: {nomor}</p></div><Button type="button" variant="outline" className="h-9 shrink-0 gap-1.5 border-gold/30 px-2.5 text-xs text-gold-light sm:px-3 sm:text-sm" onClick={onClose}><X className="size-4" />Tutup</Button></div>
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p><h2 className="mt-2 break-words font-serif text-3xl leading-tight sm:text-4xl">{title}</h2><p className="mt-2 break-all font-mono text-xs text-gold sm:text-sm">ID: {nomor}</p></div><Button type="button" variant="outline" className="h-9 shrink-0 gap-1.5 border-gold/30 px-2.5 text-xs text-gold-light sm:px-3 sm:text-sm" onClick={onClose}><X className="size-4" />Tutup</Button></div>
   </header>;
 }
 
