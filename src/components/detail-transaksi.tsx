@@ -42,7 +42,7 @@ function kodePaket(name: string | undefined) {
 
 const labelStatusTransaksi: Record<string, string> = {
   booking: 'Booking',
-  check_in: 'Terisi',
+  check_in: 'Check-in',
   check_out: 'Selesai',
   cancelled: 'Dibatalkan',
 };
