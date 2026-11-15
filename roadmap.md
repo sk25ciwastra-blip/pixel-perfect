@@ -1,5 +1,10 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Layar sambutan setelah login — 15 November
+- [x] Satu layar sambutan semi-3D sesuai referensi Owner: karakter 3D sebagai aset terpisah (`src/assets/karakter-manajemen.png`), bingkai emas, logo MANAJEMEN, lonceng, kartu pesan berdaun, pil "Login berhasil"; judul/pesan/label jabatan teks dinamis per peran (Owner, Supervisor, Receptionist, Housekeeping, Inspector, Investor) di `src/lib/sambutan.ts`.
+- [x] Alur: penanda sesi disetel hanya setelah `signInWithPassword` berhasil; overlay tampil hanya setelah sesi dan hak akses tervalidasi, fade CSS ±1,2 detik lalu otomatis hilang, dapat dilewati klik/keyboard, tidak tampil saat refresh atau sesi aktif; tanpa mengubah login, otorisasi, Training, sesi kas, database, maupun halaman lain.
+- [x] Preview akun uji Owner 1280×1800/390×844: overlay tampil dengan sapaan Owner, hilang otomatis ke Dashboard, refresh tidak menampilkan ulang, tanpa error runtime, build OK; tanpa publikasi.
+
 ## ID transaksi seragam warna emas — 15 November
 - [x] Samakan warna nomor transaksi di seluruh halaman dengan milik tabel Status Kamar: emas tua di latar terang (tabel krem Housekeeping, daftar Booking, kartu Kamar) dan champagne gold di latar gelap (Transaksi Terbaru, daftar Transaksi, riwayat Tamu, kepala Detail Transaksi, tabel aktivitas Keuangan); isi, hak akses, dan tindakan tetap.
 - [x] Preview akun aktif terukur: latar krem/kertas memakai oklch(0.46 0.12 70) sama persis dengan tabel Status Kamar, latar gelap memakai oklch(0.76 0.115 82); tidak ada nomor abu-abu tersisa, tanpa runtime error, build OK; tanpa publikasi.
