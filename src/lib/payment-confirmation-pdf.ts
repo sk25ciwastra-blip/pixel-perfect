@@ -2,7 +2,7 @@ import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib';
 import type { PDFPage } from 'pdf-lib';
 import { confirmationMoney, type PaymentConfirmation } from './payment-confirmation';
 
-export const CONFIRMATION_LOGO = '/assets/Logo_Resmi_BTRD25_Transparan.png';
+export const CONFIRMATION_LOGO = '/assets/Logo_Resmi_BTRD25_Gelap.png';
 
 /** Byte generator only. Layout follows the approved white–blue "Payment Confirmation" template. */
 export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, logoPng: Uint8Array) {
@@ -27,7 +27,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   const red = rgb(0.8, 0.18, 0.18);
   const redSoft = rgb(0.99, 0.91, 0.91);
   const width = 841.89, height = 595.28;
-  const panelTop = height - 158, panelBottom = 108, bottom = panelBottom + 4;
+  const panelTop = height - 150, panelBottom = 98, bottom = panelBottom + 4;
   const LX = 28, LW = 392, RX = 432, RW = width - 28 - RX;
 
   function clean(text: string) { return text.replace(/[\r\n\t\u0000-\u001f]/g, ' '); }
@@ -152,12 +152,12 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
     p.drawText(label, { x: R.x + 6, y: R.y, size: 11, font, color: ink });
     right(p, value, rr - 6, R.y, 11, font);
     p.drawLine({ start: { x: R.x, y: R.y - 10 }, end: { x: rr, y: R.y - 10 }, color: line, thickness: 0.6 });
-    R.y -= 25;
+    R.y -= 23;
   }
   p.drawRectangle({ x: R.x - 2, y: R.y - 12, width: rw + 4, height: 30, color: blueSoft });
   p.drawText('Grand Total', { x: R.x + 8, y: R.y - 3, size: 14, font: serif, color: ink });
   right(p, confirmationMoney(data.totals.bill), rr - 8, R.y - 3, 16, serif);
-  R.y -= 36;
+  R.y -= 32;
   p.drawText('Amount Paid', { x: R.x + 8, y: R.y, size: 11, font, color: ink });
   right(p, confirmationMoney(data.totals.netPaid), rr - 8, R.y, 11, font);
   R.y -= 16;
@@ -184,7 +184,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
     pg.drawRectangle({ x: R.x - 2, y: R.y - 16, width: rw + 4, height: 20, color: blueSoft, opacity: 0.8 });
     ['DATE & TIME', 'METHOD', 'AMOUNT'].forEach((t, i) => pg.drawText(t, { x: cols[i]!, y: R.y - 9, size: 7.5, font, color: ink }));
     right(pg, 'STATUS', rr - 16, R.y - 9, 7.5, font);
-    R.y -= 34;
+    R.y -= 30;
   };
   head();
   if (!data.history.length) { pageAt(R.page).drawText('No payments recorded', { x: cols[0]!, y: R.y, size: 9, font, color: muted }); R.y -= 20; }
