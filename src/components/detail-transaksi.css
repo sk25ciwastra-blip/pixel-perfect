@@ -110,7 +110,7 @@
 .dtx-kartu { border-radius: 7px; padding: 5px 10px; background: var(--dtx-peach-lembut); font-size: 12px; line-height: 1.35; }
 .dtx-kartu-atas { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .dtx-kartu-atas strong { font-size: 13px; font-weight: 800; }
-.dtx-kartu-atas span { font-size: 11px; font-weight: 700; white-space: nowrap; color: var(--dtx-tinta); }
+.dtx-kartu-atas span { font-size: 11px; font-weight: 400; white-space: nowrap; color: var(--dtx-tinta); }
 .dtx-kartu-bawah { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .dtx-kartu-kiri { min-width: 0; overflow-wrap: anywhere; }
 .dtx-kartu-kanan { font-size: 11px; font-weight: 700; white-space: nowrap; color: var(--dtx-tinta); }
