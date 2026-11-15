@@ -11,7 +11,7 @@ import logoBaturaden from "@/assets/logo-baturaden-25.png.asset.json";
 import { konteksHeader } from "@/lib/konteks-header";
 import { PengumumanSidebar } from "@/components/pengumuman-sidebar";
 
-type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean; anak?: { bagian: string; label: string }[] };
+type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean };
 
 function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
   if (peran === "owner") return true;
@@ -41,13 +41,7 @@ const semuaMenu: Menu[] = [
   { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles },
   { ke: "/keuangan", label: "Keuangan", ikon: Wallet, ownerSaja: true },
   { ke: "/laporan", label: "Laporan", ikon: FileBarChart },
-  { ke: "/karyawan", label: "Tim & Akses", ikon: IdCard, ownerSaja: true, anak: [
-    { bagian: "receptionist", label: "Receptionist" },
-    { bagian: "housekeeping", label: "Housekeeping" },
-    { bagian: "supervisor", label: "Supervisor" },
-    { bagian: "inspector", label: "Inspector" },
-    { bagian: "investor", label: "Investor" },
-  ] },
+  { ke: "/karyawan", label: "Tim & Akses", ikon: IdCard, ownerSaja: true },
   { ke: "/pengaturan", label: "Pengaturan", ikon: Settings, ownerSaja: true },
 ];
 
@@ -111,8 +105,7 @@ export function Kerangka({
 }) {
   const { peran, nama, posisi, posisiKode } = usePeran();
   const [lainnya, setLainnya] = useState(false);
-  const [tertutup, setTertutup] = useState<Record<string, boolean>>({});
-  const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname, bagian: (r.location.search as { bagian?: string }).bagian }) });
+  const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname }) });
   const menu = semuaMenu.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
   const teksKonteks = konteksHeader[lokasi.path];
@@ -130,8 +123,8 @@ export function Kerangka({
         <div className="relative mx-5 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
         <nav className="relative mt-4 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
           {menu.map((m) => (
-            <div key={m.ke}>
             <Link
+              key={m.ke}
               to={m.ke}
               activeOptions={{ exact: m.ke === "/" }}
               activeProps={{ className: "menu-aktif font-semibold text-gold-light" }}
@@ -142,27 +135,7 @@ export function Kerangka({
                 <m.ikon className="h-[17px] w-[17px]" strokeWidth={1.6} />
               </span>
               <span className="flex-1 truncate">{m.label}</span>
-              {m.anak && lokasi.path === m.ke && (
-                <span role="button" tabIndex={0} aria-label={tertutup[m.ke] ? "Buka submenu" : "Tutup submenu"}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTertutup((t) => ({ ...t, [m.ke]: !t[m.ke] })); }}
-                  className={`grid size-6 place-items-center rounded-md text-gold transition-transform hover:bg-gold/10 ${tertutup[m.ke] ? "" : "rotate-180"}`}><ChevronDown className="size-3.5" /></span>
-              )}
             </Link>
-            {m.anak && lokasi.path === m.ke && !tertutup[m.ke] && (
-              <div className="ml-[1.6rem] mt-1 mb-1.5 space-y-0.5 border-l border-gold/20 pl-3">
-                {m.anak.map((a, idx) => {
-                  const aktif = (lokasi.bagian ?? m.anak?.[0]?.bagian) === a.bagian;
-                  return (
-                    <Link key={a.bagian} to={m.ke} search={{ bagian: a.bagian } as never}
-                      className={`relative block rounded-md px-2.5 py-1.5 text-xs transition ${aktif ? "bg-gold/10 font-semibold text-gold-light before:absolute before:-left-[13px] before:top-1/2 before:size-1.5 before:-translate-y-1/2 before:rounded-full before:bg-gold before:shadow-[0_0_8px_var(--gold)]" : "text-muted-foreground hover:text-foreground"}`}
-                      data-idx={idx}>
-                      {a.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-            </div>
           ))}
         </nav>
         <PengumumanSidebar />
