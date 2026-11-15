@@ -229,3 +229,7 @@
 ## Detail Transaksi — kepala, penanda, dan label tombol 16 November
 - [x] Kepala popup jadi hitam dengan cahaya lembut di tepi; penanda BOOKING biru terang timbul bertulisan putih berkilau halus (CHECK-IN LANGSUNG tetap hijau); label kaki jadi "Bukti Digital" dan "Cetak Struk" tanpa "(PDF)"/"(58 mm)". Hanya tampilan — data, hak akses, fungsi, dan alur kas tidak berubah; build OK, tanpa error runtime, tanpa publikasi.
 - [x] Kepala popup diperhalus jadi hitam murni (#000000) dengan cahaya setipis mungkin di tepi (garis emas rambut di atas, sapuan sangat lemah di bawah/kiri/kanan) setelah Owner menilai cahaya sebelumnya terlalu terang; sampel piksel tengah (0,0,0), tepi 4–9, hanya garis emas pemisah yang tetap; build OK, tanpa error runtime, tanpa publikasi.
+
+## Detail Transaksi — penanda Booking dan menu Bukti Digital 16 November
+- [x] Penanda BOOKING dikecilkan (70×18px, tulisan 11px) dan cahaya dibatasi (bayangan 6px -3px) sehingga tidak menyentuh baris teks di atas/bawahnya; CHECK-IN LANGSUNG ikut ramping.
+- [x] Menu Bukti Digital kini dua tombol "Unduh" dan "WhatsApp" dengan keterangan "Unduh bukti pembayaran atau bagikan kepada tamu melalui WhatsApp."; dialog Check-in lama tetap memakai label aslinya. Hanya tampilan — data, hak akses, fungsi unduh/WhatsApp, dan alur kas tidak berubah; build OK, tanpa error runtime, tanpa publikasi.
