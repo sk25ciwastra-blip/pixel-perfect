@@ -42,6 +42,7 @@ type BarisKelompok={harga:PackageRoomTypePrice;paket:Package};
 
 function jamBerlaku(p:Package):string{
  const {mulai,selesai}=jamPaket(p);
+ if(p.time_mode==='fixed_days_checkout'&&selesai)return `${teksJamWib(selesai)} Hari ke ${Math.round(p.duration_minutes/1440)}`;
  if(mulai&&selesai)return `${teksJamWib(mulai)} - ${teksJamWib(selesai)}${selesai<mulai?' (besok)':''}`;
  return selesai?`Keluar ${teksJamWib(selesai)}`:'—';
 }
