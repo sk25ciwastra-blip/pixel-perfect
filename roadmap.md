@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## ID transaksi seragam warna emas — 15 November
+- [x] Samakan warna nomor transaksi di seluruh halaman dengan milik tabel Status Kamar: emas tua di latar terang (tabel krem Housekeeping, daftar Booking, kartu Kamar) dan champagne gold di latar gelap (Transaksi Terbaru, daftar Transaksi, riwayat Tamu, kepala Detail Transaksi, tabel aktivitas Keuangan); isi, hak akses, dan tindakan tetap.
+- [x] Preview akun aktif terukur: latar krem/kertas memakai oklch(0.46 0.12 70) sama persis dengan tabel Status Kamar, latar gelap memakai oklch(0.76 0.115 82); tidak ada nomor abu-abu tersisa, tanpa runtime error, build OK; tanpa publikasi.
+
 ## ID transaksi tabel krem lebih jelas — 15 November
 - [x] Perdalam warna emas nomor transaksi di tabel Status Kamar Dashboard dan perbesar sedikit teksnya agar terbaca jelas; pemutusan nomor di tanda hubung, isi, klik, izin dan proses tetap.
 - [x] Preview akun aktif: kontras terukur 5,6:1 terhadap latar krem (sebelumnya 3,4:1), teks 11px tebal, nomor pecah menjadi "BTRDTRX-" dan "000025" tanpa digit terpotong, klik tetap membuka detail, tanpa runtime error, build OK; tanpa publikasi.
