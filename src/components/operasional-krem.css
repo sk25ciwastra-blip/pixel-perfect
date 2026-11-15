@@ -6,9 +6,9 @@
   --gold-light: var(--gold-krem);
   --border: var(--premium-line);
   --input: var(--premium-line);
-  --siap-foreground: oklch(0.43 0.11 152);
-  --bahaya-foreground: oklch(0.5 0.16 25);
-  --terisi-foreground: oklch(0.43 0.08 240);
+  --siap-foreground: var(--premium-success);
+  --bahaya-foreground: var(--premium-danger);
+  --terisi-foreground: var(--premium-info);
   --perlu-foreground: var(--gold-krem);
   --destructive: var(--bahaya-foreground);
   color: var(--foreground);
@@ -42,7 +42,7 @@
 .ok-panel h3 { display: flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 700; color: var(--premium-ink); margin-bottom: 14px; padding-bottom: 9px; border-bottom: 1px solid var(--premium-line); }
 .ok-panel h3 svg { width: 22px; height: 22px; color: var(--gold-dark); stroke-width: 1.5; }
 .ok-rincian { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; }
-.ok-baris { display: grid; grid-template-columns: 100px 7px minmax(0,1fr); align-items: baseline; gap: 5px; font-size: 12px; line-height: 1.65; }
+.ok-baris { display: grid; grid-template-columns: 110px 7px minmax(0,1fr); align-items: baseline; gap: 5px; font-size: 12px; line-height: 1.65; }
 .ok-baris > svg { display: none; }
 .ok-baris > span:first-of-type { width: auto; color: var(--premium-muted); }
 .ok-baris > span:last-of-type { font-weight: 600; overflow-wrap: anywhere; }
