@@ -15,7 +15,7 @@ export async function confirmationPdfToJpg(pdfBytes: Uint8Array): Promise<Blob> 
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil(viewport.width);
     canvas.height = Math.ceil(viewport.height);
-    await page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise;
+    await page.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport }).promise;
     canvases.push(canvas);
     width = Math.max(width, canvas.width);
     height += canvas.height;
