@@ -48,8 +48,8 @@ const labelStatusTransaksi: Record<string, string> = {
 };
 
 const labelJenisPembayaran: Record<string, string> = {
-  dp: 'DP',
-  payment: 'Pelunasan',
+  dp: 'DOWN PAYMENT (DP)',
+  payment: 'FINAL PAYMENT',
 };
 
 function Panel({ judul, ikon: Ikon, isi, children }: { judul: string; ikon: LucideIcon; isi?: boolean; children: ReactNode }) {
@@ -173,13 +173,13 @@ export function DetailTransaksi({
 
   type Peristiwa = { key: string; waktu: string | null; judul: string; ikon: LucideIcon; nada?: 'hijau' | 'abu' | undefined; metode?: string | undefined; jumlah?: number | undefined; oleh?: string | undefined; ket?: string | undefined };
   const peristiwa: Peristiwa[] = ([
-    { key: 'buat', waktu: transaction.created_at, judul: viaBooking ? 'Booking dibuat' : 'Transaksi dibuat', ikon: CalendarDays, oleh: creator?.name },
-    ...transactionPayments.map(p => ({ key: p.id, waktu: p.created_at, judul: p.kind === 'dp' ? 'Pembayaran DP' : labelJenisPembayaran[p.kind] ?? p.kind, ikon: CreditCard, metode: p.method.toUpperCase(), jumlah: Number(p.amount), oleh: namaPegawai(p.recorded_by) })),
-    ...(transaction.started_at ? [{ key: 'in', waktu: transaction.started_at, judul: 'Check-in dilakukan', ikon: DoorOpen, nada: 'hijau' as const, oleh: viaBooking ? undefined : creator?.name }] : []),
+    { key: 'buat', waktu: transaction.created_at, judul: viaBooking ? 'RESERVASI' : 'Transaksi dibuat', ikon: CalendarDays, oleh: creator?.name },
+    ...transactionPayments.map(p => ({ key: p.id, waktu: p.created_at, judul: p.kind === 'dp' ? 'DOWN PAYMENT (DP)' : labelJenisPembayaran[p.kind] ?? p.kind, ikon: CreditCard, metode: p.method.toUpperCase(), jumlah: Number(p.amount), oleh: namaPegawai(p.recorded_by) })),
+    ...(transaction.started_at ? [{ key: 'in', waktu: transaction.started_at, judul: 'CHECK-IN', ikon: DoorOpen, nada: 'hijau' as const, oleh: viaBooking ? undefined : creator?.name }] : []),
   ] as Peristiwa[]).sort((a, b) => new Date(a.waktu ?? 0).getTime() - new Date(b.waktu ?? 0).getTime());
   if (transaction.status !== 'cancelled') peristiwa.push(transaction.checked_out_at
-    ? { key: 'out', waktu: transaction.checked_out_at, judul: 'Check-out dilakukan', ikon: Flag, oleh: namaPegawai(logCheckout?.user_id) }
-    : { key: 'out', waktu: null, judul: 'Check-out', ikon: Flag, nada: 'abu', ket: 'Belum dilakukan' });
+    ? { key: 'out', waktu: transaction.checked_out_at, judul: 'CHECK-OUT', ikon: Flag, oleh: namaPegawai(logCheckout?.user_id) }
+    : { key: 'out', waktu: null, judul: 'CHECK-OUT', ikon: Flag, nada: 'abu', ket: 'Belum dilakukan' });
 
   const status = transaction.status === 'booking' ? 'Menunggu Check-in' : labelStatusTransaksi[transaction.status] ?? transaction.status;
   const hargaDasar = transaction.base_price_snapshot ?? total - Number(transaction.extra_guest_charge ?? 0);
