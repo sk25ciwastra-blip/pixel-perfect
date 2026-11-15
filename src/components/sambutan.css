@@ -263,3 +263,6 @@
     transition: none;
   }
 }
+
+.sambutan-layar { background: #000; }
+.sambutan-gambar { display:block; width:min(92vw, 1000px); max-height:92vh; height:auto; object-fit:contain; border-radius:28px; }
