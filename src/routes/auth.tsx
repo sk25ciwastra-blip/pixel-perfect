@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, Mail, Lock, LogIn, Building2, Check } from 'lucide-react';
 import { meta } from '@/lib/meta';
-import { tandaiSambutan } from '@/lib/sambutan';
 // Panorama unggahan sebelumnya dipilih kembali oleh Owner; lokasi belum terverifikasi.
 import panorama from '@/assets/panorama-kota-malam.png.asset.json';
 import logoBaturaden from '@/assets/logo-baturaden-25.png.asset.json';
@@ -19,7 +18,7 @@ function Auth() {
     e.preventDefault(); setBusy(true); setError('');
     if (mode === 'lupa') { const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` }); setError(error?.message ?? 'Jika alamat terdaftar, tautan pengaturan ulang sudah dikirim.'); }
     else if (mode === 'daftar') { const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } }); setError(error?.message ?? 'Periksa email untuk mengonfirmasi akun. Pemilik perlu memberi akses sebelum Anda dapat masuk.'); }
-    else { const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setError('Alamat email atau kata sandi tidak sesuai.'); else { tandaiSambutan(); await navigate({ to: '/' }); } }
+    else { const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) setError('Alamat email atau kata sandi tidak sesuai.'); else { await navigate({ to: '/' }); } }
     setBusy(false);
   }
   const input = 'h-10 w-full rounded-xl border border-gold/70 bg-gradient-to-b from-background/90 to-navy-deep/80 pl-12 pr-4 text-[14px] text-foreground placeholder:text-foreground/70 shadow-[inset_0_2px_6px_color-mix(in_oklch,var(--background)_80%,transparent)] outline-none transition focus:border-gold focus:ring-4 focus:ring-gold/20';
