@@ -37,6 +37,31 @@
 
 .ph-kosong{padding:22px 16px;font-size:13px;font-weight:600;color:#5b5348;text-align:center}
 
+/* Pilihan tipe kamar di halaman awal */
+.ph-pilihan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:28px}
+.ph-kartu-tipe{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:22px 20px;border-radius:16px;cursor:pointer;text-align:left;
+ border:1px solid color-mix(in oklab,var(--gold) 45%,transparent);
+ background:linear-gradient(160deg,#fdfaf4 0%,#f8f4ec 55%,#efe7d8 100%);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -2px 0 color-mix(in oklab,var(--gold) 18%,transparent),0 10px 24px -14px rgba(0,0,0,.6),0 2px 6px -2px rgba(0,0,0,.35);
+ transition:transform .18s ease,box-shadow .18s ease}
+.ph-kartu-tipe:hover,.ph-kartu-tipe:focus-visible{transform:translateY(-2px);outline:none;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 0 0 1px color-mix(in oklab,var(--gold) 70%,transparent),0 14px 28px -14px rgba(0,0,0,.65),0 0 18px -6px color-mix(in oklab,var(--gold) 55%,transparent)}
+.ph-kartu-tipe h2{margin:0;font-family:var(--font-serif,serif);font-size:21px;font-weight:600;color:#1d1a16}
+.ph-kartu-tipe .ph-kartu-jumlah{font-size:12px;font-weight:600;color:#8a7d68}
+.ph-kartu-tipe svg{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--gold-krem)}
+
+.ph-kembali-tipe{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;margin-bottom:18px;border-radius:999px;border:none;cursor:pointer;
+ font-size:13px;font-weight:600;color:var(--gold);
+ background:radial-gradient(circle at 35% 30%,#3a332a,#0d0c0b 75%);
+ box-shadow:inset 0 1px 1px rgba(255,255,255,.16),0 0 0 1px color-mix(in oklab,var(--gold) 65%,transparent),0 6px 14px -6px rgba(0,0,0,.7);
+ transition:transform .18s ease,box-shadow .18s ease}
+.ph-kembali-tipe:hover,.ph-kembali-tipe:focus-visible{transform:translateY(-1px);outline:none;box-shadow:inset 0 1px 1px rgba(255,255,255,.16),0 0 0 1px var(--gold),0 0 16px -4px color-mix(in oklab,var(--gold) 60%,transparent)}
+.ph-kembali-tipe svg{width:16px;height:16px}
+
+@media (max-width:640px){
+ .ph-pilihan{grid-template-columns:1fr}
+}
+
 @media (max-width:640px){
  .ph-judul h2{font-size:19px}
  .ph-tabel th,.ph-tabel td{padding:10px 12px}
