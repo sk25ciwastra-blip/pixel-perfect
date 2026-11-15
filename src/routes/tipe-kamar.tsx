@@ -31,9 +31,7 @@ function lantaiAsli(r:Room):number|null{
 /** Lantai hanya ditampilkan bila data aslinya tersedia; — bila belum. */
 function teksLantai(r:Room):string{const v=lantaiAsli(r);return v===null?'—':String(v)}
 
-// Lantai boleh ikut tersimpan begitu kolomnya ada; tipe bawaan belum memuatnya.
-type KamarBaru=TablesInsert<'rooms'>&{lantai?:number|null};
-type KamarUbah=TablesUpdate<'rooms'>&{lantai?:number|null};
+// Lantai boleh ikut tersimpan begitu kolomnya ada di basis data.
 
 function Halaman(){
  const {peran}=usePeran();const owner=peran==='owner';
