@@ -53,9 +53,8 @@ function Halaman(){
   if((kamar.rows as Room[]).some(r=>r.room_number.trim().toLowerCase()===n.toLowerCase()&&r.id!==item?.id)){setPesan('Nomor kamar sudah digunakan.');return}
   let lt:number|null=null;
   if(lantai.trim()!==''){const v=Number(lantai.trim());if(!Number.isInteger(v)||v<1){setPesan('Lantai harus bilangan bulat, minimal 1.');return}lt=v}
-  const isi:{lantai?:number|null}=adaLantai?{lantai:lt}:{};
-  const ubahData:KamarUbah={room_number:n,...isi};
-  const tambahData:KamarBaru={room_number:n,room_type_id:terpilih.id,...isi};
+  const ubahData={room_number:n,...(adaLantai?{lantai:lt}:{})} as unknown as TablesUpdate<'rooms'>;
+  const tambahData={room_number:n,room_type_id:terpilih.id,...(adaLantai?{lantai:lt}:{})} as unknown as TablesInsert<'rooms'>;
   const res=item?await supabase.from('rooms').update(ubahData).eq('id',item.id):await supabase.from('rooms').insert(tambahData);
   if(res.error)setPesan(res.error.message);else{setOpen(false);await kamar.refresh()}}
  async function alih(r:Room){setInfo('');
