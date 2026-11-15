@@ -89,10 +89,10 @@
 
 /* Tabel Manajemen Kamar: lebar kolom tetap agar header dan isi sejajar, jarak konsisten */
 .tk-tabel table{table-layout:fixed;min-width:860px}
-.tk-tabel th,.tk-tabel td{padding:13px 18px}
+.tk-tabel th,.tk-tabel td{padding:13px 18px;text-align:center}
 .tk-tabel th{white-space:nowrap}
 .tk-tabel td{overflow:hidden;text-overflow:ellipsis}
-.tk-tabel td:last-child,.tk-tabel th:last-child{text-align:right}
+.tk-tabel td:last-child,.tk-tabel th:last-child{text-align:center}
 .tk-k-nomor{width:12%}.tk-k-tipe{width:17%}.tk-k-lantai{width:10%}.tk-k-status{width:14%}.tk-k-ubah{width:29%}.tk-k-aksi{width:18%}
-.tk-aksi{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.tk-aksi{display:flex;align-items:center;justify-content:center;gap:10px}
 @media (max-width:640px){.tk-tabel th,.tk-tabel td{padding:11px 12px}}
