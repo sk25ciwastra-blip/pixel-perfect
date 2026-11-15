@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Kas Keluar — gambar 15 November
+- [x] Sesuaikan kepala, font dan panel: Sesi Kas penuh di atas, Rincian/Pembayaran berdampingan, Ringkasan penuh di bawah; CASH, data pilihan, izin dan penyimpanan tetap.
+- [x] Preview akun aktif 1582×900/390×844: susunan panel sesuai referensi, nominal Rp25.000 terbaca di Ringkasan, Batal menutup, tanpa overflow/error runtime; tes keuangan/training PASS dan build OK. Pilihan pengeluaran tetap belum tersedia; tanpa menyimpan pengeluaran atau publikasi.
+
 ## Booking — pilihan tipe kamar
 - [x] Hilangkan kolom input Tamu Tambahan hanya pada Booking; gunakan pilihan tipe lalu nomor terurut seperti Check-in, dengan sumber kamar Booking, tanggal/jam, DP dan penyimpanan tetap.
 - [x] Preview akun aktif komputer/HP: input Tamu Tambahan tidak tampil di Booking, empat tipe berurutan dan nomor terkecil per tipe, paket/tanggal/jam/DP dapat dipilih; Check-in tetap memiliki input Tamu Tambahan. Dua tes urutan PASS, tanpa runtime error, build OK; tanpa menyimpan transaksi atau publikasi.

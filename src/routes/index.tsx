@@ -1289,7 +1289,7 @@ function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved
   );
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm" onClick={onClose}>
-      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "checkin-reference"}`}>
+      <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "checkin-reference expense-reference"}`}>
         {nomor === null ? <div className="ci-header">
           <p>OPERASIONAL / PENGELUARAN BARU</p>
           <div className="ci-header-title"><h2 id="judul-pengeluaran">Kas Keluar</h2><span className="ci-header-id">ID otomatis setelah disimpan</span></div>
@@ -1307,22 +1307,22 @@ function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved
         ) : (
           <div className="ci-form">
             <div className="ci-grid">
+              <section className="ci-pane expense-session"><h3><CircleDollarSign />Sesi Kas</h3><div className="ci-fields">
+                <label className={kelasLabel}><span className={judulLabel}>Nama Sesi Kas Aktif</span><div className={kelasKunci} aria-readonly="true">{!sessionId ? "Belum ada sesi kas aktif" : namaSesi || "Sesi kas aktif"}</div></label>
+              </div></section>
               <section className="ci-pane"><h3><ReceiptText />Rincian Pengeluaran</h3><div className="ci-fields">
                 <label className={kelasLabel}><span className={judulLabel}>Jenis Pengeluaran</span><Pilih nilai={kategori} ubah={setKategori} daftar={daftarJenis} kosong="Pilih jenis" /></label>
                 <label className={kelasLabel}><span className={judulLabel}>Keperluan Siapa</span><Pilih nilai={keperluan} ubah={setKeperluan} daftar={daftarKeperluan} kosong="Pilih keperluan" /></label>
                 <label className={kelasLabel}><span className={judulLabel}>Untuk Pembayaran Apa?</span><input required maxLength={200} value={untukApa} onChange={(e) => setUntukApa(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Keterangan pembayaran" /></label>
-              </div>{!daftarSiap && !opsi.loading && <p className="ci-notice">{pesanBelum}</p>}</section>
-              <section className="ci-pane"><h3><CircleDollarSign />Sesi Kas</h3><div className="ci-fields">
-                <label className={kelasLabel}><span className={judulLabel}>Nama Sesi Kas Aktif</span><div className={kelasKunci} aria-readonly="true">{!sessionId ? "Belum ada sesi kas aktif" : namaSesi || "Sesi kas aktif"}</div></label>
-              </div></section>
-              <section className="ci-pane"><h3><CreditCard />Pembayaran</h3><div className="ci-fields">
+              </div>{!daftarSiap && !opsi.loading && <p className="ci-notice expense-notice"><Info />{pesanBelum}</p>}</section>
+              <section className="ci-pane expense-payment"><h3><CreditCard />Pembayaran</h3><div className="ci-fields">
                 <label className={kelasLabel}><span className={judulLabel}>Metode Pembayaran</span><div className={`${kelasKunci} font-semibold`} aria-readonly="true">CASH</div></label>
-                <label className={kelasLabel}><span className={judulLabel}>Nominal Pengeluaran (Rp)</span><input required type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} /></label>
+                <label className={kelasLabel}><span className={judulLabel}>Nominal Pengeluaran (Rp)</span><input required type="number" min="1" value={nominal} onChange={(e) => setNominal(e.target.value)} className={`mt-1 ${kelasInput}`} placeholder="Masukkan nominal pengeluaran" /></label>
               </div></section>
-              <section className="ci-pane"><h3><FileText />Ringkasan Pengeluaran</h3><div className="ci-summary"><div className="ci-total ci-expense-total"><span>Total Kas Keluar</span><span aria-readonly="true">{rupiah(Number(nominal) > 0 ? Number(nominal) : 0)}</span></div></div></section>
+              <section className="ci-pane expense-summary"><h3><FileText />Ringkasan Pengeluaran</h3><div className="ci-summary"><div className="ci-total ci-expense-total"><span>Total Kas Keluar</span><span aria-readonly="true">{rupiah(Number(nominal) > 0 ? Number(nominal) : 0)}</span></div></div></section>
             </div>
             {pesan && <p role="alert" className="ci-notice text-destructive">{pesan}</p>}
-            <footer className="ci-footer"><p className="ci-reminder"><Info />Pastikan rincian dan nominal pengeluaran sudah sesuai</p><div className="ci-footer-actions">
+            <footer className="ci-footer"><p className="ci-reminder"><Info />Pastikan rincian dan nominal pengeluaran sudah sesuai.</p><div className="ci-footer-actions">
               <Button type="button" variant="outline" onClick={onClose}>Batal</Button>
               <Button type="submit" disabled={simpan || !daftarSiap}>{simpan ? "Menyimpan…" : "Simpan Pengeluaran"}</Button>
             </div></footer>
