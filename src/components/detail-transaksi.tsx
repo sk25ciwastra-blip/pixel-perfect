@@ -194,7 +194,7 @@ export function DetailTransaksi({
           </div>
           <div className="dtx-meta">
             <span className={`dtx-status dtx-status-${transaction.status}`}>{status.toUpperCase()}</span>
-            <p>Dibuat pada : {waktuWib(transaction.created_at)}</p>
+            <p>Dibuat pada : {jejakWib(transaction.created_at)}</p>
           </div>
         </header>
 
@@ -245,10 +245,21 @@ export function DetailTransaksi({
                 <ol className="dtx-linimasa">{peristiwa.map(e => <li key={e.key} className={e.nada ? `dtx-nada-${e.nada}` : undefined}>
                   <span className="dtx-bulat"><e.ikon /></span>
                   <div className="dtx-kartu">
-                    <div className="dtx-kartu-atas"><strong>{e.judul}</strong><span>{e.waktu ? waktuWib(e.waktu) : '—'}</span></div>
-                    {e.metode && <p>{e.metode} <span aria-hidden>•</span> <b>{rupiah(e.jumlah ?? 0)}</b></p>}
-                    {e.oleh && <p>oleh <b>{e.oleh}</b></p>}
-                    {e.ket && <p><em>{e.ket}</em></p>}
+                    <div className="dtx-kartu-atas"><strong>{e.judul}</strong><span>{tanggalHariWib(e.waktu)}</span></div>
+                    <div className="dtx-kartu-bawah">
+                      <span className="dtx-kartu-kiri">
+                        {e.metode
+                          ? <>{e.metode} <span aria-hidden>·</span> <b>{rupiah(e.jumlah ?? 0)}</b></>
+                          : e.oleh
+                            ? <>Oleh : <b>{e.oleh}</b></>
+                            : e.ket
+                              ? <em>{e.ket}</em>
+                              : null}
+                      </span>
+                      <span className="dtx-kartu-kanan">{e.waktu ? `${jamWib(e.waktu)} WIB` : ''}</span>
+                    </div>
+                    {e.metode && e.oleh && <p className="dtx-kartu-oleh">Oleh : <b>{e.oleh}</b></p>}
+                    {e.metode && e.ket && <p><em>{e.ket}</em></p>}
                   </div>
                 </li>)}</ol>
               </Panel>
@@ -264,7 +275,7 @@ export function DetailTransaksi({
         </div>
 
         <footer className="dtx-pied">
-          <p><strong>Terakhir diubah :</strong> {waktuWib(transaction.updated_at)}</p>
+          <p><strong>Terakhir diubah :</strong> {jejakWib(transaction.updated_at)}</p>
           <div className="dtx-aksi">
             <div className="dtx-pdf">
               <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital<ChevronDown className="dtx-panah" /></button>
