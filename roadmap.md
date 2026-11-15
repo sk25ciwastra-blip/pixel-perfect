@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Nomor transaksi emas di tabel krem — 15 November
+- [x] Ganti warna nomor transaksi di tabel Status Kamar Dashboard dari abu-abu gelap menjadi emas; isi, klik, izin dan proses tetap.
+- [x] Preview akun aktif: warna terukur emas kaya dan terbaca di latar krem, klik tetap membuka detail, tanpa runtime error, build OK; tanpa publikasi.
+
 ## Kas Keluar — gambar 15 November
 - [x] Sesuaikan kepala, font dan panel: Sesi Kas penuh di atas, Rincian/Pembayaran berdampingan, Ringkasan penuh di bawah; CASH, data pilihan, izin dan penyimpanan tetap.
 - [x] Preview akun aktif 1582×900/390×844: susunan panel sesuai referensi, nominal Rp25.000 terbaca di Ringkasan, Batal menutup, tanpa overflow/error runtime; tes keuangan/training PASS dan build OK. Pilihan pengeluaran tetap belum tersedia; tanpa menyimpan pengeluaran atau publikasi.
