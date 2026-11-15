@@ -239,7 +239,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   for (const h of data.history) {
     const methodLines = wrap(h.method, 72, 10);
     const rowH = 12 + methodLines.length * 12;
-    need(R, rowH, head);
+    need(R, 10 + methodLines.length * 2, head);
     const p = pageAt(R.page);
     p.drawText(when(h.date).replace('  ·  ', ' · '), { x: cols[0]!, y: R.y, size: 10, font, color: ink });
     methodLines.forEach((m, i) => p.drawText(m, { x: cols[1]!, y: R.y - i * 12, size: 10, font, color: ink }));
