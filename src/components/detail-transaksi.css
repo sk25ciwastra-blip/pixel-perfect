@@ -35,7 +35,7 @@
 }
 .dtx-jejak { color: #F4EFE6; font-size: 11px; font-weight: 600; letter-spacing: .01em; margin-bottom: 3px; }
 .dtx-judul { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
-.dtx-judul h2 { color: #FFFFFF; font-size: 20px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; }
+.dtx-judul h2 { color: #F7F6F3; font-family: var(--font-serif); font-size: 28px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; font-variant-numeric: lining-nums; }
 .dtx-nomor { font-family: var(--font-mono, ui-monospace, monospace); color: #F4EFE6; font-size: 13px; letter-spacing: .1em; padding: 2px 9px; border-radius: 5px; background: #2A2723; }
 .dtx-meta { text-align: right; flex-shrink: 0; }
 .dtx-status { display: inline-block; color: #FFFFFF; font-size: 13px; font-weight: 700; letter-spacing: .03em; padding: 3px 14px; border-radius: 6px; border: 1.5px solid var(--premium-success); background: color-mix(in oklab, var(--premium-success) 14%, #0B0A08); box-shadow: 0 0 10px -2px color-mix(in oklab, var(--premium-success) 70%, transparent); }
@@ -165,7 +165,7 @@
   .dtx { border-radius: 12px; }
   .dtx-kepala { flex-wrap: wrap; padding: 12px 12px; }
   .dtx-meta { text-align: left; }
-  .dtx-judul h2 { font-size: 19px; }
+  .dtx-judul h2 { font-size: 28px; }
   .dtx-nomor { font-size: 12px; }
   .dtx-isi { padding: 10px 8px 4px; }
   .dtx-panel { padding: 10px 12px 12px; }
