@@ -59,7 +59,7 @@ const labelJenisPembayaran: Record<string, string> = {
   payment: 'Pelunasan',
 };
 
-const kelasPopup = 'operasional-krem flex max-h-[calc(100dvh-2rem)] w-full max-w-[1000px] flex-col overflow-hidden text-sm';
+const kelasPopup = 'operasional-krem flex max-h-[calc(100dvh-2rem)] w-full max-w-[940px] flex-col overflow-hidden text-sm ok-detail';
 
 function Seksi({ judul, ikon: Ikon, children }: { judul: string; ikon: LucideIcon; children: ReactNode }) {
   return <section className="ok-panel"><h3><Ikon /><span>{judul}</span></h3>{children}</section>;
@@ -71,7 +71,7 @@ function Baris({ label, children }: { label: string; ikon: LucideIcon; nada?: st
 
 function Kepala({ nomor, statusLabel, statusDot, dibuat }: { nomor: string; statusLabel: string; statusDot: string; dibuat: string }) {
   return <header className="ok-kepala">
-    <div className="min-w-0"><p>TRANSAKSI / ARSIP OPERASIONAL</p><div className="flex flex-wrap items-center gap-3"><h2>Detail Transaksi</h2><span className="ok-nomor font-mono break-all">{nomor}</span></div></div>
+    <div className="min-w-0"><p>TRANSAKSI / ARSIP OPERASIONAL</p><div className="flex flex-wrap items-center gap-3"><h2>Detail Transaksi</h2><span className="ok-nomor font-mono break-all">{nomor}</span><span className="ok-garis" aria-hidden /></div></div>
     <div className="ok-meta"><span className="inline-flex items-center gap-2 rounded-md border border-primary/50 px-3 py-1 text-xs font-semibold text-primary">{statusLabel.toUpperCase()}<span className={`sr-only ${statusDot}`} /></span><p>Dibuat pada : {dibuat}</p></div>
   </header>;
 }

@@ -141,3 +141,41 @@
 @media (max-width: 700px) { .ok-rincian .ok-baris > span:last-of-type { white-space: normal; } }
 .ok-rincian:not(.ok-ekstra) { column-gap: 26px; }
 .ok-rincian:not(.ok-ekstra) .ok-baris { font-size: 14px; grid-template-columns: 118px 10px minmax(0,1fr); }
+/* Detail transaksi — penyempurnaan referensi: lembut, berdimensi, ringkas */
+.ok-detail { border-radius: 10px; border: 0; background: radial-gradient(120% 80% at 50% 0%, var(--premium-paper), color-mix(in oklab, var(--premium-highlight) 55%, var(--premium-paper))); box-shadow: 0 30px 80px -20px color-mix(in oklab, var(--navy-deep) 80%, transparent); max-height: calc(100dvh - 1.5rem); }
+.ok-detail .ok-kepala { padding: 12px 22px; background: linear-gradient(180deg, color-mix(in oklab, var(--navy-deep) 85%, var(--premium-ink)), var(--navy-deep)); border-bottom: 4px solid color-mix(in oklab, var(--primary) 55%, transparent); box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--primary) 50%, transparent); }
+.ok-detail .ok-kepala h2 { font-size: 24px; text-shadow: 0 2px 6px color-mix(in oklab, var(--navy-deep) 80%, transparent); }
+.ok-detail .ok-kepala > div > p { font-size: 11px; margin-bottom: 2px; }
+.ok-detail .ok-kepala .ok-nomor { background: color-mix(in oklab, var(--premium-paper) 8%, transparent); border: 0; font-size: 15px; padding: 2px 10px; }
+.ok-detail .ok-garis { width: 2px; height: 26px; background: var(--primary); border-radius: 2px; margin-left: 4px; }
+.ok-detail .ok-meta > span { font-size: 13px; padding: 3px 16px; border-radius: 7px; border-color: var(--siap-foreground); box-shadow: 0 0 10px -2px color-mix(in oklab, var(--primary) 60%, transparent), inset 0 0 6px color-mix(in oklab, var(--siap-foreground) 25%, transparent); }
+.ok-detail .ok-meta p { font-size: 13px; margin-top: 8px; }
+.ok-detail .ok-isi { padding: 12px 16px; }
+.ok-detail .ok-grid, .ok-detail .ok-kolom { gap: 10px; }
+.ok-detail .ok-panel { border: 0; border-radius: 10px; padding: 10px 14px; background: color-mix(in oklab, var(--premium-paper) 70%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--premium-line) 45%, transparent), 0 8px 22px -14px color-mix(in oklab, var(--gold-dark) 55%, transparent), inset 0 1px 0 var(--premium-paper); }
+.ok-detail .ok-panel h3 { font-size: 18px; margin-bottom: 8px; padding-bottom: 9px; color: var(--navy-deep); text-shadow: 0 1px 1px color-mix(in oklab, var(--gold-dark) 25%, transparent); }
+.ok-detail .ok-panel h3 svg { width: 21px; height: 21px; filter: drop-shadow(0 1px 1px color-mix(in oklab, var(--gold-dark) 40%, transparent)); }
+.ok-detail .ok-panel h3::after { width: 66px; height: 3px; box-shadow: 0 1px 3px color-mix(in oklab, var(--gold-dark) 50%, transparent); }
+.ok-detail .ok-baris, .ok-detail .ok-rincian:not(.ok-ekstra) .ok-baris { font-size: 13px; line-height: 1.75; grid-template-columns: 110px 10px minmax(0,1fr); text-shadow: 0 1px 0 var(--premium-paper); }
+.ok-detail .ok-baris > span:first-of-type, .ok-detail .ok-baris > span:last-of-type { justify-self: start; background: linear-gradient(90deg, color-mix(in oklab, var(--primary) 35%, transparent), transparent) bottom / 100% 1px no-repeat; }
+.ok-detail .ok-ekstra { margin-top: 10px; gap: 10px; }
+.ok-detail .ok-kotak { background: linear-gradient(180deg, color-mix(in oklab, var(--premium-highlight) 60%, transparent), transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--premium-line) 40%, transparent); }
+.ok-detail .ok-kotak h4 { font-size: 13px; padding: 3px 14px; }
+.ok-detail .ok-kotak .ok-baris { padding: 0 14px; font-size: 12px; line-height: 1.7; }
+.ok-detail .ok-payment { font-size: 13px; padding: 2px 4px; }
+.ok-detail .ok-dibayar { font-size: 14px; margin-top: 4px; }
+.ok-detail .ok-total { font-size: 14px; padding: 6px 10px; background: linear-gradient(90deg, var(--premium-highlight), color-mix(in oklab, var(--premium-highlight) 40%, transparent)); box-shadow: inset 0 1px 0 var(--premium-paper); }
+.ok-detail .ok-total strong { font-size: 16px; text-shadow: 0 1px 2px color-mix(in oklab, var(--gold-dark) 30%, transparent); }
+.ok-detail .ok-history { max-height: 108px; padding: 2px 12px; box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--premium-line) 40%, transparent); }
+.ok-detail .ok-history-item { padding: 6px 0; }
+.ok-detail .ok-history-top { font-size: 13px; }
+.ok-detail .ok-history-meta { font-size: 11px; margin: 1px 0 3px; }
+.ok-detail .ok-lihat { font-size: 12px; padding: 2px 12px; box-shadow: 0 2px 6px -3px var(--gold-dark); }
+.ok-detail .ok-table-wrap { margin-top: 10px; }
+.ok-detail .ok-tabel-gulir { max-height: 96px; }
+.ok-detail .ok-table-wrap table { font-size: 13px; }
+.ok-detail .ok-table-wrap th { font-size: 13px; padding: 6px 8px; background: linear-gradient(180deg, var(--premium-highlight), color-mix(in oklab, var(--premium-highlight) 60%, var(--premium-paper))); }
+.ok-detail .ok-table-wrap td { padding: 5px 8px; }
+.ok-detail .ok-pied { padding: 8px 18px; border-top: 0; }
+.ok-detail .ok-diubah { font-size: 13px; }
+.ok-detail .ok-pied .ok-noir { height: 34px; font-size: 14px; border-radius: 7px; box-shadow: 0 0 0 1px var(--primary), 0 6px 14px -6px var(--navy-deep); }
