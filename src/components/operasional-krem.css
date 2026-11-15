@@ -192,3 +192,6 @@
 .ok-detail .ok-kepala h2 { background: linear-gradient(180deg, var(--premium-paper), var(--gold-light)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .ok-detail .ok-total { box-shadow: inset 0 1px 0 var(--premium-paper), inset 0 -1px 0 color-mix(in oklab, var(--primary) 35%, transparent), 0 4px 10px -8px var(--gold-dark); }
 @media (prefers-reduced-motion: reduce) { .ok-detail .ok-panel, .ok-detail .ok-panel:hover { transition: none; transform: none; } }
+.ok-detail .ok-kotak .ok-baris { grid-template-columns: 112px 10px minmax(0,1fr); }
+.ok-detail .ok-baris > span:first-of-type { white-space: nowrap; }
+.ok-detail .ok-kepala h2 { background: none; color: var(--premium-paper); text-shadow: 0 1px 0 color-mix(in oklab, var(--primary) 45%, transparent), 0 3px 8px color-mix(in oklab, var(--navy-deep) 90%, transparent); }
