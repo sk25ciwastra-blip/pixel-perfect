@@ -11,7 +11,7 @@ import logoBaturaden from "@/assets/logo-baturaden-25.png.asset.json";
 import { konteksHeader } from "@/lib/konteks-header";
 import { PengumumanSidebar } from "@/components/pengumuman-sidebar";
 
-type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean; anak?: { bagian: string; label: string }[] };
+type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean };
 
 function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
   if (peran === "owner") return true;
@@ -41,13 +41,7 @@ const semuaMenu: Menu[] = [
   { ke: "/housekeeping", label: "Housekeeping", ikon: Sparkles },
   { ke: "/keuangan", label: "Keuangan", ikon: Wallet, ownerSaja: true },
   { ke: "/laporan", label: "Laporan", ikon: FileBarChart },
-  { ke: "/karyawan", label: "Tim & Akses", ikon: IdCard, ownerSaja: true, anak: [
-    { bagian: "receptionist", label: "Receptionist" },
-    { bagian: "housekeeping", label: "Housekeeping" },
-    { bagian: "supervisor", label: "Supervisor" },
-    { bagian: "inspector", label: "Inspector" },
-    { bagian: "investor", label: "Investor" },
-  ] },
+  { ke: "/karyawan", label: "Tim & Akses", ikon: IdCard, ownerSaja: true },
   { ke: "/pengaturan", label: "Pengaturan", ikon: Settings, ownerSaja: true },
 ];
 
@@ -111,8 +105,7 @@ export function Kerangka({
 }) {
   const { peran, nama, posisi, posisiKode } = usePeran();
   const [lainnya, setLainnya] = useState(false);
-  const [tertutup, setTertutup] = useState<Record<string, boolean>>({});
-  const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname, bagian: (r.location.search as { bagian?: string }).bagian }) });
+  const lokasi = useRouterState({ select: (r) => ({ path: r.location.pathname }) });
   const menu = semuaMenu.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode));
   const menuLain = menu.filter((m) => !bawah.some((b) => b.ke === m.ke));
   const teksKonteks = konteksHeader[lokasi.path];
