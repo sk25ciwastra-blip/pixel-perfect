@@ -27,7 +27,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   const red = rgb(0.8, 0.18, 0.18);
   const redSoft = rgb(0.99, 0.91, 0.91);
   const width = 841.89, height = 595.28;
-  const panelTop = height - 158, panelBottom = 108, bottom = panelBottom + 14;
+  const panelTop = height - 158, panelBottom = 108, bottom = panelBottom + 4;
   const LX = 28, LW = 392, RX = 432, RW = width - 28 - RX;
 
   function clean(text: string) { return text.replace(/[\r\n\t\u0000-\u001f]/g, ' '); }
@@ -131,7 +131,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
       L.y -= i === lines.length - 1 ? 14 : 15;
     });
     pageAt(L.page).drawLine({ start: { x: L.x, y: L.y }, end: { x: L.x + lw, y: L.y }, color: line, thickness: 0.6 });
-    L.y -= 20;
+    L.y -= 17;
   }
 
   // ---------- Right: summary, status, history ----------
