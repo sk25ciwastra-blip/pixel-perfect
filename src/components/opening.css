@@ -1,0 +1,120 @@
+/* Opening aplikasi — logo reveal premium, scoped, murni CSS, total ±2 detik. */
+
+.opening-layar {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  opacity: 1;
+  transition: opacity 350ms ease;
+  pointer-events: none;
+}
+
+.opening-layar[data-menutup] { opacity: 0; }
+
+.opening-kunci {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  overflow: hidden;
+  padding: 24px 40px;
+}
+
+/* Elemen 1: logo muncul terpisah dari atas, lalu menyatu pada posisi akhir. */
+.opening-logo {
+  width: min(300px, 62vw);
+  height: auto;
+  opacity: 0;
+  transform: translateY(-16px) scale(1.06);
+  filter: blur(6px);
+  animation: opening-logo 650ms cubic-bezier(0.22, 0.9, 0.3, 1) 120ms forwards;
+}
+
+@keyframes opening-logo {
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+.opening-manajemen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Elemen 2: garis emas menyapu masuk dari kedua sisi. */
+.opening-garis {
+  width: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+  opacity: 0;
+  animation: opening-garis-kiri 500ms ease-out 420ms forwards;
+}
+
+.opening-garis-kanan {
+  background: linear-gradient(90deg, var(--gold), transparent);
+  animation-name: opening-garis-kanan;
+}
+
+@keyframes opening-garis-kiri {
+  from { opacity: 0; transform: translateX(-18px) scaleX(0.4); }
+  to { opacity: 1; transform: translateX(0) scaleX(1); }
+}
+
+@keyframes opening-garis-kanan {
+  from { opacity: 0; transform: translateX(18px) scaleX(0.4); }
+  to { opacity: 1; transform: translateX(0) scaleX(1); }
+}
+
+/* Elemen 3: kata MANAJEMEN naik dan merapat ke posisi akhir. */
+.opening-kata {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  color: var(--gold);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: opening-kata 550ms ease-out 500ms forwards;
+}
+
+@keyframes opening-kata {
+  from { opacity: 0; transform: translateY(10px); letter-spacing: 0.5em; }
+  to { opacity: 1; transform: translateY(0); letter-spacing: 0.32em; }
+}
+
+/* Kilau emas halus menyapu satu kali setelah logo menyatu. */
+.opening-kilau {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  width: 38%;
+  background: linear-gradient(105deg, transparent, color-mix(in oklch, var(--gold-light) 55%, transparent) 50%, transparent);
+  filter: blur(6px);
+  opacity: 0;
+  animation: opening-kilau 600ms ease-in-out 950ms forwards;
+  pointer-events: none;
+}
+
+@keyframes opening-kilau {
+  0% { opacity: 0; left: -40%; }
+  25% { opacity: 1; }
+  100% { opacity: 0; left: 102%; }
+}
+
+/* Logo utuh bertahan sesaat, lalu overlay fade out (ditangani data-menutup). */
+
+@media (prefers-reduced-motion: reduce) {
+  .opening-logo,
+  .opening-garis,
+  .opening-kata,
+  .opening-kilau {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+
+  .opening-layar { transition: opacity 150ms ease; }
+}

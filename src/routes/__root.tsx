@@ -15,7 +15,7 @@ import { usePeran } from "../lib/peran";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PeranProvider } from "../lib/peran";
-import { Sambutan, perluSambutan } from "../components/sambutan";
+import { Opening } from "../components/opening";
 
 function NotFoundComponent() {
   return (
@@ -110,7 +110,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
@@ -143,6 +143,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <PeranProvider>
         <AccessGate><Outlet /></AccessGate>
+        <Opening />
       </PeranProvider>
     </QueryClientProvider>
   );
@@ -152,15 +153,6 @@ function AccessGate({ children }: { children: ReactNode }) {
   const { siap, masuk, peran, posisiKode } = usePeran();
   const location = useLocation();
   const navigate = useNavigate();
-  const [tampilSambutan, setTampilSambutan] = useState(false);
-
-  // Sambutan hanya setelah sesi dan hak akses tervalidasi (masuk === true).
-  useEffect(() => {
-    if (siap && masuk && !tampilSambutan && perluSambutan()) {
-      setTampilSambutan(true);
-    }
-  }, [siap, masuk, tampilSambutan]);
-
   const publicPage =
     location.pathname === '/auth' ||
     location.pathname === '/reset-password';
@@ -243,7 +235,6 @@ function AccessGate({ children }: { children: ReactNode }) {
   return (
     <>
       {children}
-      {tampilSambutan && masuk && <Sambutan />}
     </>
   );
 }
