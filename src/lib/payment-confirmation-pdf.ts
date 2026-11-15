@@ -114,16 +114,17 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
         page.drawSvgPath(petal, { x: 832, y: 448, rotate: degrees(-rot), color: bluePetal, opacity: op, borderColor: white, borderWidth: 1.4 });
       }
       // Logo wordmark + tagline.
-      const size = logo.scaleToFit(132, 44);
       const cx = 137;
-      page.drawImage(logo, { x: cx - size.width / 2 + 4, y: 506, width: size.width, height: size.height });
+      const logoH = 37;
+      const logoW = (logoH * logo.width) / logo.height;
+      page.drawImage(logo, { x: cx - logoW / 2 + 4, y: 509, width: logoW, height: logoH });
       const dw = 'DAILY & WEEKLY';
       const dwW = spacedWidth(dw, 6.8, bold, 1.8);
-      spaced(page, dw, cx - dwW / 2, 493, 6.8, bold, 1.8);
-      page.drawLine({ start: { x: cx - dwW / 2 - 28, y: 495.5 }, end: { x: cx - dwW / 2 - 8, y: 495.5 }, color: ink, thickness: 1 });
-      page.drawLine({ start: { x: cx + dwW / 2 + 8, y: 495.5 }, end: { x: cx + dwW / 2 + 28, y: 495.5 }, color: ink, thickness: 1 });
+      spaced(page, dw, cx - dwW / 2, 496, 6.8, bold, 1.8);
+      page.drawLine({ start: { x: cx - dwW / 2 - 28, y: 498.5 }, end: { x: cx - dwW / 2 - 8, y: 498.5 }, color: ink, thickness: 1 });
+      page.drawLine({ start: { x: cx + dwW / 2 + 8, y: 498.5 }, end: { x: cx + dwW / 2 + 28, y: 498.5 }, color: ink, thickness: 1 });
       const tag = 'Nyaman Seperti di Rumah Sendiri';
-      page.drawText(tag, { x: cx - italic.widthOfTextAtSize(tag, 10.5) / 2, y: 473, size: 10.5, font: italic, color: ink });
+      page.drawText(tag, { x: cx - italic.widthOfTextAtSize(tag, 10.5) / 2, y: 476, size: 10.5, font: italic, color: ink });
       page.drawLine({ start: { x: 238.5, y: 556 }, end: { x: 238.5, y: 472 }, color: blue, thickness: 1.5 });
       spaced(page, 'PAYMENT CONFIRMATION', 256, 532, 21, serif, 1.9);
       spaced(page, 'THANK YOU FOR YOUR PAYMENT', 256.5, 512, 10, bold, 3.3, blue);
