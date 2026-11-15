@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import {
-  UserRound, Phone, NotebookPen, BedDouble, DoorOpen, Package, Users,
-  CalendarDays, Clock3, Timer, ReceiptText, CircleDollarSign, History,
+  UserRound, Phone, NotebookPen, BedDouble, DoorOpen, Package,
+  CalendarDays, Timer, ReceiptText, CircleDollarSign, History,
   Car, MapPin, X, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
@@ -90,7 +90,6 @@ export function DetailTransaksi({
   const roomTypes = useTable('room_types');
   const packages = useTable('packages');
   const employees = useTable('employees', !restricted);
-  const cashSessions = useTable('finance_cash_sessions', !restricted);
   const housekeepingHistory = useTable('housekeeping_history', restricted);
   const { posisiKode } = usePeran();
   const konfirmasi = usePaymentConfirmation();
@@ -169,8 +168,6 @@ export function DetailTransaksi({
   const total = Number(transaction.price_snapshot ?? 0);
   const remaining = Math.max(total - totalPaid, 0);
 
-  const sesiKasTerakhir = [...transactionPayments].reverse().find((item) => item.cash_session_id);
-  const sesiKas = cashSessions.rows.find((item) => item.id === sesiKasTerakhir?.cash_session_id);
 
   const catatan = [...notes.rows].sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
   const metode = [...new Set(transactionPayments.map(item => item.method.toUpperCase() === 'CASH' ? 'Cash' : item.method.toUpperCase()))].join(' + ');
