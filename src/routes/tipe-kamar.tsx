@@ -14,6 +14,18 @@ export const Route=createFileRoute('/tipe-kamar')({head:()=>meta('Tipe Kamar','P
 const TIPE_RESMI=['standard','superior a','superior b','deluxe'];
 const nomorUrut=(a:Room,b:Room)=>a.room_number.localeCompare(b.room_number,'id',{numeric:true});
 
+/** Tanggal dan jam WIB dari data tersimpan; — bila belum tersedia. */
+function waktuWib(t?:string|null):string{
+ if(!t)return '—';const d=new Date(t);if(isNaN(d.getTime()))return '—';
+ return new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(d).replace(/\./g,':')+' WIB';
+}
+
+/** Lantai hanya ditampilkan bila data aslinya tersedia; — bila belum. */
+function lantai(r:Room):string{
+ const v=(r as {lantai?:unknown;floor?:unknown}).lantai ?? (r as {floor?:unknown}).floor;
+ return v===null||v===undefined||v===''?'—':String(v);
+}
+
 function Halaman(){
  const {peran}=usePeran();const owner=peran==='owner';
  const tipe=useTable('room_types');const kamar=useTable('rooms');const trx=useTable('transactions');
@@ -41,12 +53,17 @@ function Halaman(){
    <button type="button" className="ph-kembali-tipe" onClick={()=>{setPilih(null);setInfo('')}}><ArrowLeft/>Kembali</button>
    <section className="ph-kelompok"><div className="ph-judul"><h2>{terpilih.name}</h2><span className="ph-jumlah">{kamarTipe(terpilih.id).length} kamar</span><span className="ph-judul-garis"/></div>
     {info&&<p role="alert" className="mb-3 rounded-xl bg-destructive/15 px-4 py-2 text-sm font-semibold text-destructive-foreground">{info}</p>}
-    <div className="ph-tabel"><table><thead><tr><th>Nomor Kamar</th><th>Tipe</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
-     {kamarTipe(terpilih.id).length===0?<tr><td colSpan={4} className="ph-kosong">Belum ada kamar untuk tipe ini.</td></tr>:kamarTipe(terpilih.id).map(r=><tr key={r.id}>
-      <td className="ph-nama">{r.room_number}</td><td className="ph-slot">{terpilih.name}</td>
+    <div className="ph-tabel tk-tabel"><table>
+     <colgroup><col className="tk-k-nomor"/><col className="tk-k-tipe"/><col className="tk-k-lantai"/><col className="tk-k-status"/><col className="tk-k-ubah"/><col className="tk-k-aksi"/></colgroup>
+     <thead><tr><th>No. Kamar</th><th>Tipe</th><th>Lantai</th><th>Status</th><th>Terakhir Diubah</th><th>Aksi</th></tr></thead><tbody>
+     {kamarTipe(terpilih.id).length===0?<tr><td colSpan={6} className="ph-kosong">Belum ada kamar untuk tipe ini.</td></tr>:kamarTipe(terpilih.id).map(r=><tr key={r.id}>
+      <td><span className="ph-nama">{r.room_number}</span></td>
+      <td><span className="ph-slot">{terpilih.name}</span></td>
+      <td><span className="ph-slot">{lantai(r)}</span></td>
       <td><span className={`ph-pil ${r.active?'ph-pil-aktif':'ph-pil-nonaktif'}`}>{r.active?'Aktif':'Nonaktif'}</span></td>
-      <td>{owner?<div className="flex items-center gap-3"><button type="button" className="ph-ubah" onClick={()=>ubah(r)}>Ubah</button>
-       <button type="button" role="switch" aria-checked={r.active} aria-label={`${r.active?'Nonaktifkan':'Aktifkan'} kamar ${r.room_number}`} disabled={sibuk===r.id} onClick={()=>alih(r)} className="tk-switch"><span/></button><span className="ph-slot">{r.active?'ON':'OFF'}</span></div>:<span className="ph-slot">Khusus Owner</span>}</td>
+      <td><span className="ph-slot">{waktuWib(r.updated_at)}</span></td>
+      <td>{owner?<div className="tk-aksi"><button type="button" className="ph-ubah" onClick={()=>ubah(r)}>Ubah</button>
+       <button type="button" role="switch" aria-checked={r.active} aria-label={`${r.active?'Nonaktifkan':'Aktifkan'} kamar ${r.room_number}`} disabled={sibuk===r.id} onClick={()=>alih(r)} className="tk-switch"><span/></button></div>:<span className="ph-slot">Khusus Owner</span>}</td>
      </tr>)}
     </tbody></table></div>
    </section></>
