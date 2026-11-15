@@ -26,10 +26,16 @@ export function usePaymentConfirmation() {
       return loadPaymentConfirmation(id, supabase);
     },
     download: async (data) => {
-      const { CONFIRMATION_LOGO, generatePaymentConfirmationPdf, downloadConfirmationBytes } = await import('./payment-confirmation-pdf');
+      const { CONFIRMATION_LOGO, CONFIRMATION_FONTS, generatePaymentConfirmationPdf, downloadConfirmationBytes } = await import('./payment-confirmation-pdf');
       const response = await fetch(CONFIRMATION_LOGO, { credentials: 'same-origin' });
       if (!response.ok) throw new Error('Logo resmi PDF tidak tersedia.');
-      const bytes = await generatePaymentConfirmationPdf(data, new Uint8Array(await response.arrayBuffer()));
+      const fontEntries = await Promise.all(Object.entries(CONFIRMATION_FONTS).map(async ([key, url]) => {
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Font PDF tidak tersedia.');
+        return [key, new Uint8Array(await res.arrayBuffer())] as const;
+      }));
+      const fonts = Object.fromEntries(fontEntries) as unknown as Parameters<typeof generatePaymentConfirmationPdf>[2];
+      const bytes = await generatePaymentConfirmationPdf(data, new Uint8Array(await response.arrayBuffer()), fonts);
       if (!active.current) throw new Error('Sesi berubah; unduhan dibatalkan.');
       return () => downloadConfirmationBytes(bytes, data.transactionNumber);
     },
