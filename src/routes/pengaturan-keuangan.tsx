@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { SubPengaturan } from '@/components/pengaturan-sub';
 import { useEffect, useState } from 'react';
 import { Landmark, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -55,11 +56,11 @@ function HalamanPengaturanKeuangan() {
   }
 
   if (!isOwner) {
-    return <Kerangka judul="Pengaturan Keuangan"><p className="panel-mewah p-5 text-sm text-muted-foreground">Halaman ini khusus Owner.</p></Kerangka>;
+    return <Kerangka judul="Pengaturan Keuangan"><SubPengaturan><p className="panel-mewah p-5 text-sm text-muted-foreground">Halaman ini khusus Owner.</p></SubPengaturan></Kerangka>;
   }
 
   return (
-    <Kerangka judul="Pengaturan Keuangan">
+    <Kerangka judul="Pengaturan Keuangan"><SubPengaturan>
       {message && <p role="alert" className="mb-4 rounded-md bg-secondary px-3 py-2 text-sm">{message}</p>}
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="panel-mewah p-5">
@@ -92,6 +93,6 @@ function HalamanPengaturanKeuangan() {
           <ul className="mt-3 space-y-2 text-sm">{banks.rows.filter((bank) => bank.active).map((bank) => <li key={bank.id} className="rounded-md bg-secondary px-3 py-2">{bank.bank_name} · {bank.account_name} · {bank.account_number}</li>)}</ul>
         </section>
       </div>
-    </Kerangka>
+    </SubPengaturan></Kerangka>
   );
 }
