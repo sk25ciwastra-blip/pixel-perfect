@@ -267,12 +267,12 @@ export function DetailTransaksi({
           <p><strong>Terakhir diubah :</strong> {waktuWib(transaction.updated_at)}</p>
           <div className="dtx-aksi">
             <div className="dtx-pdf">
-              <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital (PDF)<ChevronDown className="dtx-panah" /></button>
+              <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital<ChevronDown className="dtx-panah" /></button>
               {bukaPdf && <div className="dtx-pdf-menu"><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} /></div>}
             </div>
             <span className="dtx-cetak">{featureFlags.receipt58mm
-              ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk (58 mm)" />
-              : <button type="button" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer />Cetak Struk (58 mm)</button>}</span>
+              ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk" />
+              : <button type="button" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer />Cetak Struk</button>}</span>
             <button type="button" className="dtx-tutup" onClick={onClose}>Tutup</button>
           </div>
         </footer>
