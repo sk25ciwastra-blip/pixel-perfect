@@ -650,7 +650,7 @@ function Ringkasan() {
             <section aria-label="Hasil pencarian" className="panel-mewah mt-3 p-4">
               <div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Hasil pencarian</h2><Button variant="ghost" size="icon" aria-label="Tutup pencarian" onClick={() => { setKataCari(""); setPencarian(""); }}><X /></Button></div>
               <ul className="divide-y divide-border text-sm">
-                {hasilTransaksi.map((t) => <li key={t.id}><Button variant="ghost" className="h-auto w-full justify-start whitespace-normal py-3 text-left" onClick={() => setDetailTransactionId(t.id)}><Receipt className="text-gold" />{t.transaction_number} — {guests.rows.find((g) => g.id === t.guest_id)?.full_name ?? "Tamu"}</Button></li>)}
+                {hasilTransaksi.map((t) => <li key={t.id}><Button variant="ghost" className="h-auto w-full justify-start whitespace-normal py-3 text-left" onClick={() => setDetailTransactionId(t.id)}><Receipt className="text-gold" /><span className="font-mono text-gold">{t.transaction_number}</span> — {guests.rows.find((g) => g.id === t.guest_id)?.full_name ?? "Tamu"}</Button></li>)}
                 {hasilHk.map((h) => <li key={h.id}><Link to="/housekeeping" search={{ bagian: "riwayat" }} className="flex items-center gap-2 py-3 text-gold-light"><Sparkles className="size-4" />{h.job_number} — Kamar {kamar.find((r) => r.id === h.room_id)?.room_number ?? "—"}</Link></li>)}
                 {hasilPengeluaran.map((e) => <li key={e.id}><Link to="/keuangan" className="flex items-center gap-2 py-3 text-gold-light"><ArrowUpRight className="size-4" />{e.expense_number} — {e.category} · {rupiah(e.amount)}</Link></li>)}
               </ul>
@@ -715,7 +715,7 @@ function Ringkasan() {
               )}
               {bookingPeringatan.length > 0 && (
                 <div role="status" className="mx-5 mb-3 space-y-1 rounded-xl border border-gold/25 bg-gold/10 px-3 py-2 text-xs sm:mx-6">
-                  {bookingPeringatan.map(({ item, status }) => <p key={item.id}><span className={`font-bold ${status?.kelas}`}>{status?.label}</span> · {guests.rows.find((guest) => guest.id === item.guest_id)?.full_name ?? "Tamu"} · {item.transaction_number}</p>)}
+                  {bookingPeringatan.map(({ item, status }) => <p key={item.id}><span className={`font-bold ${status?.kelas}`}>{status?.label}</span> · {guests.rows.find((guest) => guest.id === item.guest_id)?.full_name ?? "Tamu"} · <span className="font-mono text-gold">{item.transaction_number}</span></p>)}
                 </div>
               )}
               {statusKamarBaris.length === 0 ? (

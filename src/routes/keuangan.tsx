@@ -11,6 +11,12 @@ import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
 import { setSesiKasKonteks } from '@/lib/sesi-kas';
 
+const POLA_NOMOR = /(BTRD[A-Z]*-\d+)/;
+
+function NomorTeks({ teks }: { teks: string }) {
+  return <>{teks.split(POLA_NOMOR).map((bagian, i) => (i % 2 ? <span key={i} className="font-mono text-gold">{bagian}</span> : <span key={i}>{bagian}</span>))}</>;
+}
+
 export const Route = createFileRoute('/keuangan')({
   head: () => meta('Keuangan', 'Sesi kas, penerimaan, closing, dan pengawasan keuangan.'),
   component: HalamanKeuangan,
@@ -386,7 +392,7 @@ function HalamanKeuangan() {
                       <tr key={row.id} className="border-t border-gold/10">
                         <td className="whitespace-nowrap px-3 py-2.5 text-xs">{new Date(row.waktu).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                         <td className="px-3 py-2.5"><span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${warnaJenis[row.jenis]}`}>{row.jenis}</span></td>
-                        <td className="max-w-64 px-3 py-2.5 text-xs"><span className="line-clamp-2 break-words">{row.ket}</span></td>
+                        <td className="max-w-64 px-3 py-2.5 text-xs"><span className="line-clamp-2 break-words"><NomorTeks teks={row.ket} /></span></td>
                         <td className="px-3 py-2.5 text-xs">{row.metode}</td>
                         <td className={`whitespace-nowrap px-3 py-2.5 text-xs font-semibold tabular-nums ${row.jenis === 'Penerimaan' ? 'text-siap-foreground' : row.jenis === 'Setoran' ? 'text-foreground' : 'text-bahaya-foreground'}`}>{rupiah(row.nominal)}</td>
                         <td className="px-3 py-2.5 text-xs">{row.petugas}</td>
