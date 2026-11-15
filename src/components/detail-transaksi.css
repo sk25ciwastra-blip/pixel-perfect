@@ -22,16 +22,16 @@
   display: flex; justify-content: space-between; align-items: center; gap: 12px;
   padding: 11px 18px 12px;
   background:
-    radial-gradient(130% 200% at 0% 0%, color-mix(in oklab, var(--primary) 15%, transparent), transparent 52%),
-    radial-gradient(130% 200% at 100% 0%, color-mix(in oklab, var(--primary) 11%, transparent), transparent 52%),
-    #050505;
+    linear-gradient(180deg, color-mix(in oklab, var(--primary) 5%, transparent) 0%, transparent 22%),
+    linear-gradient(180deg, transparent 74%, color-mix(in oklab, var(--primary) 7%, transparent) 100%),
+    #000000;
   border-bottom: 4px solid transparent;
   border-image: linear-gradient(90deg, var(--gold-dark), var(--primary), var(--gold-dark)) 1;
   box-shadow:
-    inset 0 1px 0 color-mix(in oklab, var(--primary) 42%, transparent),
-    inset 0 -16px 24px -20px color-mix(in oklab, var(--primary) 75%, transparent),
-    inset 20px 0 28px -24px color-mix(in oklab, var(--primary) 60%, transparent),
-    inset -20px 0 28px -24px color-mix(in oklab, var(--primary) 60%, transparent);
+    inset 0 1px 0 color-mix(in oklab, var(--primary) 22%, transparent),
+    inset 0 -7px 9px -9px color-mix(in oklab, var(--primary) 26%, transparent),
+    inset 9px 0 12px -12px color-mix(in oklab, var(--primary) 18%, transparent),
+    inset -9px 0 12px -12px color-mix(in oklab, var(--primary) 18%, transparent);
 }
 .dtx-jejak { color: #F4EFE6; font-size: 11px; font-weight: 600; letter-spacing: .01em; margin-bottom: 3px; }
 .dtx-judul { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
