@@ -57,7 +57,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   const redSoft = rgb(0.99, 0.91, 0.91);
   const white = rgb(1, 1, 1);
   const width = 841.89, height = 595.28;
-  const panelTop = 436, panelBottom = 108, bottom = panelBottom + 6;
+  const panelTop = 436, panelBottom = 100, bottom = panelBottom + 2;
   const LX = 28, LW = 392, RX = 431, RW = 384;
 
   function clean(text: string) { return text.replace(/[\r\n\t\u0000-\u001f]/g, ' '); }
@@ -206,7 +206,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   rounded(pg, rl, y - 19, rr - rl, 30, 6, { color: blueSoft });
   pg.drawText('Grand Total', { x: 453, y: y - 8, size: 14.5, font: serif, color: ink });
   right(pg, money(data.totals.bill), 797, y - 9, 17, serif);
-  y -= 41;
+  y -= 38;
   pg.drawText('Amount Paid', { x: 454, y, size: 11.5, font, color: ink });
   right(pg, money(data.totals.netPaid), 796, y, 11.5, font);
   y -= 15;
@@ -223,7 +223,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   pg.drawLine({ start: { x: 639, y: y - 14 }, end: { x: 639, y: y - 46 }, color: stColor, thickness: 1 });
   pg.drawText(stNote[0]!, { x: 655, y: y - 24, size: 9.8, font, color: ink });
   pg.drawText(stNote[1]!, { x: 655, y: y - 39, size: 9.8, font, color: ink });
-  y -= 80;
+  y -= 72;
   spaced(pg, 'PAYMENT HISTORY', 445, y, 12, serif, 0.9);
   R.y = y - 8;
   const cols = [451, 564, 642];
@@ -232,7 +232,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
     p.drawRectangle({ x: rl, y: R.y - 21, width: rr - rl, height: 21, color: blueSoft, opacity: 0.75 });
     ['DATE & TIME', 'METHOD', 'AMOUNT'].forEach((t, i) => p.drawText(t, { x: cols[i]!, y: R.y - 14, size: 8, font: medium, color: ink }));
     p.drawText('STATUS', { x: 761 - medium.widthOfTextAtSize('STATUS', 8) / 2, y: R.y - 14, size: 8, font: medium, color: ink });
-    R.y -= 37;
+    R.y -= 33;
   };
   head();
   if (!data.history.length) { pageAt(R.page).drawText('No payments recorded', { x: cols[0]!, y: R.y, size: 9.5, font, color: text2 }); R.y -= 20; }
