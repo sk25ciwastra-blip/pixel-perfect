@@ -32,7 +32,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
   let font: PDFFont, medium: PDFFont, bold: PDFFont, serif: PDFFont, italic: PDFFont, script: PDFFont;
   if (fontBytes) {
     pdf.registerFontkit(fontkit);
-    [font, medium, bold, serif, italic, script] = await Promise.all([fontBytes.regular, fontBytes.medium, fontBytes.bold, fontBytes.serif, fontBytes.italic, fontBytes.script].map(b => pdf.embedFont(b, { subset: true })));
+    [font, medium, bold, serif, italic, script] = (await Promise.all([fontBytes.regular, fontBytes.medium, fontBytes.bold, fontBytes.serif, fontBytes.italic, fontBytes.script].map(b => pdf.embedFont(b, { subset: true })))) as [PDFFont, PDFFont, PDFFont, PDFFont, PDFFont, PDFFont];
   } else {
     font = await pdf.embedFont(StandardFonts.Helvetica);
     medium = font;
@@ -95,7 +95,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
     page.drawText(text, { x: xr - f.widthOfTextAtSize(text, size), y, size, font: f, color });
   function rounded(page: PDFPage, x: number, y: number, w: number, h: number, r: number, opts: { color?: ReturnType<typeof rgb>; borderColor?: ReturnType<typeof rgb>; borderWidth?: number; opacity?: number }) {
     const path = `M ${r} 0 H ${w - r} A ${r} ${r} 0 0 1 ${w} ${r} V ${h - r} A ${r} ${r} 0 0 1 ${w - r} ${h} H ${r} A ${r} ${r} 0 0 1 0 ${h - r} V ${r} A ${r} ${r} 0 0 1 ${r} 0 Z`;
-    page.drawSvgPath(path, { x, y: y + h, ...opts, borderOpacity: opts.opacity });
+    page.drawSvgPath(path, { x, y: y + h, ...opts, ...(opts.opacity !== undefined ? { borderOpacity: opts.opacity } : {}) });
   }
   const icon = (page: PDFPage, d: string, x: number, y: number, s = 0.72) =>
     page.drawSvgPath(d, { x, y: y + 24 * s, scale: s, borderColor: blue, borderWidth: 1.9, borderLineCap: LineCapStyle.Round });
@@ -264,7 +264,7 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
     p.drawSvgPath('M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z', { x: 545, y: 70, scale: 0.65, color: blue });
     p.drawCircle({ x: 552.8, y: 64.2, size: 2.1, color: white });
     p.drawText(addr, { x: 573, y: 55, size: 10, font, color: ink, maxWidth: 240 });
-    p.drawSvgPath('M7.9 20A9 9 0 1 0 4 16.1L2 22Z', { x: 544, y: 45, scale: 0.68, borderColor: blue, borderWidth: 1.9, borderLineJoin: 1 as never });
+    p.drawSvgPath('M7.9 20A9 9 0 1 0 4 16.1L2 22Z', { x: 544, y: 45, scale: 0.68, borderColor: blue, borderWidth: 1.9 });
     p.drawSvgPath('M9 9.5c0 3 2.5 5.5 5.5 5.5l1.2-1.4-1.8-1-0.9 0.8c-1-0.4-2-1.4-2.4-2.4l0.8-0.9-1-1.8z', { x: 544, y: 45, scale: 0.68, color: blue });
     p.drawText(`WhatsApp ${clean(data.business.whatsapp)}`, { x: 573, y: 31, size: 10, font, color: ink });
     if (all.length > 1) right(p, `Page ${index + 1} / ${all.length}`, 812, 8, 7, font, text2);
