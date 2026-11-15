@@ -1,9 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Layar sambutan setelah login — 15 November
-- [x] Satu layar sambutan semi-3D sesuai referensi Owner: karakter 3D sebagai aset terpisah (`src/assets/karakter-manajemen.png`), bingkai emas, logo MANAJEMEN, lonceng, kartu pesan berdaun, pil "Login berhasil"; judul/pesan/label jabatan teks dinamis per peran (Owner, Supervisor, Receptionist, Housekeeping, Inspector, Investor) di `src/lib/sambutan.ts`.
-- [x] Alur: penanda sesi disetel hanya setelah `signInWithPassword` berhasil; overlay tampil hanya setelah sesi dan hak akses tervalidasi, fade CSS ±1,2 detik lalu otomatis hilang, dapat dilewati klik/keyboard, tidak tampil saat refresh atau sesi aktif; tanpa mengubah login, otorisasi, Training, sesi kas, database, maupun halaman lain.
-- [x] Preview akun uji Owner 1280×1800/390×844: overlay tampil dengan sapaan Owner, hilang otomatis ke Dashboard, refresh tidak menampilkan ulang, tanpa error runtime, build OK; tanpa publikasi.
+- [x] Revisi final Owner: satu gambar panel tetap `src/assets/sambutan-panel.png` (dipotong persis mengikuti lekukan bingkai emas dari tangkapan layar referensi, latar transparan) untuk semua jabatan, menggantikan versi teks dinamis per peran; overlay hitam polos, panel kecil pas di tengah (desktop 560px, HP 420px) dengan glow emas halus, durasi tampil 2 detik.
+- [x] Alur: penanda sesi disetel hanya setelah `signInWithPassword` berhasil; gambar dimuat penuh dulu sebelum hitungan mulai; fade CSS lalu otomatis hilang, dapat dilewati klik/keyboard, tidak tampil saat refresh atau sesi aktif; tanpa mengubah login, otorisasi, Training, sesi kas, database, maupun halaman lain.
+- [x] Preview akun uji Owner 1280×1800: panel tampil kecil terpusat di layar hitam dengan tepi bingkai emas rapi, hilang otomatis ke Dashboard, tanpa error runtime, build OK; tanpa publikasi.
 
 ## ID transaksi seragam warna emas — 15 November
 - [x] Samakan warna nomor transaksi di seluruh halaman dengan milik tabel Status Kamar: emas tua di latar terang (tabel krem Housekeeping, daftar Booking, kartu Kamar) dan champagne gold di latar gelap (Transaksi Terbaru, daftar Transaksi, riwayat Tamu, kepala Detail Transaksi, tabel aktivitas Keuangan); isi, hak akses, dan tindakan tetap.
