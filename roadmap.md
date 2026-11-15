@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Detail Transaksi — font dan penanda jenis transaksi
+- [x] Samakan font label Rincian Menginap dengan Identitas Tamu, tampilkan titik dua sejajar atas, dan beri warna biru pada Booking serta hijau pada kedatangan langsung; data dan fungsi tetap.
+- [x] Periksa transaksi tersimpan di komputer dan HP: label, titik dua dan penanda Booking tampil; tanpa kesalahan aplikasi, tanpa publikasi.
+
 ## Detail transaksi & formulir karyawan — 16 November
 - [x] Samakan detail transaksi dengan referensi: kepala hitam, isi krem, dua kolom dan pembayaran rapi; data serta aksi tetap.
 - [x] Samakan formulir karyawan dengan referensi krem–emas; isian, validasi dan penyimpanan tetap, tanpa menambah data pribadi/foto/sandi otomatis dari gambar.
