@@ -1,0 +1,262 @@
+/* Layar sambutan setelah login — scoped, tanpa menyentuh halaman lain. */
+
+.sambutan-layar {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--background);
+  opacity: 0;
+  transition: opacity 320ms ease;
+  cursor: pointer;
+}
+
+.sambutan-layar[data-fase='tampil'] {
+  opacity: 1;
+}
+
+.sambutan-layar[data-fase='tutup'] {
+  opacity: 0;
+}
+
+.sambutan-latar {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
+.sambutan-latar-gelap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at center, transparent 30%, color-mix(in oklch, var(--background) 72%, transparent)),
+    linear-gradient(to bottom, color-mix(in oklch, var(--background) 55%, transparent), transparent 30%, transparent 70%, color-mix(in oklch, var(--background) 60%, transparent));
+}
+
+.sambutan-bingkai {
+  position: relative;
+  width: min(860px, 100%);
+  border-radius: 44px;
+  padding: 3px;
+  background: linear-gradient(160deg, var(--gold-light), var(--gold-dark) 45%, var(--gold));
+  box-shadow:
+    0 0 60px -10px color-mix(in oklch, var(--gold) 55%, transparent),
+    0 45px 90px -25px color-mix(in oklch, var(--background) 100%, transparent);
+}
+
+.sambutan-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+  align-items: center;
+  gap: 8px;
+  border-radius: 41px;
+  padding: 28px 36px 28px 8px;
+  background: linear-gradient(160deg, var(--navy-deep), var(--background) 60%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--gold-light) 40%, transparent),
+    inset 0 0 60px color-mix(in oklch, var(--gold) 8%, transparent);
+  overflow: hidden;
+}
+
+.sambutan-panel::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  width: 70%;
+  height: 120px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--gold) 14%, transparent);
+  filter: blur(48px);
+  pointer-events: none;
+}
+
+.sambutan-karakter {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.sambutan-karakter img {
+  width: min(280px, 100%);
+  height: auto;
+  filter: drop-shadow(0 18px 30px color-mix(in oklch, var(--background) 85%, transparent));
+}
+
+.sambutan-papan-nama {
+  position: absolute;
+  bottom: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 12px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--gold-light), var(--gold-dark));
+  color: var(--background);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px color-mix(in oklch, var(--background) 70%, transparent);
+}
+
+.sambutan-isi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sambutan-logo {
+  width: 150px;
+  height: auto;
+  filter: drop-shadow(0 4px 12px color-mix(in oklch, var(--background) 90%, transparent));
+}
+
+.sambutan-manajemen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  color: var(--gold);
+}
+
+.sambutan-manajemen::before,
+.sambutan-manajemen::after {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: color-mix(in oklch, var(--gold) 75%, transparent);
+}
+
+.sambutan-judul {
+  font-family: 'Great Vibes', 'Playfair Display', cursive;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.15;
+  color: var(--foreground);
+  text-shadow: 0 3px 18px color-mix(in oklch, var(--gold) 35%, transparent);
+}
+
+.sambutan-garis {
+  width: 150px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--gold-light) 50%, var(--gold) 70%, transparent);
+  box-shadow: 0 0 14px color-mix(in oklch, var(--gold) 60%, transparent);
+}
+
+.sambutan-lonceng {
+  color: var(--gold);
+  filter: drop-shadow(0 0 10px color-mix(in oklch, var(--gold) 65%, transparent));
+}
+
+.sambutan-pesan {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  padding: 12px 22px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in oklch, var(--gold) 65%, transparent);
+  background: linear-gradient(180deg, color-mix(in oklch, var(--gold) 12%, transparent), transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--gold-light) 35%, transparent),
+    0 10px 26px -12px color-mix(in oklch, var(--background) 90%, transparent);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--foreground);
+}
+
+.sambutan-pesan .sambutan-daun {
+  flex-shrink: 0;
+  color: var(--gold);
+}
+
+.sambutan-berhasil {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklch, var(--gold) 80%, transparent);
+  background: linear-gradient(180deg, color-mix(in oklch, var(--gold) 18%, transparent), color-mix(in oklch, var(--gold) 6%, transparent));
+  box-shadow: 0 0 22px -4px color-mix(in oklch, var(--gold) 55%, transparent);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.sambutan-berhasil svg {
+  color: #4ade80;
+}
+
+.sambutan-titik {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.sambutan-titik span {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+  background: transparent;
+}
+
+.sambutan-titik span:nth-child(2) {
+  background: var(--gold);
+  box-shadow: 0 0 10px color-mix(in oklch, var(--gold) 70%, transparent);
+}
+
+.sambutan-lewati {
+  font-size: 12px;
+  color: color-mix(in oklch, var(--foreground) 60%, transparent);
+}
+
+@media (max-width: 700px) {
+  .sambutan-panel {
+    grid-template-columns: 1fr;
+    padding: 20px 20px 24px;
+    gap: 4px;
+  }
+
+  .sambutan-karakter {
+    min-height: 0;
+  }
+
+  .sambutan-karakter img {
+    width: 170px;
+  }
+
+  .sambutan-papan-nama {
+    bottom: 12%;
+  }
+
+  .sambutan-pesan {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sambutan-layar {
+    transition: none;
+  }
+}
