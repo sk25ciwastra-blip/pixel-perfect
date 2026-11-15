@@ -1,5 +1,10 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Detail transaksi & formulir karyawan — 16 November
+- [x] Samakan detail transaksi dengan referensi: kepala hitam, isi krem, dua kolom dan pembayaran rapi; data serta aksi tetap.
+- [x] Samakan formulir karyawan dengan referensi krem–emas; isian, validasi dan penyimpanan tetap, tanpa menambah data pribadi/foto/sandi otomatis dari gambar.
+- [x] Kedua popup diperiksa dengan akun aktif 1280×1800/390×844: ringkasan isian mengikuti masukan, detail memakai transaksi asli, tutup/batal berjalan, tanpa overflow/error; 6 tes PASS, tanpa penyimpanan baru atau publikasi.
+
 ## Jam berlaku paket — 16 November
 - [x] Terapkan batas check-in 2/4/6 jam sesuai Owner tanpa mengubah durasi atau transaksi lama; 12 pemeriksaan batas aktual lulus.
 - [x] Format WIB dan dua pilihan jam pada popup; 7 tes lulus, tampilan komputer/HP diperiksa. Pilihan mengikuti aturan tetap; penyimpanan paket per tipe tetap belum tersedia.
