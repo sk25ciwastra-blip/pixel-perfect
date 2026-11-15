@@ -1,5 +1,10 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Halaman Pengaturan — 15 November
+- [x] Dashboard menu Owner di `src/routes/pengaturan.tsx` (satu-satunya file berubah): tiga kelompok serif (Operasional, Keuangan, Akun & Keamanan), kartu warm white semi-3D dengan medali ikon hitam-emas, grid 3 kolom desktop / 1 kolom HP; Kerangka, sidebar, dan latar header asli tidak disentuh.
+- [x] Hanya rute sah yang dapat diklik: Tipe Kamar, Paket & Harga, Daftar Pengeluaran, Minimum DP & Komisi, Rekening Owner (5 kartu aktif); Manajemen Kamar, Profil Homestay, Metode Pembayaran, Keamanan tampil nonaktif berlencana "Belum tersedia" tanpa link palsu.
+- [x] Preview akun uji Owner 1280×1800/390×844: 5 kartu aktif + 4 nonaktif tampil, klik Tipe Kamar menuju /tipe-kamar, tanpa overflow HP, tanpa error runtime, build OK; tanpa perubahan hak akses/database dan tanpa publikasi.
+
 ## Layar sambutan setelah login — 15 November
 - [x] Revisi final Owner: satu gambar panel tetap `src/assets/sambutan-panel.png` (dipotong persis mengikuti lekukan bingkai emas dari tangkapan layar referensi, latar transparan) untuk semua jabatan, menggantikan versi teks dinamis per peran; overlay hitam polos, panel kecil pas di tengah (desktop 560px, HP 420px) dengan glow emas halus, durasi tampil 2 detik.
 - [x] Alur: penanda sesi disetel hanya setelah `signInWithPassword` berhasil; gambar dimuat penuh dulu sebelum hitungan mulai; fade CSS lalu otomatis hilang, dapat dilewati klik/keyboard, tidak tampil saat refresh atau sesi aktif; tanpa mengubah login, otorisasi, Training, sesi kas, database, maupun halaman lain.
