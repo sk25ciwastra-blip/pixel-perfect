@@ -46,13 +46,6 @@ const labelStatusTransaksi: Record<string, string> = {
   cancelled: 'Dibatalkan',
 };
 
-const warnaTitikStatus: Record<string, string> = {
-  booking: 'bg-perlu-foreground',
-  check_in: 'bg-terisi-foreground',
-  check_out: 'bg-siap-foreground',
-  cancelled: 'bg-bahaya-foreground',
-};
-
 const labelJenisPembayaran: Record<string, string> = {
   dp: 'DP',
   payment: 'Pelunasan',
