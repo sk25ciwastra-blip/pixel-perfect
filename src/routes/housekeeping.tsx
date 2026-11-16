@@ -236,13 +236,6 @@ function Halaman() {
           <div><p className="hk-brand">BATURADEN 25 HOMESTAY</p><h1>Housekeeping</h1><p className="hk-header-description">Pantau status kamar, pekerjaan kebersihan, dan perawatan berkala.</p></div>
           <div className="hk-header-kanan">
             <blockquote>“Kamar bersih, tamu nyaman,<br />pelayanan lancar.”</blockquote>
-            <nav aria-label="Bagian Housekeeping" className="hk-tabs">
-              {bagianHk.map((b) => (
-                <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }} aria-current={bagian === b.kode ? 'page' : undefined} className="hk-tab">
-                  <b.ikon /><span>{b.label}</span>
-                </Link>
-              ))}
-            </nav>
           </div>
         </div>
       </header>
