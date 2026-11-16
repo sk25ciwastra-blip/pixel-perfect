@@ -137,16 +137,6 @@ function formatSisaTabel(endsAt: string | null, sekarang: number) {
   return `${selisih < 0 ? "+" : "-"}${formatDurasi(Math.abs(selisih))}`;
 }
 
-function tipeKamarRingkas(name: string | undefined) {
-  if (!name) return "—";
-  const tipe = name.trim().toLowerCase();
-  if (/^(standard|standar|std)$/.test(tipe)) return "Std";
-  if (/^(superior|sup)\s*a$/.test(tipe)) return "Sup A";
-  if (/^(superior|sup)\s*b$/.test(tipe)) return "Sup B";
-  if (/^(deluxe|deluks|dlx)$/.test(tipe)) return "Dlx";
-  return name;
-}
-
 function namaDepan(nama: string | undefined) {
   const bersih = (nama ?? "").trim().replace(/\s+/g, " ");
   const kata = bersih.split(" ")[0];
@@ -731,7 +721,7 @@ function Ringkasan() {
                   <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-xs font-semibold [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
                       <col className="w-[44px]" />
-                      <col className="w-[48px]" />
+                      <col className="w-[96px]" />
                       <col />
                       <col className="w-[40px]" />
                       <col className="w-[100px]" />
@@ -771,7 +761,7 @@ function Ringkasan() {
                             <td className="px-1 py-2">
                               <span className="inline-flex min-w-9 justify-center rounded-full bg-[var(--pil)] px-2 py-0.5 font-bold tabular-nums text-[var(--pil-teks)]">{room.room_number}</span>
                             </td>
-                            <td className="truncate px-1 py-2.5 font-bold" title={roomType?.name}>{tipeKamarRingkas(roomType?.name)}</td>
+                            <td className="whitespace-normal px-1 py-2.5 font-bold leading-snug" title={roomType?.name}>{roomType?.name || "—"}</td>
                             <td className="px-1 py-2">
                               {guest ? (
                                 <>
