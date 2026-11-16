@@ -79,6 +79,6 @@ export function KeuanganArus({ penerimaan, pengeluaran }: Props) {
         </ComposedChart>
       </ResponsiveContainer> : <p className="kf-chart-empty">Belum ada catatan arus kas pada sesi ini.</p>}
     </div>
-    {data.length > 0 && <ul className="kf-chart-legend" aria-label="Keterangan grafik"><li data-series="penerimaan"><i aria-hidden="true" />Penerimaan</li><li data-series="pengeluaran"><i aria-hidden="true" />Pengeluaran</li><li data-series="bersih"><i aria-hidden="true" />Penerimaan bersih</li></ul>}
+    {data.length > 0 && <ul className="kf-chart-legend" aria-label="Keterangan grafik"><li data-series="penerimaan"><i aria-hidden="true" />Penerimaan</li><li data-series="pengeluaran"><i aria-hidden="true" />Pengeluaran</li><li data-series="bersih"><i aria-hidden="true" />Arus Kas Bersih</li></ul>}
   </>;
 }
