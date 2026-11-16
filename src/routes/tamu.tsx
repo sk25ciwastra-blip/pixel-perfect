@@ -57,10 +57,6 @@ function IkonWhatsApp({ className = "size-5" }: { className?: string }) {
   return <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.05 0C5.46 0 .1 5.36.1 11.95c0 2.1.55 4.16 1.6 5.98L0 24l6.23-1.63a11.96 11.96 0 0 0 5.82 1.49h.01c6.58 0 11.94-5.36 11.94-11.95 0-3.2-1.24-6.2-3.48-8.43ZM12.05 21.85a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.7.97.99-3.61-.24-.37a9.87 9.87 0 0 1-1.51-5.3c0-5.48 4.46-9.94 9.94-9.94a9.87 9.87 0 0 1 7.03 2.91 9.87 9.87 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94Zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.2 5.08 4.49.71.31 1.27.5 1.7.64.71.22 1.36.19 1.87.12.57-.09 1.77-.73 2.02-1.43.25-.7.25-1.3.17-1.43-.07-.12-.27-.2-.57-.35Z" /></svg>;
 }
 
-function InformasiTamu({ label, value, icon: Icon }: { label: string; value: string; icon: React.ComponentType<{ className?: string }> }) {
-  return <div className="flex min-w-0 items-end gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-lg border border-gold/25 bg-primary-soft/30 text-gold"><Icon className="size-5" /></span><div className="min-w-0 flex-1"><dt className="mb-1 text-xs text-muted-foreground">{label}</dt><dd className="min-h-10 rounded-lg border border-gold/25 bg-navy-deep/60 px-3 py-2 text-sm font-medium leading-relaxed break-words">{value}</dd></div></div>;
-}
-
 function HalamanTamu() {
   const { posisiKode } = usePeran();
   const readOnly = posisiKode === 'inspector';
@@ -83,13 +79,9 @@ function HalamanTamu() {
   const [saving, setSaving] = useState(false);
   const [detailTamu, setDetailTamu] = useState<Guest | null>(null);
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
-  const [semuaTransaksi, setSemuaTransaksi] = useState(false);
-  const [semuaCatatan, setSemuaCatatan] = useState(false);
   const [tabDetail, setTabDetail] = useState<'kunjungan' | 'transaksi' | 'booking' | 'catatan'>('kunjungan');
   const detailTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
-    setSemuaTransaksi(false);
-    setSemuaCatatan(false);
     setTabDetail('kunjungan');
   }, [detailTamu?.id]);
   const queryText = cari.trim().toLocaleLowerCase('id-ID');
@@ -99,7 +91,6 @@ function HalamanTamu() {
   const jumlahKunjungan = (id: string) => kunjunganTamu(transactions.rows, id).length;
   const detail = rows.find(t => t.id === detailTamu?.id) ?? detailTamu;
   const riwayat = detail ? transaksiTamu(detail.id) : [];
-  const pertama = detail ? kunjunganTamu(transactions.rows, detail.id).map(t => t.started_at).filter((time): time is string => !!time).sort().at(0) : undefined;
   const terakhir = detail ? kunjunganTamu(transactions.rows, detail.id).map(t => t.started_at).filter((time): time is string => !!time).sort().at(-1) : undefined;
   const catatanTamu = detail ? notes.rows.filter(n => n.guest_id === detail.id).sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id)) : [];
   const daftarCatatan = catatanTamu.length ? catatanTamu : detail?.notes.trim() ? [{ id: 'legacy', body: detail.notes, author_role: null, author_name: null, created_at: null }] : [];
