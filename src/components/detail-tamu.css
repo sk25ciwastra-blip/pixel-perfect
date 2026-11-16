@@ -61,9 +61,15 @@
 .ct-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 18px; padding: 16px 24px 18px; border-top: 1px solid var(--premium-line); }
 @media (max-width: 650px) {
   .ct-header { padding: 14px 16px; gap: 12px; }
-  .ct-avatar { width: 46px; height: 46px; font-size: 21px; }
-  .ct-judul h2 { font-size: 22px; }
-  .ct-isian, .ct-riwayat { margin-left: 14px; margin-right: 14px; }
+  .ct-avatar { width: 46px; height: 46px; }
+  .ct-avatar svg { width: 23px; height: 23px; }
+  .ct-judul h2 { font-size: 21px; }
+  .ct-tamu { flex-wrap: wrap; padding: 14px 16px; }
+  .ct-ringkasan { margin-left: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .ct-ringkasan-kartu { padding: 8px 12px; }
+  .ct-ringkasan-kartu strong { white-space: normal; }
+  .ct-isian, .ct-jenis, .ct-riwayat { margin-left: 16px; margin-right: 16px; }
+  .ct-footer { padding: 14px 16px; }
   .ct-simpan { padding: 0 18px; font-size: 14px; }
 }
 .detail-tamu-popup {
