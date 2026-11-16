@@ -124,13 +124,14 @@
 }
 .dt-tabel { width: 100%; min-width: 0; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 14px; color: var(--premium-ink); }
 .dt-tabel thead th {
-  position: sticky; top: 0; z-index: 1; padding: 10px 5px; text-align: center; white-space: normal; overflow-wrap: anywhere;
+  position: sticky; top: 0; z-index: 1; padding: 10px 5px; text-align: center; white-space: normal; overflow-wrap: normal; letter-spacing: 0; text-transform: none;
   font-size: 13px; font-weight: 700; color: var(--premium-ink);
   background: var(--success-metal);
   border-bottom: 1px solid color-mix(in oklab, var(--gold-krem) 60%, transparent);
 }
 .dt-tabel tbody td { padding: 10px 5px; border-bottom: 1px solid color-mix(in oklab, var(--premium-line) 75%, transparent); white-space: normal; overflow-wrap: anywhere; text-align: center; vertical-align: middle; line-height: 1.45; }
 .dt-tabel tbody tr:nth-child(even) { background: color-mix(in oklab, var(--premium-highlight) 40%, var(--premium-surface)); }
+.dt-tabel th:first-child, .dt-tabel th:nth-child(4) { white-space: nowrap; }
 .dt-tabel tbody tr:last-child td { border-bottom: 0; }
 .dt-tabel tbody tr:hover td { background: color-mix(in oklab, var(--gold) 7%, transparent); }
 .dt-nomor { color: var(--premium-muted); }
