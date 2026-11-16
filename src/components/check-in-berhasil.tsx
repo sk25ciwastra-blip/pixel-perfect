@@ -80,8 +80,8 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
   return <PopupBerhasil title={booking ? 'Booking Berhasil!' : 'Check-in Berhasil!'} subtitle={booking ? 'Reservasi berhasil disimpan.' : 'Transaksi berhasil disimpan.'} number={transactionNumber} onClose={onClose}>
       <dl className="cib-details">{rows.map(({ icon: Icon, label, value }) => <div className="cib-row" key={label}><Icon /><dt>{label}</dt><span>:</span><dd>{value}</dd></div>)}</dl>
       {result.isError && <p className="cib-message" role="alert">{booking ? 'Booking' : 'Check-in'} sudah berhasil; rincian belum dapat dimuat. <Button type="button" variant="link" onClick={() => void result.refetch()}>Muat ulang rincian</Button></p>}
-      <div className="cib-total"><Layers /><span>{booking ? 'Total Tagihan' : 'Total Pembayaran'}</span><strong>{t ? rupiah(Number(t.price_snapshot)) : '—'}</strong></div>
-      {booking ? <div className="cib-actions cib-actions-single"><Button type="button" className="cib-digital" onClick={onClose}><Check />Selesai</Button></div> : <><div className="cib-actions">
+      <div className="cib-total"><Layers /><span>{booking ? 'DP Diterima' : 'Total Pembayaran'}</span><strong>{booking ? (payments.data ? rupiah(dpDiterima) : '—') : (t ? rupiah(Number(t.price_snapshot)) : '—')}</strong></div>
+      <><div className="cib-actions">
         {featureFlags.receipt58mm ? <div className="cib-print"><ReceiptTransactionButton transactionNumber={transactionNumber} label="Cetak Struk" /></div> : <Button type="button" variant="outline" className="cib-print" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer /><span><b>Cetak Struk</b><small>Thermal 58 mm</small></span></Button>}
         <Popover open={menu} onOpenChange={setMenu}><PopoverTrigger asChild><Button type="button" className="cib-digital" disabled={!t || !hook.pdfAvailable}><FileText /><span><b>Bukti Digital</b><small>Kirim PDF atau JPG</small></span><ChevronDown className="size-4" /></Button></PopoverTrigger>
           <PopoverContent className="cib-digital-menu" side="right" align="end" sideOffset={16}>
