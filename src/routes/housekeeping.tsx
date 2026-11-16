@@ -11,8 +11,7 @@ import { usePeran } from '@/lib/peran';
 import { ChecklistHousekeeping } from '@/components/checklist-housekeeping';
 import { PerawatanBerkala } from '@/components/perawatan-berkala';
 import { Link } from '@tanstack/react-router';
-import { BedDouble, Brush, ClipboardCheck, History, Wrench, Search, Sparkles, CheckCircle2, Users, Package, Layers, Eye, ChevronRight } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { BedDouble, Brush, ClipboardCheck, ClipboardList, History, Wrench, CheckCircle2, Users, Package, Layers, Eye, ChevronRight, ChevronLeft, ChevronDown, Clock3, LoaderCircle, MoreHorizontal, TriangleAlert } from 'lucide-react';
 import '@/components/housekeeping.css';
 import latarHousekeeping from '@/assets/header-transaksi.jpg';
 import { ringkasanHousekeeping } from '@/lib/housekeeping-ringkasan';
@@ -52,8 +51,8 @@ function Halaman() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [checklistRoomId, setChecklistRoomId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
+  const [filter, setFilter] = useState('');
+  const [halaman, setHalaman] = useState(0);
   const [detailRoomId, setDetailRoomId] = useState<string | null>(null);
 
   const rooms = useTable('rooms');
@@ -63,31 +62,7 @@ function Halaman() {
   const checklists = useTable('housekeeping_checklists');
   const transactions = useTable('transactions');
 
-  const transactionNumbers = useMemo(
-    () => new Map(transactions.rows.map((transaction) => [transaction.id, transaction.transaction_number])),
-    [transactions.rows],
-  );
-
-  const operationalRooms = useMemo(() => {
-    const term = search.trim().toLowerCase();
-
-    return rooms.rows.filter((room) => {
-      if (room.room_number === '01') return false;
-      if (!term) return true;
-
-      return (
-        room.room_number.toLowerCase().includes(term) ||
-        history.rows.some(
-          (item) =>
-            item.room_id === room.id &&
-            (item.job_number?.toLowerCase().includes(term) ||
-              (item.transaction_id
-                ? transactionNumbers.get(item.transaction_id)?.toLowerCase().includes(term)
-                : false)),
-        )
-      );
-    });
-  }, [history.rows, rooms.rows, search, transactionNumbers]);
+  const operationalRooms = useMemo(() => rooms.rows.filter((room) => room.room_number !== '01'), [rooms.rows]);
 
   const latestChecklist = useMemo(() => {
     const map = new Map<string, (typeof checklists.rows)[number]>();
@@ -113,7 +88,17 @@ function Halaman() {
   const allDirtySelected =
     dirtyRooms.length > 0 && dirtyRooms.every((room) => selectedIds.includes(room.id));
   const activeRooms = operationalRooms.filter((room) => room.active);
-  const visibleSections = sections.map(section => ({ ...section, rooms: section.rooms.filter(room => !typeFilter || room.room_type_id === typeFilter) }));
+  const visibleSections = sections.map(section => ({ ...section, rooms: section.rooms.filter(room => !filter || (filter.startsWith('status:') ? section.key === filter.slice(7) : room.room_type_id === filter.slice(5))) }));
+  const barisKamar = visibleSections.flatMap(section => section.rooms.map(room => ({ section, room })));
+  const ukuranHalaman = 5;
+  const jumlahHalaman = Math.max(1, Math.ceil(barisKamar.length / ukuranHalaman));
+  const halamanAktif = Math.min(halaman, jumlahHalaman - 1);
+  const barisHalaman = barisKamar.slice(halamanAktif * ukuranHalaman, halamanAktif * ukuranHalaman + ukuranHalaman);
+  const waktuSingkat = (value: string) => new Date(value).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const bulanWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()).slice(0, 7);
+  const riwayatBulanIni = history.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.created_at)).startsWith(bulanWib)).length;
+  const perawatanHariIni = maintenance.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.performed_at)) === todayWib).length;
+  const perawatanBulanIni = maintenance.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.performed_at)).startsWith(bulanWib)).length;
   const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
   const todayHistory = history.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.created_at)) === todayWib);
   const startedToday = new Set(todayHistory.filter(item => item.action === 'start_cleaning').map(item => item.room_id));
