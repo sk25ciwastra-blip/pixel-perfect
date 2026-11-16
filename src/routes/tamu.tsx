@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { Eye, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, History, MapPin, CalendarDays, Users, ChevronRight, BedDouble, FileText, X, Clock, Layers, CircleCheck, Info, ReceiptText } from 'lucide-react';
+import { Eye, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, CalendarDays, Users, BedDouble, FileText, X, Clock, Layers, CircleCheck, Info, ReceiptText } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
@@ -21,12 +21,6 @@ export const Route = createFileRoute('/tamu')({
 function normalisasiNomor(value: string) {
   const digits = value.replace(/\D/g, '');
   return digits.startsWith('62') ? '0' + digits.slice(2) : digits;
-}
-function tanggalWib(value: string) {
-  return new Date(value).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' });
-}
-function waktuWib(value: string) {
-  return new Date(value).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
 }
 function tanggalPendekWib(value: string) {
   return new Date(value).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' });
