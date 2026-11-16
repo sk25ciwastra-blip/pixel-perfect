@@ -203,33 +203,74 @@ function HalamanTamu() {
               </div>
               <footer className="flex flex-wrap justify-end gap-3 border-t border-gold/20 bg-navy-deep/50 px-5 py-4 sm:px-7"><Button type="button" variant="outline" className="h-11 text-base" disabled={saving} onClick={() => { setOpen(false); setEditing(null); if (!detail) tutup(); }}>Batal</Button><Button type="submit" className="h-11 text-base" disabled={saving}>{saving ? 'Menyimpan…' : catatanSaja ? 'Simpan Catatan' : 'Simpan'}</Button></footer>
             </form> : detail && <>
-              <div className="space-y-3 p-4 sm:p-5">
-                <section className="rounded-xl border border-gold/30 bg-navy-deep/35 p-4">
-                  <h3 className="flex items-center gap-2 border-b border-gold/20 pb-3 text-sm font-semibold text-gold"><UserRound className="size-5" />INFORMASI TAMU</h3>
-                  <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                    <InformasiTamu label="Nama Tamu" value={detail.full_name} icon={UserRound} />
-                    <InformasiTamu label="Total Kunjungan" value={transactions.loading ? 'Memuat…' : `${jumlahKunjungan(detail.id)} kali`} icon={Users} />
-                    <InformasiTamu label="Nomor WhatsApp" value={detail.phone} icon={IkonWhatsApp} />
-                    <InformasiTamu label="Kunjungan Pertama" value={pertama ? tanggalWib(pertama) : 'Belum tersedia'} icon={CalendarDays} />
-                    <InformasiTamu label="Alamat" value={detail.address || '—'} icon={MapPin} />
-                    <InformasiTamu label="Kunjungan Terakhir" value={terakhir ? tanggalWib(terakhir) : 'Belum tersedia'} icon={CalendarDays} />
-                  </dl>
-                  <p className="mt-3 text-xs text-muted-foreground">Terdaftar {tanggalWib(detail.created_at)}</p>
-                </section>
-                <div className="grid min-w-0 gap-3">
-                  <section className="min-w-0 rounded-xl border border-gold/30 bg-navy-deep/35 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-gold/20 pb-3"><h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gold"><NotebookPen className="size-5" />Catatan Tamu</h3>{daftarCatatan.length > 1 && <Button variant="ghost" size="sm" className="h-8 px-2 text-sm text-gold-light" onClick={() => setSemuaCatatan(!semuaCatatan)}>{semuaCatatan ? 'Ringkas' : 'Lihat Semua'}</Button>}</div>
-                    {notes.error && <p className="mt-3 text-sm text-muted-foreground">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
-                    <ul className={`mt-1 divide-y divide-border/60 ${semuaCatatan ? 'max-h-56 overflow-y-auto pr-3' : ''}`}>{(semuaCatatan ? daftarCatatan : daftarCatatan.slice(0, 1)).map(note => <li key={note.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_210px] sm:items-center"><p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{note.body}</p><p className="text-right text-xs sm:border-l sm:border-gold/20 sm:pl-3 leading-relaxed text-muted-foreground"><span className="block break-words">{pembuatCatatan(note.author_role, note.author_name)}</span><span className="block">{note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</span></p></li>)}</ul>
-                    {!daftarCatatan.length && <p className="mt-3 text-base text-muted-foreground">Belum ada catatan tamu</p>}
-                  </section>
-                  <section className="min-w-0 rounded-xl border border-gold/30 bg-navy-deep/35 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-gold/20 pb-3"><h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gold"><History className="size-5" />Riwayat Transaksi</h3>{riwayat.length > 2 && <Button variant="ghost" size="sm" className="h-8 px-2 text-sm text-gold-light" onClick={() => setSemuaTransaksi(!semuaTransaksi)}>{semuaTransaksi ? 'Ringkas' : 'Lihat Semua'}</Button>}</div>
-                    {transactions.error && <p role="alert" className="mt-3 text-sm text-destructive">Riwayat transaksi belum dapat dimuat.</p>}
-                    <ul className={`mt-1 divide-y divide-border/60 ${semuaTransaksi ? 'max-h-56 overflow-y-auto pr-3' : ''}`}>{(semuaTransaksi ? riwayat : riwayat.slice(0, 2)).map(tr => <li key={tr.id} className="flex items-center gap-3 py-3"><span className="grid size-10 shrink-0 place-items-center rounded-lg border border-gold/20 bg-primary-soft/20 text-gold"><History className="size-5" /></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><Button type="button" variant="link" className="h-auto whitespace-normal break-all p-0 text-left font-mono text-sm text-gold" onClick={() => setDetailTransactionId(tr.id)}>{tr.transaction_number}</Button><span className="text-xs text-muted-foreground">•</span><span className="text-xs font-medium">{statusTransaksi[tr.status] ?? tr.status}</span></div><p className="mt-1 text-xs text-muted-foreground">{waktuWib(tr.created_at)}</p></div><Button size="icon" variant="ghost" className="size-8 shrink-0 text-gold-light" aria-label={`Detail transaksi ${tr.transaction_number}`} onClick={() => setDetailTransactionId(tr.id)}><ChevronRight className="size-4" /></Button></li>)}</ul>
-                    {!transactions.loading && !transactions.error && !riwayat.length && <p className="mt-3 text-base text-muted-foreground">Belum ada riwayat transaksi</p>}
-                  </section>
+              <div className="dt-tamu">
+                <span className="dt-avatar"><UserRound aria-hidden="true" /></span>
+                <div className="dt-identitas">
+                  <h3>{detail.full_name.toUpperCase()} · {empatDigitWA(detail.phone)}</h3>
+                  <p className="dt-telepon"><IkonWhatsApp className="size-[19px]" />{detail.phone}</p>
+                  <span className="dt-pill-status" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span>
+                </div>
+                <div className="dt-statistik">
+                  <div className="dt-stat"><span className="dt-stat-ikon"><BedDouble aria-hidden="true" /></span><div><p>Total Kunjungan</p><strong>{transactions.loading ? '…' : `${jumlahKunjungan(detail.id)} Kali`}</strong></div></div>
+                  <div className="dt-stat"><span className="dt-stat-ikon"><FileText aria-hidden="true" /></span><div><p>Total Transaksi</p><strong>{transactions.loading ? '…' : rupiah(totalTransaksi)}</strong></div></div>
+                  <div className="dt-stat"><span className="dt-stat-ikon"><CalendarDays aria-hidden="true" /></span><div><p>Kunjungan Terakhir</p><strong>{terakhir ? tanggalPendekWib(terakhir) : '—'}</strong></div></div>
                 </div>
               </div>
-              <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gold/20 bg-navy-deep/50 px-4 py-4 sm:px-5"><Button variant="outline" className="h-11 text-sm text-gold-light" onClick={tutup}>Tutup</Button>{!readOnly && <Button className="h-11 gap-2 text-sm" onClick={() => openWhatsApp(detail.phone)}><IkonWhatsApp />Hubungi</Button>}</footer>
+              <section className="dt-bagian">
+                <h3 className="dt-bagian-judul"><Info aria-hidden="true" />Informasi Tamu</h3>
+                <dl className="dt-info-grid">
+                  <div><dt>Nama Lengkap</dt><dd>{detail.full_name.toUpperCase()}</dd></div>
+                  <div><dt>No. HP / WhatsApp</dt><dd><span className="dt-telepon-inline"><IkonWhatsApp className="size-[17px]" />{detail.phone}</span></dd></div>
+                  <div><dt>No. Whatsapp</dt><dd className="dt-tebal">{detail.phone || '—'}</dd></div>
+                  <div><dt>Email</dt><dd>—</dd></div>
+                  <div><dt>Alamat</dt><dd>{detail.address || '—'}</dd></div>
+                  <div><dt>Catatan</dt><dd>{catatanPreferensi}</dd></div>
+                </dl>
+              </section>
+              <section className="dt-bagian">
+                <h3 className="dt-bagian-judul"><Layers aria-hidden="true" />Preferensi &amp; Riwayat Umum</h3>
+                <div className="dt-pref">
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><BedDouble aria-hidden="true" /></span><div><p>Tipe Favorit</p><strong>{tipeFavorit}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><Layers aria-hidden="true" /></span><div><p>Paket Favorit</p><strong>{paketFavorit}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><Users aria-hidden="true" /></span><div><p>Jumlah Tamu Umum</p><strong>{tamuUmum ? `${tamuUmum} Orang` : '—'}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><NotebookPen aria-hidden="true" /></span><div><p>Catatan Preferensi</p><strong>{catatanPreferensi}</strong></div></div>
+                </div>
+              </section>
+              <div className="dt-tab-bar" role="tablist" aria-label="Riwayat tamu">
+                <button type="button" role="tab" aria-selected={tabDetail === 'kunjungan'} data-aktif={tabDetail === 'kunjungan'} className="dt-tab" onClick={() => setTabDetail('kunjungan')}><Clock aria-hidden="true" />Riwayat Kunjungan ({kunjunganList.length})</button>
+                <button type="button" role="tab" aria-selected={tabDetail === 'transaksi'} data-aktif={tabDetail === 'transaksi'} className="dt-tab" onClick={() => setTabDetail('transaksi')}><Layers aria-hidden="true" />Riwayat Transaksi</button>
+                <button type="button" role="tab" aria-selected={tabDetail === 'booking'} data-aktif={tabDetail === 'booking'} className="dt-tab" onClick={() => setTabDetail('booking')}><CalendarDays aria-hidden="true" />Riwayat Booking</button>
+                <button type="button" role="tab" aria-selected={tabDetail === 'catatan'} data-aktif={tabDetail === 'catatan'} className="dt-tab" onClick={() => setTabDetail('catatan')}><NotebookPen aria-hidden="true" />Catatan</button>
+              </div>
+              {tabDetail === 'catatan' ? <>
+                {notes.error && <p className="dt-kosong">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
+                {daftarCatatan.length ? <ul className="dt-catatan-list">{daftarCatatan.map(note => <li key={note.id} className="dt-catatan-item"><p>{note.body}</p><p className="dt-catatan-meta">{pembuatCatatan(note.author_role, note.author_name)} · {note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</p></li>)}</ul> : !notes.error && <p className="dt-kosong">Belum ada catatan tamu</p>}
+              </> : <>
+                {transactions.error && <p role="alert" className="dt-kosong">Riwayat transaksi belum dapat dimuat.</p>}
+                {barisRiwayat.length ? <div className="dt-tabel-wrap"><table className="dt-tabel">
+                  <thead><tr><th>No.</th><th>Tgl Kunjungan</th><th>No. Transaksi</th><th>Kamar</th><th>Tipe</th><th>Paket</th><th>Check-in</th><th>Check-out</th><th>Total</th><th>Status</th><th aria-label="Struk" /></tr></thead>
+                  <tbody>{barisRiwayat.map((tr, index) => <tr key={tr.id}>
+                    <td className="dt-nomor">{index + 1}</td>
+                    <td>{tanggalPendekWib(tr.started_at ?? tr.created_at)}</td>
+                    <td className="dt-mono">{tr.transaction_number}</td>
+                    <td><span className="dt-kamar-pill">{nomorKamar(tr.room_id)}</span></td>
+                    <td>{tipeKamar(tr.room_id)}</td>
+                    <td>{namaPaket(tr.package_id)}</td>
+                    <td>{tr.started_at ? jamWib(tr.started_at) : '—'}</td>
+                    <td>{tr.checked_out_at ?? tr.ends_at ? jamWib((tr.checked_out_at ?? tr.ends_at) as string) : '—'}</td>
+                    <td>{rupiah(tr.price_snapshot ?? tr.base_price_snapshot ?? 0)}</td>
+                    <td><span className="dt-status" data-state={tr.status}>{tr.status === 'check_out' && <CircleCheck aria-hidden="true" />}{statusTransaksi[tr.status] ?? tr.status}</span></td>
+                    <td><button type="button" className="dt-struk" aria-label={`Detail transaksi ${tr.transaction_number}`} onClick={() => setDetailTransactionId(tr.id)}><ReceiptText aria-hidden="true" /></button></td>
+                  </tr>)}</tbody>
+                </table></div> : !transactions.loading && !transactions.error && <p className="dt-kosong">{tabDetail === 'booking' ? 'Belum ada riwayat booking' : 'Belum ada riwayat transaksi'}</p>}
+              </>}
+              <footer className="dt-footer">
+                <div className="dt-footer-kiri">
+                  {!readOnly && <button type="button" className="dt-tombol" onClick={() => edit(detail)}><Pencil aria-hidden="true" />Perbarui Data</button>}
+                  {!readOnly && <button type="button" className="dt-tombol" onClick={() => openWhatsApp(detail.phone)}><IkonWhatsApp className="size-[18px]" />Hubungi</button>}
+                </div>
+                <button type="button" className="dt-tutup" onClick={tutup}>Tutup</button>
+              </footer>
             </>}
           </Dialog.Content>
         </Dialog.Portal>
