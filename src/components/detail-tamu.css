@@ -123,10 +123,11 @@
   box-shadow: inset 0 2px 5px color-mix(in oklab, var(--premium-ink) 8%, transparent);
 }
 .dt-tabel { width: 100%; min-width: 0; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 14px; color: var(--premium-ink); }
+.dt-tabel thead { background: var(--gold); }
 .dt-tabel thead th {
   position: sticky; top: 0; z-index: 1; padding: 10px 5px; text-align: center; white-space: normal; overflow-wrap: normal; letter-spacing: 0; text-transform: none;
   font-size: 13px; font-weight: 700; color: var(--premium-ink);
-  background: var(--success-metal);
+  background: var(--gold);
   border-bottom: 1px solid color-mix(in oklab, var(--gold-krem) 60%, transparent);
 }
 .dt-tabel tbody td { padding: 10px 5px; border-bottom: 1px solid color-mix(in oklab, var(--premium-line) 75%, transparent); white-space: normal; overflow-wrap: anywhere; text-align: center; vertical-align: middle; line-height: 1.45; }
