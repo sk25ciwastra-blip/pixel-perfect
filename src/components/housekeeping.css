@@ -597,3 +597,20 @@
   .hk-panel-header h2, .hk-room-panel > .hk-panel-header h2, .hk-side-panel .hk-panel-header h2 { font-size: 19px; }
 }
 @media (prefers-reduced-motion: reduce) { .hk-aksi-menu > summary { transition: none; } .hk-aksi-menu > summary:hover { transform: none; } }
+/* Penyesuaian kerapatan referensi */
+@media (min-width: 1024px) { .hk-header { margin-top: -44px; } }
+.hk-stats-reference { grid-template-columns: 1.62fr .98fr 1fr 1.25fr; }
+.hk-summary-status { flex-wrap: nowrap; gap: 5px; }
+.hk-summary-status span { padding: 2px 6px; font-size: 11px; white-space: nowrap; }
+.hk-summary-status span::before { width: 6px; height: 6px; margin-right: 4px; }
+@media (max-width: 1350px) { .hk-summary-status { flex-wrap: wrap; } }
+@media (min-width: 1201px) {
+  .hk-room-panel .hk-table th:nth-child(1) { width: 10%; }
+  .hk-room-panel .hk-table th:nth-child(2) { width: 15%; }
+  .hk-room-panel .hk-table th:nth-child(3) { width: 15%; }
+  .hk-room-panel .hk-table th:nth-child(4) { width: 13%; }
+  .hk-room-panel .hk-table th:nth-child(5) { width: 10%; }
+  .hk-room-panel .hk-table th:nth-child(6) { width: 27%; }
+  .hk-room-panel .hk-table th:nth-child(7) { width: 10%; }
+}
+.hk-room-panel .hk-table td:nth-child(2), .hk-room-panel .hk-table td:nth-child(6) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
