@@ -2,7 +2,7 @@
 
 ## Formulir operasional — putih hangat 16 November
 - [x] Perhalus Check-in Langsung, Reservasi dan Pengeluaran dengan putih hangat serta relief ringan; ukuran, isian, data, aturan dan fungsi tetap.
-- [ ] Periksa ketiga formulir dengan akun aktif di komputer dan HP tanpa menyimpan transaksi.
+- [x] Ketiga formulir diperiksa dengan akun aktif di komputer dan HP: putih hangat, empat bagian tetap, tanpa meluap; Batal berjalan dan build OK, tanpa menyimpan transaksi atau publikasi.
 
 ## Detail Karyawan — referensi 16 November
 - [x] Susun popup dua kolom krem–emas sesuai referensi dengan profil/foto asli; isian/status tanpa sumber tetap —, tanpa sandi atau data contoh.
