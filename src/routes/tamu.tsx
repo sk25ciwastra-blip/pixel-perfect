@@ -233,6 +233,7 @@ function HalamanTamu() {
               </> : <>
                 {transactions.error && <p role="alert" className="dt-kosong">Riwayat transaksi belum dapat dimuat.</p>}
                 {barisRiwayat.length ? <div className="dt-tabel-wrap"><table className="dt-tabel">
+                  <colgroup><col className="w-[3%]" /><col className="w-[10%]" /><col className="w-[15%]" /><col className="w-[6%]" /><col className="w-[9%]" /><col className="w-[10%]" /><col className="w-[7%]" /><col className="w-[7%]" /><col className="w-[11%]" /><col className="w-[17%]" /><col className="w-[5%]" /></colgroup>
                   <thead><tr><th>No.</th><th>Tgl Kunjungan</th><th>No. Transaksi</th><th>Kamar</th><th>Tipe</th><th>Paket</th><th>Check-in</th><th>Check-out</th><th>Total</th><th>Status</th><th aria-label="Struk" /></tr></thead>
                   <tbody>{barisRiwayat.map((tr, index) => <tr key={tr.id}>
                     <td className="dt-nomor">{index + 1}</td>
