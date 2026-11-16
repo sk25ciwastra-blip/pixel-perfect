@@ -1,5 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { nextEmployeeId } from '@/lib/employee-id';
 export const createEmployee = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((data:{name:string;email:string;password:string;active?:boolean;position:'receptionist'|'housekeeping'|'supervisor'|'inspector'|'investor'})=>data).handler(async ({data,context})=>{
  const {data:owner,error:roleError}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'owner'});
  if(roleError||!owner)throw new Error('Akses ditolak');
@@ -8,14 +9,13 @@ export const createEmployee = createServerFn({method:'POST'}).middleware([requir
  const {data:created,error}=await supabaseAdmin.auth.admin.createUser({email:data.email,password:data.password,email_confirm:true});
  if(error||!created.user)throw new Error(error?.message??'Gagal membuat akun');
  const id=created.user.id;
- const tahun=new Date().toLocaleString('en-CA',{timeZone:'Asia/Jakarta',year:'numeric'});
- const {data:ada}=await supabaseAdmin.from('employees').select('employee_id').like('employee_id',`KR-${tahun}-%`);
- const urut=Math.max(0,...(ada??[]).map(r=>Number(r.employee_id.split('-')[2])||0))+1;
- const employeeId=`KR-${tahun}-${String(urut).padStart(4,'0')}`;
+ const {data:ada,error:idError}=await supabaseAdmin.from('employees').select('employee_id').like('employee_id','BTRDEMP-%');
+ if(idError){await supabaseAdmin.auth.admin.deleteUser(id);throw new Error('Tidak dapat menentukan ID karyawan.')}
+ const employeeId=nextEmployeeId((ada??[]).map(r=>r.employee_id));
  const {error:roleInsert}=await supabaseAdmin.from('user_roles').insert({user_id:id,role:'employee'});
  const {data:inserted,error:employeeInsert}=roleInsert?{data:null,error:roleInsert}:await supabaseAdmin.from('employees').insert({user_id:id,name:data.name.trim(),employee_id:employeeId,position:data.position,active:data.active??true}).select('id').single();
- if(employeeInsert){await supabaseAdmin.auth.admin.deleteUser(id);throw new Error(employeeInsert.message)}
- return {ok:true,id:inserted!.id,employeeId};
+ if(employeeInsert||!inserted){await supabaseAdmin.auth.admin.deleteUser(id);throw new Error(employeeInsert?.message??'Gagal menyimpan karyawan')}
+ return {ok:true,id:inserted.id,employeeId};
 });
 export const manageEmployee = createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((data:{id:string;name:string;position:'receptionist'|'housekeeping'|'supervisor'|'inspector'|'investor';active:boolean;password?:string})=>data).handler(async ({data,context})=>{
  const {data:owner}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'owner'});

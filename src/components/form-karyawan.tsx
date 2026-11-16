@@ -4,6 +4,7 @@ import { UserRound, Mail, Layers, Lock, Info, IdCard, MapPin, CalendarDays, Phon
 import '@/components/form-karyawan.css';
 import { supabase } from '@/integrations/supabase/client';
 import { createEmployee, manageEmployee } from '@/lib/employee.functions';
+import { nextEmployeeId } from '@/lib/employee-id';
 import type { Employee } from '@/lib/data-live';
 
 type Posisi = 'receptionist' | 'housekeeping' | 'supervisor' | 'inspector' | 'investor';
@@ -26,8 +27,7 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
   const [foto, setFoto] = useState<File | null>(null); const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const tahun = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric' });
-  const idPratinjau = item?.employee_id ?? `KR-${tahun}-${String(Math.max(0, ...semua.filter(k => k.employee_id.startsWith(`KR-${tahun}-`)).map(k => Number(k.employee_id.split('-')[2]) || 0)) + 1).padStart(4, '0')}`;
+  const idPratinjau = item?.employee_id ?? nextEmployeeId(semua.map(k => k.employee_id));
 
   useEffect(() => {
     if (!item) return;
@@ -59,7 +59,8 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
         const { error } = await supabase.storage.from('employee-photos').upload(photo_path, foto, { upsert: true, contentType: foto.type });
         if (error) throw new Error('Akun tersimpan, tetapi pas foto gagal diunggah.');
       }
-      const { error } = await supabase.from('employee_profiles').upsert({ employee_id: id!, ...p, birth_date: p.birth_date || null, ...(photo_path ? { photo_path } : {}) });
+      if (!id) throw new Error('Karyawan belum tersimpan.');
+      const { error } = await supabase.from('employee_profiles').upsert({ employee_id: id, ...p, birth_date: p.birth_date || null, ...(photo_path ? { photo_path } : {}) });
       if (error) throw new Error('Akun tersimpan, tetapi data identitas gagal disimpan.');
       onSelesai(true);
     } catch (err) { setMessage(err instanceof Error ? err.message : 'Tidak dapat menyimpan karyawan.'); } finally { setBusy(false); }
