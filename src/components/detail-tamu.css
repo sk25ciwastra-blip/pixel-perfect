@@ -4,7 +4,8 @@
   overflow-x: hidden;
   line-height: 1.5;
   color-scheme: light;
-  --dt-relief: var(--premium-panel-shadow);
+  --dt-relief: inset 0 1px 0 var(--premium-surface), 0 2px 3px -1px color-mix(in oklab, var(--gold-krem) 24%, transparent), 0 5px 12px -7px color-mix(in oklab, var(--gold-krem) 30%, transparent);
+  --dt-metal: linear-gradient(170deg, var(--gold-light), var(--gold-dark) 22%, var(--gold-krem) 76%, var(--gold-dark));
   border: 1.5px solid var(--gold);
   border-radius: 24px;
   color: var(--premium-ink);
@@ -114,7 +115,7 @@
 }
 .dt-tab svg { width: 22px; height: 22px; color: var(--gold-krem); flex-shrink: 0; }
 .dt-tab[data-aktif='true'] {
-  background: var(--success-dark-button);
+  background: var(--dt-metal);
   color: var(--premium-paper);
   border-color: color-mix(in oklab, var(--gold-krem) 80%, transparent);
   box-shadow: 0 5px 12px -4px color-mix(in oklab, var(--gold-krem) 65%, transparent), inset 0 1px 0 color-mix(in oklab, var(--card) 40%, transparent);
@@ -187,7 +188,7 @@
 .dt-tutup {
   display: inline-flex; align-items: center; gap: 7px; padding: 10px 36px; border-radius: 13px; cursor: pointer;
   font-family: var(--font-serif, serif); font-size: 18px; font-weight: 700; color: var(--premium-paper);
-  background: var(--success-dark-button);
+  background: var(--dt-metal);
   border: 1px solid color-mix(in oklab, var(--gold-krem) 80%, transparent);
   box-shadow: 0 6px 14px -5px color-mix(in oklab, var(--gold-krem) 70%, transparent), inset 0 1px 0 color-mix(in oklab, var(--card) 45%, transparent);
 }
