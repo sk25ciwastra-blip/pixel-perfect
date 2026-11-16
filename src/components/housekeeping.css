@@ -653,3 +653,39 @@
 .hk-table tbody tr:hover { background: color-mix(in oklab, var(--primary) 8%, transparent); }
 .hk-room-status, .hk-aksi-menu > summary { box-shadow: inset 0 1px 0 color-mix(in oklab, var(--card) 40%, transparent), 0 2px 6px -2px color-mix(in oklab, var(--background) 40%, transparent); }
 @media (prefers-reduced-motion: reduce) { .hk-stats-reference > * { transition: none; } .hk-stats-reference > *:hover { transform: none; } }
+/* Ringkasan sesuai gambar referensi 16 Nov (kartu atas) */
+.hk-stats-reference { gap: 16px; align-items: stretch; }
+.hk-stats-reference > .hk-summary-card {
+  display: flex; flex-direction: column; justify-content: center; gap: 12px;
+  padding: 14px 18px; min-height: 0; border-radius: 14px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 92%, var(--primary) 8%), color-mix(in oklab, var(--background) 85%, var(--card)));
+  border: 1px solid color-mix(in oklab, var(--primary) 42%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--primary) 25%, transparent), 0 10px 24px -14px color-mix(in oklab, var(--background) 90%, transparent);
+}
+.hk-stats-reference .hk-summary-main { display: flex; align-items: center; gap: 14px; }
+.hk-stats-reference .hk-summary-main p { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--foreground); }
+.hk-stats-reference .hk-summary-main strong { font-family: var(--font-serif); font-variant-numeric: lining-nums; font-size: 26px; line-height: 1.05; color: var(--foreground); }
+.hk-stats-reference .hk-summary-main strong small { font-size: 19px; font-weight: 600; }
+.hk-stats-reference .hk-stat-icon {
+  width: 44px; height: 44px; flex: 0 0 44px; border-radius: 10px; display: grid; place-items: center;
+  background: linear-gradient(160deg, color-mix(in oklab, var(--primary) 30%, var(--card)), color-mix(in oklab, var(--primary) 10%, var(--background)));
+  color: var(--primary); border: 1px solid color-mix(in oklab, var(--primary) 35%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--primary) 45%, transparent);
+}
+.hk-stats-reference .hk-stat-icon svg { width: 24px; height: 24px; stroke-width: 2.2; }
+.hk-stats-reference .hk-summary-status { border-top: 0; padding: 0; margin: 0; flex-wrap: nowrap; gap: 14px; }
+.hk-stats-reference .hk-summary-status span { border: 0; background: none; padding: 0; font-size: 12px; color: var(--foreground); }
+.hk-stats-reference .hk-summary-status span::before { width: 7px; height: 7px; }
+.hk-stats-reference .hk-summary-caption { margin: 0 0 0 58px; font-size: 12px; color: color-mix(in oklab, var(--foreground) 80%, transparent); }
+.hk-stats-reference .hk-summary-gold {
+  background: radial-gradient(120% 140% at 15% 0%, color-mix(in oklab, var(--primary) 28%, var(--card)), color-mix(in oklab, var(--background) 80%, var(--card)) 75%);
+  border: 1.5px solid var(--primary);
+  box-shadow: 0 0 22px -4px color-mix(in oklab, var(--primary) 60%, transparent), inset 0 1px 0 color-mix(in oklab, var(--primary) 60%, transparent);
+}
+.hk-stats-reference .hk-summary-gold .hk-summary-main p { color: var(--primary); font-size: 15px; }
+.hk-stats-reference .hk-summary-gold .hk-stat-icon { background: none; border: 0; box-shadow: none; width: 32px; height: 32px; flex-basis: 32px; }
+.hk-stats-reference .hk-summary-gold .hk-completion-grid { padding-left: 46px; }
+.hk-stats-reference .hk-summary-gold .hk-completion-grid strong { font-size: 26px; }
+@media (max-width: 1350px) { .hk-stats-reference .hk-summary-status { flex-wrap: wrap; gap: 6px 12px; } }
+.hk-stats-reference .hk-summary-gold .hk-completion-grid strong { font-family: var(--font-serif); font-variant-numeric: lining-nums; color: var(--foreground); }
+.hk-stats-reference .hk-summary-gold { gap: 6px; }
