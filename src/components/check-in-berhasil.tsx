@@ -81,7 +81,7 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
       <dl className="cib-details">{rows.map(({ icon: Icon, label, value }) => <div className="cib-row" key={label}><Icon /><dt>{label}</dt><span>:</span><dd>{value}</dd></div>)}</dl>
       {result.isError && <p className="cib-message" role="alert">{booking ? 'Booking' : 'Check-in'} sudah berhasil; rincian belum dapat dimuat. <Button type="button" variant="link" onClick={() => void result.refetch()}>Muat ulang rincian</Button></p>}
       <div className="cib-total"><Layers /><span>{booking ? 'DP Diterima' : 'Total Pembayaran'}</span><strong>{booking ? (payments.data ? rupiah(dpDiterima) : '—') : (t ? rupiah(Number(t.price_snapshot)) : '—')}</strong></div>
-      <><div className="cib-actions">
+      <div className="cib-actions">
         {featureFlags.receipt58mm ? <div className="cib-print"><ReceiptTransactionButton transactionNumber={transactionNumber} label="Cetak Struk" /></div> : <Button type="button" variant="outline" className="cib-print" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer /><span><b>Cetak Struk</b><small>Thermal 58 mm</small></span></Button>}
         <Popover open={menu} onOpenChange={setMenu}><PopoverTrigger asChild><Button type="button" className="cib-digital" disabled={!t || !hook.pdfAvailable}><FileText /><span><b>Bukti Digital</b><small>Kirim PDF atau JPG</small></span><ChevronDown className="size-4" /></Button></PopoverTrigger>
           <PopoverContent className="cib-digital-menu" side="right" align="end" sideOffset={16}>
@@ -94,6 +94,6 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
           </PopoverContent>
         </Popover>
       </div>
-      <p className="cib-reminder"><ShieldCheck />Pastikan setiap tamu menerima bukti pembayaran resmi, baik dalam bentuk digital maupun struk cetak.</p></>}
+      <p className="cib-reminder"><ShieldCheck />Pastikan setiap tamu menerima bukti pembayaran resmi, baik dalam bentuk digital maupun struk cetak.</p>
   </PopupBerhasil>;
 }
