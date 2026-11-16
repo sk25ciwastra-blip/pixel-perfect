@@ -337,6 +337,9 @@
 .hk-room-panel .hk-table .hk-state,.hk-room-panel .hk-table td > span.inline-flex { font-size: 10px; padding: 3px 6px; font-weight: 600; }
 .hk-room-panel .hk-table td .hk-eye-button { width: 30px; height: 30px; min-width: 30px; min-height: 30px; background: var(--premium-paper); color: var(--premium-ink); border-color: var(--premium-line); }
 .hk-room-panel .hk-table td button { font-size: 10px; }
+.hk-room-panel .hk-table th:last-child,.hk-room-panel .hk-table td:last-child { position: sticky; right: 0; box-shadow: -1px 0 0 var(--premium-line); }
+.hk-room-panel .hk-table td:last-child { z-index: 1; }
+.hk-room-panel .hk-table th:last-child { z-index: 2; }
 .hk-side { grid-template-rows: auto auto; gap: 12px; }
 .hk-reference-link { margin-left: auto; color: var(--gold-krem); }
 .hk-reference-link svg { width: 18px; height: 18px; }
