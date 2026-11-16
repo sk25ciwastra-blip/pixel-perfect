@@ -171,9 +171,9 @@ function HalamanTamu() {
         <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-navy-deep/75 backdrop-blur-sm" />
           <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className={open && catatanSaja ? "catatan-tamu-popup fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[800px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto text-base" : open ? "fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut" : "detail-tamu-popup fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[1000px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto text-base"}>
             {open && catatanSaja ? <header className="ct-header">
-              <NotebookPen aria-hidden="true" />
-              <div><Dialog.Title>Catatan Tamu</Dialog.Title></div>
-              <Dialog.Close asChild><Button type="button" variant="ghost" size="icon" disabled={saving} className="ct-silang" aria-label="Tutup catatan tamu"><X /></Button></Dialog.Close>
+              <span className="ct-avatar" aria-hidden="true">{(detail?.full_name ?? '?').trim().charAt(0).toUpperCase()}</span>
+              <div className="ct-judul"><p>Catatan Tamu</p><Dialog.Title asChild><h2>{detail?.full_name ?? 'Catatan Tamu'}</h2></Dialog.Title></div>
+              <Dialog.Close asChild><button type="button" disabled={saving} className="ct-silang" aria-label="Tutup catatan tamu"><X /></button></Dialog.Close>
             </header> : open ? <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0"><p className="text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
