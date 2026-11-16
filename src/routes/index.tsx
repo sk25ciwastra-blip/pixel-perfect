@@ -33,6 +33,7 @@ import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import panorama from "@/assets/panorama-kota-malam.png.asset.json";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
+import { PopupBerhasil } from "@/components/check-in-berhasil";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { usePeran } from "@/lib/peran";
@@ -1247,6 +1248,7 @@ function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved
   const [pesan, setPesan] = useState("");
   const [simpan, setSimpan] = useState(false);
   const [nomor, setNomor] = useState<string | null>(null);
+  const [hasilPengeluaran, setHasilPengeluaran] = useState<{ category: string; note: string; method: string; amount: number } | null>(null);
   const [kunci] = useState(() => crypto.randomUUID());
 
   async function kirim(e: React.FormEvent) {
@@ -1266,10 +1268,11 @@ function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved
     });
     if (error) { setSimpan(false); setPesan(`Pengeluaran gagal disimpan: ${error.message}`); return; }
     const { data: baris } = typeof data === "string"
-      ? await supabase.from("finance_expenses").select("expense_number").eq("id", data).maybeSingle()
+      ? await supabase.from("finance_expenses").select("expense_number,category,note,method,amount").eq("id", data).maybeSingle()
       : { data: null };
     setSimpan(false);
     setNomor(baris?.expense_number ?? "");
+    setHasilPengeluaran(baris ?? null);
     await onSaved();
   }
 
@@ -1287,6 +1290,16 @@ function FormulirPengeluaran({ sessionId, namaSesi, isTraining, onClose, onSaved
       <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
     </div>
   );
+  if (nomor !== null) return <PopupBerhasil title="Pengeluaran Berhasil!" subtitle="Pengeluaran berhasil disimpan." number={nomor} onClose={onClose}>
+    <dl className="cib-details">
+      <div className="cib-row"><ReceiptText /><dt>Jenis Pengeluaran</dt><span>:</span><dd>{hasilPengeluaran?.category ?? '—'}</dd></div>
+      <div className="cib-row"><FileText /><dt>Keterangan</dt><span>:</span><dd>{hasilPengeluaran?.note ?? '—'}</dd></div>
+      <div className="cib-row"><CreditCard /><dt>Metode Pembayaran</dt><span>:</span><dd>{hasilPengeluaran?.method ?? '—'}</dd></div>
+    </dl>
+    <div className="cib-total"><ReceiptText /><span>Total Kas Keluar</span><strong>{hasilPengeluaran ? rupiah(Number(hasilPengeluaran.amount)) : '—'}</strong></div>
+    <div className="cib-actions cib-actions-single"><Button type="button" className="cib-digital" onClick={onClose}>Selesai</Button></div>
+  </PopupBerhasil>;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm" onClick={onClose}>
       <form onSubmit={kirim} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judul-pengeluaran" className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${nomor !== null ? "max-w-sm" : "checkin-reference expense-reference"}`}>

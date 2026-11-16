@@ -24,6 +24,7 @@
 .cib-total { display: flex; align-items: center; gap: 12px; margin: 12px 0 18px; padding: 11px 12px; border: 1px solid var(--success-gold); border-radius: 12px; background: linear-gradient(110deg, var(--premium-highlight), var(--success-gold-light)); box-shadow: inset 0 1px 0 var(--success-paper), inset 0 -2px 3px color-mix(in oklab, var(--success-gold) 18%, transparent), 0 4px 8px -5px color-mix(in oklab, var(--success-ink) 30%, transparent); }
 .cib-total svg { width: 23px; flex-shrink: 0; color: var(--gold-krem); } .cib-total span { font-size: 14px; font-weight: 800; } .cib-total strong { margin-left: auto; font-size: 21px; white-space: nowrap; }
 .cib-actions { display: grid; grid-template-columns: 1fr 1.12fr; gap: 10px; }
+.cib-actions-single { grid-template-columns: 1fr; }
 .cib-actions button { height: 54px; width: 100%; border-radius: 12px; border: 1px solid var(--premium-line); gap: 12px; box-shadow: 0 3px 3px color-mix(in oklab, var(--success-ink) 24%, transparent), inset 0 1px 0 color-mix(in oklab, var(--premium-surface) 45%, transparent); transition: filter .16s, transform .16s; }
 .cib-actions button:not(:disabled):hover { filter: brightness(1.06); transform: translateY(-1px); }
 .cib-actions button:disabled { opacity: .8; }
