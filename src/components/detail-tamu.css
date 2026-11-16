@@ -1,4 +1,61 @@
 /* Popup Detail Tamu — referensi Owner 16 November */
+.catatan-tamu-popup {
+  background: var(--finance-paper-satin); color: var(--premium-ink); color-scheme: light;
+  border: 1.5px solid var(--gold); border-radius: 22px; overflow-x: hidden;
+  box-shadow: var(--premium-shadow); line-height: 1.5;
+}
+.ct-header { display: flex; align-items: center; gap: 15px; padding: 16px 24px 13px; border-bottom: 1px solid var(--premium-line); }
+.ct-header > svg { width: 39px; height: 39px; color: var(--gold-krem); }
+.ct-header h2 { font-family: var(--font-serif); font-size: 28px; font-weight: 700; margin: 0; }
+.ct-silang { margin-left: auto; color: var(--gold-krem); background: transparent; }
+.ct-identitas { display: grid; grid-template-columns: 58px minmax(0, 1fr) minmax(0, 175px) minmax(0, 140px); align-items: center; gap: 14px; padding: 16px 24px; }
+.ct-avatar { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: var(--success-dark-button); border: 2px solid var(--gold); color: var(--premium-paper); box-shadow: var(--finance-metal-relief); }
+.ct-avatar svg { width: 38px; height: 38px; fill: var(--premium-paper); stroke-width: 1.2; }
+.ct-nama { min-width: 0; }
+.ct-nama h3 { font-size: 21px; font-weight: 800; margin: 0; overflow-wrap: anywhere; }
+.ct-nama p { display: flex; align-items: center; gap: 7px; margin: 2px 0 0; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.ct-nama p svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--premium-success); }
+.ct-ringkasan { display: flex; align-items: center; gap: 9px; padding: 10px; border: 1px solid var(--premium-surface); border-radius: 16px; background: var(--finance-paper-satin); box-shadow: var(--premium-panel-shadow); min-width: 0; }
+.ct-ringkasan > svg { width: 35px; height: 35px; padding: 5px; box-sizing: content-box; border-radius: 50%; background: var(--premium-highlight); color: var(--gold-krem); flex-shrink: 0; }
+.ct-ringkasan div { min-width: 0; }
+.ct-ringkasan span { display: block; font-size: 12px; }
+.ct-ringkasan strong { display: block; font-size: 16px; overflow-wrap: anywhere; }
+.ct-isian { margin: 0 20px 16px; padding: 12px; background: var(--premium-surface); border-radius: 14px; border-top: 1px solid var(--premium-line); }
+.ct-isian label { display: block; font-weight: 700; font-size: 14px; margin-bottom: 5px; }
+.ct-isian textarea { display: block; width: 100%; min-height: 100px; max-height: 220px; resize: vertical; border: 1px solid var(--premium-line); border-radius: 13px; padding: 11px 13px; color: var(--premium-ink); background: var(--premium-paper); font-size: 15px; line-height: 1.6; box-shadow: var(--finance-field-inset); }
+.ct-isian textarea::placeholder { color: var(--premium-muted); }
+.catatan-tamu-popup :is(textarea, button):focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 3px; }
+.ct-peringatan { color: var(--premium-danger); font-size: 14px; margin-top: 8px; }
+.ct-riwayat { margin: 0 20px 14px; border-radius: 14px; background: var(--premium-paper); box-shadow: var(--premium-panel-shadow); overflow: hidden; }
+.ct-riwayat h3 { display: flex; align-items: center; gap: 9px; font-family: var(--font-serif); font-size: 19px; font-weight: 700; margin: 0; padding: 7px 12px; background: var(--premium-highlight); }
+.ct-riwayat h3 svg { width: 21px; height: 21px; color: var(--gold-krem); }
+.ct-riwayat ul { list-style: none; margin: 0; padding: 0 12px; max-height: 230px; overflow-y: auto; }
+.ct-riwayat li { display: grid; grid-template-columns: 30px minmax(0, 1fr) minmax(0, 200px); align-items: start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--premium-line); }
+.ct-riwayat li:last-child { border-bottom: 0; }
+.ct-ikon-catatan { width: 27px; height: 27px; padding: 4px; color: var(--gold-krem); background: var(--premium-highlight); border-radius: 50%; }
+.ct-isi-catatan { margin: 0; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ct-meta { display: flex; align-items: start; gap: 7px; font-size: 12px; color: var(--premium-muted); overflow-wrap: anywhere; }
+.ct-meta > svg { width: 17px; height: 17px; color: var(--gold-krem); flex-shrink: 0; }
+.ct-meta strong { display: block; font-weight: 600; color: var(--premium-ink); }
+.ct-kosong { font-size: 14px; color: var(--premium-muted); padding: 16px; margin: 0; }
+.ct-footer { display: flex; justify-content: flex-end; gap: 14px; margin: 0 20px; padding: 16px 0 20px; border-top: 1px solid var(--premium-line); }
+.ct-batal, .ct-simpan { height: 44px; font-size: 16px; font-weight: 700; border-radius: 12px; padding: 0 28px; box-shadow: var(--premium-panel-shadow); }
+.ct-batal { background: var(--finance-paper-satin); color: var(--premium-ink); border-color: var(--premium-line); }
+.ct-simpan { background: var(--success-metal); color: var(--premium-ink); border: 1px solid var(--gold); }
+.ct-simpan svg { width: 19px; height: 19px; }
+@media (max-width: 650px) {
+  .ct-header { padding: 12px 16px; gap: 10px; }
+  .ct-header h2 { font-size: 24px; }
+  .ct-header > svg { width: 30px; height: 30px; }
+  .ct-identitas { grid-template-columns: 58px minmax(0, 1fr); padding: 14px 16px; gap: 12px; }
+  .ct-ringkasan { grid-column: 1 / -1; }
+  .ct-nama h3 { font-size: 19px; }
+  .ct-riwayat li { grid-template-columns: 26px minmax(0, 1fr); }
+  .ct-meta { grid-column: 2; }
+  .ct-isian, .ct-riwayat, .ct-footer { margin-left: 14px; margin-right: 14px; }
+  .ct-footer { gap: 9px; }
+  .ct-batal, .ct-simpan { padding: 0 15px; font-size: 14px; }
+}
 .detail-tamu-popup {
   background: var(--finance-paper-satin);
   overflow-x: hidden;
