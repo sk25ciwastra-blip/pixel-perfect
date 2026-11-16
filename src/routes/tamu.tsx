@@ -91,10 +91,12 @@ function HalamanTamu() {
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
   const [semuaTransaksi, setSemuaTransaksi] = useState(false);
   const [semuaCatatan, setSemuaCatatan] = useState(false);
+  const [tabDetail, setTabDetail] = useState<'kunjungan' | 'transaksi' | 'booking' | 'catatan'>('kunjungan');
   const detailTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     setSemuaTransaksi(false);
     setSemuaCatatan(false);
+    setTabDetail('kunjungan');
   }, [detailTamu?.id]);
   const queryText = cari.trim().toLocaleLowerCase('id-ID');
   const queryDigits = normalisasiNomor(cari);
@@ -107,6 +109,17 @@ function HalamanTamu() {
   const terakhir = detail ? kunjunganTamu(transactions.rows, detail.id).map(t => t.started_at).filter((time): time is string => !!time).sort().at(-1) : undefined;
   const catatanTamu = detail ? notes.rows.filter(n => n.guest_id === detail.id).sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id)) : [];
   const daftarCatatan = catatanTamu.length ? catatanTamu : detail?.notes.trim() ? [{ id: 'legacy', body: detail.notes, author_role: null, author_name: null, created_at: null }] : [];
+  const nomorKamar = (id: string) => rooms.rows.find(r => r.id === id)?.room_number ?? '—';
+  const tipeKamar = (id: string) => { const kamar = rooms.rows.find(r => r.id === id); return roomTypes.rows.find(t => t.id === kamar?.room_type_id)?.name ?? '—'; };
+  const namaPaket = (id: string | null) => packages.rows.find(p => p.id === id)?.name ?? '—';
+  const kunjunganList = detail ? kunjunganTamu(transactions.rows, detail.id).sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id)) : [];
+  const bookingList = riwayat.filter(t => t.status === 'booking');
+  const barisRiwayat = tabDetail === 'booking' ? bookingList : tabDetail === 'transaksi' ? riwayat : kunjunganList;
+  const totalTransaksi = riwayat.reduce((sum, t) => sum + (t.price_snapshot ?? t.base_price_snapshot ?? 0), 0);
+  const tipeFavorit = terbanyak(riwayat.map(t => tipeKamar(t.room_id)));
+  const paketFavorit = terbanyak(riwayat.map(t => namaPaket(t.package_id)));
+  const tamuUmum = riwayat.length ? Math.round(riwayat.reduce((sum, t) => sum + (t.guest_count ?? 0), 0) / riwayat.length) : 0;
+  const catatanPreferensi = daftarCatatan[0]?.body ?? '—';
 
   function edit(t?: Guest, hanyaCatatan = false) {
     setCatatanSaja(hanyaCatatan);
