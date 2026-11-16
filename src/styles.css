@@ -421,3 +421,63 @@
   --pil-teks: oklch(0.8 0.12 82);
   --pil-tombol: oklch(0.99 0.004 85);
 }
+
+/* Relief satin khusus tabel Daftar Tamu, tanpa memengaruhi popup atau tabel lain. */
+.tabel-tamu-premium {
+  background: var(--finance-paper-satin);
+  box-shadow: var(--premium-shadow), var(--finance-paper-relief);
+}
+.tabel-tamu-premium > div {
+  border: 1px solid var(--premium-line);
+  border-radius: 6px;
+  scrollbar-color: var(--gold-krem) var(--premium-paper);
+}
+.tabel-tamu-premium thead {
+  background: var(--success-metal);
+}
+.tabel-tamu-premium th {
+  color: var(--premium-ink);
+  letter-spacing: 0;
+  box-shadow: inset 0 1px 0 var(--premium-surface), inset 0 -1px 0 var(--premium-line);
+}
+.tabel-tamu-premium thead button {
+  color: var(--premium-ink);
+  font-weight: 700;
+}
+.tabel-tamu-premium td {
+  background: var(--premium-paper);
+  box-shadow: inset 0 1px 0 var(--premium-surface);
+  transition: background 200ms ease;
+}
+.tabel-tamu-premium tbody tr:nth-child(even) td {
+  background: color-mix(in oklab, var(--premium-highlight) 22%, var(--premium-paper));
+}
+.tabel-tamu-premium tbody tr:hover td {
+  background: color-mix(in oklab, var(--premium-highlight) 60%, var(--premium-surface));
+}
+.tabel-tamu-premium td:nth-child(2) {
+  font-weight: 650;
+}
+.tabel-tamu-premium td:nth-child(4) {
+  font-weight: 600;
+}
+.tabel-tamu-premium td:last-child button {
+  border-radius: 8px;
+  transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+.tabel-tamu-premium td:last-child button:hover:not(:disabled),
+.tabel-tamu-premium td:last-child button:focus-visible {
+  background: var(--premium-surface);
+  box-shadow: var(--premium-panel-shadow);
+  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tabel-tamu-premium td,
+  .tabel-tamu-premium td:last-child button {
+    transition: none;
+  }
+  .tabel-tamu-premium td:last-child button:hover:not(:disabled),
+  .tabel-tamu-premium td:last-child button:focus-visible {
+    transform: none;
+  }
+}
