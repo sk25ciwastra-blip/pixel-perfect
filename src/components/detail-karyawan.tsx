@@ -24,7 +24,8 @@ export function DetailKaryawan({ item, posisi, onClose }: { item: Employee; posi
     return { data, photoUrl };
   }});
   const p = profil.data?.data;
-  return <div className="fk-modal" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}><section className="dk-popup" role="dialog" aria-modal="true" aria-label={`Detail Karyawan · ${item.name}`}>
+  return <div className="fk-modal" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}><section className="dk-popup" role="dialog" aria-modal="true" aria-labelledby="dk-judul" aria-describedby="dk-keterangan">
+    <header className="dk-kepala"><h2 id="dk-judul">Detail Karyawan</h2><p id="dk-keterangan">Informasi lengkap, status, akses, dan riwayat karyawan</p></header>
     {profil.isPending && <p className="dk-erreur" role="status">Memuat profil karyawan…</p>}{profil.error && <p className="dk-erreur" role="alert">{profil.error.message}</p>}
     <div className="dk-isi"><div className="dk-kolom">
       <Panel titre="Data Akun & Akses" sousTitre="Informasi akun, posisi, dan akses sistem karyawan." icon={UserRound}><div className="dk-champs">
