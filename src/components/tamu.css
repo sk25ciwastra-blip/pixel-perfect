@@ -27,3 +27,18 @@
 .tabel-tamu-premium tbody tr { height: 50px !important; }
 .tabel-tamu-premium tbody tr td { padding-top: 5px !important; padding-bottom: 5px !important; }
 .tamu-aksi button { height: 36px !important; width: 42px !important; }
+/* Sedikit lebih ringkas */
+.tamu-cari { max-width: 440px !important; padding: 4px 4px 4px 16px; }
+.tamu-cari input { height: 34px; font-size: 15px; }
+.tamu-cari button { height: 34px; padding: 0 16px; font-size: 15px; }
+.tabel-tamu-premium { padding: 12px !important; border-width: 2px !important; border-radius: 18px !important; }
+.tabel-tamu-premium thead tr th { padding-top: 10px !important; padding-bottom: 10px !important; font-size: 13px !important; }
+.tabel-tamu-premium thead th button { font-size: 13px !important; height: 30px; }
+.tabel-tamu-premium tbody tr { height: 44px !important; }
+.tabel-tamu-premium tbody tr td { padding-top: 3px !important; padding-bottom: 3px !important; font-size: 14px; }
+.tabel-tamu-premium tbody tr td:first-child { font-size: 14px; }
+.tabel-tamu-premium tbody tr td:nth-child(2), .tabel-tamu-premium tbody tr td:nth-child(4) { font-size: 15px; }
+.tamu-status-pill { padding: 3px 14px; font-size: 12px; }
+.tamu-aksi { gap: 6px !important; }
+.tamu-aksi button { height: 32px !important; width: 36px !important; border-radius: 10px; }
+.tamu-aksi button svg { width: 18px !important; height: 18px !important; }
