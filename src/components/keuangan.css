@@ -15,25 +15,17 @@
 .kf-kpis p:nth-child(2) { margin:3px 0; font-size:16px; font-weight:700; white-space:normal; overflow-wrap:anywhere; }
 .kf-kpis p:last-child { font-size:11px; }
 .kf-grille { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:12px; align-items:start; }
-.kf-colonne { display:contents; }
+.kf-colonne { display:grid; gap:12px; min-width:0; align-content:start; }
 .kf-panel { position:relative; min-width:0; border-radius:18px; border:1px solid var(--gold-dark); padding:12px 14px; background:var(--permukaan-mewah); box-shadow:var(--shadow-lembut); scroll-margin-top:20px; }
 .kf-panel-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:9px; }
 .kf-panel-heading { display:flex; align-items:center; gap:12px; min-width:0; }
 .kf-panel-heading > span { width:43px; height:43px; }
 .kf-panel h2 { font-size:23px; line-height:1.1; font-weight:600; }
 .kf-panel-head p { font-size:11px; margin-top:3px; }
-.kf-panel[data-panel="sesi"] { grid-column:1; grid-row:1; }
-.kf-panel[data-panel="arus"] { grid-column:1; grid-row:2; min-height:284px; }
-.kf-panel[data-panel="setoran"] { grid-column:2; grid-row:1 / span 2; }
-.kf-panel[data-panel="refund"] { grid-column:2; grid-row:3; }
-.kf-panel[data-panel="closing"] { grid-column:1 / -1; grid-row:4; }
-.kf-panel[data-panel="aktivitas"] { grid-column:1 / -1; grid-row:5; }
-.kf-panel[data-panel="ringkasan"] { grid-column:1 / -1; grid-row:6; }
+.kf-panel[data-panel="arus"] { min-height:284px; }
+.kf-panel[data-panel="closing"], .kf-panel[data-panel="aktivitas"], .kf-panel[data-panel="ringkasan"] { grid-column:1 / -1; }
 .kf-panel[data-panel="handoff"] { grid-column:1 / -1; }
-/* Session and chart share one left track; the right stack sizes independently. */
-.kf-grille { grid-template-rows:auto minmax(60px,auto) auto; }
-.kf-panel[data-panel="arus"] { grid-row:2 / span 2; align-self:stretch; }
-.kf-panel[data-panel="setoran"] { grid-row:1 / span 2; }
+/* Independent stacks keep each panel directly below the preceding panel. */
 .kf-paper { background:var(--success-surface); border-color:var(--premium-line); color:var(--premium-ink); box-shadow:var(--premium-panel-shadow); }
 .kf-paper .kf-panel-head p, .kf-paper label, .kf-paper .text-muted-foreground { color:var(--premium-ink); }
 .kf-paper .ikon-bulat, .kf-session-strip .ikon-bulat { background:var(--success-metal); color:var(--premium-ink); border:1px solid var(--gold-light); box-shadow:var(--premium-panel-shadow); }
@@ -103,13 +95,8 @@
 }
 @media (max-width:1100px) {
   .kf-grille { grid-template-columns:minmax(0,1fr); }
+  .kf-colonne { display:contents; }
   .kf-panel[data-panel] { grid-column:1; grid-row:auto; }
-  .kf-panel[data-panel="arus"] { order:2; }
-  .kf-panel[data-panel="setoran"] { order:3; }
-  .kf-panel[data-panel="refund"] { order:4; }
-  .kf-panel[data-panel="closing"] { order:5; }
-  .kf-panel[data-panel="aktivitas"] { order:6; }
-  .kf-panel[data-panel="ringkasan"] { order:7; }
   .kf-closing-summary { grid-template-columns:repeat(3,minmax(0,1fr)); }
   .kf-closing-summary > div:first-child { grid-column:1 / -1; }
   .kf-closing-summary > div:nth-last-child(2) { display:none; }
