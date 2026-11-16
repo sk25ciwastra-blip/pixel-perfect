@@ -4,6 +4,7 @@ import { useTable } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
 
 const ACTIVE_SESSION_KEY = 'baturaden25.active_finance_session_id';
+const SESSION_CONTEXT_CHANGE = 'baturaden25:sesi-kas-konteks';
 
 export function setSesiKasKonteks(sessionId: string | null) {
   if (typeof window === 'undefined') return;
@@ -12,6 +13,8 @@ export function setSesiKasKonteks(sessionId: string | null) {
   } else {
     window.sessionStorage.removeItem(ACTIVE_SESSION_KEY);
   }
+  // Native storage events do not fire in the same tab that makes the change.
+  window.dispatchEvent(new Event(SESSION_CONTEXT_CHANGE));
 }
 
 function bacaSesiKasKonteks() {
@@ -32,9 +35,16 @@ export function useSesiKasKonteks() {
   }, []);
 
   useEffect(() => {
-    const handleStorage = () => setAssistedSessionId(bacaSesiKasKonteks());
+    const sync = () => setAssistedSessionId(bacaSesiKasKonteks());
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === ACTIVE_SESSION_KEY || event.key === null) sync();
+    };
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    window.addEventListener(SESSION_CONTEXT_CHANGE, sync);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener(SESSION_CONTEXT_CHANGE, sync);
+    };
   }, []);
 
   const openSessions = useMemo(
@@ -54,16 +64,29 @@ export function useSesiKasKonteks() {
   const trainingSession = training.is_training && training.session_id
     ? openSessions.find((session) => session.id === training.session_id)
     : undefined;
+  // An explicit Owner/Supervisor selection wins over an owned session.
+  // If that selection closes, never silently switch the operator to another cash drawer.
   const activeSession = training.is_training
     ? trainingSession
-    : ownSession ?? assistedSession ?? onlyOpenSession;
+    : isSessionHelper && assistedSessionId
+      ? assistedSession
+      : ownSession ?? onlyOpenSession;
   const needsAssistedContext = training.is_training
     ? !trainingSession
-    : isSessionHelper && !ownSession && openSessions.length > 1 && !assistedSession;
+    : isSessionHelper && !activeSession && (openSessions.length > 0 || Boolean(assistedSessionId));
 
   return {
     sessionId: activeSession?.id ?? '',
     activeSession,
+    openSessions,
+    ownSession,
+    assistedSessionId: isSessionHelper ? assistedSessionId : '',
+    selectAssistedSession: (sessionId: string | null) => {
+      if (!isSessionHelper || training.is_training) return false;
+      if (sessionId && !openSessions.some((session) => session.id === sessionId)) return false;
+      setSesiKasKonteks(sessionId);
+      return true;
+    },
     isSessionHelper,
     isTraining: training.is_training,
     trainingStatus: training.status,

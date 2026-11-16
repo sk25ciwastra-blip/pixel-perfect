@@ -5,6 +5,8 @@ import {
   IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
+import { setSesiKasKonteks, useSesiKasKonteks } from "@/lib/sesi-kas";
+import { useTable } from "@/lib/data-live";
 import { LatarHeader } from "@/components/latar-header";
 import gedungSate from "@/assets/gedung-sate-malam.jpg";
 import logoBaturaden from "@/assets/logo-baturaden-25.png.asset.json";
@@ -278,6 +280,9 @@ export function Kerangka({
 
 export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
   const { nama, posisi, keluar } = usePeran();
+  const { isSessionHelper, isTraining, openSessions, activeSession, assistedSessionId, selectAssistedSession, loading: sesiLoading } = useSesiKasKonteks();
+  const employees = useTable("employees");
+  const namaPemilik = (openedBy: string) => employees.rows.find((employee) => employee.user_id === openedBy)?.name ?? "Pemilik sesi";
   const [buka, setBuka] = useState(false);
   const [yakin, setYakin] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -302,16 +307,42 @@ export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
         <ChevronDown className={`size-4 text-gold transition ${buka ? "rotate-180" : ""}`} />
       </button>
       {buka && (
-        <div role="menu" className="panel-mewah absolute right-0 top-full z-50 mt-2 w-60 p-3">
+        <div role="menu" className="panel-mewah absolute right-0 top-full z-50 mt-2 w-72 p-3">
           <p className="truncate text-sm font-semibold">{nama || "Pengguna"}</p>
           <p className="truncate text-xs text-gold">{posisi || "Pengguna"}</p>
+          {isSessionHelper && !isTraining && !yakin && (
+            <div className="mt-3 space-y-2 rounded-lg border border-gold/20 bg-background/40 p-2.5">
+              <label htmlFor={ringkas ? "sesi-bantu-mobile" : "sesi-bantu-desktop"} className="block text-xs font-bold text-gold-light">Bantu Sesi Aktif</label>
+              <select
+                id={ringkas ? "sesi-bantu-mobile" : "sesi-bantu-desktop"}
+                aria-label="Pilih sesi kas untuk dibantu"
+                className="w-full rounded-lg border border-gold/25 bg-background px-2 py-2 text-xs text-foreground"
+                value={assistedSessionId}
+                disabled={sesiLoading}
+                onChange={(event) => { selectAssistedSession(event.target.value || null); }}
+              >
+                <option value="">Gunakan sesi sendiri / otomatis</option>
+                {openSessions.map((session) => (
+                  <option key={session.id} value={session.id}>
+                    {namaPemilik(session.opened_by)} · {session.id.slice(0, 8)}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                {sesiLoading ? "Memuat sesi aktif…" : assistedSessionId && !openSessions.some((session) => session.id === assistedSessionId)
+                  ? "Sesi pilihan sudah ditutup. Pilih sesi OPEN lain atau keluar dari mode bantu."
+                  : activeSession ? `Sesi digunakan: ${namaPemilik(activeSession.opened_by)}` : "Belum ada sesi kas OPEN."}
+              </p>
+              {assistedSessionId && <button type="button" className="text-xs font-semibold text-gold-light underline" onClick={() => selectAssistedSession(null)}>Keluar dari mode bantu</button>}
+            </div>
+          )}
           <div className="my-3 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
           {yakin ? (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Yakin ingin keluar dari aplikasi?</p>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setYakin(false)} className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold">Batal</button>
-                <button type="button" role="menuitem" onClick={() => void keluar()} className="flex-1 rounded-lg bg-bahaya px-3 py-2 text-xs font-semibold text-bahaya-foreground">Ya, keluar</button>
+                <button type="button" role="menuitem" onClick={() => { setSesiKasKonteks(null); void keluar(); }} className="flex-1 rounded-lg bg-bahaya px-3 py-2 text-xs font-semibold text-bahaya-foreground">Ya, keluar</button>
               </div>
             </div>
           ) : (
