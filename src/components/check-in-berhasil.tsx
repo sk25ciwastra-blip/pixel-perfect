@@ -48,6 +48,16 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
   });
   const t = result.data;
   const booking = mode === 'booking';
+  const payments = useQuery({
+    queryKey: ['check-in-result-payments', t?.id],
+    enabled: booking && !!t,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('payments').select('amount,kind').eq('transaction_id', t!.id);
+      if (error) throw error;
+      return data;
+    },
+  });
+  const dpDiterima = (payments.data ?? []).filter(p => p.kind === 'dp').reduce((sum, p) => sum + Number(p.amount), 0);
   const timestamp = booking ? t?.scheduled_check_in : t?.started_at;
   const date = timestamp ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(timestamp)) : '—';
   const time = timestamp ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(timestamp)) + ' WIB' : '';
