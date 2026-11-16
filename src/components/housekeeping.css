@@ -664,7 +664,7 @@
 }
 .hk-stats-reference .hk-summary-main { display: flex; align-items: center; gap: 14px; }
 .hk-stats-reference .hk-summary-main p { margin: 0 0 2px; font-size: 14px; font-weight: 600; color: var(--foreground); }
-.hk-stats-reference .hk-summary-main strong { font-family: var(--font-display, serif); font-size: 26px; line-height: 1.05; color: var(--foreground); }
+.hk-stats-reference .hk-summary-main strong { font-family: var(--font-serif); font-variant-numeric: lining-nums; font-size: 26px; line-height: 1.05; color: var(--foreground); }
 .hk-stats-reference .hk-summary-main strong small { font-size: 19px; font-weight: 600; }
 .hk-stats-reference .hk-stat-icon {
   width: 44px; height: 44px; flex: 0 0 44px; border-radius: 10px; display: grid; place-items: center;
@@ -687,3 +687,5 @@
 .hk-stats-reference .hk-summary-gold .hk-completion-grid { padding-left: 46px; }
 .hk-stats-reference .hk-summary-gold .hk-completion-grid strong { font-size: 26px; }
 @media (max-width: 1350px) { .hk-stats-reference .hk-summary-status { flex-wrap: wrap; gap: 6px 12px; } }
+.hk-stats-reference .hk-summary-gold .hk-completion-grid strong { font-family: var(--font-serif); font-variant-numeric: lining-nums; color: var(--foreground); }
+.hk-stats-reference .hk-summary-gold { gap: 6px; }
