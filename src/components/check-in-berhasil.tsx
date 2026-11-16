@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BedDouble, Box, CalendarDays, Check, ChevronDown, ChevronRight, FileText, Image, Layers, Printer, ShieldCheck, UserRoundPlus, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,14 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
   const hook = usePaymentConfirmation();
   const [menu, setMenu] = useState(false);
   const [busy, setBusy] = useState('');
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 640px)');
+    const update = () => setMobile(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   const [message, setMessage] = useState('');
   const result = useQuery({
     queryKey: ['check-in-result', transactionNumber],
@@ -84,7 +92,7 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
       <div className="cib-actions">
         {featureFlags.receipt58mm ? <div className="cib-print"><ReceiptTransactionButton transactionNumber={transactionNumber} label="Cetak Struk" /></div> : <Button type="button" variant="outline" className="cib-print" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer /><span><b>Cetak Struk</b><small>Thermal 58 mm</small></span></Button>}
         <Popover open={menu} onOpenChange={setMenu}><PopoverTrigger asChild><Button type="button" className="cib-digital" disabled={!t || !hook.pdfAvailable}><FileText /><span><b>Bukti Digital</b><small>Kirim PDF atau JPG</small></span><ChevronDown className="size-4" /></Button></PopoverTrigger>
-          <PopoverContent className="cib-digital-menu" side="right" align="end" sideOffset={16}>
+          <PopoverContent className="cib-digital-menu" side={mobile ? 'bottom' : 'right'} align={mobile ? 'center' : 'end'} sideOffset={mobile ? 10 : 16}>
             <div className="cib-menu-heading"><FileText /><h3>Bukti Digital</h3><Button type="button" variant="ghost" size="icon" aria-label="Tutup pilihan bukti" onClick={() => setMenu(false)}><X className="size-4" /></Button></div>
             <p>Pilih format bukti pembayaran untuk dikirim kepada tamu.</p>
             <Button type="button" variant="outline" className="cib-format cib-format-pdf" disabled={!!busy} onClick={() => void download('pdf')}><FileText /><span><b>{busy === 'pdf' ? 'Menyiapkan…' : 'Unduh PDF'}</b><small>Format dokumen (PDF)</small></span><ChevronRight /></Button>
