@@ -614,3 +614,23 @@
   .hk-room-panel .hk-table th:nth-child(7) { width: 10%; }
 }
 .hk-room-panel .hk-table td:nth-child(2), .hk-room-panel .hk-table td:nth-child(6) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hk-stats-reference { grid-template-columns: 1.8fr .95fr 1fr 1.2fr; }
+.hk-summary-status { flex-wrap: wrap; gap: 4px; }
+.hk-summary-status span { padding: 2px 6px; }
+@media (min-width: 1201px) {
+  .hk-room-panel .hk-table th:nth-child(1) { width: 13%; }
+  .hk-room-panel .hk-table th:nth-child(6) { width: 24%; }
+}
+@media (max-width: 1200px) {
+  .hk-stats-reference { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hk-layout { grid-template-columns: minmax(0, 1fr); }
+  .hk-side { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1023px) {
+  .hk-header-isi { flex-direction: column; align-items: stretch; }
+  .hk-header-isi > div:first-child { width: 100%; }
+}
+@media (max-width: 700px) {
+  .hk-stats-reference, .hk-side { grid-template-columns: minmax(0, 1fr); }
+  .hk-summary-gold .hk-completion-grid { padding-left: 0; }
+}
