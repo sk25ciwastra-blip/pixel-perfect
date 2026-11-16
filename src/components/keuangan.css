@@ -121,4 +121,53 @@
   .kf-panel[data-panel="ringkasan"] li { grid-template-columns:18px 1fr auto; gap:8px; }
   .kf-panel[data-panel="ringkasan"] li > span:last-child { grid-column:2 / -1; width:auto; text-align:left; }
 }
-@media (prefers-reduced-motion:reduce) { .kf-halaman button { transition:none; } }
+/* Satin surfaces and small bevels add depth without changing layout dimensions. */
+.kf-panel:not(.kf-paper), .kf-kpis > div {
+  background:var(--finance-dark-satin);
+  box-shadow:var(--finance-panel-relief);
+  border-color:color-mix(in oklab, var(--gold) 68%, var(--background));
+}
+.kf-paper, .kf-session-strip {
+  background:var(--finance-paper-satin);
+  box-shadow:var(--finance-paper-relief);
+}
+.kf-paper { border-color:color-mix(in oklab, var(--gold-light) 48%, var(--premium-surface)); }
+.kf-panel-heading .ikon-bulat, .kf-kpis > div > span {
+  box-shadow:var(--finance-panel-relief);
+}
+.kf-paper .ikon-bulat, .kf-session-strip .ikon-bulat {
+  box-shadow:var(--finance-metal-relief);
+}
+.kf-tabs button {
+  background:var(--finance-dark-satin);
+  box-shadow:var(--finance-panel-relief);
+}
+.kf-tabs button[aria-pressed=true], .kf-periode button[aria-pressed=true],
+.kf-paper > button, .kf-closing-summary > button {
+  background:var(--success-metal);
+  box-shadow:var(--finance-metal-relief);
+}
+.kf-periode { background:var(--background); box-shadow:var(--finance-panel-relief); }
+.kf-paper input:not(.kf-rp input), .kf-paper select, .kf-paper .kf-rp {
+  box-shadow:var(--finance-field-inset);
+}
+.kf-paper .kf-rp input { box-shadow:none; }
+.kf-paper input:focus-visible, .kf-paper select:focus-visible {
+  outline:2px solid var(--gold);
+  outline-offset:2px;
+}
+.kf-paper .kf-rp:focus-within { border-color:var(--gold-dark); }
+.kf-paper .kf-rp input:focus-visible { outline:none; }
+.kf-halaman button { transition:transform .18s ease, box-shadow .18s ease, filter .18s ease, border-color .18s ease; }
+@media (hover:hover) and (pointer:fine) {
+  .kf-tabs button:hover, .kf-paper > button:hover, .kf-closing-summary > button:hover {
+    transform:translateY(-1px);
+    box-shadow:var(--finance-hover-relief);
+    border-color:var(--gold-light);
+  }
+}
+.kf-halaman button:active { transform:translateY(0); }
+@media (prefers-reduced-motion:reduce) {
+  .kf-halaman button { transition:none; }
+  .kf-halaman button:hover { transform:none; }
+}

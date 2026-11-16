@@ -203,6 +203,13 @@
   --success-metal: linear-gradient(155deg, var(--success-gold-light), var(--success-gold) 55%, var(--gold-dark));
   --success-dark-button: linear-gradient(170deg, oklch(0.4 0.075 65), oklch(0.2 0.04 65));
   --success-shadow: 0 20px 70px color-mix(in oklab, var(--navy-deep) 65%, transparent), inset 0 1px 0 var(--premium-surface);
+  --finance-dark-satin: linear-gradient(145deg, color-mix(in oklab, var(--gold) 6%, var(--card)), var(--background) 65%, var(--card));
+  --finance-paper-satin: linear-gradient(135deg, var(--premium-surface), var(--success-paper) 72%, var(--premium-highlight));
+  --finance-panel-relief: inset 0 1px 0 color-mix(in oklab, var(--gold-light) 22%, transparent), inset 0 -1px 0 var(--navy-deep), 0 4px 6px -4px var(--navy-deep), 0 16px 30px -20px var(--navy-deep);
+  --finance-paper-relief: inset 0 1px 0 var(--premium-surface), inset 0 -2px 0 color-mix(in oklab, var(--gold-dark) 18%, transparent), 0 4px 7px -4px var(--navy-deep), 0 16px 30px -20px var(--navy-deep);
+  --finance-metal-relief: inset 0 1px 1px var(--success-gold-light), inset 0 -2px 2px color-mix(in oklab, var(--gold-krem) 45%, transparent), 0 3px 5px -2px color-mix(in oklab, var(--navy-deep) 45%, transparent);
+  --finance-field-inset: inset 0 2px 4px color-mix(in oklab, var(--gold-dark) 9%, transparent), 0 1px 0 var(--premium-surface);
+  --finance-hover-relief: inset 0 1px 1px var(--success-gold-light), inset 0 -2px 2px color-mix(in oklab, var(--gold-krem) 40%, transparent), 0 5px 9px -4px color-mix(in oklab, var(--gold) 38%, var(--navy-deep));
 }
 
 .dark {
