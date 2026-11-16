@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { Eye, Search, Plus, ArrowDownUp, UserRound, NotebookPen, CalendarDays, Users, BedDouble, FileText, X, Clock, Layers, CircleCheck, Info, ReceiptText, Save } from 'lucide-react';
+import { Eye, Search, Plus, ArrowDownUp, UserRound, NotebookPen, CalendarDays, Users, BedDouble, FileText, X, Clock, Layers, CircleCheck, Info, ReceiptText, Save, Star, TriangleAlert, Pin, Check, PenLine } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
@@ -105,6 +105,8 @@ function HalamanTamu() {
   const paketFavorit = terbanyak(riwayat.map(t => namaPaket(t.package_id)));
   const tamuUmum = riwayat.length ? Math.round(riwayat.reduce((sum, t) => sum + (t.guest_count ?? 0), 0) / riwayat.length) : 0;
   const catatanPreferensi = daftarCatatan[0]?.body ?? '—';
+  const kunjunganTerakhir = kunjunganList[0];
+  const kamarTerakhirLabel = kunjunganTerakhir ? `${nomorKamar(kunjunganTerakhir.room_id)} – ${tipeKamar(kunjunganTerakhir.room_id)}` : '—';
 
   function edit(t?: Guest, hanyaCatatan = false) {
     setCatatanSaja(hanyaCatatan);
@@ -171,8 +173,8 @@ function HalamanTamu() {
         <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-navy-deep/75 backdrop-blur-sm" />
           <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className={open && catatanSaja ? "catatan-tamu-popup fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[800px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto text-base" : open ? "fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut" : "detail-tamu-popup fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[1000px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto text-base"}>
             {open && catatanSaja ? <header className="ct-header">
-              <span className="ct-avatar" aria-hidden="true">{(detail?.full_name ?? '?').trim().charAt(0).toUpperCase()}</span>
-              <div className="ct-judul"><p>Catatan Tamu</p><Dialog.Title asChild><h2>{detail?.full_name ?? 'Catatan Tamu'}</h2></Dialog.Title></div>
+              <span className="ct-ikon-header" aria-hidden="true"><NotebookPen /></span>
+              <div className="ct-judul"><Dialog.Title asChild><h2>Catatan Tamu</h2></Dialog.Title><p>Catat informasi penting terkait tamu ini.</p></div>
               <Dialog.Close asChild><button type="button" disabled={saving} className="ct-silang" aria-label="Tutup catatan tamu"><X /></button></Dialog.Close>
             </header> : open ? <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
               <div className="flex items-center justify-between gap-3">
@@ -184,15 +186,34 @@ function HalamanTamu() {
               <Dialog.Close asChild><button type="button" className="dt-tutup-ikon" aria-label="Tutup detail tamu"><X className="size-5" /></button></Dialog.Close>
             </header>}
             {open && catatanSaja && !readOnly && detail ? <form onSubmit={save}>
+              <div className="ct-tamu">
+                <span className="ct-avatar" aria-hidden="true"><UserRound /></span>
+                <div className="ct-identitas">
+                  <h3>{detail.full_name.toUpperCase()} · {empatDigitWA(detail.phone)}</h3>
+                  <p className="ct-telepon"><IkonWhatsApp className="size-4" />{detail.phone}</p>
+                </div>
+                <div className="ct-ringkasan">
+                  <div className="ct-ringkasan-kartu"><span className="ct-ringkasan-ikon"><BedDouble aria-hidden="true" /></span><div><p>Kamar Terakhir</p><strong>{kamarTerakhirLabel}</strong></div></div>
+                  <div className="ct-ringkasan-kartu"><span className="ct-ringkasan-ikon"><CalendarDays aria-hidden="true" /></span><div><p>Kunjungan</p><strong>{transactions.loading ? '…' : `${jumlahKunjungan(detail.id)} Kali`}</strong></div></div>
+                </div>
+              </div>
               <div className="ct-isian">
-                <label htmlFor="catatan-tamu-baru">Tambah Catatan Baru</label>
-                <textarea id="catatan-tamu-baru" required autoFocus value={catatan} onChange={e => setCatatan(e.target.value)} placeholder="Tulis catatan di sini..." />
+                <label htmlFor="catatan-tamu-baru">Tambah Catatan</label>
+                <div className="ct-textarea-wrap">
+                  <textarea id="catatan-tamu-baru" required autoFocus maxLength={500} value={catatan} onChange={e => setCatatan(e.target.value)} placeholder="Tulis catatan di sini..." />
+                  <span className="ct-hitung" aria-live="polite">{catatan.length} / 500</span>
+                </div>
                 {notes.error && <p className="ct-peringatan">Riwayat catatan belum tersedia. Data lama tetap dipertahankan.</p>}
                 {message && <p role="alert" className="ct-peringatan">{message}</p>}
-                <div className="ct-aksi"><Button type="submit" className="ct-simpan" disabled={saving}><Save />{saving ? 'Menyimpan…' : 'Simpan Catatan'}</Button></div>
+              </div>
+              <div className="ct-jenis">
+                <p id="ct-jenis-label">Jenis Catatan</p>
+                <div className="ct-jenis-pills" role="group" aria-labelledby="ct-jenis-label">
+                  {([['umum', 'Umum', PenLine], ['preferensi', 'Preferensi', Star], ['perhatian', 'Perhatian', TriangleAlert], ['lainnya', 'Lainnya', Pin]] as const).map(([kode, label, Ikon]) => <button key={kode} type="button" disabled data-aktif={kode === 'umum'} className="ct-pill" title="Pilihan jenis catatan menunggu persetujuan penambahan data"><Ikon aria-hidden="true" />{label}{kode === 'umum' && <Check aria-hidden="true" />}</button>)}
+                </div>
               </div>
               <section className="ct-riwayat">
-                <h3><Clock aria-hidden="true" />Riwayat Catatan ({daftarCatatan.length})</h3>
+                <h3><Clock aria-hidden="true" />Riwayat Catatan</h3>
                 {notes.loading ? <p className="ct-kosong">Memuat riwayat catatan…</p> : daftarCatatan.length ? <ul>{daftarCatatan.map(note => <li key={note.id}>
                   <NotebookPen className="ct-ikon-catatan" aria-hidden="true" />
                   <div className="ct-kartu-isi">
@@ -201,6 +222,10 @@ function HalamanTamu() {
                   </div>
                 </li>)}</ul> : <p className="ct-kosong">Belum ada catatan tamu.</p>}
               </section>
+              <footer className="ct-footer">
+                <Button type="button" variant="outline" className="ct-batal" disabled={saving} onClick={() => { setOpen(false); setEditing(null); }}>Batal</Button>
+                <Button type="submit" className="ct-simpan" disabled={saving}><Save />{saving ? 'Menyimpan…' : 'Simpan Catatan'}</Button>
+              </footer>
             </form> : open && !readOnly ? <form onSubmit={save}>
               <div className="space-y-5 p-5 sm:p-7">
                 {!catatanSaja && <div className="grid gap-4 sm:grid-cols-2">{([['Nama lengkap', nama, setNama], ['Nomor HP/WhatsApp', telepon, setTelepon], ['Alamat', alamat, setAlamat]] as const).map(([label, value, setter]) => <label key={label} className={`block min-w-0 text-base ${label === 'Alamat' ? 'sm:col-span-2' : ''}`}><span className="font-medium text-gold-light">{label}</span><input required value={value} onChange={e => setter(e.target.value)} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>)}</div>}
