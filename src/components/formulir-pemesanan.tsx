@@ -327,7 +327,7 @@ export function FormulirPemesanan({
     openWhatsApp(phone, pesan);
   }
 
-  if (savedNumber && mode === 'check_in') return <CheckInBerhasil transactionNumber={savedNumber} room={selectedRoom?.room_number ?? '—'} roomType={selectedRoomType?.name ?? '—'} packageName={selectedPackage?.name ?? '—'} onClose={onClose} />;
+  if (savedNumber) return <CheckInBerhasil mode={mode} transactionNumber={savedNumber} room={selectedRoom?.room_number ?? '—'} roomType={selectedRoomType?.name ?? '—'} packageName={selectedPackage?.name ?? '—'} onClose={onClose} />;
 
   return (
     <div

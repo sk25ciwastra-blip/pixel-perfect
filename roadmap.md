@@ -1,6 +1,7 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Popup Check-in Berhasil — referensi 16 November
+- [x] Booking dan Pengeluaran memakai template berhasil yang sama; penyimpanan dan aksi tetap. Template diperiksa dengan catatan tersimpan di komputer/HP, 23 tes lulus; alur simpan baru tidak dijalankan agar tidak menambah transaksi, tanpa publikasi.
 - [x] Gunakan logo asli dari lampiran terbaru; perhalus relief popup dan perjelas teks tanpa mengubah data atau aksi.
 - [x] Terapkan logo, ceklis hijau, rincian transaksi, total emas dan dua tombol sesuai referensi; hanya tampil setelah penyimpanan berhasil.
 - [x] Periksa popup dengan transaksi tersimpan dan akun aktif di komputer/HP, PDF berhasil diunduh dan 23 tes lulus; tidak membuat check-in baru untuk pengujian, tanpa publikasi.
