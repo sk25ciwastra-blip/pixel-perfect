@@ -21,10 +21,10 @@ function Halaman(){const {bagian}=Route.useSearch();const semua=useTable('employ
  {error&&<p role="alert">{error}</p>}
  <div className="ta-halaman">
  <div className="ta-ringkasan">
- <section className="ta-kpi"><Users/><div><p>Total Karyawan</p><strong>{semua.loading?'—':rows.length} Orang</strong></div></section>
- <section className="ta-kpi" data-ton="hijau"><CircleCheck/><div><p>Akun Aktif</p><strong>{semua.loading?'—':rows.filter(k=>k.active).length} Orang</strong></div></section>
+ <section className="ta-kpi"><Users/><div><p>Total Karyawan</p><strong>{semua.loading?'—':rows.length}<span>Orang</span></strong></div></section>
+ <section className="ta-kpi" data-ton="hijau"><CircleCheck/><div><p>Akun Aktif</p><strong>{semua.loading?'—':rows.filter(k=>k.active).length}<span>Orang</span></strong></div></section>
  <section className="ta-kpi"><GraduationCap/><div><p>Pelatihan</p><strong title="Status pelatihan seluruh tim belum tersedia pada daftar ini">—</strong></div></section>
- <section className="ta-kpi" data-ton="merah"><CirclePause/><div><p>Nonaktif</p><strong>{semua.loading?'—':rows.filter(k=>!k.active).length} Orang</strong></div></section>
+ <section className="ta-kpi" data-ton="merah"><CirclePause/><div><p>Nonaktif</p><strong>{semua.loading?'—':rows.filter(k=>!k.active).length}<span>Orang</span></strong></div></section>
  </div>
  <section className="ta-isi">
  <div className="ta-toolbar"><div className="ta-tabs" role="tablist" aria-label="Tim dan akses"><Button role="tab" aria-selected={true}><List/>Daftar Karyawan</Button><Button role="tab" aria-selected={false} disabled title="Tampilan hak akses belum tersedia"><ShieldCheck/>Hak Akses</Button><Button role="tab" aria-selected={false} disabled title="Riwayat perubahan belum tersedia"><History/>Riwayat Perubahan</Button></div><Button className="ta-ajouter" onClick={()=>edit()}><Plus/>Daftar Karyawan</Button></div>
