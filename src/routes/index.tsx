@@ -259,12 +259,11 @@ function Ringkasan() {
   );
 
   const bookingHariIni = useMemo(() => {
-    const awalHari = new Date(`${tanggalWib(sekarang)}T00:00:00+07:00`).getTime();
-    const akhirHari = awalHari + 86_400_000;
+    const hariKedatanganWib = tanggalWib(sekarang);
     return bookingAktif.filter((item) => {
       const mulai = item.scheduled_check_in ? new Date(item.scheduled_check_in).getTime() : NaN;
       const akhir = item.scheduled_check_out ? new Date(item.scheduled_check_out).getTime() : NaN;
-      return Number.isFinite(mulai) && Number.isFinite(akhir) && mulai < akhirHari && akhir > awalHari;
+      return Number.isFinite(mulai) && Number.isFinite(akhir) && akhir > mulai && tanggalWib(mulai) === hariKedatanganWib;
     });
   }, [bookingAktif, sekarang]);
 
