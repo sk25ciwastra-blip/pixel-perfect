@@ -374,7 +374,6 @@
 .hk-chart-year { margin-left: auto; border: 1px solid var(--premium-line); border-radius: 8px; padding: 4px 12px; font-size: 12px; background: var(--success-paper); }
 .hk-chart .recharts-cartesian-grid line { stroke: var(--premium-line); }
 .hk-chart .recharts-text { fill: var(--premium-ink); font-family: var(--font-sans); font-size: 11px; }
-.hk-chart .recharts-bar-rectangle path { fill: url(#hk-emas-batang); }
 .hk-chart-caption { padding: 4px 14px 0; font-size: 11px; color: var(--premium-muted); line-height: 1.4; }
 .hk-chart-tooltip { padding: 8px; border: 1px solid var(--premium-line); border-radius: 6px; color: var(--premium-ink); background: var(--premium-paper); font-size: 13px; }
 .hk-progress-legend { color: var(--premium-ink); }
