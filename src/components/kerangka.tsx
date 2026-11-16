@@ -5,7 +5,7 @@ import {
   IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
-import { useSesiKasKonteks } from "@/lib/sesi-kas";
+import { setSesiKasKonteks, useSesiKasKonteks } from "@/lib/sesi-kas";
 import { useTable } from "@/lib/data-live";
 import { LatarHeader } from "@/components/latar-header";
 import gedungSate from "@/assets/gedung-sate-malam.jpg";
@@ -342,7 +342,7 @@ export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
               <p className="text-xs text-muted-foreground">Yakin ingin keluar dari aplikasi?</p>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setYakin(false)} className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold">Batal</button>
-                <button type="button" role="menuitem" onClick={() => void keluar()} className="flex-1 rounded-lg bg-bahaya px-3 py-2 text-xs font-semibold text-bahaya-foreground">Ya, keluar</button>
+                <button type="button" role="menuitem" onClick={() => { setSesiKasKonteks(null); void keluar(); }} className="flex-1 rounded-lg bg-bahaya px-3 py-2 text-xs font-semibold text-bahaya-foreground">Ya, keluar</button>
               </div>
             </div>
           ) : (
