@@ -13,7 +13,7 @@
 - Data contoh untuk revisi antarmuka tetap berada di `src/lib/data-contoh.ts`, agar harga dan waktu yang tampil tidak dianggap aturan bisnis atau hitung mundur nyata.
 - Identitas dan izin operasional berasal dari Lovable Cloud (`user_roles` terpisah dari `employees`), bukan penyimpanan browser; kebijakan data dan fungsi server memastikan hak akses tidak dapat dipalsukan.
 - Halaman operasional membaca tabel melalui `src/lib/data-live.ts`; transaksi dan harga memakai penyimpanan langsung agar contoh antarmuka tidak menjadi sumber aturan bisnis.
-- Employee creation stays Owner-authorized; shared helpers keep ID numbering consistent and edit profile payloads limited to allowed fields, while scoped form CSS stays independent of access logic.
+- Employee creation stays Owner-authorized; shared helpers keep IDs and edit fields consistent; scoped form/list CSS preserves access logic, and team detail reads only existing employee fields.
 - Shared visual primitives live in `src/styles.css` utilities (`panel-mewah`, `emas-isi`, `ikon-bulat`, `pemisah-kolom`) and `Kerangka` (`penuh` for full-bleed Dashboard); pages reuse them so the black-gold look stays consistent without per-page colors. `pemisah-kolom` draws cell separators with inset box-shadow because tables use border-separate, where borders on `<tr>` are not painted.
 - Dashboard room rows retain inset fixed-layout scrolling and reserved action widths; scoped panel CSS keeps visual polish independent of existing timestamps, checkout guards, statuses and permissions.
 - Dashboard search reads existing RLS-scoped operational rows and opens existing detail views or pages; it never uses privileged queries or changes operational records.
