@@ -2,7 +2,7 @@
 
 ## Housekeeping — kerapian panel dan kedalaman
 - [x] Pisahkan pencarian/filter menjadi dua baris, sesuaikan lebar tabel komputer agar waktu/catatan dan aksi tidak terpotong, hilangkan ruang kosong riwayat, perkuat relief satin dan ikon timbul; fungsi tetap.
-- [ ] Periksa komputer/HP dengan akun aktif serta tes Housekeeping, tanpa penyimpanan atau publikasi.
+- [x] Akun aktif komputer/HP: tabel komputer pas tanpa gulir horizontal, waktu/catatan utuh, pencarian/tab/detail berjalan, riwayat tanpa ruang kosong berlebih; lima tes lulus, tanpa error atau publikasi.
 
 ## Housekeeping — relief dan keterbacaan
 - [x] Perhalus relief mewah dan samakan font dengan halaman lainnya: judul serif 22px, isi sans-serif 13px dan label 14px; data, fungsi dan halaman lain tetap, ringkasan HP ditumpuk agar teks utuh.

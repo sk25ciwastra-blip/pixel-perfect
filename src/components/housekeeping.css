@@ -439,6 +439,8 @@
   .hk-tab:hover,.hk-room-panel .hk-type-filters button:hover:not(:disabled),.hk-eye-button:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--gold-krem); }
 }
 @media (max-width:700px) {
+  .hk-room-panel .hk-table th { white-space: normal; overflow-wrap: normal; }
+  .hk-room-panel .hk-table th:nth-child(1) { width: 80px; }
   .hk-stats-reference { grid-template-columns: minmax(0,1fr); }
   .hk-summary-card { min-height: 104px; }
   .hk-summary-main p { font-size: 14px; }
