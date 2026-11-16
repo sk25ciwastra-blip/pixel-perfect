@@ -9,100 +9,100 @@
     0 0 46px -8px color-mix(in oklab, var(--gold) 55%, transparent);
 }
 .dt-header {
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  padding: 15px 26px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 22px;
   background: linear-gradient(180deg, color-mix(in oklab, var(--gold) 92%, var(--card)), var(--gold-krem));
   border-bottom: 2px solid color-mix(in oklab, var(--gold-krem) 85%, transparent);
   border-radius: 21px 21px 0 0;
 }
-.dt-judul { display: flex; align-items: center; gap: 13px; color: var(--premium-ink); }
-.dt-judul svg { width: 34px; height: 34px; color: var(--premium-ink); }
-.dt-judul h2 { font-family: var(--font-serif, serif); font-size: 30px; font-weight: 700; letter-spacing: 0.01em; margin: 0; }
+.dt-judul { display: flex; align-items: center; gap: 11px; color: var(--premium-ink); }
+.dt-judul svg { width: 28px; height: 28px; color: var(--premium-ink); }
+.dt-judul h2 { font-family: var(--font-serif, serif); font-size: 25px; font-weight: 700; letter-spacing: 0.01em; margin: 0; }
 .dt-tutup-ikon {
-  display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; cursor: pointer;
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; cursor: pointer;
   background: linear-gradient(180deg, var(--premium-paper), var(--premium-highlight));
   border: 1px solid var(--premium-line); color: var(--premium-ink);
   box-shadow: inset 0 1px 0 color-mix(in oklab, var(--premium-paper) 90%, transparent), 0 3px 6px -2px color-mix(in oklab, var(--premium-ink) 25%, transparent);
 }
 .dt-tutup-ikon:hover { transform: translateY(-1px); }
 
-.dt-tamu { display: flex; align-items: center; gap: 22px; padding: 20px 26px 14px; flex-wrap: wrap; }
+.dt-tamu { display: flex; align-items: center; gap: 18px; padding: 15px 22px 11px; flex-wrap: wrap; }
 .dt-avatar {
-  display: grid; place-items: center; width: 88px; height: 88px; border-radius: 999px; flex-shrink: 0;
+  display: grid; place-items: center; width: 72px; height: 72px; border-radius: 999px; flex-shrink: 0;
   background: radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--gold) 85%, var(--card)), var(--gold-krem) 78%);
   border: 3px solid color-mix(in oklab, var(--gold-krem) 85%, transparent);
   box-shadow: 0 6px 14px -6px color-mix(in oklab, var(--gold-krem) 70%, transparent), inset 0 2px 3px color-mix(in oklab, var(--card) 45%, transparent);
   color: var(--premium-paper);
 }
-.dt-avatar svg { width: 44px; height: 44px; }
+.dt-avatar svg { width: 36px; height: 36px; }
 .dt-identitas { min-width: 0; }
-.dt-identitas h3 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.02em; color: var(--premium-ink); }
-.dt-telepon { display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 16px; font-weight: 600; color: var(--premium-ink); }
-.dt-telepon svg { width: 19px; height: 19px; color: var(--premium-success); }
+.dt-identitas h3 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.02em; color: var(--premium-ink); }
+.dt-telepon { display: flex; align-items: center; gap: 7px; margin-top: 3px; font-size: 14.5px; font-weight: 600; color: var(--premium-ink); }
+.dt-telepon svg { width: 17px; height: 17px; color: var(--premium-success); }
 .dt-pill-status {
-  display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 14px; border-radius: 999px;
-  font-size: 13px; font-weight: 700; color: var(--premium-ink);
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 7px; padding: 3px 12px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; color: var(--premium-ink);
   background: linear-gradient(180deg, color-mix(in oklab, var(--premium-paper) 60%, var(--card)), var(--premium-highlight));
   border: 1px solid var(--premium-line);
 }
-.dt-statistik { display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 14px; margin-left: auto; }
+.dt-statistik { display: grid; grid-template-columns: repeat(3, minmax(140px, 1fr)); gap: 11px; margin-left: auto; }
 .dt-stat {
-  display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 16px;
+  display: flex; align-items: center; gap: 10px; padding: 9px 13px; border-radius: 14px;
   background: linear-gradient(180deg, var(--premium-paper), color-mix(in oklab, var(--premium-paper) 80%, var(--premium-highlight)));
   border: 1px solid var(--premium-line);
   box-shadow: inset 0 1px 0 color-mix(in oklab, var(--premium-paper) 90%, transparent), 0 4px 8px -4px color-mix(in oklab, var(--premium-ink) 22%, transparent);
 }
 .dt-stat-ikon {
-  display: grid; place-items: center; width: 46px; height: 46px; border-radius: 999px; flex-shrink: 0;
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 999px; flex-shrink: 0;
   background: radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--gold) 80%, var(--card)), var(--gold-krem));
   color: var(--premium-paper); box-shadow: inset 0 1px 2px color-mix(in oklab, var(--card) 40%, transparent);
 }
-.dt-stat-ikon svg { width: 24px; height: 24px; }
-.dt-stat p { margin: 0; font-size: 12.5px; color: color-mix(in oklab, var(--premium-ink) 62%, transparent); }
-.dt-stat strong { display: block; font-size: 19px; font-weight: 800; color: var(--premium-ink); line-height: 1.2; }
+.dt-stat-ikon svg { width: 21px; height: 21px; }
+.dt-stat p { margin: 0; font-size: 12px; color: color-mix(in oklab, var(--premium-ink) 62%, transparent); }
+.dt-stat strong { display: block; font-size: 17px; font-weight: 800; color: var(--premium-ink); line-height: 1.2; }
 
 .dt-bagian {
-  margin: 0 26px 16px; border-radius: 16px; overflow: hidden;
+  margin: 0 22px 13px; border-radius: 15px; overflow: hidden;
   background: linear-gradient(180deg, var(--premium-paper), color-mix(in oklab, var(--premium-paper) 84%, var(--premium-highlight)));
   border: 1px solid var(--premium-line);
   box-shadow: 0 4px 10px -5px color-mix(in oklab, var(--premium-ink) 22%, transparent);
 }
 .dt-bagian-judul {
-  display: flex; align-items: center; gap: 10px; padding: 11px 18px;
-  font-size: 16px; font-weight: 700; color: var(--premium-ink);
+  display: flex; align-items: center; gap: 9px; padding: 9px 16px;
+  font-size: 14.5px; font-weight: 700; color: var(--premium-ink);
   background: linear-gradient(180deg, var(--premium-highlight), color-mix(in oklab, var(--premium-highlight) 70%, var(--premium-paper)));
   border-bottom: 1px solid var(--premium-line);
 }
-.dt-bagian-judul svg { width: 21px; height: 21px; color: var(--gold-krem); }
-.dt-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 40px; padding: 14px 20px 16px; margin: 0; }
-.dt-info-grid > div { display: grid; grid-template-columns: minmax(120px, auto) 1fr; gap: 4px 10px; align-items: baseline; }
-.dt-info-grid dt { font-size: 14px; color: color-mix(in oklab, var(--premium-ink) 62%, transparent); }
+.dt-bagian-judul svg { width: 19px; height: 19px; color: var(--gold-krem); }
+.dt-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; padding: 11px 17px 13px; margin: 0; }
+.dt-info-grid > div { display: grid; grid-template-columns: minmax(110px, auto) 1fr; gap: 3px 9px; align-items: baseline; }
+.dt-info-grid dt { font-size: 13px; color: color-mix(in oklab, var(--premium-ink) 62%, transparent); }
 .dt-info-grid dt::after { content: ':'; }
-.dt-info-grid dd { margin: 0; font-size: 15px; font-weight: 600; color: var(--premium-ink); overflow-wrap: anywhere; }
+.dt-info-grid dd { margin: 0; font-size: 14px; font-weight: 600; color: var(--premium-ink); overflow-wrap: anywhere; }
 .dt-info-grid dd.dt-tebal { font-weight: 800; }
 .dt-info-grid dd .dt-telepon-inline { display: inline-flex; align-items: center; gap: 7px; }
 .dt-info-grid dd .dt-telepon-inline svg { width: 17px; height: 17px; color: var(--premium-success); }
 
-.dt-pref { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; padding: 14px 20px 16px; }
-.dt-pref-item { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.dt-pref { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 11px 17px 13px; }
+.dt-pref-item { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .dt-pref-ikon {
-  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; flex-shrink: 0;
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 999px; flex-shrink: 0;
   background: radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--gold) 30%, var(--premium-paper)), color-mix(in oklab, var(--gold) 18%, var(--premium-highlight)));
   border: 1px solid color-mix(in oklab, var(--gold-krem) 40%, transparent); color: var(--gold-krem);
 }
-.dt-pref-ikon svg { width: 22px; height: 22px; }
-.dt-pref-item p { margin: 0; font-size: 12.5px; color: color-mix(in oklab, var(--premium-ink) 62%, transparent); }
-.dt-pref-item strong { display: block; font-size: 15.5px; font-weight: 700; color: var(--premium-ink); overflow-wrap: anywhere; }
+.dt-pref-ikon svg { width: 19px; height: 19px; }
+.dt-pref-item p { margin: 0; font-size: 12px; color: color-mix(in oklab, var(--premium-ink) 62%, transparent); }
+.dt-pref-item strong { display: block; font-size: 14px; font-weight: 700; color: var(--premium-ink); overflow-wrap: anywhere; }
 
-.dt-tab-bar { display: flex; flex-wrap: wrap; gap: 10px; padding: 2px 26px 14px; }
+.dt-tab-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 1px 22px 11px; }
 .dt-tab {
-  display: inline-flex; align-items: center; gap: 9px; padding: 10px 20px; border-radius: 13px; cursor: pointer;
-  font-size: 15px; font-weight: 600; color: var(--premium-ink);
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 12px; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: var(--premium-ink);
   background: linear-gradient(180deg, var(--premium-paper), var(--premium-highlight));
   border: 1px solid var(--premium-line);
   box-shadow: inset 0 1px 0 color-mix(in oklab, var(--premium-paper) 90%, transparent), 0 3px 6px -3px color-mix(in oklab, var(--premium-ink) 22%, transparent);
 }
-.dt-tab svg { width: 19px; height: 19px; color: var(--gold-krem); }
+.dt-tab svg { width: 17px; height: 17px; color: var(--gold-krem); }
 .dt-tab[data-aktif='true'] {
   background: linear-gradient(180deg, color-mix(in oklab, var(--gold) 92%, var(--card)), var(--gold-krem));
   border-color: color-mix(in oklab, var(--gold-krem) 80%, transparent);
@@ -111,47 +111,47 @@
 .dt-tab[data-aktif='true'] svg { color: var(--premium-ink); }
 
 .dt-tabel-wrap {
-  margin: 0 26px 18px; border-radius: 14px; overflow: auto; max-height: 320px;
+  margin: 0 22px 14px; border-radius: 13px; overflow: auto; max-height: 280px;
   border: 1px solid var(--premium-line); background: var(--premium-paper);
   box-shadow: inset 0 2px 5px color-mix(in oklab, var(--premium-ink) 8%, transparent);
 }
-.dt-tabel { width: 100%; min-width: 0; border-collapse: separate; border-spacing: 0; font-size: 13.5px; color: var(--premium-ink); }
+.dt-tabel { width: 100%; min-width: 0; border-collapse: separate; border-spacing: 0; font-size: 13px; color: var(--premium-ink); }
 .dt-tabel thead th {
-  position: sticky; top: 0; z-index: 1; padding: 10px 9px; text-align: left; white-space: nowrap;
-  font-size: 12.5px; font-weight: 700; color: var(--premium-ink);
+  position: sticky; top: 0; z-index: 1; padding: 8px 8px; text-align: left; white-space: nowrap;
+  font-size: 12px; font-weight: 700; color: var(--premium-ink);
   background: linear-gradient(180deg, color-mix(in oklab, var(--gold) 88%, var(--card)), color-mix(in oklab, var(--gold-krem) 92%, var(--card)));
   border-bottom: 1px solid color-mix(in oklab, var(--gold-krem) 60%, transparent);
 }
-.dt-tabel tbody td { padding: 8px 9px; border-bottom: 1px solid color-mix(in oklab, var(--premium-line) 75%, transparent); white-space: nowrap; }
+.dt-tabel tbody td { padding: 7px 8px; border-bottom: 1px solid color-mix(in oklab, var(--premium-line) 75%, transparent); white-space: nowrap; }
 .dt-tabel tbody tr:last-child td { border-bottom: 0; }
 .dt-tabel tbody tr:hover td { background: color-mix(in oklab, var(--gold) 7%, transparent); }
 .dt-nomor { color: color-mix(in oklab, var(--premium-ink) 60%, transparent); }
-.dt-mono { font-family: ui-monospace, monospace; font-size: 13px; font-weight: 600; }
+.dt-mono { font-family: ui-monospace, monospace; font-size: 12.5px; font-weight: 600; }
 .dt-kamar-pill {
-  display: inline-block; min-width: 42px; padding: 4px 10px; border-radius: 999px; text-align: center;
+  display: inline-block; min-width: 38px; padding: 3px 9px; border-radius: 999px; text-align: center;
   background: linear-gradient(180deg, color-mix(in oklab, var(--navy-deep) 88%, var(--gold) 12%), var(--navy-deep));
-  color: var(--gold-light); font-weight: 700; font-size: 13.5px;
+  color: var(--gold-light); font-weight: 700; font-size: 12.5px;
   box-shadow: inset 0 1px 0 color-mix(in oklab, var(--gold) 25%, transparent);
 }
-.dt-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 700; }
-.dt-status svg { width: 15px; height: 15px; }
+.dt-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.dt-status svg { width: 14px; height: 14px; }
 .dt-status[data-state='check_out'] { background: color-mix(in oklab, var(--premium-success) 15%, var(--premium-paper)); color: var(--premium-success); border: 1px solid color-mix(in oklab, var(--premium-success) 35%, transparent); }
 .dt-status[data-state='check_in'] { background: color-mix(in oklab, var(--gold) 20%, var(--premium-paper)); color: var(--gold-krem); border: 1px solid color-mix(in oklab, var(--gold-krem) 40%, transparent); }
 .dt-status[data-state='booking'] { background: color-mix(in oklab, var(--gold) 14%, var(--premium-paper)); color: color-mix(in oklab, var(--gold-krem) 80%, var(--premium-ink)); border: 1px solid color-mix(in oklab, var(--gold-krem) 35%, transparent); }
 .dt-status[data-state='cancelled'] { background: color-mix(in oklab, var(--destructive) 12%, var(--premium-paper)); color: var(--destructive); border: 1px solid color-mix(in oklab, var(--destructive) 30%, transparent); }
 .dt-struk {
-  display: grid; place-items: center; width: 37px; height: 37px; border-radius: 11px; cursor: pointer;
+  display: grid; place-items: center; width: 33px; height: 33px; border-radius: 10px; cursor: pointer;
   background: linear-gradient(180deg, var(--premium-paper), var(--premium-highlight));
   border: 1px solid var(--premium-line); color: var(--gold-krem);
   box-shadow: inset 0 1px 0 color-mix(in oklab, var(--premium-paper) 90%, transparent), 0 3px 5px -2px color-mix(in oklab, var(--premium-ink) 22%, transparent);
 }
 .dt-struk:hover { transform: translateY(-1px); }
-.dt-struk svg { width: 19px; height: 19px; }
-.dt-kosong { margin: 0 26px 18px; padding: 22px; text-align: center; font-size: 15px; color: color-mix(in oklab, var(--premium-ink) 60%, transparent); border: 1px dashed var(--premium-line); border-radius: 14px; }
+.dt-struk svg { width: 17px; height: 17px; }
+.dt-kosong { margin: 0 22px 14px; padding: 18px; text-align: center; font-size: 14px; color: color-mix(in oklab, var(--premium-ink) 60%, transparent); border: 1px dashed var(--premium-line); border-radius: 13px; }
 
-.dt-catatan-list { list-style: none; margin: 0 26px 18px; padding: 0; display: grid; gap: 10px; max-height: 320px; overflow-y: auto; }
+.dt-catatan-list { list-style: none; margin: 0 22px 14px; padding: 0; display: grid; gap: 9px; max-height: 280px; overflow-y: auto; }
 .dt-catatan-item {
-  padding: 13px 16px; border-radius: 14px; border: 1px solid var(--premium-line);
+  padding: 11px 14px; border-radius: 13px; border: 1px solid var(--premium-line);
   background: linear-gradient(180deg, var(--premium-paper), color-mix(in oklab, var(--premium-paper) 84%, var(--premium-highlight)));
   box-shadow: 0 3px 7px -4px color-mix(in oklab, var(--premium-ink) 20%, transparent);
 }
