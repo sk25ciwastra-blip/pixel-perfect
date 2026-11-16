@@ -381,6 +381,29 @@
 .hk-donut-number,.hk-progress-panel[data-empty="true"] .hk-donut-number { fill: var(--premium-ink); }
 .hk-donut-caption,.hk-progress-panel[data-empty="true"] .hk-donut-caption { fill: var(--premium-muted); }
 .hk-queue-link { color: var(--gold-krem); }
+/* Readability: preserve reference geometry and improve text contrast. */
+.hk-header-description { color: var(--foreground); font-size: 15px; line-height: 1.5; }
+.hk-tab { font-size: 13px; font-weight: 600; }
+.hk-summary-main p { font-size: 15px; color: var(--foreground); }
+.hk-summary-status span { font-size: 12px; color: var(--foreground); }
+.hk-summary-caption { font-size: 13px; font-weight: 500; }
+.hk-summary-main strong { font-size: 30px; }
+.hk-room-panel .hk-table,.hk-reference-table { font-size: 14px; color: var(--premium-ink); }
+.hk-room-panel .hk-table th,.hk-reference-table th { font-size: 13px; font-weight: 700; }
+.hk-room-panel .hk-table td,.hk-reference-table td { font-weight: 500; }
+.hk-room-number { font-size: 15px; font-weight: 700; }
+.hk-room-panel .hk-table td .text-muted-foreground,.hk-room-panel .hk-table td.text-muted-foreground,.hk-room-panel .hk-table details { color: var(--premium-ink); font-size: 13px; }
+.hk-room-panel .hk-table .text-xs { font-size: 13px; }
+.hk-room-panel .hk-table .hk-state,.hk-room-panel .hk-table td > span.inline-flex { font-size: 12px; font-weight: 600; }
+.hk-room-panel .hk-search input { font-size: 14px; }
+.hk-room-panel .hk-search input::placeholder { color: var(--premium-muted); opacity: 1; }
+.hk-room-panel .hk-type-filters button { font-size: 13px; font-weight: 600; }
+.hk-reference-more { font-size: 13px; }
+.hk-reference-table .hk-reference-empty { color: var(--premium-ink); font-size: 14px; }
+.hk-completion-grid p,.hk-summary-gold .hk-completion-grid p { font-size: 13px; font-weight: 600; }
+.hk-completion-grid strong,.hk-summary-gold .hk-completion-grid strong { font-size: 28px; }
+.hk-chart .recharts-text { font-size: 12px; font-weight: 500; }
+.hk-chart-caption { font-size: 12px; color: var(--premium-ink); }
 @media(min-width:1201px) {
  .hk-room-panel .hk-table { min-width: 0; }
  .hk-room-panel .hk-table th:nth-child(1) { width: 9%; }
