@@ -196,6 +196,7 @@
   --success-paper: oklch(0.978 0.014 75);
   --success-ink: oklch(0.25 0.044 65);
   --success-gold: oklch(0.79 0.145 80);
+  --success-gold-deep: oklch(0.6 0.115 78);
   --success-gold-light: oklch(0.92 0.09 80);
   --success-green: oklch(0.66 0.22 145);
   --success-surface: linear-gradient(125deg, var(--premium-surface), var(--success-paper));
