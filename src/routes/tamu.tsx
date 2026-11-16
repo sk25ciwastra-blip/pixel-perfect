@@ -122,7 +122,7 @@ function HalamanTamu() {
       </div>
       {loading && <p className="mt-4 text-base">Memuat tamu…</p>}
       {error && <p role="alert" className="mt-4 text-base text-destructive">{error}</p>}
-      <div className="mt-6 w-full min-w-0 overflow-hidden rounded-lg border border-[var(--premium-line)] bg-[var(--premium-paper)] p-2 text-[var(--premium-ink)] shadow-lembut [--muted-foreground:var(--premium-muted)] [--gold:var(--gold-krem)] [--gold-light:var(--gold-krem)] [--siap-foreground:var(--premium-success)] [--border:var(--premium-line)] [--accent:var(--premium-highlight)] [--accent-foreground:var(--premium-ink)] sm:p-3">
+      <div className="tabel-tamu-premium mt-6 w-full min-w-0 overflow-hidden rounded-lg border border-[var(--premium-line)] bg-[var(--premium-paper)] p-2 text-[var(--premium-ink)] shadow-lembut [--muted-foreground:var(--premium-muted)] [--gold:var(--gold-krem)] [--gold-light:var(--gold-krem)] [--siap-foreground:var(--premium-success)] [--border:var(--premium-line)] [--accent:var(--premium-highlight)] [--accent-foreground:var(--premium-ink)] sm:p-3">
         <div className="max-w-full overflow-x-auto">
           <table className="w-full min-w-[780px] table-fixed border-separate border-spacing-0 text-center text-base [&_th]:text-[13px]">
             <colgroup><col className="w-[6%]" /><col className="w-[28%]" /><col className="w-[18%]" /><col className="w-[15%]" /><col className="w-[16%]" /><col className="w-[17%]" /></colgroup>
