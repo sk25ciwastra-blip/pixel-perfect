@@ -38,7 +38,9 @@ function page(rows, area='status', position='owner') {
   const icons = new Proxy({}, {get:()=>()=>null});
   const api = load('src/routes/housekeeping.tsx', {
     '@/components/housekeeping.css': {},
-    '@/assets/header-housekeeping-reference.jpg': {default:'housekeeping-fixture.jpg'},
+    '@/assets/header-transaksi.jpg': {default:'housekeeping-fixture.jpg'},
+    '@/lib/housekeeping-ringkasan': {ringkasanHousekeeping:()=>({hari:0,minggu:0,bulan:0,tahun:'2026',grafik:[]})},
+    '@/components/housekeeping-referensi': {GrafikReferensi:stub,PanelPerawatanReferensi:stub,PanelSelesaiReferensi:stub,RiwayatReferensi:stub,RingkasanSelesai:stub},
     '@tanstack/react-router': {createFileRoute:()=>options=>({...options,useSearch:()=>({bagian:area})}),Link:stub},
     '@/components/kerangka': {Kerangka:({children})=>React.createElement('main',null,children)},
     '@/components/ui/button': {Button:({children,disabled})=>React.createElement('button',{disabled},children)},

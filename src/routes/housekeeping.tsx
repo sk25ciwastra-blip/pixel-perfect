@@ -14,7 +14,9 @@ import { Link } from '@tanstack/react-router';
 import { BedDouble, Brush, ClipboardCheck, History, Wrench, Search, Sparkles, CheckCircle2, Users, Package, Layers, Eye, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import '@/components/housekeeping.css';
-import latarHousekeeping from '@/assets/header-housekeeping-reference.jpg';
+import latarHousekeeping from '@/assets/header-transaksi.jpg';
+import { ringkasanHousekeeping } from '@/lib/housekeeping-ringkasan';
+import { GrafikReferensi, PanelPerawatanReferensi, PanelSelesaiReferensi, RiwayatReferensi, RingkasanSelesai } from '@/components/housekeeping-referensi';
 
 type BagianHk = 'status' | 'checklist' | 'perlengkapan' | 'perawatan' | 'riwayat';
 const bagianHk: { kode: BagianHk; label: string; ikon: typeof Brush }[] = [
@@ -57,6 +59,7 @@ function Halaman() {
   const rooms = useTable('rooms');
   const types = useTable('room_types');
   const history = useTable('housekeeping_history');
+  const maintenance = useTable('housekeeping_maintenance');
   const checklists = useTable('housekeeping_checklists');
   const transactions = useTable('transactions');
 
@@ -118,6 +121,7 @@ function Halaman() {
   const progressTotal = new Set([...startedToday, ...finishedToday]).size;
   const progress = progressTotal ? Math.round(finishedToday.size / progressTotal * 100) : 0;
   const queueRooms = activeRooms.filter(room => room.status === 'dirty' || room.status === 'cleaning');
+  const completionSummary = useMemo(() => ringkasanHousekeeping(history.rows), [history.rows]);
 
   const linenPanel = <section className="hk-bottom-panel"><div className="hk-panel-header"><Layers /><h2>Perlengkapan &amp; Linen</h2><Link to="/housekeeping" search={{ bagian: 'perlengkapan' }} className="hk-gold-link">Lihat Detail <ChevronRight /></Link></div><div className="hk-stock-grid">{[{ label: 'Handuk', ikon: Layers }, { label: 'Sprei Set', ikon: BedDouble }, { label: 'Amenitas', ikon: Package }].map(item => <div className="hk-stock-item" key={item.label}><item.ikon /><div><p>{item.label}</p><strong>— / —</strong></div><p className="hk-stock-empty">Stok belum tersedia</p></div>)}</div></section>;
   const maintenancePanel = <section className="hk-bottom-panel"><div className="hk-panel-header"><Wrench /><h2>Perawatan &amp; Kendala</h2></div><div className="hk-maintenance-empty"><CheckCircle2 /><div><p>Status kendala belum tersedia.</p><p className="text-muted-foreground">Riwayat perawatan dapat dilihat di tab Perawatan.</p></div><Link to="/housekeeping" search={{ bagian: 'perawatan' }} className="hk-outline-link">Lihat Perawatan <ChevronRight /></Link></div></section>;
@@ -232,7 +236,7 @@ function Halaman() {
       <header className="hk-header">
         <div className="hk-header-latar" aria-hidden="true"><img src={latarHousekeeping} alt="" width={1536} height={512} /></div>
         <div className="hk-header-isi">
-          <div><p className="hk-brand">BATURADEN 25 HOMESTAY</p><h1>Housekeeping</h1><div className="hk-header-garis" aria-hidden="true" /><p className="hk-header-description">Operasional kebersihan kamar, perlengkapan, dan perawatan.</p></div>
+          <div><p className="hk-brand">BATURADEN 25 HOMESTAY</p><h1>Housekeeping</h1><div className="hk-header-garis" aria-hidden="true" /><p className="hk-header-description">Pantau status kamar, pekerjaan kebersihan, dan perawatan berkala.</p></div>
           <blockquote>Kamar bersih, tamu nyaman,<br />operasional makin lancar.</blockquote>
         </div>
       </header>
@@ -266,25 +270,16 @@ function Halaman() {
       {bagian === 'perlengkapan' && <div className="hk-bottom">{linenPanel}{maintenancePanel}</div>}
 
       {(bagian === 'status' || bagian === 'checklist') && (<>
-        <div className="hk-stats">
-          {[
-            { label: 'Total Kamar', value: activeRooms.length, ikon: BedDouble, status: 'total' },
-            { label: 'Tersedia', value: activeRooms.filter((room) => room.status === 'ready').length, ikon: BedDouble, status: 'ready' },
-            { label: 'Terisi', value: activeRooms.filter((room) => room.status === 'occupied').length, ikon: BedDouble, status: 'occupied' },
-            { label: 'Perlu Dibersihkan', value: activeRooms.filter((room) => room.status === 'dirty').length, ikon: Brush, status: 'dirty' },
-            { label: 'Sedang Dibersihkan', value: activeRooms.filter((room) => room.status === 'cleaning').length, ikon: Sparkles, status: 'cleaning' },
-            { label: 'Perawatan', value: '—', ikon: Wrench, status: 'maintenance' },
-          ].map((item) => (
-            <div key={item.label} className="hk-stat" data-status={item.status}>
-              <span className="hk-stat-icon"><item.ikon /></span>
-              <div><p className="hk-stat-label">{item.label}</p><p className="hk-stat-value">{item.value}</p></div>{item.status !== 'total' && <span className="hk-percent">{typeof item.value === 'number' && activeRooms.length ? `${Math.round(item.value / activeRooms.length * 100)}%` : '—'}</span>}
-            </div>
-          ))}
+        <div className="hk-stats hk-stats-reference">
+          <div className="hk-summary-card hk-summary-rooms"><div className="hk-summary-main"><span className="hk-stat-icon"><BedDouble /></span><div><p>Status Kamar</p><strong>{activeRooms.length}<small> Kamar</small></strong></div></div><div className="hk-summary-status">{[{ label: 'Tersedia', status: 'ready' }, { label: 'Perlu Dibersihkan', status: 'dirty' }, { label: 'Sedang Dibersihkan', status: 'cleaning' }, { label: 'Terisi', status: 'occupied' }].map(item => <span key={item.status} data-state={item.status}>{item.label} <b>{activeRooms.filter(room => room.status === item.status).length}</b></span>)}</div></div>
+          <div className="hk-summary-card"><div className="hk-summary-main"><span className="hk-stat-icon"><Wrench /></span><div><p>Perawatan Berkala</p><strong>{maintenance.error ? '—' : maintenance.rows.length}<small> Catatan</small></strong></div></div><Link to="/housekeeping" search={{ bagian: 'perawatan' }} className="hk-summary-caption">Lihat Perawatan <ChevronRight /></Link></div>
+          <div className="hk-summary-card"><div className="hk-summary-main"><span className="hk-stat-icon"><ClipboardCheck /></span><div><p>Riwayat Pekerjaan</p><strong>{history.rows.length}<small> Catatan</small></strong></div></div><Link to="/housekeeping" search={{ bagian: 'riwayat' }} className="hk-summary-caption">Riwayat Tercatat <ChevronRight /></Link></div>
+          <div className="hk-summary-card hk-summary-gold"><div className="hk-summary-main"><span className="hk-stat-icon"><Brush /></span><p>Jumlah Pembersihan Selesai</p></div><RingkasanSelesai data={completionSummary} /></div>
         </div>
         <div className="hk-layout">
           <section className="hk-room-panel">
             <div className="hk-panel-header">
-              <BedDouble className="hk-heading-icon" /><h2>{bagian === 'checklist' ? 'Tugas Petugas' : 'Status Kamar & Housekeeping'}</h2>
+              <BedDouble className="hk-heading-icon" /><h2>{bagian === 'checklist' ? 'Tugas Petugas' : 'Status Kamar'}</h2>
             </div>
               <div className="hk-table-tools" role="toolbar" aria-label="Pencarian dan filter kamar">        <label className="hk-search">
           <Search className="pointer-events-none absolute left-4 top-3.5 size-5 text-muted-foreground" />
@@ -332,15 +327,16 @@ function Halaman() {
             </div>
           </section>
           <aside className="hk-side">
-            <section className="hk-side-panel hk-progress-panel" data-empty={!progressTotal}>
+            {bagian === 'status' && <><PanelPerawatanReferensi rows={maintenance.rows} /><PanelSelesaiReferensi data={completionSummary} /></>}
+            {bagian === 'checklist' && <><section className="hk-side-panel hk-progress-panel" data-empty={!progressTotal}>
               <div className="hk-panel-header"><BedDouble /><h2>Progress Pembersihan Hari Ini</h2></div>
               <div className="hk-progress-body"><svg viewBox="0 0 120 120" className="hk-donut" role="img" aria-label={progressTotal ? `${progress}% selesai dari ${progressTotal} kamar yang dikerjakan hari ini` : 'Belum ada pekerjaan hari ini'}><circle cx="60" cy="60" r="46" className="hk-donut-track" /><circle cx="60" cy="60" r="46" className="hk-donut-value" strokeDasharray={`${progress * 2.89} 289`} /><text x="60" y="58" textAnchor="middle" className="hk-donut-number">{progressTotal ? `${progress}%` : '—'}</text><text x="60" y="76" textAnchor="middle" className="hk-donut-caption">{progressTotal ? 'Selesai' : 'Belum tercatat'}</text></svg>
               <dl className="hk-progress-legend"><div data-state="ready"><dt>Selesai</dt><dd>{finishedToday.size} kamar</dd></div><div data-state="cleaning"><dt>Sedang Proses</dt><dd>{activeRooms.filter(room => room.status === 'cleaning').length} kamar</dd></div><div data-state="dirty"><dt>Menunggu</dt><dd>{activeRooms.filter(room => room.status === 'dirty').length} kamar</dd></div><div><dt>Total Dikerjakan</dt><dd>{progressTotal} kamar</dd></div></dl></div>
             </section>
-            <section className="hk-side-panel hk-queue-panel"><div className="hk-panel-header"><ClipboardCheck /><h2>Antrean Tugas Petugas</h2></div><ul className="hk-task-list">{queueRooms.length === 0 && <li className="hk-empty-task"><CheckCircle2 /><div>Tidak ada tugas dalam antrean.<p>Belum ada kamar perlu dibersihkan.</p></div></li>}{queueRooms.slice(0, 3).map(room => <li key={room.id}><Brush /><div><strong>Kamar {room.room_number} — Pembersihan</strong><p>{room.status === 'cleaning' ? history.rows.filter(item => item.room_id === room.id && item.action === 'start_cleaning').sort((a,b) => b.created_at.localeCompare(a.created_at))[0]?.performed_by_name || 'Petugas belum tercatat' : 'Menunggu pembersihan'}</p></div><span className="hk-state" data-state={room.status}>{room.status === 'cleaning' ? 'Proses' : 'Menunggu'}</span></li>)}</ul><Link to="/housekeeping" search={{ bagian: 'checklist' }} className="hk-queue-link">Lihat Tugas Petugas <ChevronRight /></Link></section>
+            <section className="hk-side-panel hk-queue-panel"><div className="hk-panel-header"><ClipboardCheck /><h2>Antrean Tugas Petugas</h2></div><ul className="hk-task-list">{queueRooms.length === 0 && <li className="hk-empty-task"><CheckCircle2 /><div>Tidak ada tugas dalam antrean.<p>Belum ada kamar perlu dibersihkan.</p></div></li>}{queueRooms.slice(0, 3).map(room => <li key={room.id}><Brush /><div><strong>Kamar {room.room_number} — Pembersihan</strong><p>{room.status === 'cleaning' ? history.rows.filter(item => item.room_id === room.id && item.action === 'start_cleaning').sort((a,b) => b.created_at.localeCompare(a.created_at))[0]?.performed_by_name || 'Petugas belum tercatat' : 'Menunggu pembersihan'}</p></div><span className="hk-state" data-state={room.status}>{room.status === 'cleaning' ? 'Proses' : 'Menunggu'}</span></li>)}</ul><Link to="/housekeeping" search={{ bagian: 'checklist' }} className="hk-queue-link">Lihat Tugas Petugas <ChevronRight /></Link></section></>}
           </aside>
         </div>
-        <div className="hk-bottom">{linenPanel}{maintenancePanel}</div>
+        <div className="hk-bottom hk-reference-bottom"><RiwayatReferensi history={history.rows} rooms={rooms.rows} /><GrafikReferensi data={completionSummary} /></div>
       </>)}
 
       </div>

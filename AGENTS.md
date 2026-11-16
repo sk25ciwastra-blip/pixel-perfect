@@ -28,7 +28,7 @@
 - Feature header backdrops extend behind the shared profile row through scoped desktop CSS; the room header retains its local offset, keeping content geometry and the independent Dashboard unchanged.
 - Short per-page header context lines live in `src/lib/konteks-header.ts` and are rendered only by the shared page header in `kerangka.tsx` (Dashboard is excluded because it renders full-bleed), so context copy stays presentation-only and can never resize a header or touch a background.
 - The Kamar check-in entry reuses FormulirPemesanan and the prior transaction-list permission plus refresh invalidations; contact availability uses the existing Dashboard number format, preserving operational restrictions.
-- Housekeeping owns its reference-matched five-tab layout, header and scoped presentation inside Kerangka; its seven-column table retains queue membership, permissions and callbacks, while unsupported inventory/repair fields remain explicitly unavailable rather than fabricated.
+- Housekeeping keeps its five tabs and queue permissions; reference panels use scoped browser-readable maintenance/history and tested completion summaries, never sample schedules or inferred repairs.
 - Check-in, booking and expense results share the scoped success shell; forms retain validation, save handlers and existing actions so presentation cannot alter payment rules.
 - Cash-expense layout overrides use the expense-reference scope: full-width session and summary surround paired detail/payment panels, so reference adjustments never change other forms or the cash-only save handler.
 
