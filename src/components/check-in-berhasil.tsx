@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BadgeCheck, BedDouble, Box, CalendarDays, Check, ChevronDown, ChevronRight, FileText, Image, Layers, Printer, ShieldCheck, UserRoundPlus, Users, X } from 'lucide-react';
+import { BedDouble, Box, CalendarDays, Check, ChevronDown, ChevronRight, FileText, Image, Layers, Printer, ShieldCheck, UserRoundPlus, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ReceiptTransactionButton } from '@/components/receipt-actions';
@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 import { featureFlags } from '@/lib/feature-flags';
 import { rupiah } from '@/lib/data-contoh';
+import logoPopup from '@/assets/logo-popup-berhasil.png.asset.json';
 import '@/components/check-in-berhasil.css';
 
 export function CheckInBerhasil({ transactionNumber, room, roomType, packageName, onClose }: {
@@ -49,8 +50,7 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
   return <div className="cib-overlay" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
     <section className="cib-popup" role="dialog" aria-modal="true" aria-labelledby="cib-title">
       <Button type="button" variant="ghost" size="icon" className="cib-close" aria-label="Tutup" onClick={onClose}><X className="size-4" /></Button>
-      <div className="cib-logo" aria-label="Baturaden 25 Homestay"><span>Baturaden 25</span><strong>Homestay<BadgeCheck /></strong></div>
-      <p className="cib-management">— MANAJEMEN —</p>
+      <div className="cib-logo"><img src={logoPopup.url} alt="Baturaden 25 Homestay — MANAJEMEN" /></div>
       <div className="cib-check-wrap"><svg className="cib-rays" viewBox="0 0 26 50" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M16 3l8 7M2 20l12 3M1 32l13-3M15 44l8-8" /></svg><span className="cib-check"><Check /></span><svg className="cib-rays" viewBox="0 0 26 50" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M16 3l8 7M2 20l12 3M1 32l13-3M15 44l8-8" /></svg></div>
       <h2 id="cib-title">Check-in Berhasil!</h2><p className="cib-subtitle">Transaksi berhasil disimpan.</p>
       <div className="cib-number"><FileText />{transactionNumber}</div>
