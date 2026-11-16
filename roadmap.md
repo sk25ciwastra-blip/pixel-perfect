@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Housekeeping — referensi baru 16 November
+- [ ] Sesuaikan ringkasan hitam–emas, tabel putih hangat, panel perawatan, riwayat dan grafik dengan gambar; semua aksi dan izin tetap, tanpa data contoh.
+- [ ] Periksa halaman dengan akun aktif di komputer dan HP, pencarian, tab dan detail tanpa menyimpan pekerjaan atau publikasi.
+
 ## Formulir operasional — putih hangat 16 November
 - [x] Perhalus Check-in Langsung, Reservasi dan Pengeluaran dengan putih hangat serta relief ringan; ukuran, isian, data, aturan dan fungsi tetap.
 - [x] Ketiga formulir diperiksa dengan akun aktif di komputer dan HP: putih hangat, empat bagian tetap, tanpa meluap; Batal berjalan dan build OK, tanpa menyimpan transaksi atau publikasi.
