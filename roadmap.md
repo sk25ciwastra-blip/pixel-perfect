@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Detail Karyawan — referensi 16 November
+- [x] Susun popup dua kolom krem–emas sesuai referensi dengan profil/foto asli; isian/status tanpa sumber tetap —, tanpa sandi atau data contoh.
+- [x] Akun aktif komputer/HP: tujuh panel, baca profil tanpa error, tutup berjalan dan tanpa overflow; tiga tes ID/isian lulus, tanpa perubahan akun atau publikasi.
+
 ## Tim & Akses — relief dan tombol 16 November
 - [x] Perhalus empat ringkasan hitam–emas dengan relief dan efek kursor tanpa memperbesar; tombol tambah menjadi Tambah Karyawan, simpan baru menjadi Simpan, ubah menjadi Perbaharui.
 - [x] Akun aktif komputer/HP: efek naik 2px, kedua tombol formulir sesuai dan tidak meluap; tiga tes ID/isian terkunci lulus, tanpa error, tanpa menyimpan akun atau publikasi.
