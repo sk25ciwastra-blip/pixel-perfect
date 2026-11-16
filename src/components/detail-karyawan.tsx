@@ -10,7 +10,7 @@ import '@/components/detail-karyawan.css';
 function Panel({ titre, sousTitre, icon: Icon, children, className = '' }: { titre: string; sousTitre: string; icon: LucideIcon; children: ReactNode; className?: string }) {
   return <section className={`dk-panel ${className}`}><header><span className="dk-medali"><Icon /></span><div><h3>{titre}</h3><p>{sousTitre}</p></div></header>{children}</section>;
 }
-function Champ({ label, value, icon: Icon, auto = false, large = false }: { label: string; value?: string | null; icon: LucideIcon; auto?: boolean; large?: boolean }) {
+function Champ({ label, value, icon: Icon, auto = false, large = false }: { label: string; value?: string | null | undefined; icon: LucideIcon; auto?: boolean; large?: boolean }) {
   return <div className={`dk-champ ${large ? 'dk-large' : ''}`}><span>{label}</span><div className="dk-valeur"><Icon /><span>{value || '—'}</span>{auto && <em>Otomatis</em>}</div></div>;
 }
 const date = (value?: string | null) => value ? new Date(value).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' }) : '—';
