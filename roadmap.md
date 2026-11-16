@@ -2,7 +2,7 @@
 
 ## Housekeeping — teks jelas
 - [x] Perbesar label 15px, isi tabel 14px, judul kolom/status 13/12px dan angka 30px; perkuat kontras teks dan pencarian tanpa mengubah data atau susunan.
-- [ ] Periksa keterbacaan komputer/HP dan fungsi pencarian/detail tanpa menyimpan data atau publikasi.
+- [x] Akun aktif komputer/HP: teks lebih besar dan gelap, tabel tetap pas, pencarian/tab/detail berjalan tanpa overflow/error; lima tes lulus dan build OK, tanpa penyimpanan atau publikasi.
 
 ## Housekeeping — gambar kedua final
 - [x] Samakan proporsi dua kolom, ringkasan serif dan sorotan emas, panel krem lembut tanpa kotak ikon, tabel berbaris selang-seling dan grafik emas; lima tab, pencarian dan semua aksi tetap. Data/jadwal/durasi contoh tidak disalin.
