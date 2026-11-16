@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { Eye, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, CalendarDays, Users, BedDouble, FileText, X, Clock, Layers, CircleCheck, Info, ReceiptText } from 'lucide-react';
+import { Eye, Search, Plus, ArrowDownUp, UserRound, NotebookPen, CalendarDays, Users, BedDouble, FileText, X, Clock, Layers, CircleCheck, Info, ReceiptText } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
@@ -251,11 +251,7 @@ function HalamanTamu() {
                 </table></div> : !transactions.loading && !transactions.error && <p className="dt-kosong">{tabDetail === 'booking' ? 'Belum ada riwayat booking' : 'Belum ada riwayat transaksi'}</p>}
               </>}
               <footer className="dt-footer">
-                <div className="dt-footer-kiri">
-                  {!readOnly && <button type="button" className="dt-tombol" onClick={() => edit(detail)}><Pencil aria-hidden="true" />Perbarui Data</button>}
-                  {!readOnly && <button type="button" className="dt-tombol" onClick={() => openWhatsApp(detail.phone)}><IkonWhatsApp className="size-[18px]" />Hubungi</button>}
-                </div>
-                <button type="button" className="dt-tutup" onClick={tutup}>Tutup</button>
+                <Button type="button" className="dt-tutup" onClick={tutup}>Tutup</Button>
               </footer>
             </>}
           </Dialog.Content>
