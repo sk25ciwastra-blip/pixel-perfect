@@ -2,7 +2,7 @@
 
 ## Popup Check-in Berhasil — referensi 16 November
 - [x] Terapkan logo, ceklis hijau, rincian transaksi, total emas dan dua tombol sesuai referensi; hanya tampil setelah penyimpanan berhasil.
-- [ ] Periksa tampilan komputer/HP dan aksi bukti digital dengan akun aktif; pembayaran dan izin tetap, tanpa publikasi.
+- [x] Periksa popup dengan transaksi tersimpan dan akun aktif di komputer/HP, PDF berhasil diunduh dan 23 tes lulus; tidak membuat check-in baru untuk pengujian, tanpa publikasi.
 
 ## Detail Transaksi — font dan penanda jenis transaksi
 - [x] Samakan font label Rincian Menginap dengan Identitas Tamu, tampilkan titik dua sejajar atas, dan beri warna biru pada Booking serta hijau pada kedatangan langsung; data dan fungsi tetap.
