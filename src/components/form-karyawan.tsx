@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
-import { UserRound, Mail, Layers, Lock, Info, IdCard, MapPin, CalendarDays, Phone, Users, Link2, Home, Camera, Upload, ShieldCheck, Save, Contact } from 'lucide-react';
+import { UserRound, Mail, Layers, Lock, Info, IdCard, MapPin, CalendarDays, Phone, Users, Link2, Home, Camera, Upload, ShieldCheck, Save, Contact, RefreshCw } from 'lucide-react';
 import '@/components/form-karyawan.css';
 import { supabase } from '@/integrations/supabase/client';
 import { createEmployee, manageEmployee } from '@/lib/employee.functions';
@@ -137,6 +137,6 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
     </div>
     {message && <p role="alert" className="fk-pesan">{message}</p>}
     {!item && <p className="fk-ingat">Catat kata sandi awal di atas dan berikan kepada karyawan; kata sandi tidak ditampilkan lagi setelah disimpan.</p>}
-    <footer className="fk-kaki"><button type="button" className="fk-batal" onClick={() => onSelesai(false)}>Batal</button><button className="fk-simpan" disabled={busy}><Save />{busy ? 'Menyimpan…' : item ? 'Perbaharui' : 'Simpan'}</button></footer>
+    <footer className="fk-kaki"><button type="button" className="fk-batal" onClick={() => onSelesai(false)}>Batal</button><button className="fk-simpan" disabled={busy}>{item ? <RefreshCw /> : <Save />}{busy ? 'Menyimpan…' : item ? 'Perbarui' : 'Simpan'}</button></footer>
   </form>;
 }
