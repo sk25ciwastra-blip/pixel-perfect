@@ -287,7 +287,7 @@ export function FormulirPemesanan({
       _day_mode: dayMode,
       _idempotency_key: requestKey,
       _session_id: sessionId || null,
-      ...(scheduledCheckIn ? { _scheduled_check_in: scheduledCheckIn } : {}),
+      _scheduled_check_in: scheduledCheckIn,
       ...(extraGuestOn ? { _guest_count: jumlahTamu } : {}),
     };
     const combinedArgs = {
@@ -296,7 +296,7 @@ export function FormulirPemesanan({
       _payments: methods.map(m => ({ method: m, amount: Number(nominal[m]), idempotency_key: componentKeys[m] })) as CombinedPaymentComponent[],
       _day_mode: dayMode, _request_idempotency_key: requestKey, _request_fingerprint: requestFingerprint,
       _session_id: sessionId || null,
-      ...(scheduledCheckIn ? { _scheduled_check_in: scheduledCheckIn } : {}),
+      _scheduled_check_in: scheduledCheckIn,
       ...(extraGuestOn ? { _guest_count: jumlahTamu } : {}),
     };
     const combined = shouldUseCombinedPayment(methods.length, featureFlags.combinedPayment);
