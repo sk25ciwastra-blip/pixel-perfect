@@ -2,7 +2,7 @@
 .dk-kepala { flex-shrink: 0; padding: 16px 20px 14px; border-bottom: 1px solid var(--premium-line); background: var(--finance-paper-satin); box-shadow: inset 0 1px 0 var(--premium-surface); }
 .dk-kepala h2 { font: 600 26px/1.2 var(--font-serif); }
 .dk-kepala p { font-size: 12px; line-height: 1.5; color: var(--premium-muted); margin-top: 5px; }
-.dk-isi { min-height: 0; padding: 12px; overflow-y: auto; display: grid; grid-template-columns: minmax(0,1.7fr) minmax(0,1fr); gap: 12px; scrollbar-color: var(--gold-krem) var(--premium-paper); }
+.dk-isi { min-height: 0; padding: 12px; overflow-y: auto; display: grid; grid-template-columns: minmax(0,1.7fr) minmax(0,1fr); gap: 12px; }
 .dk-kolom { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .dk-panel { border: 1px solid var(--premium-line); border-radius: 8px; background: var(--finance-paper-satin); box-shadow: var(--premium-panel-shadow), inset 0 -1px 0 color-mix(in oklab,var(--gold-krem) 10%,transparent); padding: 10px 12px 12px; }
 .dk-panel header { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--premium-line); padding-bottom: 8px; margin-bottom: 10px; }
