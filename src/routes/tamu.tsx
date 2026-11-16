@@ -10,6 +10,7 @@ import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
+import '@/components/tamu.css';
 import { empatDigitWA, kunjunganTamu, urutTamu } from '@/lib/tamu-tampilan';
 
 export const Route = createFileRoute('/tamu')({
@@ -114,7 +115,7 @@ function HalamanTamu() {
   return (
     <Kerangka judul="Daftar Tamu" keterangan={`${rows.length} tamu tercatat`} aksi={!readOnly && <Button className="h-11 shrink-0 gap-2 rounded-xl px-5 text-base" onClick={() => edit()}><Plus className="size-4" /><span className="leading-none">Tambah Tamu</span></Button>}>
       <div className="min-w-0">
-      <form onSubmit={e => e.preventDefault()} className="grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 py-1.5 pl-4 pr-1.5 backdrop-blur-md sm:max-w-md">
+      <form onSubmit={e => e.preventDefault()} className="tamu-cari grid w-full min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-full border border-gold/25 bg-navy-deep/70 py-1.5 pl-4 pr-1.5 backdrop-blur-md sm:max-w-md">
         <Search className="size-5 shrink-0 text-foreground/90" aria-hidden="true" />
         <input aria-label="Pencarian tamu" placeholder="Cari Nama atau Nomor Whatsapp...." value={cari} onChange={e => setCari(e.target.value)} className="h-8 w-full min-w-0 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-gold/50" />
         <Button type="submit" size="sm" className="shrink-0 rounded-full px-4 text-base"><Search className="size-4" />Cari</Button>
@@ -139,8 +140,8 @@ function HalamanTamu() {
               <td className="pemisah-kolom border-b border-border/60 px-4 py-3 text-left font-semibold"><span className="block truncate" title={t.full_name}>{t.full_name}</span></td>
               <td className="pemisah-kolom whitespace-nowrap border-b border-border/60 px-4 py-3 font-mono text-base tabular-nums">xxxx{empatDigitWA(t.phone)}</td>
               <td className="pemisah-kolom border-b border-border/60 px-4 py-3 tabular-nums">{transactions.loading ? '—' : jumlahKunjungan(t.id)}</td>
-              <td className="pemisah-kolom border-b border-border/60 px-2 py-3"><span className="text-xs text-muted-foreground" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span></td>
-              <td className="border-b border-border/60 px-2 py-2"><div className="flex justify-center gap-0">
+              <td className="pemisah-kolom border-b border-border/60 px-2 py-3"><span className="tamu-status-pill text-xs text-muted-foreground" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span></td>
+              <td className="border-b border-border/60 px-2 py-2"><div className="tamu-aksi flex justify-center gap-0">
                 <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Lihat detail ${t.full_name}`} aria-label={`Lihat detail ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setOpen(false); setDetailTamu(t); }}><Eye className="size-[21px]!" /></Button>
                 {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-siap-foreground" title={`WhatsApp ${t.full_name}`} aria-label={`WhatsApp ${t.full_name}`} onClick={() => openWhatsApp(t.phone)}><IkonWhatsApp className="size-[21px]!" /></Button>}
                  {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Tambah catatan ${t.full_name}`} aria-label={`Tambah catatan ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setDetailTamu(t); edit(t, true); }}><NotebookPen className="size-[21px]!" /></Button>}
