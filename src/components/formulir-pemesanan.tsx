@@ -10,6 +10,7 @@ import { biayaTamuTambahan } from '@/lib/tamu-tambahan';
 import { paketTerurut, tipeKamarTerurut } from '@/lib/urutan-pilihan';
 import { featureFlags, extraGuestAktif } from '@/lib/feature-flags';
 import { ReceiptTransactionButton } from '@/components/receipt-actions';
+import { CheckInBerhasil } from '@/components/check-in-berhasil';
 import {
   createReservationCombined,
   createTrainingReservationCombined,
@@ -325,6 +326,8 @@ export function FormulirPemesanan({
     ].join('\n');
     openWhatsApp(phone, pesan);
   }
+
+  if (savedNumber && mode === 'check_in') return <CheckInBerhasil transactionNumber={savedNumber} room={selectedRoom?.room_number ?? '—'} roomType={selectedRoomType?.name ?? '—'} packageName={selectedPackage?.name ?? '—'} onClose={onClose} />;
 
   return (
     <div

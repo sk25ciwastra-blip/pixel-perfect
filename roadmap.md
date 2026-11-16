@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Popup Check-in Berhasil — referensi 16 November
+- [x] Terapkan logo, ceklis hijau, rincian transaksi, total emas dan dua tombol sesuai referensi; hanya tampil setelah penyimpanan berhasil.
+- [ ] Periksa tampilan komputer/HP dan aksi bukti digital dengan akun aktif; pembayaran dan izin tetap, tanpa publikasi.
+
 ## Detail Transaksi — font dan penanda jenis transaksi
 - [x] Samakan font label Rincian Menginap dengan Identitas Tamu, tampilkan titik dua sejajar atas, dan beri warna biru pada Booking serta hijau pada kedatangan langsung; data dan fungsi tetap.
 - [x] Periksa transaksi tersimpan di komputer dan HP: label, titik dua dan penanda Booking tampil; tanpa kesalahan aplikasi, tanpa publikasi.
