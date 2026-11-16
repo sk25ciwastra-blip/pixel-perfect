@@ -137,6 +137,6 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
     </div>
     {message && <p role="alert" className="fk-pesan">{message}</p>}
     {!item && <p className="fk-ingat">Catat kata sandi awal di atas dan berikan kepada karyawan; kata sandi tidak ditampilkan lagi setelah disimpan.</p>}
-    <footer className="fk-kaki"><button type="button" className="fk-batal" onClick={() => onSelesai(false)}>Batal</button><button className="fk-simpan" disabled={busy}><Save />{busy ? 'Menyimpan…' : 'Simpan Karyawan'}</button></footer>
+    <footer className="fk-kaki"><button type="button" className="fk-batal" onClick={() => onSelesai(false)}>Batal</button><button className="fk-simpan" disabled={busy}><Save />{busy ? 'Menyimpan…' : item ? 'Perbaharui' : 'Simpan'}</button></footer>
   </form>;
 }
