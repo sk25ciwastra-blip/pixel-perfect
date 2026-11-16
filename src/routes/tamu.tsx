@@ -184,14 +184,16 @@ function HalamanTamu() {
       </div>
       <Dialog.Root open={(!!detail || open) && !detailTransactionId} onOpenChange={value => { if (!value && !saving && !detailTransactionId) tutup(); }}>
         <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-navy-deep/75 backdrop-blur-sm" />
-          <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut">
-            <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
+          <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className={open ? "fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut" : "detail-tamu-popup fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[1060px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto text-base"}>
+            {open ? <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0"><p className="text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
-                <Dialog.Title className="mt-1.5 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{open ? catatanSaja ? 'Tambah Catatan' : editing ? 'Perbarui Data' : 'Tambah Tamu' : 'Detail Tamu'}</Dialog.Title></div>
-                {!open && detail && !readOnly && <Button className="h-11 shrink-0 gap-2 px-3 text-sm" onClick={() => edit(detail)}><Pencil className="size-4" />Perbarui Data</Button>}
+                <Dialog.Title className="mt-1.5 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{catatanSaja ? 'Tambah Catatan' : editing ? 'Perbarui Data' : 'Tambah Tamu'}</Dialog.Title></div>
               </div>
-            </header>
+            </header> : <header className="dt-header">
+              <div className="dt-judul"><BedDouble aria-hidden="true" /><Dialog.Title asChild><h2>Detail Tamu</h2></Dialog.Title></div>
+              <Dialog.Close asChild><button type="button" className="dt-tutup-ikon" aria-label="Tutup detail tamu"><X className="size-5" /></button></Dialog.Close>
+            </header>}
             {open && !readOnly ? <form onSubmit={save}>
               <div className="space-y-5 p-5 sm:p-7">
                 {!catatanSaja && <div className="grid gap-4 sm:grid-cols-2">{([['Nama lengkap', nama, setNama], ['Nomor HP/WhatsApp', telepon, setTelepon], ['Alamat', alamat, setAlamat]] as const).map(([label, value, setter]) => <label key={label} className={`block min-w-0 text-base ${label === 'Alamat' ? 'sm:col-span-2' : ''}`}><span className="font-medium text-gold-light">{label}</span><input required value={value} onChange={e => setter(e.target.value)} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>)}</div>}
