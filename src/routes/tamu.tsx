@@ -122,11 +122,11 @@ function HalamanTamu() {
       </div>
       {loading && <p className="mt-4 text-base">Memuat tamu…</p>}
       {error && <p role="alert" className="mt-4 text-base text-destructive">{error}</p>}
-      <div className="panel-mewah mt-6 w-full min-w-0 overflow-hidden p-2 sm:p-3">
+      <div className="mt-6 w-full min-w-0 overflow-hidden rounded-lg border border-[var(--premium-line)] bg-[var(--premium-paper)] p-2 text-[var(--premium-ink)] shadow-lembut [--muted-foreground:var(--premium-muted)] [--gold:var(--gold-krem)] [--gold-light:var(--gold-krem)] [--siap-foreground:var(--premium-success)] [--border:var(--premium-line)] [--accent:var(--premium-highlight)] [--accent-foreground:var(--premium-ink)] sm:p-3">
         <div className="max-w-full overflow-x-auto">
           <table className="w-full min-w-[780px] table-fixed border-separate border-spacing-0 text-center text-base [&_th]:text-[13px]">
             <colgroup><col className="w-[6%]" /><col className="w-[28%]" /><col className="w-[18%]" /><col className="w-[15%]" /><col className="w-[16%]" /><col className="w-[17%]" /></colgroup>
-            <thead className="whitespace-nowrap bg-navy-deep/60 text-[13px] font-semibold text-gold"><tr>
+            <thead className="whitespace-nowrap bg-[var(--premium-highlight)] text-[13px] font-semibold text-gold"><tr>
               <th className="border-b border-gold/20 px-3 py-3 normal-case">No.</th>
               <th className="pemisah-kolom border-b border-gold/20 px-4 py-3"><Button variant="ghost" size="sm" className="h-9 px-3 text-[13px] text-gold" onClick={() => setUrutan('nama')}>NAMA TAMU</Button></th>
               <th className="pemisah-kolom border-b border-gold/20 px-5 py-3">WHATSAPP</th>
