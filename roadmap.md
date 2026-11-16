@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Tim & Akses — referensi 16 November
+- [ ] Sesuaikan empat ringkasan, tab, pencarian/filter dan tabel putih hangat dengan referensi; data, izin dan formulir tetap, tanpa informasi contoh.
+- [ ] Periksa akun aktif di komputer/HP, pencarian dan buka formulir tanpa menyimpan akun atau publikasi.
+
 ## Laporan — referensi 16 November
 - [x] Sesuaikan tab, periode, empat ringkasan, grafik, ringkasan usaha dan tabel harian dengan referensi; sumber angka serta closing resmi tetap, tanpa contoh transaksi atau publikasi. Rincian pendapatan kamar/tamu tambahan dan tamu lama tampil —, bukan angka rekaan; ekspor belum tersedia.
 - [x] Akun aktif komputer/HP: periode tujuh hari menampilkan transaksi tersimpan, grafik Harian/Mingguan/Bulanan dan navigasi riwayat/closing diperiksa; tanpa overflow/error, enam tes lulus.
