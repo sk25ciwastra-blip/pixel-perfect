@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Laporan — referensi 16 November
+- [ ] Sesuaikan tab, periode, empat ringkasan, grafik, ringkasan usaha dan tabel harian dengan referensi; sumber angka serta closing resmi tetap, tanpa contoh transaksi atau publikasi.
+- [ ] Periksa tampilan serta navigasi dengan akun aktif di komputer dan HP.
+
 ## Keuangan — referensi 16 November
 - [x] Tab emas, tujuh ringkasan horizontal, sesi kas terang, grafik catatan nyata, setoran/refund krem dan closing bawah mengikuti referensi; sumber angka, isian, izin dan aksi tetap. Grafik penerimaan bersih tidak diklaim sebagai saldo kas.
 - [x] Akun aktif komputer/HP: tab, pencarian/filter, periode grafik, buka/tutup closing dan isian diperiksa tanpa overflow/error; tes finance150/training PASS, build OK. Tanpa penyimpanan keuangan atau publikasi.
