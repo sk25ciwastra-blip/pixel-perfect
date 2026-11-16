@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Housekeeping — relief dan keterbacaan
+- [x] Perhalus relief mewah dan samakan font dengan halaman lainnya: judul serif 22px, isi sans-serif 13px dan label 14px; data, fungsi dan halaman lain tetap, ringkasan HP ditumpuk agar teks utuh.
+- [x] Akun aktif komputer/HP: 11 kamar, pencarian kosong/reset, tab petugas dan detail kamar berjalan; tanpa overflow/error, lima tes lulus dan build OK; tanpa penyimpanan atau publikasi.
+
 ## Housekeeping — referensi baru 16 November
 - [x] Sesuaikan ringkasan hitam–emas, tabel putih hangat, panel perawatan, riwayat dan grafik dengan gambar; semua aksi dan izin tetap, tanpa data contoh. Jadwal rekaan tidak disalin, ringkasan menghitung catatan selesai yang dapat diakses.
 - [x] Akun aktif komputer/HP: 11 kamar, empat baris antrean dan dua riwayat asli; pencarian, tab petugas dan detail kamar terbuka/tertutup tanpa error atau overflow. Lima tes lulus, build OK; tanpa menyimpan pekerjaan atau publikasi.
