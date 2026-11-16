@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Keuangan — referensi 16 November
+- [ ] Samakan tab, tujuh ringkasan, sesi kas, grafik, panel setoran/refund krem dan closing bawah; sumber angka, isian, izin dan aksi tetap.
+- [ ] Periksa tampilan serta navigasi/isian dengan akun aktif di komputer/HP, jalankan tes keuangan; tanpa transaksi baru atau publikasi.
+
 ## Tim & Akses — ID dan relief formulir
 - [x] ID baru BTRDEMP-0001 berurutan, ID lama tetap; relief formulir diperhalus. Dua tes lulus, popup komputer/HP terbaca tanpa overflow/error; tidak membuat akun baru atau publikasi.
 
