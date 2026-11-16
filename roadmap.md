@@ -1,3 +1,6 @@
+## Housekeeping — samakan dengan gambar ke-3 (16 November)
+- [x] Susunan judul, ringkasan, Status Kamar (menu aksi, penyaring, halaman), Perawatan, Riwayat (mulai/selesai/durasi) dan grafik per tahun mengikuti gambar
+
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Housekeeping — teks jelas
