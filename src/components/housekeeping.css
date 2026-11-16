@@ -634,3 +634,5 @@
   .hk-stats-reference, .hk-side { grid-template-columns: minmax(0, 1fr); }
   .hk-summary-gold .hk-completion-grid { padding-left: 0; }
 }
+.hk-header .hk-tab { white-space: nowrap; }
+@media (max-width: 700px) { .hk-header .hk-tab { flex: 0 1 auto; padding: 3px 9px; } }
