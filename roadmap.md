@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Housekeeping — gambar kedua final
+- [x] Samakan proporsi dua kolom, ringkasan serif dan sorotan emas, panel krem lembut tanpa kotak ikon, tabel berbaris selang-seling dan grafik emas; lima tab, pencarian dan semua aksi tetap. Data/jadwal/durasi contoh tidak disalin.
+- [x] Akun aktif komputer/HP: komposisi dan panel diperiksa, tabel komputer pas, pencarian/tab/detail tetap berjalan tanpa error/overflow; lima tes lulus dan build OK. Angka, jadwal dan kolom riwayat tanpa sumber tidak dikarang, sehingga isi tidak identik dengan contoh; tanpa publikasi.
+
 ## Housekeeping — kerapian panel dan kedalaman
 - [x] Pisahkan pencarian/filter menjadi dua baris, sesuaikan lebar tabel komputer agar waktu/catatan dan aksi tidak terpotong, hilangkan ruang kosong riwayat, perkuat relief satin dan ikon timbul; fungsi tetap.
 - [x] Akun aktif komputer/HP: tabel komputer pas tanpa gulir horizontal, waktu/catatan utuh, pencarian/tab/detail berjalan, riwayat tanpa ruang kosong berlebih; lima tes lulus, tanpa error atau publikasi.
