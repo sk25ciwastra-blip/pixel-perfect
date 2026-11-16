@@ -1,7 +1,7 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Tim & Akses — ID dan relief formulir
-- [ ] Terapkan format ID karyawan baru dan perhalus relief formulir; periksa tes dan tampilan komputer/HP tanpa membuat akun baru.
+- [x] ID baru BTRDEMP-0001 berurutan, ID lama tetap; relief formulir diperhalus. Dua tes lulus, popup komputer/HP terbaca tanpa overflow/error; tidak membuat akun baru atau publikasi.
 
 ## Popup Check-in Berhasil — referensi 16 November
 - [x] Booking dan Pengeluaran memakai template berhasil yang sama; penyimpanan dan aksi tetap. Template diperiksa dengan catatan tersimpan di komputer/HP, 23 tes lulus; alur simpan baru tidak dijalankan agar tidak menambah transaksi, tanpa publikasi.
