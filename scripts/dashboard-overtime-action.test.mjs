@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const route = readFileSync(new URL('../src/routes/index.tsx', import.meta.url), 'utf8');
 const helper = readFileSync(new URL('../src/lib/room-overtime.ts', import.meta.url), 'utf8');
+const roomRoute = readFileSync(new URL('../src/routes/kamar.tsx', import.meta.url), 'utf8');
 const ms120 = 120 * 60_000;
 function classification(stay, nowMs) {
   const deadline = stay.ends_at === null ? NaN : Date.parse(stay.ends_at);
@@ -40,10 +41,24 @@ test('case panel preserves existing Check-out guard and transaction detail', () 
 });
 test('KPI overtime counts action queue, not all expired timers', () => {
   assert.match(route, /overtime: overtimePerluTindakan\.length/);
+  assert.match(route, /terisi: kamarTerisi\.length/);
   assert.doesNotMatch(route, /overtime: statusKamarBaris\.filter\(/);
 });
 test('no new database status/RPC/override or replacement of Booking UI', () => {
   assert.match(route, /const bookings = bookingHariIni/);
   assert.match(route, /if \(!terisi && bookings\.length === 0\) return \[\]/);
   assert.doesNotMatch(route, /override_room_ready|release_overtime_guard/);
+});
+
+test('ROOM card derives red PERLU TINDAKAN from the same helper and preserves transaction link', () => {
+  assert.match(roomRoute, /import \{ roomOvertimeIndicator \} from "@\/lib\/room-overtime"/);
+  assert.match(roomRoute, /const overtime = transaction \? roomOvertimeIndicator\(transaction, waktuSekarang\)\.needsAction : false/);
+  assert.match(roomRoute, /PERLU TINDAKAN · Overtime lebih dari 120 menit/);
+  assert.match(roomRoute, /setDetailTransactionId\(transaction\.id\)/);
+  assert.match(roomRoute, /room\.status/);
+});
+test('ROOM indicator refreshes its local clock without modifying live data', () => {
+  assert.match(roomRoute, /window\.setInterval\(\(\) => setWaktuSekarang\(Date\.now\(\)\), 30_000\)/);
+  assert.match(roomRoute, /window\.clearInterval\(tick\)/);
+  assert.doesNotMatch(roomRoute, /release_overtime_guard|override_overtime/);
 });
