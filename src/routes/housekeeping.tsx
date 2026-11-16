@@ -88,6 +88,7 @@ function Halaman() {
   const allDirtySelected =
     dirtyRooms.length > 0 && dirtyRooms.every((room) => selectedIds.includes(room.id));
   const activeRooms = operationalRooms.filter((room) => room.active);
+  const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
   const visibleSections = sections.map(section => ({ ...section, rooms: section.rooms.filter(room => !filter || (filter.startsWith('status:') ? section.key === filter.slice(7) : room.room_type_id === filter.slice(5))) }));
   const barisKamar = visibleSections.flatMap(section => section.rooms.map(room => ({ section, room })));
   const ukuranHalaman = 5;
@@ -99,7 +100,6 @@ function Halaman() {
   const riwayatBulanIni = history.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.created_at)).startsWith(bulanWib)).length;
   const perawatanHariIni = maintenance.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.performed_at)) === todayWib).length;
   const perawatanBulanIni = maintenance.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.performed_at)).startsWith(bulanWib)).length;
-  const todayWib = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
   const todayHistory = history.rows.filter(item => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(item.created_at)) === todayWib);
   const startedToday = new Set(todayHistory.filter(item => item.action === 'start_cleaning').map(item => item.room_id));
   const finishedToday = new Set(todayHistory.filter(item => item.action === 'finish_cleaning').map(item => item.room_id));
@@ -221,17 +221,19 @@ function Halaman() {
       <header className="hk-header">
         <div className="hk-header-latar" aria-hidden="true"><img src={latarHousekeeping} alt="" width={1536} height={512} /></div>
         <div className="hk-header-isi">
-          <div><p className="hk-brand">BATURADEN 25 HOMESTAY</p><h1>Housekeeping</h1><div className="hk-header-garis" aria-hidden="true" /><p className="hk-header-description">Pantau status kamar, pekerjaan kebersihan, dan perawatan berkala.</p></div>
-          <blockquote>Kamar bersih, tamu nyaman,<br />operasional makin lancar.</blockquote>
+          <div><p className="hk-brand">BATURADEN 25 HOMESTAY</p><h1>Housekeeping</h1><p className="hk-header-description">Pantau status kamar, pekerjaan kebersihan, dan perawatan berkala.</p></div>
+          <div className="hk-header-kanan">
+            <blockquote>“Kamar bersih, tamu nyaman,<br />pelayanan lancar.”</blockquote>
+            <nav aria-label="Bagian Housekeeping" className="hk-tabs">
+              {bagianHk.map((b) => (
+                <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }} aria-current={bagian === b.kode ? 'page' : undefined} className="hk-tab">
+                  <b.ikon /><span>{b.label}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
       </header>
-      <nav aria-label="Bagian Housekeeping" className="hk-tabs">
-        {bagianHk.map((b) => (
-          <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }} aria-current={bagian === b.kode ? 'page' : undefined} className="hk-tab">
-            <b.ikon /><span>{b.label}</span>
-          </Link>
-        ))}
-      </nav>
       {message && <p role="status" className="mb-4 rounded-lg border border-gold/20 bg-secondary px-4 py-3 text-sm">{message}</p>}
 
       {bagian === 'riwayat' && (
@@ -256,63 +258,66 @@ function Halaman() {
 
       {(bagian === 'status' || bagian === 'checklist') && (<>
         <div className="hk-stats hk-stats-reference">
-          <div className="hk-summary-card hk-summary-rooms"><div className="hk-summary-main"><span className="hk-stat-icon"><BedDouble /></span><div><p>Status Kamar</p><strong>{activeRooms.length}<small> Kamar</small></strong></div></div><div className="hk-summary-status">{[{ label: 'Tersedia', status: 'ready' }, { label: 'Perlu Dibersihkan', status: 'dirty' }, { label: 'Sedang Dibersihkan', status: 'cleaning' }, { label: 'Terisi', status: 'occupied' }].map(item => <span key={item.status} data-state={item.status}>{item.label} <b>{activeRooms.filter(room => room.status === item.status).length}</b></span>)}</div></div>
-          <div className="hk-summary-card"><div className="hk-summary-main"><span className="hk-stat-icon"><Wrench /></span><div><p>Perawatan Berkala</p><strong>{maintenance.error ? '—' : maintenance.rows.length}<small> Catatan</small></strong></div></div><Link to="/housekeeping" search={{ bagian: 'perawatan' }} className="hk-summary-caption">Lihat Perawatan <ChevronRight /></Link></div>
-          <div className="hk-summary-card"><div className="hk-summary-main"><span className="hk-stat-icon"><ClipboardCheck /></span><div><p>Riwayat Pekerjaan</p><strong>{history.rows.length}<small> Catatan</small></strong></div></div><Link to="/housekeeping" search={{ bagian: 'riwayat' }} className="hk-summary-caption">Riwayat Tercatat <ChevronRight /></Link></div>
-          <div className="hk-summary-card hk-summary-gold"><div className="hk-summary-main"><span className="hk-stat-icon"><Brush /></span><p>Jumlah Pembersihan Selesai</p></div><RingkasanSelesai data={completionSummary} /></div>
+          <div className="hk-summary-card hk-summary-rooms"><div className="hk-summary-main"><span className="hk-stat-icon"><BedDouble /></span><div><p>Status Kamar</p><strong>{activeRooms.length}<small> Kamar</small></strong></div></div><div className="hk-summary-status">{[{ label: 'Tersedia', status: 'ready' }, { label: 'Perlu Dibersihkan', status: 'dirty' }, { label: 'Sedang Dibersihkan', status: 'cleaning' }, { label: 'Terisi', status: 'occupied' }].map(item => <span key={item.status} data-state={item.status}>{item.label} {activeRooms.filter(room => room.status === item.status).length}</span>)}</div></div>
+          <div className="hk-summary-card"><div className="hk-summary-main"><span className="hk-stat-icon"><Wrench /></span><div><p>Perawatan Berkala</p><strong>{maintenance.error ? '—' : maintenance.rows.length}<small> Catatan</small></strong></div></div><p className="hk-summary-caption"><span>{perawatanHariIni} Hari Ini</span><span>{perawatanBulanIni} Bulan Ini</span></p></div>
+          <div className="hk-summary-card"><div className="hk-summary-main"><span className="hk-stat-icon"><ClipboardList /></span><div><p>Riwayat Pekerjaan</p><strong>{riwayatBulanIni}<small> Pekerjaan</small></strong></div></div><p className="hk-summary-caption"><span>Bulan Ini</span></p></div>
+          <div className="hk-summary-card hk-summary-gold"><div className="hk-summary-main"><span className="hk-stat-icon"><Brush /></span><p>Jumlah Kamar Dibersihkan</p></div><RingkasanSelesai data={completionSummary} /></div>
         </div>
         <div className="hk-layout">
           <section className="hk-room-panel">
             <div className="hk-panel-header">
               <BedDouble className="hk-heading-icon" /><h2>{bagian === 'checklist' ? 'Tugas Petugas' : 'Status Kamar'}</h2>
+              <label className="hk-filter-select"><span className="sr-only">Saring kamar</span><select value={filter} onChange={(event) => { setFilter(event.target.value); setHalaman(0); }}><option value="">Semua Status</option>{sections.map(section => <option key={section.key} value={`status:${section.key}`}>{section.label === 'terisi' ? 'Terisi' : section.label === 'perlu' ? 'Perlu Dibersihkan' : section.label === 'sedang' ? 'Sedang Dibersihkan' : 'Tersedia'}</option>)}{types.rows.filter(type => activeRooms.some(room => room.room_type_id === type.id)).map(type => <option key={type.id} value={`type:${type.id}`}>Tipe {type.name}</option>)}</select><ChevronDown aria-hidden="true" /></label>
             </div>
-              <div className="hk-table-tools" role="toolbar" aria-label="Pencarian dan filter kamar">        <label className="hk-search">
-          <Search className="pointer-events-none absolute left-4 top-3.5 size-5 text-muted-foreground" />
-          <Input aria-label="Cari nomor kamar, TRX, atau HK" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nomor kamar, TRX, atau HK…" className="h-12 rounded-lg bg-card pl-12 text-base" />
-        </label>
-<div className="hk-type-filters"><Button variant="ghost" size="sm" onClick={() => setTypeFilter('')} aria-pressed={!typeFilter}>Semua</Button>{types.rows.filter(type => activeRooms.some(room => room.room_type_id === type.id)).map(type => <Button key={type.id} variant="ghost" size="sm" onClick={() => setTypeFilter(type.id)} aria-pressed={typeFilter === type.id}>{type.name}</Button>)}</div></div>
             {canAdvance && dirtyRooms.length > 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-gold/5 px-5 py-3">
-                <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" className="size-4 accent-primary" checked={allDirtySelected} onChange={(event) => setSelectedIds(event.target.checked ? dirtyRooms.map((room) => room.id) : [])} />Pilih Semua</label>
+              <div className="hk-bulk-bar">
+                <label><input type="checkbox" className="size-4 accent-primary" checked={allDirtySelected} onChange={(event) => setSelectedIds(event.target.checked ? dirtyRooms.map((room) => room.id) : [])} />Pilih Semua</label>
                 <Button size="sm" disabled={!selectedIds.length || processingIds.length > 0} onClick={() => void startSelected()}><Brush className="size-4" />Mulai ({selectedIds.length}) Kamar</Button>
               </div>
             )}
-            <div className="hk-table-scroll tabel-krem">
+            <div className="hk-table-scroll">
               <table className="hk-table text-left">
-                <thead><tr className="bg-secondary/60">{['No. Kamar', 'Tipe', 'Status Kamar', 'Status HK', 'Petugas', 'Waktu / Catatan', 'Aksi'].map((title) => <th key={title} className="px-4 py-3 text-xs">{title}</th>)}</tr></thead>
+                <thead><tr>{['No. Kamar', 'Tipe', 'Status Kamar', 'Status HK', 'Petugas', 'Terakhir Diubah', 'Aksi'].map((title) => <th key={title}>{title}</th>)}</tr></thead>
                 <tbody>
-                  {visibleSections.flatMap(section => section.rooms.map((room) => {
+                  {barisHalaman.map(({ section, room }) => {
                         const roomType = types.rows.find((type) => type.id === room.room_type_id);
-                        const roomHistory = history.rows.filter((item) => item.room_id === room.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 3);
-                        const lastHistory = roomHistory[0];
+                        const lastHistory = history.rows.filter((item) => item.room_id === room.id).sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
                         const shortage = housekeepingShortageNote(latestChecklist.get(room.id));
+                        const hk = room.status === 'cleaning' ? 'cleaning' : room.status === 'dirty' ? 'dirty' : latestChecklist.get(room.id)?.result === 'passed' ? 'ready' : 'unknown';
                         return (
-                          <tr key={room.id} className="align-top">
-                            <td className="border-b border-border px-4 py-4"><div className="flex items-center gap-2">{section.key === 'dirty' && canAdvance && <input aria-label={`Pilih kamar ${room.room_number}`} type="checkbox" className="size-4 accent-primary" checked={selectedIds.includes(room.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...current, room.id] : current.filter((id) => id !== room.id))} />}<span className="hk-room-number">{room.room_number}</span></div></td>
-                            <td className="border-b border-border px-4 py-4 text-muted-foreground">{roomType?.name}</td>
-                            <td className="border-b border-border px-4 py-4"><LencanaStatus status={section.label} /></td>
-                            <td className="border-b border-border px-4 py-4"><span className="hk-state" data-state={room.status === 'cleaning' ? 'cleaning' : room.status === 'dirty' ? 'dirty' : latestChecklist.get(room.id)?.result === 'passed' ? 'ready' : 'unknown'}>{room.status === 'cleaning' ? 'Sedang Dibersihkan' : room.status === 'dirty' ? 'Perlu Dibersihkan' : latestChecklist.get(room.id)?.result === 'passed' ? 'Bersih' : 'Belum tercatat'}</span>
-                              {shortage && <details className="mt-2 max-w-48 text-xs leading-relaxed text-perlu-foreground"><summary className="cursor-pointer">Informasi kekurangan</summary><p className="mt-1 whitespace-pre-wrap break-words">{shortage}</p></details>}
+                          <tr key={room.id}>
+                            <td><div className="hk-room-cell">{section.key === 'dirty' && canAdvance && <input aria-label={`Pilih kamar ${room.room_number}`} type="checkbox" className="size-4 accent-primary" checked={selectedIds.includes(room.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...current, room.id] : current.filter((id) => id !== room.id))} />}<span className="hk-room-number">{room.room_number}</span></div></td>
+                            <td>{roomType?.name ?? '—'}</td>
+                            <td><LencanaStatus status={section.label} /></td>
+                            <td><div className="hk-hk-cell">{hk === 'unknown' ? <span className="hk-dash">—</span> : <span className="hk-state" data-state={hk}>{hk === 'ready' ? <CheckCircle2 /> : hk === 'cleaning' ? <LoaderCircle /> : <Clock3 />}{hk === 'ready' ? 'Selesai' : hk === 'cleaning' ? 'Proses' : 'Menunggu'}</span>}{shortage && <span className="hk-shortage-flag" title="Ada informasi kekurangan" aria-label="Ada informasi kekurangan"><TriangleAlert /></span>}</div></td>
+                            <td>{lastHistory?.performed_by_name || '—'}</td>
+                            <td>{waktuSingkat(lastHistory?.created_at ?? room.updated_at)}</td>
+                            <td>
+                              <details className="hk-aksi-menu">
+                                <summary aria-label={`Aksi kamar ${room.room_number}`}><MoreHorizontal /></summary>
+                                <div className="hk-aksi-isi" onClick={(event) => { if ((event.target as HTMLElement).closest('button')) (event.currentTarget.parentElement as HTMLDetailsElement).open = false; }}>
+                                  <Button variant="ghost" size="sm" aria-label={`Lihat riwayat kamar ${room.room_number}`} onClick={() => setDetailRoomId(room.id)}><Eye className="size-4" />Lihat Riwayat</Button>
+                                  {section.key === 'dirty' && canAdvance && <Button variant="ghost" size="sm" disabled={processingIds.includes(room.id)} onClick={() => void advanceOne(room.id)}><Brush className="size-4" />{processingIds.includes(room.id) ? 'Memproses...' : 'Mulai Bersihkan'}</Button>}
+                                  {section.key === 'cleaning' && room.status === 'cleaning' && canAdvance && <Button variant="ghost" size="sm" disabled={processingIds.includes(room.id)} onClick={() => setChecklistRoomId(room.id)}><ClipboardCheck className="size-4" />Telah Dibersihkan</Button>}
+                                  {['dirty', 'cleaning'].includes(room.status) && canOverride && <Button variant="ghost" size="sm" disabled={processingIds.includes(room.id)} onClick={() => void overrideReady(room.id, room.room_number)}><CheckCircle2 className="size-4" />Jadikan Siap</Button>}
+                                  {shortage && <details className="hk-aksi-catatan"><summary>Informasi kekurangan</summary><p>{shortage}</p></details>}
+                                </div>
+                              </details>
                             </td>
-                            <td className="hk-worker">{lastHistory?.performed_by_name || '—'}</td>
-                            <td className="max-w-64 border-b border-border px-4 py-4">
-                              {!lastHistory ? <span className="text-sm text-muted-foreground">Belum ada riwayat.</span> : <details className="text-sm"><summary className="cursor-pointer text-muted-foreground">{new Date(lastHistory.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}<span className="mt-1 block text-xs text-gold">{lastHistory.performed_by_name}</span></summary><div className="mt-3 space-y-3">{roomHistory.map((item) => <div key={item.id} className="border-l border-gold/25 pl-3"><p className="font-semibold">{item.action === 'start_cleaning' ? 'Mulai dibersihkan' : item.action === 'finish_cleaning' ? 'Selesai dibersihkan' : 'Override menjadi siap'}</p><p className="mt-1 text-xs text-muted-foreground">{item.performed_by_name} · {new Date(item.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</p><p className="mt-1 break-all font-mono text-xs text-gold-krem">{item.job_number ?? 'HK legacy'}{item.transaction_id && transactionNumbers.get(item.transaction_id) ? ` · ${transactionNumbers.get(item.transaction_id)}` : ''}</p>{item.note && <p className="mt-1 break-words text-sm">{item.note}</p>}</div>)}</div></details>}
-                            </td>
-                            <td className="border-b border-border px-4 py-4"><div className="hk-row-actions"><Button variant="outline" size="icon" className="hk-eye-button" aria-label={`Lihat riwayat kamar ${room.room_number}`} onClick={() => setDetailRoomId(room.id)}><Eye className="size-4" /></Button>
-                              {section.key === 'dirty' && canAdvance && <Button size="sm" disabled={processingIds.includes(room.id)} onClick={() => void advanceOne(room.id)}><Brush className="size-4" />{processingIds.includes(room.id) ? 'Memproses...' : 'Mulai Bersihkan'}</Button>}
-                              {section.key === 'cleaning' && room.status === 'cleaning' && canAdvance && <Button size="sm" disabled={processingIds.includes(room.id)} onClick={() => setChecklistRoomId(room.id)}><ClipboardCheck className="size-4" />Telah Dibersihkan</Button>}
-                              {['dirty', 'cleaning'].includes(room.status) && canOverride && <Button variant="outline" size="sm" disabled={processingIds.includes(room.id)} onClick={() => void overrideReady(room.id, room.room_number)}>Jadikan Siap</Button>}
-                            </div></td>
                           </tr>
                         );
-                      }))}
-                  {visibleSections.every(section => section.rooms.length === 0) && <tr><td colSpan={7}>Tidak ada kamar dalam antrean ini.</td></tr>}
+                      })}
+                  {barisKamar.length === 0 && <tr><td colSpan={7} className="hk-table-empty">Tidak ada kamar dalam antrean ini.</td></tr>}
                 </tbody>
               </table>
             </div>
+            <div className="hk-panel-footer">
+              <span>Menampilkan {barisKamar.length ? `${halamanAktif * ukuranHalaman + 1}–${halamanAktif * ukuranHalaman + barisHalaman.length}` : '0'} dari {barisKamar.length} kamar</span>
+              <div className="hk-pager"><button type="button" aria-label="Halaman sebelumnya" disabled={halamanAktif === 0} onClick={() => setHalaman(halamanAktif - 1)}><ChevronLeft /></button><b>{halamanAktif + 1}/{jumlahHalaman}</b><button type="button" aria-label="Halaman berikutnya" disabled={halamanAktif >= jumlahHalaman - 1} onClick={() => setHalaman(halamanAktif + 1)}><ChevronRight /></button></div>
+            </div>
           </section>
           <aside className="hk-side">
-            {bagian === 'status' && <><PanelPerawatanReferensi rows={maintenance.rows} /><PanelSelesaiReferensi data={completionSummary} /></>}
+            {bagian === 'status' && <><PanelPerawatanReferensi rows={maintenance.rows} rooms={rooms.rows} /><PanelSelesaiReferensi data={completionSummary} /></>}
             {bagian === 'checklist' && <><section className="hk-side-panel hk-progress-panel" data-empty={!progressTotal}>
               <div className="hk-panel-header"><BedDouble /><h2>Progress Pembersihan Hari Ini</h2></div>
               <div className="hk-progress-body"><svg viewBox="0 0 120 120" className="hk-donut" role="img" aria-label={progressTotal ? `${progress}% selesai dari ${progressTotal} kamar yang dikerjakan hari ini` : 'Belum ada pekerjaan hari ini'}><circle cx="60" cy="60" r="46" className="hk-donut-track" /><circle cx="60" cy="60" r="46" className="hk-donut-value" strokeDasharray={`${progress * 2.89} 289`} /><text x="60" y="58" textAnchor="middle" className="hk-donut-number">{progressTotal ? `${progress}%` : '—'}</text><text x="60" y="76" textAnchor="middle" className="hk-donut-caption">{progressTotal ? 'Selesai' : 'Belum tercatat'}</text></svg>
@@ -321,12 +326,12 @@ function Halaman() {
             <section className="hk-side-panel hk-queue-panel"><div className="hk-panel-header"><ClipboardCheck /><h2>Antrean Tugas Petugas</h2></div><ul className="hk-task-list">{queueRooms.length === 0 && <li className="hk-empty-task"><CheckCircle2 /><div>Tidak ada tugas dalam antrean.<p>Belum ada kamar perlu dibersihkan.</p></div></li>}{queueRooms.slice(0, 3).map(room => <li key={room.id}><Brush /><div><strong>Kamar {room.room_number} — Pembersihan</strong><p>{room.status === 'cleaning' ? history.rows.filter(item => item.room_id === room.id && item.action === 'start_cleaning').sort((a,b) => b.created_at.localeCompare(a.created_at))[0]?.performed_by_name || 'Petugas belum tercatat' : 'Menunggu pembersihan'}</p></div><span className="hk-state" data-state={room.status}>{room.status === 'cleaning' ? 'Proses' : 'Menunggu'}</span></li>)}</ul><Link to="/housekeeping" search={{ bagian: 'checklist' }} className="hk-queue-link">Lihat Tugas Petugas <ChevronRight /></Link></section></>}
           </aside>
         </div>
-        <div className="hk-bottom hk-reference-bottom"><RiwayatReferensi history={history.rows} rooms={rooms.rows} /><GrafikReferensi data={completionSummary} /></div>
+        <div className="hk-bottom hk-reference-bottom"><RiwayatReferensi history={history.rows} rooms={rooms.rows} /><GrafikReferensi data={completionSummary} history={history.rows} /></div>
       </>)}
 
       </div>
 
-      {detailRoomId && <div className="hk-detail-backdrop" onClick={() => setDetailRoomId(null)}><section className="hk-detail" role="dialog" aria-modal="true" aria-label="Riwayat kebersihan kamar" onClick={event => event.stopPropagation()}><h2>Riwayat Kamar {rooms.rows.find(room => room.id === detailRoomId)?.room_number}</h2>{history.rows.filter(item => item.room_id === detailRoomId).sort((a,b) => b.created_at.localeCompare(a.created_at)).map(item => <div key={item.id}><strong>{item.action === 'start_cleaning' ? 'Mulai dibersihkan' : item.action === 'finish_cleaning' ? 'Selesai dibersihkan' : 'Dijadikan siap'}</strong><p>{item.performed_by_name} · {new Date(item.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</p><p>{item.note}</p></div>)}{!history.rows.some(item => item.room_id === detailRoomId) && <p>Belum ada riwayat kebersihan.</p>}<Button variant="outline" onClick={() => setDetailRoomId(null)}>Tutup</Button></section></div>}
+      {detailRoomId && <div className="hk-detail-backdrop" onClick={() => setDetailRoomId(null)}><section className="hk-detail" role="dialog" aria-modal="true" aria-label="Riwayat kebersihan kamar" onClick={event => event.stopPropagation()}><h2>Riwayat Kamar {rooms.rows.find(room => room.id === detailRoomId)?.room_number}</h2>{history.rows.filter(item => item.room_id === detailRoomId).sort((a,b) => b.created_at.localeCompare(a.created_at)).map(item => <div key={item.id}><strong>{item.action === 'start_cleaning' ? 'Mulai dibersihkan' : item.action === 'finish_cleaning' ? 'Selesai dibersihkan' : 'Dijadikan siap'}</strong><p>{item.performed_by_name} · {new Date(item.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</p><p>{item.note}</p></div>)}{!history.rows.some(item => item.room_id === detailRoomId) && <p>Belum ada riwayat kebersihan.</p>}{(() => { const note = housekeepingShortageNote(latestChecklist.get(detailRoomId)); return note ? <div className="hk-detail-catatan"><strong>Informasi kekurangan</strong><p className="whitespace-pre-wrap break-words">{note}</p></div> : null; })()}<Button variant="outline" onClick={() => setDetailRoomId(null)}>Tutup</Button></section></div>}
       {checklistRoom && (
         <ChecklistHousekeeping
           roomId={checklistRoom.id}
