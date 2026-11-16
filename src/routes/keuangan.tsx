@@ -364,6 +364,41 @@ function HalamanKeuangan() {
           {selectedSession && <Panel judul="Arus Kas Operasional" sub="Pergerakan penerimaan dan pengeluaran sesi kas.">
             <KeuanganArus penerimaan={sessionPayments} pengeluaran={sessionExpenses} />
           </Panel>}
+        </div>
+        <div className="kf-colonne">
+          {selectedSession && (
+            <Panel judul="Setoran ke Owner" sub="Ajukan setoran uang ke rekening owner.">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className={label}><span className="mb-1.5 block">Nominal Setoran</span><RpInput value={depositAmount} onChange={setDepositAmount} /></label>
+                <label className={label}><span className="mb-1.5 block">Metode Setoran</span><select value={depositMethod} onChange={(e) => setDepositMethod(e.target.value)} className={input}><option value="Transfer">Transfer Bank</option><option value="CASH">Cash</option></select></label>
+                {depositMethod === 'Transfer' && banks.rows.some((bank) => bank.active) && <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Rekening Tujuan</span><select value={depositBankId} onChange={(e) => setDepositBankId(e.target.value)} className={input}><option value="">Rekening Owner</option>{banks.rows.filter((bank) => bank.active).map((bank) => <option key={bank.id} value={bank.id}>{bank.bank_name} · {bank.account_number}</option>)}</select></label>}
+                <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Referensi Transfer (Opsional)</span><input value={depositProof} onChange={(e) => setDepositProof(e.target.value)} className={input} placeholder="Contoh: TRF123456789" /></label>
+              </div>
+              <Button className="mt-4 w-full gap-2" disabled={busy} onClick={() => void submitDeposit()}><Send size={16} aria-hidden="true" />Ajukan Setoran</Button>
+              {isOwner && deposits.rows.some((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER') && (
+                <div className="mt-5 border-t border-gold/15 pt-4">
+                  <p className="mb-3 text-xs text-muted-foreground">Setoran menunggu konfirmasi Owner</p>
+                  <ul className="space-y-2">{deposits.rows.filter((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER').map((deposit) => <li key={deposit.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-secondary px-3 py-2 text-sm"><span>{deposit.method} · {rupiah(Number(deposit.amount))}</span><span className="flex gap-2"><Button size="sm" onClick={() => void decideDeposit(deposit.id, 'DITERIMA')}>Terima</Button><Button size="sm" variant="outline" onClick={() => void decideDeposit(deposit.id, 'DITOLAK')}>Tolak</Button><Button size="sm" variant="ghost" onClick={() => void decideDeposit(deposit.id, 'BELUM_DITERIMA')}>Belum diterima</Button></span></li>)}</ul>
+                </div>
+              )}
+            </Panel>
+          )}
+          {handoffs.rows.filter((handoff) => handoff.status === 'MENUNGGU_HITUNG').length > 0 && <Panel judul="Serah terima DI LACI"><ul className="space-y-3">{handoffs.rows.filter((handoff) => handoff.status === 'MENUNGGU_HITUNG').map((handoff) => <li key={handoff.id} className="rounded-md bg-secondary p-3 text-sm"><p>Ekspektasi: {rupiah(Number(handoff.expected_amount))}</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><input value={handoffActual} onChange={(e) => setHandoffActual(e.target.value)} type="number" min="0" className={input} placeholder="Hitungan aktual" /><input value={handoffReason} onChange={(e) => setHandoffReason(e.target.value)} className={input} placeholder="Alasan selisih bila ada" /><Button disabled={busy} onClick={() => void confirmHandoff(handoff.id)}>Konfirmasi</Button></div></li>)}</ul></Panel>}
+          {isOwner && (
+            <Panel judul="Refund Tamu" sub="Catat pengembalian dana kepada tamu (atas persetujuan owner).">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className={label}><span className="mb-1.5 block">Pilih Transaksi / Booking</span><select value={refundTransactionId} onChange={(e) => setRefundTransactionId(e.target.value)} className={input}><option value="">Pilih transaksi</option>{transactions.rows.filter((transaction) => transaction.status !== 'cancelled').map((transaction) => <option key={transaction.id} value={transaction.id}>{transaction.transaction_number}</option>)}</select></label>
+                <label className={label}><span className="mb-1.5 block">Nominal Refund</span><RpInput value={refundAmount} onChange={setRefundAmount} /></label>
+                <label className={label}><span className="mb-1.5 block">Sumber Dana</span><select value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)} className={input}><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select></label>
+                <label className={label}><span className="mb-1.5 block">Alasan Refund</span><input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} className={input} placeholder="Contoh: Pembatalan oleh tamu" /></label>
+                <details className="sm:col-span-2"><summary>Asal Dana &amp; Sesi Sumber</summary><div className="grid gap-3 sm:grid-cols-2"><label className={label}><span className="mb-1.5 block">Asal Dana</span><select value={refundSourceType} onChange={(e) => setRefundSourceType(e.target.value)} className={input}><option value="OWNER_FUNDS">Dana Owner</option><option value="SHIFT_CASH">Kas sesi</option><option value="DRAWER">Laci</option></select></label>
+                {refundSourceType !== 'OWNER_FUNDS' && <label className={label}><span className="mb-1.5 block">Sesi Sumber</span><select value={refundSourceSessionId} onChange={(e) => setRefundSourceSessionId(e.target.value)} className={input}><option value="">Pilih sesi sumber</option>{sessions.rows.filter((session) => session.status === 'OPEN' || session.status === 'FINAL').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select></label>}
+</div></details>
+              </div>
+              <Button className="mt-4 w-full gap-2" disabled={!isOwner || busy} onClick={() => void refund()}><RotateCcw size={16} aria-hidden="true" />Catat Refund</Button>
+            </Panel>
+          )}
+        </div>
           {selectedSession && (
             <section className="kf-panel" data-panel="closing" id="keuangan-closing">
               <div className="kf-closing-summary">
@@ -431,40 +466,6 @@ function HalamanKeuangan() {
               </div>
             </Panel>
           )}
-        </div>
-        <div className="kf-colonne">
-          {selectedSession && (
-            <Panel judul="Setoran ke Owner" sub="Ajukan setoran uang ke rekening owner.">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className={label}><span className="mb-1.5 block">Nominal Setoran</span><RpInput value={depositAmount} onChange={setDepositAmount} /></label>
-                <label className={label}><span className="mb-1.5 block">Metode Setoran</span><select value={depositMethod} onChange={(e) => setDepositMethod(e.target.value)} className={input}><option value="Transfer">Transfer Bank</option><option value="CASH">Cash</option></select></label>
-                {depositMethod === 'Transfer' && banks.rows.some((bank) => bank.active) && <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Rekening Tujuan</span><select value={depositBankId} onChange={(e) => setDepositBankId(e.target.value)} className={input}><option value="">Rekening Owner</option>{banks.rows.filter((bank) => bank.active).map((bank) => <option key={bank.id} value={bank.id}>{bank.bank_name} · {bank.account_number}</option>)}</select></label>}
-                <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Referensi Transfer (Opsional)</span><input value={depositProof} onChange={(e) => setDepositProof(e.target.value)} className={input} placeholder="Contoh: TRF123456789" /></label>
-              </div>
-              <Button className="mt-4 w-full gap-2" disabled={busy} onClick={() => void submitDeposit()}><Send size={16} aria-hidden="true" />Ajukan Setoran</Button>
-              {isOwner && deposits.rows.some((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER') && (
-                <div className="mt-5 border-t border-gold/15 pt-4">
-                  <p className="mb-3 text-xs text-muted-foreground">Setoran menunggu konfirmasi Owner</p>
-                  <ul className="space-y-2">{deposits.rows.filter((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER').map((deposit) => <li key={deposit.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-secondary px-3 py-2 text-sm"><span>{deposit.method} · {rupiah(Number(deposit.amount))}</span><span className="flex gap-2"><Button size="sm" onClick={() => void decideDeposit(deposit.id, 'DITERIMA')}>Terima</Button><Button size="sm" variant="outline" onClick={() => void decideDeposit(deposit.id, 'DITOLAK')}>Tolak</Button><Button size="sm" variant="ghost" onClick={() => void decideDeposit(deposit.id, 'BELUM_DITERIMA')}>Belum diterima</Button></span></li>)}</ul>
-                </div>
-              )}
-            </Panel>
-          )}
-          {handoffs.rows.filter((handoff) => handoff.status === 'MENUNGGU_HITUNG').length > 0 && <Panel judul="Serah terima DI LACI"><ul className="space-y-3">{handoffs.rows.filter((handoff) => handoff.status === 'MENUNGGU_HITUNG').map((handoff) => <li key={handoff.id} className="rounded-md bg-secondary p-3 text-sm"><p>Ekspektasi: {rupiah(Number(handoff.expected_amount))}</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><input value={handoffActual} onChange={(e) => setHandoffActual(e.target.value)} type="number" min="0" className={input} placeholder="Hitungan aktual" /><input value={handoffReason} onChange={(e) => setHandoffReason(e.target.value)} className={input} placeholder="Alasan selisih bila ada" /><Button disabled={busy} onClick={() => void confirmHandoff(handoff.id)}>Konfirmasi</Button></div></li>)}</ul></Panel>}
-          {isOwner && (
-            <Panel judul="Refund Tamu" sub="Catat pengembalian dana kepada tamu (atas persetujuan owner).">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className={label}><span className="mb-1.5 block">Pilih Transaksi / Booking</span><select value={refundTransactionId} onChange={(e) => setRefundTransactionId(e.target.value)} className={input}><option value="">Pilih transaksi</option>{transactions.rows.filter((transaction) => transaction.status !== 'cancelled').map((transaction) => <option key={transaction.id} value={transaction.id}>{transaction.transaction_number}</option>)}</select></label>
-                <label className={label}><span className="mb-1.5 block">Nominal Refund</span><RpInput value={refundAmount} onChange={setRefundAmount} /></label>
-                <label className={label}><span className="mb-1.5 block">Sumber Dana</span><select value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)} className={input}><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select></label>
-                <label className={label}><span className="mb-1.5 block">Alasan Refund</span><input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} className={input} placeholder="Contoh: Pembatalan oleh tamu" /></label>
-                <details className="sm:col-span-2"><summary>Asal Dana &amp; Sesi Sumber</summary><div className="grid gap-3 sm:grid-cols-2"><label className={label}><span className="mb-1.5 block">Asal Dana</span><select value={refundSourceType} onChange={(e) => setRefundSourceType(e.target.value)} className={input}><option value="OWNER_FUNDS">Dana Owner</option><option value="SHIFT_CASH">Kas sesi</option><option value="DRAWER">Laci</option></select></label>
-                {refundSourceType !== 'OWNER_FUNDS' && <label className={label}><span className="mb-1.5 block">Sesi Sumber</span><select value={refundSourceSessionId} onChange={(e) => setRefundSourceSessionId(e.target.value)} className={input}><option value="">Pilih sesi sumber</option>{sessions.rows.filter((session) => session.status === 'OPEN' || session.status === 'FINAL').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select></label>}
-</div></details>
-              </div>
-              <Button className="mt-4 w-full gap-2" disabled={!isOwner || busy} onClick={() => void refund()}><RotateCcw size={16} aria-hidden="true" />Catat Refund</Button>
-            </Panel>
-          )}
           {selectedSession && (tab === 'Komisi' || tab === 'Sesi Kas') && (
             <Panel judul="Ringkasan Hari Ini" kanan={<span className="text-sm text-muted-foreground">{tanggalPanjang}</span>}>
               <ul className="divide-y divide-gold/10 rounded-lg border border-gold/15 bg-background/40 text-sm">
@@ -485,7 +486,6 @@ function HalamanKeuangan() {
               </ul>
             </Panel>
           )}
-        </div>
       </div>
       </div>
     </Kerangka>
