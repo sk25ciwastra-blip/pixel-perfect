@@ -1,0 +1,29 @@
+/* Daftar Tamu — referensi Owner 16 November */
+.tamu-cari { max-width: 500px !important; padding: 6px 6px 6px 20px; border: 1.5px solid color-mix(in oklab, var(--gold) 65%, transparent) !important; background: linear-gradient(180deg, color-mix(in oklab, var(--card) 85%, var(--gold) 6%), var(--background)) !important; box-shadow: 0 0 0 4px color-mix(in oklab, var(--background) 70%, transparent), 0 0 18px -6px color-mix(in oklab, var(--gold) 55%, transparent), inset 0 1px 0 color-mix(in oklab, var(--gold) 30%, transparent); }
+.tamu-cari input { height: 40px; }
+.tamu-cari button { height: 40px; padding: 0 20px; font-size: 17px; font-weight: 600; box-shadow: inset 0 1px 0 color-mix(in oklab, var(--card) 40%, transparent), 0 4px 10px -4px color-mix(in oklab, var(--gold) 70%, transparent); }
+
+.tabel-tamu-premium { border-radius: 22px !important; padding: 16px !important; border: 3px solid color-mix(in oklab, var(--gold) 70%, transparent) !important; background: linear-gradient(180deg, var(--premium-paper), color-mix(in oklab, var(--premium-paper) 88%, var(--premium-highlight))) !important; box-shadow: 0 0 0 1px color-mix(in oklab, var(--gold-krem) 50%, transparent), 0 0 34px -6px color-mix(in oklab, var(--gold) 55%, transparent), inset 0 2px 6px color-mix(in oklab, var(--card) 8%, transparent); }
+.tabel-tamu-premium table { border-spacing: 0 7px !important; margin-top: -7px; }
+.tabel-tamu-premium thead tr th { background: linear-gradient(180deg, color-mix(in oklab, var(--gold) 92%, var(--card) 0%), var(--gold-krem)); color: var(--premium-ink) !important; border: 0 !important; box-shadow: none !important; font-weight: 700; font-size: 14px !important; padding-top: 14px; padding-bottom: 14px; }
+.tabel-tamu-premium thead th button { color: var(--premium-ink) !important; font-size: 14px !important; font-weight: 700; }
+.tabel-tamu-premium thead tr th:first-child { border-radius: 12px 0 0 12px; }
+.tabel-tamu-premium thead tr th:last-child { border-radius: 0 12px 12px 0; }
+.tabel-tamu-premium thead tr { filter: drop-shadow(0 4px 6px color-mix(in oklab, var(--gold-krem) 45%, transparent)); }
+.tabel-tamu-premium tbody tr td { background: linear-gradient(180deg, color-mix(in oklab, var(--premium-paper) 70%, var(--card) 0%), color-mix(in oklab, var(--premium-paper) 90%, var(--premium-highlight))); border: 0 !important; border-top: 1px solid color-mix(in oklab, var(--premium-line) 70%, transparent) !important; border-bottom: 1px solid color-mix(in oklab, var(--premium-line) 100%, transparent) !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 8px !important; }
+.tabel-tamu-premium tbody tr td:first-child { border-left: 1px solid var(--premium-line) !important; border-radius: 10px 0 0 10px; color: var(--premium-ink) !important; font-size: 16px; }
+.tabel-tamu-premium tbody tr td:last-child { border-right: 1px solid var(--premium-line) !important; border-radius: 0 10px 10px 0; }
+.tabel-tamu-premium tbody tr { filter: drop-shadow(0 2px 3px color-mix(in oklab, var(--premium-ink) 12%, transparent)); }
+.tabel-tamu-premium tbody tr td:nth-child(2) { font-size: 17px; font-weight: 700; }
+.tabel-tamu-premium tbody tr td:nth-child(4) { font-weight: 700; font-size: 17px; }
+.tamu-status-pill { display: inline-block; padding: 5px 18px; border-radius: 9px; color: var(--premium-ink) !important; font-size: 13px; background: linear-gradient(180deg, color-mix(in oklab, var(--premium-paper) 60%, var(--card) 0%), var(--premium-highlight)); border: 1px solid var(--premium-line); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--premium-paper) 90%, transparent), 0 2px 4px -1px color-mix(in oklab, var(--premium-ink) 20%, transparent); }
+.tamu-aksi { gap: 8px !important; }
+.tamu-aksi button { width: 44px !important; height: 40px !important; border-radius: 12px; background: linear-gradient(180deg, var(--premium-paper), var(--premium-highlight)); border: 1px solid var(--premium-line); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--premium-paper) 90%, transparent), 0 3px 6px -2px color-mix(in oklab, var(--premium-ink) 25%, transparent); }
+.tamu-aksi button:hover { transform: translateY(-1px); box-shadow: 0 6px 10px -4px color-mix(in oklab, var(--gold-krem) 60%, transparent); }
+.tamu-aksi button:first-child, .tamu-aksi button:last-child { color: var(--gold-krem) !important; }
+.tabel-tamu-premium thead tr th { background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 80%, var(--premium-paper)), var(--primary) 55%, color-mix(in oklab, var(--primary) 82%, var(--gold-krem))) !important; }
+.tabel-tamu-premium { border-color: var(--primary) !important; box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 60%, transparent), 0 0 30px -4px color-mix(in oklab, var(--primary) 60%, transparent) !important; }
+.tabel-tamu-premium table { border-spacing: 0 5px !important; margin-top: -5px; }
+.tabel-tamu-premium tbody tr { height: 50px !important; }
+.tabel-tamu-premium tbody tr td { padding-top: 5px !important; padding-bottom: 5px !important; }
+.tamu-aksi button { height: 36px !important; width: 42px !important; }
