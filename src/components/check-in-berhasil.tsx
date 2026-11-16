@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BedDouble, Box, CalendarDays, Check, ChevronDown, ChevronRight, FileText, Image, Layers, Printer, ShieldCheck, UserRoundPlus, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,14 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
   const hook = usePaymentConfirmation();
   const [menu, setMenu] = useState(false);
   const [busy, setBusy] = useState('');
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 640px)');
+    const update = () => setMobile(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   const [message, setMessage] = useState('');
   const result = useQuery({
     queryKey: ['check-in-result', transactionNumber],
@@ -48,6 +56,16 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
   });
   const t = result.data;
   const booking = mode === 'booking';
+  const payments = useQuery({
+    queryKey: ['check-in-result-payments', t?.id],
+    enabled: booking && !!t,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('payments').select('amount,kind').eq('transaction_id', t!.id);
+      if (error) throw error;
+      return data;
+    },
+  });
+  const dpDiterima = (payments.data ?? []).filter(p => p.kind === 'dp').reduce((sum, p) => sum + Number(p.amount), 0);
   const timestamp = booking ? t?.scheduled_check_in : t?.started_at;
   const date = timestamp ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(timestamp)) : '—';
   const time = timestamp ? new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(timestamp)) + ' WIB' : '';
@@ -70,11 +88,11 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
   return <PopupBerhasil title={booking ? 'Booking Berhasil!' : 'Check-in Berhasil!'} subtitle={booking ? 'Reservasi berhasil disimpan.' : 'Transaksi berhasil disimpan.'} number={transactionNumber} onClose={onClose}>
       <dl className="cib-details">{rows.map(({ icon: Icon, label, value }) => <div className="cib-row" key={label}><Icon /><dt>{label}</dt><span>:</span><dd>{value}</dd></div>)}</dl>
       {result.isError && <p className="cib-message" role="alert">{booking ? 'Booking' : 'Check-in'} sudah berhasil; rincian belum dapat dimuat. <Button type="button" variant="link" onClick={() => void result.refetch()}>Muat ulang rincian</Button></p>}
-      <div className="cib-total"><Layers /><span>{booking ? 'Total Tagihan' : 'Total Pembayaran'}</span><strong>{t ? rupiah(Number(t.price_snapshot)) : '—'}</strong></div>
-      {booking ? <div className="cib-actions cib-actions-single"><Button type="button" className="cib-digital" onClick={onClose}><Check />Selesai</Button></div> : <><div className="cib-actions">
+      <div className="cib-total"><Layers /><span>{booking ? 'DP Diterima' : 'Total Pembayaran'}</span><strong>{booking ? (payments.data ? rupiah(dpDiterima) : '—') : (t ? rupiah(Number(t.price_snapshot)) : '—')}</strong></div>
+      <div className="cib-actions">
         {featureFlags.receipt58mm ? <div className="cib-print"><ReceiptTransactionButton transactionNumber={transactionNumber} label="Cetak Struk" /></div> : <Button type="button" variant="outline" className="cib-print" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer /><span><b>Cetak Struk</b><small>Thermal 58 mm</small></span></Button>}
         <Popover open={menu} onOpenChange={setMenu}><PopoverTrigger asChild><Button type="button" className="cib-digital" disabled={!t || !hook.pdfAvailable}><FileText /><span><b>Bukti Digital</b><small>Kirim PDF atau JPG</small></span><ChevronDown className="size-4" /></Button></PopoverTrigger>
-          <PopoverContent className="cib-digital-menu" side="right" align="end" sideOffset={16}>
+          <PopoverContent className="cib-digital-menu" side={mobile ? 'bottom' : 'right'} align={mobile ? 'center' : 'end'} sideOffset={mobile ? 10 : 16}>
             <div className="cib-menu-heading"><FileText /><h3>Bukti Digital</h3><Button type="button" variant="ghost" size="icon" aria-label="Tutup pilihan bukti" onClick={() => setMenu(false)}><X className="size-4" /></Button></div>
             <p>Pilih format bukti pembayaran untuk dikirim kepada tamu.</p>
             <Button type="button" variant="outline" className="cib-format cib-format-pdf" disabled={!!busy} onClick={() => void download('pdf')}><FileText /><span><b>{busy === 'pdf' ? 'Menyiapkan…' : 'Unduh PDF'}</b><small>Format dokumen (PDF)</small></span><ChevronRight /></Button>
@@ -84,6 +102,6 @@ export function CheckInBerhasil({ transactionNumber, room, roomType, packageName
           </PopoverContent>
         </Popover>
       </div>
-      <p className="cib-reminder"><ShieldCheck />Pastikan setiap tamu menerima bukti pembayaran resmi, baik dalam bentuk digital maupun struk cetak.</p></>}
+      <p className="cib-reminder"><ShieldCheck />Pastikan setiap tamu menerima bukti pembayaran resmi, baik dalam bentuk digital maupun struk cetak.</p>
   </PopupBerhasil>;
 }
