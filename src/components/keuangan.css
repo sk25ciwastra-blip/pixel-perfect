@@ -58,6 +58,9 @@
 .kf-periode { position:static; display:flex; width:max-content; max-width:100%; margin:0 0 10px auto; border:1px solid var(--gold-dark); border-radius:20px; overflow:hidden; }
 .kf-periode button { border-radius:20px; height:29px; padding:0 12px; font-size:11px; color:var(--foreground); }
 .kf-chart { width:100%; height:238px; min-width:0; }
+@media (min-width:1101px) {
+  .kf-chart { height:192px; }
+}
 .kf-chart-empty { display:grid; height:100%; place-items:center; color:var(--muted-foreground); font-size:13px; }
 .kf-chart-line .recharts-line-curve { filter:drop-shadow(0 2px 3px var(--primary-soft)); }
 .kf-chart-legend { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px 22px; margin:14px 0 4px; padding:12px 0 0; border-top:1px solid var(--border); list-style:none; font-size:11px; font-weight:500; }
