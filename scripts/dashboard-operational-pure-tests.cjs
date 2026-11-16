@@ -29,7 +29,7 @@ const visible = rows
 assert.deepEqual(visible.map((row) => row.endsAtMs), [-1, 20]);
 // Exercise the actual countdown formatter without importing the SSR route.
 const vm = require('node:vm');
-const formatterSource = source.slice(source.indexOf('const BATAS_HAMPIR_HABIS_MS'), source.indexOf('function tipeKamarRingkas'))
+const formatterSource = source.slice(source.indexOf('const BATAS_HAMPIR_HABIS_MS'), source.indexOf('function namaDepan'))
   .replace(/: number/g, '').replace(/: string \| null/g, '').replace(/ as const/g, '');
 const formatter = vm.runInNewContext(`${formatterSource}\nformatSisaWaktu`);
 const now = Date.parse('2026-10-20T21:24:00Z');
