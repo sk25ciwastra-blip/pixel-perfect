@@ -4,40 +4,72 @@
   border: 1.5px solid var(--gold); border-radius: 22px; overflow-x: hidden;
   box-shadow: var(--premium-shadow); line-height: 1.5;
 }
-.ct-header { display: flex; align-items: center; gap: 16px; padding: 18px 24px; background: linear-gradient(140deg, var(--gold-krem), color-mix(in oklab, var(--gold-krem) 68%, var(--navy-deep))); border-bottom: 2px solid var(--gold); }
-.ct-avatar { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; background: var(--premium-paper); border: 2px solid var(--gold); color: var(--gold-krem); font-family: var(--font-serif); font-size: 26px; font-weight: 700; box-shadow: var(--finance-metal-relief); }
+.ct-header { display: flex; align-items: center; gap: 14px; padding: 18px 24px; border-bottom: 1px solid var(--premium-line); }
+.ct-ikon-header { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; background: linear-gradient(150deg, var(--gold-krem), var(--gold-dark)); color: var(--premium-paper); box-shadow: var(--finance-metal-relief); }
+.ct-ikon-header svg { width: 24px; height: 24px; }
 .ct-judul { min-width: 0; }
-.ct-judul p { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
-.ct-judul h2 { font-family: var(--font-serif); font-size: 27px; font-weight: 700; margin: 2px 0 0; color: var(--premium-paper); overflow-wrap: anywhere; }
-.ct-silang { margin-left: auto; display: grid; place-items: center; width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; transition: background 0.15s ease; }
-.ct-silang:hover { background: rgb(255 255 255 / 0.12); }
+.ct-judul h2 { font-family: var(--font-serif); font-size: 24px; font-weight: 700; margin: 0; color: var(--premium-ink); }
+.ct-judul p { margin: 2px 0 0; font-size: 13.5px; color: var(--premium-muted); }
+.ct-silang { margin-left: auto; display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; border: none; background: transparent; color: var(--premium-muted); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
+.ct-silang:hover { background: color-mix(in oklab, var(--gold) 12%, transparent); color: var(--premium-ink); }
 .ct-silang svg { width: 19px; height: 19px; }
-.ct-isian { margin: 18px 22px 16px; }
-.ct-isian label { display: block; font-weight: 700; font-size: 15px; margin-bottom: 8px; }
-.ct-isian textarea { display: block; width: 100%; min-height: 110px; max-height: 220px; resize: vertical; border: 1px solid var(--premium-line); border-radius: 13px; padding: 12px 14px; color: var(--premium-ink); background: var(--premium-paper); font-size: 15px; line-height: 1.6; box-shadow: var(--finance-field-inset); }
+.ct-tamu { display: flex; align-items: center; gap: 14px; padding: 16px 24px; }
+.ct-avatar { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; background: radial-gradient(circle at 32% 26%, color-mix(in oklab, var(--navy-deep) 78%, var(--gold-krem)), var(--navy-deep)); border: 2px solid var(--gold); color: var(--gold-krem); box-shadow: var(--finance-metal-relief); }
+.ct-avatar svg { width: 28px; height: 28px; }
+.ct-identitas { min-width: 0; }
+.ct-identitas h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--premium-ink); overflow-wrap: anywhere; }
+.ct-telepon { display: flex; align-items: center; gap: 6px; margin: 3px 0 0; font-size: 14px; color: var(--premium-muted); }
+.ct-telepon svg { color: var(--premium-success); flex-shrink: 0; }
+.ct-ringkasan { margin-left: auto; display: flex; gap: 12px; flex-shrink: 0; }
+.ct-ringkasan-kartu { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--premium-paper); border: 1px solid var(--premium-line); border-radius: 14px; box-shadow: var(--premium-panel-shadow); }
+.ct-ringkasan-ikon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; background: color-mix(in oklab, var(--gold-krem) 30%, var(--premium-paper)); color: var(--gold-dark); }
+.ct-ringkasan-ikon svg { width: 18px; height: 18px; }
+.ct-ringkasan-kartu p { margin: 0; font-size: 12px; color: var(--premium-muted); }
+.ct-ringkasan-kartu strong { font-size: 15px; color: var(--premium-ink); white-space: nowrap; }
+.ct-isian { margin: 4px 24px 0; }
+.ct-isian label { display: block; font-weight: 700; font-size: 14.5px; margin-bottom: 8px; }
+.ct-textarea-wrap { position: relative; }
+.ct-isian textarea { display: block; width: 100%; min-height: 110px; max-height: 220px; resize: vertical; border: 1px solid var(--premium-line); border-radius: 13px; padding: 12px 14px 30px; color: var(--premium-ink); background: var(--premium-paper); font-size: 15px; line-height: 1.6; box-shadow: var(--finance-field-inset); }
 .ct-isian textarea::placeholder { color: var(--premium-muted); }
+.ct-hitung { position: absolute; right: 12px; bottom: 10px; font-size: 12px; color: var(--premium-muted); pointer-events: none; }
 .catatan-tamu-popup :is(textarea, button):focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 3px; }
 .ct-peringatan { color: var(--premium-danger); font-size: 14px; margin: 8px 0 0; }
-.ct-aksi { display: flex; justify-content: flex-end; margin-top: 12px; }
+.ct-jenis { margin: 16px 24px 0; }
+.ct-jenis > p { margin: 0 0 8px; font-weight: 700; font-size: 14.5px; }
+.ct-jenis-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+.ct-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; border: 1px solid var(--premium-line); background: var(--premium-paper); color: var(--premium-ink); font-size: 14px; font-weight: 600; box-shadow: var(--premium-panel-shadow); }
+.ct-pill svg { width: 16px; height: 16px; }
+.ct-pill[data-aktif="true"] { background: linear-gradient(140deg, var(--gold-krem), color-mix(in oklab, var(--gold-krem) 68%, var(--navy-deep))); color: var(--premium-paper); border-color: var(--gold); }
+.ct-pill:disabled { cursor: not-allowed; }
+.ct-pill:disabled:not([data-aktif="true"]) { opacity: 0.75; }
 .ct-simpan { height: 44px; font-size: 15px; font-weight: 700; border-radius: 12px; padding: 0 26px; background: linear-gradient(140deg, var(--gold-krem), color-mix(in oklab, var(--gold-krem) 68%, var(--navy-deep))); color: var(--premium-paper); border: 1px solid var(--gold); box-shadow: var(--premium-panel-shadow); }
 .ct-simpan:hover { filter: brightness(1.08); }
 .ct-simpan svg { width: 18px; height: 18px; }
-.ct-riwayat { margin: 0 22px 20px; }
+.ct-batal { height: 44px; font-size: 15px; font-weight: 600; border-radius: 12px; padding: 0 24px; border: 1px solid var(--premium-line); background: transparent; color: var(--premium-ink); }
+.ct-batal:hover { background: color-mix(in oklab, var(--gold) 10%, transparent); }
+.ct-riwayat { margin: 18px 24px 0; }
 .ct-riwayat h3 { display: flex; align-items: center; gap: 9px; font-family: var(--font-serif); font-size: 19px; font-weight: 700; margin: 0 0 10px; }
 .ct-riwayat h3 svg { width: 20px; height: 20px; color: var(--gold-dark); }
 .ct-riwayat ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; max-height: 240px; overflow-y: auto; }
-.ct-riwayat li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--premium-paper); border-radius: 13px; border-bottom: 2px solid var(--gold); box-shadow: var(--premium-panel-shadow); }
+.ct-riwayat li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--premium-paper); border: 1px solid var(--premium-line); border-radius: 13px; box-shadow: var(--premium-panel-shadow); }
 .ct-ikon-catatan { width: 30px; height: 30px; padding: 6px; box-sizing: content-box; flex-shrink: 0; color: var(--premium-paper); background: var(--gold-krem); border-radius: 50%; }
 .ct-kartu-isi { min-width: 0; }
 .ct-isi-catatan { margin: 0; font-size: 14.5px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ct-meta { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 12.5px; color: var(--premium-muted); overflow-wrap: anywhere; }
 .ct-meta > svg { width: 15px; height: 15px; color: var(--gold-dark); flex-shrink: 0; }
 .ct-kosong { font-size: 14px; color: var(--premium-muted); padding: 6px 2px; margin: 0; }
+.ct-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 18px; padding: 16px 24px 18px; border-top: 1px solid var(--premium-line); }
 @media (max-width: 650px) {
   .ct-header { padding: 14px 16px; gap: 12px; }
-  .ct-avatar { width: 46px; height: 46px; font-size: 21px; }
-  .ct-judul h2 { font-size: 22px; }
-  .ct-isian, .ct-riwayat { margin-left: 14px; margin-right: 14px; }
+  .ct-avatar { width: 46px; height: 46px; }
+  .ct-avatar svg { width: 23px; height: 23px; }
+  .ct-judul h2 { font-size: 21px; }
+  .ct-tamu { flex-wrap: wrap; padding: 14px 16px; }
+  .ct-ringkasan { margin-left: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .ct-ringkasan-kartu { padding: 8px 12px; }
+  .ct-ringkasan-kartu strong { white-space: normal; }
+  .ct-isian, .ct-jenis, .ct-riwayat { margin-left: 16px; margin-right: 16px; }
+  .ct-footer { padding: 14px 16px; }
   .ct-simpan { padding: 0 18px; font-size: 14px; }
 }
 .detail-tamu-popup {
