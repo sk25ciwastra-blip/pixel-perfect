@@ -2,7 +2,6 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
-import { LencanaStatus } from '@/components/status-kamar';
 import { housekeepingSections, housekeepingShortageNote } from '@/lib/housekeeping-queue';
 import { useTable } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +15,8 @@ import '@/components/housekeeping.css';
 import latarHousekeeping from '@/assets/header-transaksi.jpg';
 import { ringkasanHousekeeping } from '@/lib/housekeeping-ringkasan';
 import { GrafikReferensi, PanelPerawatanReferensi, PanelSelesaiReferensi, RiwayatReferensi, RingkasanSelesai } from '@/components/housekeeping-referensi';
+
+const labelKamar: Record<string, string> = { terisi: 'Terisi', perlu: 'Perlu Dibersihkan', sedang: 'Sedang Dibersihkan', siap: 'Tersedia' };
 
 type BagianHk = 'status' | 'checklist' | 'perlengkapan' | 'perawatan' | 'riwayat';
 const bagianHk: { kode: BagianHk; label: string; ikon: typeof Brush }[] = [
@@ -267,7 +268,7 @@ function Halaman() {
           <section className="hk-room-panel">
             <div className="hk-panel-header">
               <BedDouble className="hk-heading-icon" /><h2>{bagian === 'checklist' ? 'Tugas Petugas' : 'Status Kamar'}</h2>
-              <label className="hk-filter-select"><span className="sr-only">Saring kamar</span><select value={filter} onChange={(event) => { setFilter(event.target.value); setHalaman(0); }}><option value="">Semua Status</option>{sections.map(section => <option key={section.key} value={`status:${section.key}`}>{section.label === 'terisi' ? 'Terisi' : section.label === 'perlu' ? 'Perlu Dibersihkan' : section.label === 'sedang' ? 'Sedang Dibersihkan' : 'Tersedia'}</option>)}{types.rows.filter(type => activeRooms.some(room => room.room_type_id === type.id)).map(type => <option key={type.id} value={`type:${type.id}`}>Tipe {type.name}</option>)}</select><ChevronDown aria-hidden="true" /></label>
+              <label className="hk-filter-select"><span className="sr-only">Saring kamar</span><select value={filter} onChange={(event) => { setFilter(event.target.value); setHalaman(0); }}><option value="">Semua Status</option>{sections.map(section => <option key={section.key} value={`status:${section.key}`}>{labelKamar[section.label]}</option>)}{types.rows.filter(type => activeRooms.some(room => room.room_type_id === type.id)).map(type => <option key={type.id} value={`type:${type.id}`}>Tipe {type.name}</option>)}</select><ChevronDown aria-hidden="true" /></label>
             </div>
             {canAdvance && dirtyRooms.length > 0 && (
               <div className="hk-bulk-bar">
@@ -288,7 +289,7 @@ function Halaman() {
                           <tr key={room.id}>
                             <td><div className="hk-room-cell">{section.key === 'dirty' && canAdvance && <input aria-label={`Pilih kamar ${room.room_number}`} type="checkbox" className="size-4 accent-primary" checked={selectedIds.includes(room.id)} onChange={(event) => setSelectedIds((current) => event.target.checked ? [...current, room.id] : current.filter((id) => id !== room.id))} />}<span className="hk-room-number">{room.room_number}</span></div></td>
                             <td>{roomType?.name ?? '—'}</td>
-                            <td><LencanaStatus status={section.label} /></td>
+                            <td><span className="hk-room-status" data-state={section.label}>{labelKamar[section.label]}</span></td>
                             <td><div className="hk-hk-cell">{hk === 'unknown' ? <span className="hk-dash">—</span> : <span className="hk-state" data-state={hk}>{hk === 'ready' ? <CheckCircle2 /> : hk === 'cleaning' ? <LoaderCircle /> : <Clock3 />}{hk === 'ready' ? 'Selesai' : hk === 'cleaning' ? 'Proses' : 'Menunggu'}</span>}{shortage && <span className="hk-shortage-flag" title="Ada informasi kekurangan" aria-label="Ada informasi kekurangan"><TriangleAlert /></span>}</div></td>
                             <td>{lastHistory?.performed_by_name || '—'}</td>
                             <td>{waktuSingkat(lastHistory?.created_at ?? room.updated_at)}</td>
