@@ -46,6 +46,10 @@ export function KeuanganArus({ penerimaan, pengeluaran }: Props) {
     pengeluaran.forEach(row => add(row, 'pengeluaran'));
     return [...groups.values()].sort((a, b) => a.tanggal.localeCompare(b.tanggal));
   }, [penerimaan, pengeluaran, periode]);
+  const skala = useMemo(
+    () => skalaArusKas(data.flatMap(row => [row.penerimaan, row.pengeluaran, row.bersih])),
+    [data],
+  );
   return <>
     <div className="kf-periode" aria-label="Periode arus kas">
       {(['Harian', 'Mingguan', 'Bulanan'] as const).map(value => <Button key={value} variant="ghost" size="sm" aria-pressed={periode === value} onClick={() => setPeriode(value)}>{value}</Button>)}
