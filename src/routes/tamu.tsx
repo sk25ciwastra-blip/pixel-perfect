@@ -28,6 +28,20 @@ function tanggalWib(value: string) {
 function waktuWib(value: string) {
   return new Date(value).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
 }
+function tanggalPendekWib(value: string) {
+  return new Date(value).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' });
+}
+function jamWib(value: string) {
+  return new Date(value).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false });
+}
+function rupiah(nilai: number) {
+  return 'Rp' + nilai.toLocaleString('id-ID');
+}
+function terbanyak(items: string[]) {
+  const hitung = new Map<string, number>();
+  for (const item of items) if (item !== '—') hitung.set(item, (hitung.get(item) ?? 0) + 1);
+  return [...hitung.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'id-ID')).at(0)?.[0] ?? '—';
+}
 const statusTransaksi: Record<string, string> = { booking: 'BOOKING', check_in: 'CHECK-IN', check_out: 'SELESAI', cancelled: 'DIBATALKAN' };
 function pembuatCatatan(role: string | null, name: string | null) {
   const jabatan: Record<string, string> = { owner: 'Owner', own: 'Owner', pemilik: 'Owner', supervisor: 'SPV', spv: 'SPV', receptionist: 'RCP', resepsionis: 'RCP', rcp: 'RCP', housekeeping: 'HK', hk: 'HK' };
@@ -59,6 +73,9 @@ function HalamanTamu() {
   const { rows, loading, error, refresh } = useTable('guests');
   const transactions = useTable('transactions');
   const notes = useTable('guest_notes');
+  const rooms = useTable('rooms');
+  const roomTypes = useTable('room_types');
+  const packages = useTable('packages');
   const [cari, setCari] = useState('');
   const [urutan, setUrutan] = useState<'nama' | 'terbanyak' | 'tersedikit'>('nama');
   const [open, setOpen] = useState(false);
