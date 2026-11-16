@@ -53,6 +53,9 @@ label.fk-field.fk-rapat { display: block; }
 .fk-simpan { padding: 0 28px; background: var(--navy-deep); color: var(--premium-paper); border: 1px solid var(--gold-dark); box-shadow: 0 8px 18px -10px var(--navy-deep); }
 .fk-simpan svg { color: var(--primary); width: 19px; height: 19px; }
 .fk-simpan:disabled { opacity: .6; }
+.fk-input input:disabled, .fk-input select:disabled { background: color-mix(in oklab, var(--premium-ink) 5%, var(--premium-paper)); color: var(--premium-muted); cursor: not-allowed; opacity: 1; }
+.fk-status button:disabled, .fk-unggah:disabled { cursor: not-allowed; }
+.fk-unggah:disabled { opacity: .55; transform: none; }
 .fk-batal, .fk-simpan, .fk-unggah { box-shadow: inset 0 1px 0 color-mix(in oklab, var(--premium-surface) 24%, transparent), 0 4px 6px -4px color-mix(in oklab, var(--premium-ink) 40%, transparent), 0 8px 16px -12px var(--gold-dark); transition: transform .18s, box-shadow .18s; }
 .fk-batal:hover, .fk-simpan:hover:not(:disabled), .fk-unggah:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 color-mix(in oklab, var(--premium-surface) 30%, transparent), 0 8px 16px -9px color-mix(in oklab, var(--gold-dark) 55%, transparent); }
 @media (prefers-reduced-motion: reduce) { .fk-batal, .fk-simpan, .fk-unggah, .fk-input input, .fk-input select, .fk-input textarea { transition: none; } .fk-batal:hover, .fk-simpan:hover:not(:disabled), .fk-unggah:hover { transform: none; } }
