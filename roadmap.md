@@ -1,5 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Tim & Akses — ID dan relief formulir
+- [ ] Terapkan format ID karyawan baru dan perhalus relief formulir; periksa tes dan tampilan komputer/HP tanpa membuat akun baru.
+
 ## Popup Check-in Berhasil — referensi 16 November
 - [x] Booking dan Pengeluaran memakai template berhasil yang sama; penyimpanan dan aksi tetap. Template diperiksa dengan catatan tersimpan di komputer/HP, 23 tes lulus; alur simpan baru tidak dijalankan agar tidak menambah transaksi, tanpa publikasi.
 - [x] Gunakan logo asli dari lampiran terbaru; perhalus relief popup dan perjelas teks tanpa mengubah data atau aksi.
