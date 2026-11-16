@@ -494,14 +494,15 @@ function Ringkasan() {
       }
     }
     return {
-      terisi: statusKamarBaris.filter((row) => row.terisi).length,
+      // Occupied overtime rooms remain occupied even when displayed in the action queue.
+      terisi: kamarTerisi.length,
       booking: bookingHariIni.length,
       persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
       terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in ?? "", item.scheduled_check_out ?? "", sekarang)?.status === "late").length,
       perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
       overtime: overtimePerluTindakan.length,
     };
-  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris, overtimePerluTindakan]);
+  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, kamarTerisi, sekarang, overtimePerluTindakan]);
 
   const indikatorStatus = [
     { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
