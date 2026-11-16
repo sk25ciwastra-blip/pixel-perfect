@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { rupiah } from '@/lib/data-contoh';
 
@@ -9,6 +9,15 @@ type Props = { penerimaan: Catatan[]; pengeluaran: Catatan[] };
 // The chart only groups the already-visible session records; it is not a cash-ledger calculation.
 export function KeuanganArus({ penerimaan, pengeluaran }: Props) {
   const [periode, setPeriode] = useState<'Harian' | 'Mingguan' | 'Bulanan'>('Harian');
+  const id = useId().replace(/:/g, '');
+  const [animate, setAnimate] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setAnimate(!media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   const data = useMemo(() => {
     const groups = new Map<string, { tanggal: string; label: string; penerimaan: number; pengeluaran: number; bersih: number }>();
     const add = (row: Catatan, jenis: 'penerimaan' | 'pengeluaran') => {
@@ -42,17 +51,29 @@ export function KeuanganArus({ penerimaan, pengeluaran }: Props) {
     </div>
     <div className="kf-chart" role="img" aria-label={`Grafik ${periode.toLowerCase()} penerimaan dan pengeluaran dari catatan sesi kas`}>
       {data.length ? <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={{ top: 14, right: 12, left: 0, bottom: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--border)" />
-          <XAxis dataKey="label" tick={{ fill: 'var(--foreground)', fontSize: 11 }} tickLine={false} axisLine={{ stroke: 'var(--border)' }} minTickGap={18} />
-          <YAxis width={50} tick={{ fill: 'var(--foreground)', fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={value => value >= 1000000 ? `${value / 1000000} jt` : value >= 1000 ? `${value / 1000} rb` : String(value)} />
-          <Tooltip formatter={value => rupiah(Number(value))} contentStyle={{ background: 'var(--card)', border: '1px solid var(--gold-dark)', borderRadius: 8, color: 'var(--foreground)', fontSize: 12 }} />
-          <Legend iconType="circle" iconSize={9} wrapperStyle={{ fontSize: 11, paddingTop: 12 }} />
-          <Bar dataKey="penerimaan" name="Penerimaan" fill="var(--chart-2)" maxBarSize={22} />
-          <Bar dataKey="pengeluaran" name="Pengeluaran" fill="var(--chart-5)" maxBarSize={16} />
-          <Line dataKey="bersih" name="Penerimaan bersih" stroke="var(--success-gold)" strokeWidth={2} dot={{ r: 4, fill: 'var(--success-gold)' }} isAnimationActive={false} />
+        <ComposedChart key={periode} data={data} margin={{ top: 18, right: 16, left: 0, bottom: 8 }} barGap={6} barCategoryGap="28%">
+          <defs>
+            <linearGradient id={`${id}-masuk`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="var(--chart-2)" stopOpacity={0.55} />
+              <stop offset="42%" stopColor="var(--siap-foreground)" />
+              <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0.85} />
+            </linearGradient>
+            <linearGradient id={`${id}-keluar`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="var(--chart-5)" stopOpacity={0.55} />
+              <stop offset="42%" stopColor="var(--bahaya-foreground)" />
+              <stop offset="100%" stopColor="var(--chart-5)" stopOpacity={0.85} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 5" strokeOpacity={0.6} />
+          <XAxis dataKey="label" tick={{ fill: 'var(--foreground)', fontSize: 11, fontWeight: 500 }} tickMargin={10} tickLine={false} axisLine={{ stroke: 'var(--border)' }} minTickGap={24} />
+          <YAxis width={48} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} tickMargin={8} tickLine={false} axisLine={false} tickFormatter={value => value >= 1000000 ? `${value / 1000000} jt` : value >= 1000 ? `${value / 1000} rb` : String(value)} />
+          <Tooltip wrapperClassName="kf-chart-tooltip" cursor={{ fill: 'var(--primary-soft)', fillOpacity: 0.25 }} content={({ active, payload, label }) => active && payload?.length ? <div className="kf-chart-tip"><strong>{label}</strong>{payload.map(entry => <div key={String(entry.dataKey)} data-series={entry.dataKey}><span>{entry.name}</span><b>{rupiah(Number(entry.value))}</b></div>)}</div> : null} />
+          <Bar dataKey="penerimaan" name="Penerimaan" fill={`url(#${id}-masuk)`} radius={[4, 4, 0, 0]} maxBarSize={30} isAnimationActive={animate} animationDuration={750} animationEasing="ease-out" />
+          <Bar dataKey="pengeluaran" name="Pengeluaran" fill={`url(#${id}-keluar)`} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={animate} animationDuration={750} animationEasing="ease-out" />
+          <Line className="kf-chart-line" type="linear" dataKey="bersih" name="Penerimaan bersih" stroke="var(--gold-light)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--gold-light)', stroke: 'var(--card)', strokeWidth: 2 }} activeDot={{ r: 6, fill: 'var(--gold-light)', stroke: 'var(--card)', strokeWidth: 2 }} isAnimationActive={animate} animationDuration={950} animationEasing="ease-out" />
         </ComposedChart>
       </ResponsiveContainer> : <p className="kf-chart-empty">Belum ada catatan arus kas pada sesi ini.</p>}
     </div>
+    {data.length > 0 && <ul className="kf-chart-legend" aria-label="Keterangan grafik"><li data-series="penerimaan"><i aria-hidden="true" />Penerimaan</li><li data-series="pengeluaran"><i aria-hidden="true" />Pengeluaran</li><li data-series="bersih"><i aria-hidden="true" />Penerimaan bersih</li></ul>}
   </>;
 }
