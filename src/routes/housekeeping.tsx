@@ -61,7 +61,6 @@ function Halaman() {
   const history = useTable('housekeeping_history');
   const maintenance = useTable('housekeeping_maintenance');
   const checklists = useTable('housekeeping_checklists');
-  const transactions = useTable('transactions');
 
   const operationalRooms = useMemo(() => rooms.rows.filter((room) => room.room_number !== '01'), [rooms.rows]);
 
