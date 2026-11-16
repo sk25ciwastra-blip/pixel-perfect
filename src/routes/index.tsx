@@ -44,6 +44,7 @@ import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
+import "@/components/dashboard-panel.css";
 
 export const Route = createFileRoute("/")({
   head: () => {
@@ -696,7 +697,7 @@ function Ringkasan() {
 
           {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
           <div className="mt-5 grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,1.95fr)_minmax(320px,1fr)]">
-            <section className="panel-mewah flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar">
+            <section className="panel-mewah db-panel-operasional flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar">
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
@@ -846,7 +847,7 @@ function Ringkasan() {
             </section>
 
             {/* Transaksi terbaru */}
-            <section className="panel-mewah flex min-w-0 flex-col p-4" aria-labelledby="judul-trx-terbaru">
+            <section className="panel-mewah db-panel-operasional flex min-w-0 flex-col p-4" aria-labelledby="judul-trx-terbaru">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><FileText className="size-5" strokeWidth={1.6} /></span>
@@ -870,7 +871,7 @@ function Ringkasan() {
                   </div>
                 </div>
               ) : (
-                <ol className="mt-1 max-h-[330px] overflow-y-auto pr-2 divide-y divide-gold/15">
+                <ol className="db-transaksi-list mt-1 max-h-[330px] overflow-y-auto pr-2 divide-y divide-gold/15">
                   {transaksiTerbaru.map((t) => {
                     const metodeKode = t.metode.toLowerCase();
                     const warnaMetode = metodeKode === "qris" ? "var(--v0-info)" : metodeKode === "transfer" ? "var(--v0-ungu)" : "var(--gold)";
