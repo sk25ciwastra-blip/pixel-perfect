@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Keuangan — referensi 16 November
+- [x] Tab emas, tujuh ringkasan horizontal, sesi kas terang, grafik catatan nyata, setoran/refund krem dan closing bawah mengikuti referensi; sumber angka, isian, izin dan aksi tetap. Grafik penerimaan bersih tidak diklaim sebagai saldo kas.
+- [x] Akun aktif komputer/HP: tab, pencarian/filter, periode grafik, buka/tutup closing dan isian diperiksa tanpa overflow/error; tes finance150/training PASS, build OK. Tanpa penyimpanan keuangan atau publikasi.
+
 ## Tim & Akses — ID dan relief formulir
 - [x] ID baru BTRDEMP-0001 berurutan, ID lama tetap; relief formulir diperhalus. Dua tes lulus, popup komputer/HP terbaca tanpa overflow/error; tidak membuat akun baru atau publikasi.
 

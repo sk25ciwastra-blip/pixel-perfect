@@ -32,6 +32,6 @@
 - Check-in, booking and expense results share the scoped success shell; forms retain validation, save handlers and existing actions so presentation cannot alter payment rules.
 - Cash-expense layout overrides use the expense-reference scope: full-width session and summary surround paired detail/payment panels, so reference adjustments never change other forms or the cash-only save handler.
 
-- Finance presentation stays page-local in `keuangan.tsx`, retaining existing summary sources, form handlers and permission gates so visual refinements cannot change cash workflows.
+- Finance presentation is scoped to `keuangan.tsx` and `keuangan.css`; its chart only groups RLS-visible session records and labels net receipts separately from authoritative cash balance, while existing handlers and permission gates remain unchanged.
 - Grouped package dialogs read prices from the selected package/type relation and block grouped saves until a type-scoped audited mutation exists; global package RPCs cannot safely write type prices.
 - Room-page presentation is isolated in scoped `kamar.css`; inactive and non-ready cards reuse `PopupKamarTerisi` with stored-status messages, whose room-choice action only dismisses it back to the unchanged room list; only active ready cards can open the existing permission-gated form. Transaction ID buttons alone open transaction detail and stop propagation. No repair status is inferred from unstructured notes. Form validation and RPCs remain authoritative, keeping card handlers mutation-free.

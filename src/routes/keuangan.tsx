@@ -1,7 +1,7 @@
 import { rpc } from "@/lib/data-live";
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Wallet, Banknote, QrCode, Landmark, Percent, RotateCcw, ArrowUpRight, ArrowDownLeft, ClipboardCheck, CalendarDays, ReceiptText, Coins, Check, Search, SlidersHorizontal, Send, BadgeCheck, Clock, Upload, Info, type LucideIcon } from 'lucide-react';
+import { Wallet, Banknote, QrCode, Landmark, Percent, RotateCcw, ArrowUpRight, ArrowDownLeft, ClipboardCheck, CalendarDays, ReceiptText, Coins, Check, Search, SlidersHorizontal, Send, BadgeCheck, Clock, Upload, Info, ChartNoAxesCombined, ChevronRight, Layers, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Kerangka } from '@/components/kerangka';
 import { useTable } from '@/lib/data-live';
@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
 import { setSesiKasKonteks } from '@/lib/sesi-kas';
+import { KeuanganArus } from '@/components/keuangan-arus';
+import '@/components/keuangan.css';
 
 const POLA_NOMOR = /(BTRD[A-Z]*-\d+)/;
 
@@ -43,25 +45,25 @@ function angka(value: string) {
 }
 
 const panelIcons: Record<string, LucideIcon> = {
-  'Sesi Kas': Wallet, 'Closing Sesi Kas': ClipboardCheck, 'Aktivitas Keuangan': ReceiptText,
-  'Setoran': Upload, 'Serah terima DI LACI': Wallet, 'Refund Owner': RotateCcw, 'Ringkasan Hari Ini': Clock,
+  'Sesi Kas': Wallet, 'Sesi Kas Operasional': Wallet, 'Closing Sesi Kas': Layers, 'Aktivitas Keuangan': ReceiptText,
+  'Setoran ke Owner': Upload, 'Serah terima DI LACI': Wallet, 'Refund Tamu': RotateCcw, 'Ringkasan Hari Ini': Clock,
+  'Arus Kas Operasional': ChartNoAxesCombined,
 };
+const panelKeys: Record<string, string> = { 'Sesi Kas Operasional': 'sesi', 'Closing Sesi Kas': 'closing', 'Aktivitas Keuangan': 'aktivitas', 'Setoran ke Owner': 'setoran', 'Refund Tamu': 'refund', 'Ringkasan Hari Ini': 'ringkasan', 'Serah terima DI LACI': 'handoff', 'Arus Kas Operasional': 'arus' };
 
-// Page-local presentation keeps existing data, conditions, and finance actions unchanged.
+// These wrappers are presentation-only; handlers and permission gates stay below.
 function Panel({ judul, sub, kanan, children }: { judul: string; sub?: string; kanan?: ReactNode; children: ReactNode }) {
   const Icon = panelIcons[judul] ?? Info;
-  return (
-    <section className="panel-mewah min-w-0 overflow-hidden p-4 sm:p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="ikon-bulat h-11 w-11 shrink-0 text-gold"><Icon size={22} aria-hidden="true" /></span>
-          <div className="min-w-0"><h2 className="font-serif text-2xl leading-tight text-foreground">{judul}</h2>{sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}</div>
-        </div>
-        {kanan}
-      </div>
-      {children}
-    </section>
-  );
+  const key = panelKeys[judul];
+  const paper = key === 'setoran' || key === 'refund';
+  return <section id={key ? `keuangan-${key}` : undefined} data-panel={key} className={`kf-panel ${paper ? 'kf-paper' : ''}`}>
+    <div className="kf-panel-head">
+      <div className="kf-panel-heading">
+        <span className="ikon-bulat shrink-0 text-gold"><Icon size={22} aria-hidden="true" /></span>
+        <div className="min-w-0"><h2 className="font-serif">{judul}</h2>{sub && <p className="text-muted-foreground">{sub}</p>}</div>
+      </div>{kanan}
+    </div>{children}
+  </section>;
 }
 
 function HalamanKeuangan() {
@@ -73,6 +75,8 @@ function HalamanKeuangan() {
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState('Ringkasan');
+  const [closingBuka, setClosingBuka] = useState(false);
   const [summary, setSummary] = useState<Summary>({});
   const [openingCash, setOpeningCash] = useState('0');
   const [setorCash, setSetorCash] = useState('0');
@@ -294,7 +298,17 @@ function HalamanKeuangan() {
   const label = 'block min-w-0 text-xs text-muted-foreground';
 
   return (
-    <Kerangka judul="Keuangan" keterangan="Penerimaan, sesi kas, closing, dan pengawasan Owner">
+    <Kerangka judul="Keuangan" keterangan="Penerimaan, sesi kas, closing, dan pengawasan dana operasional.">
+      <div className="kf-halaman">
+      <nav className="kf-tabs" aria-label="Bagian Keuangan">
+        {([
+          ['Ringkasan', ChartNoAxesCombined, ''], ['Sesi Kas', Wallet, 'sesi'], ['Setoran', Upload, 'setoran'],
+          ['Refund', RotateCcw, 'refund'], ['Komisi', Percent, 'ringkasan'], ['Arus Kas', ChartNoAxesCombined, 'arus'], ['Riwayat', ReceiptText, 'aktivitas'],
+        ] as const).filter(([label]) => label !== 'Refund' || isOwner).map(([label, Icon, target]) => <Button key={label} variant="outline" aria-pressed={tab === label} onClick={() => {
+          setTab(label);
+          if (target) requestAnimationFrame(() => document.getElementById(`keuangan-${target}`)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }));
+        }}><Icon size={17} aria-hidden="true" />{label}</Button>)}
+      </nav>
       {message && <p role="alert" className="mb-4 rounded-md bg-secondary px-3 py-2 text-sm">{message}</p>}
       {isTraining && (
         <p className="mb-4 rounded-md bg-perlu px-3 py-2 text-sm text-perlu-foreground">
@@ -307,7 +321,7 @@ function HalamanKeuangan() {
         </Panel></div>
       )}
       {selectedSession && (
-        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+        <div className="kf-kpis grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7">
           {([
             ['Penerimaan Sesi', summary['payments_total'], sessionPayments.length, ArrowDownLeft, 'bg-siap text-siap-foreground'],
             ['Cash', summary['cash'], byMethod('CASH').length, Banknote, 'bg-gold/15 text-gold'],
@@ -328,11 +342,11 @@ function HalamanKeuangan() {
           ))}
         </div>
       )}
-      <div className="grid items-start gap-5 xl:grid-cols-[1.45fr_1fr]">
-        <div className="min-w-0 space-y-5">
+      <div className="kf-grille">
+        <div className="kf-colonne">
           {selectedSession && (
-            <Panel judul="Sesi Kas" sub="Informasi sesi kas operasional hari ini." kanan={<span className="flex items-center gap-2 rounded-full border border-siap-foreground/30 bg-siap/40 px-4 py-1.5 text-sm font-semibold text-siap-foreground"><span className="h-2 w-2 rounded-full bg-siap-foreground" />{selectedSession.status}</span>}>
-              <div className="grid grid-cols-1 gap-4 rounded-lg border border-gold/15 bg-background/40 p-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-gold/15">
+            <Panel judul="Sesi Kas Operasional" sub="Informasi sesi kas yang sedang berjalan." kanan={<span className="flex items-center gap-2 rounded-full border border-siap-foreground/30 bg-siap/40 px-4 py-1.5 text-sm font-semibold text-siap-foreground"><span className="h-2 w-2 rounded-full bg-siap-foreground" />{selectedSession.status}</span>}>
+              <div className="kf-session-strip grid sm:grid-cols-2 lg:grid-cols-4">
                 {([
                   ['Tanggal Operasional', tanggalPanjang, CalendarDays, ''],
                   ['Saldo Awal', rupiah(Number(summary['opening_cash'] ?? selectedSession.opening_cash)), Wallet, ''],
@@ -347,8 +361,20 @@ function HalamanKeuangan() {
               </div>
             </Panel>
           )}
+          {selectedSession && <Panel judul="Arus Kas Operasional" sub="Pergerakan penerimaan dan pengeluaran sesi kas.">
+            <KeuanganArus penerimaan={sessionPayments} pengeluaran={sessionExpenses} />
+          </Panel>}
           {selectedSession && (
-            <Panel judul="Closing Sesi Kas" sub="Input hasil perhitungan kas di akhir sesi.">
+            <section className="kf-panel" data-panel="closing" id="keuangan-closing">
+              <div className="kf-closing-summary">
+                <div className="kf-panel-heading"><span className="ikon-bulat shrink-0 text-gold"><Layers size={23} /></span><div><h2 className="font-serif">Closing Sesi Kas</h2><p className="mt-1">Input hasil perhitungan kas di akhir sesi.</p></div></div>
+                <div><p>Total Cash (Fisik)</p><strong className="tabular-nums">{rupiah(totalCash)}</strong></div>
+                <div><p>Total QRIS</p><strong className="tabular-nums">{rupiah(totalQris)}</strong></div>
+                <div><p>Total Transfer</p><strong className="tabular-nums">{rupiah(totalTransfer)}</strong></div>
+                <div><p>Selisih / Catatan</p><p className="mt-1 break-words">{closingReason || '—'}</p></div>
+                <Button variant="outline" aria-expanded={closingBuka} onClick={() => setClosingBuka(value => !value)}>Proses Closing<ChevronRight size={16} /></Button>
+              </div>
+              <div className={`kf-closing-form ${closingBuka ? '' : 'kf-hidden'}`}>
               {canCloseOthers && !activeSession && <select value={selectedSession.id} onChange={(e) => setSelectedSessionId(e.target.value)} className={`${input} mb-4`}>{sessions.rows.filter((session) => session.status === 'OPEN').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select>}
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.5fr]">
                 <label className={label}><span className="mb-1.5 block">Total Cash (Fisik)</span><RpInput value={String(totalCash)} readOnly /></label>
@@ -374,16 +400,17 @@ function HalamanKeuangan() {
                   {!isTraining && <Button className="mt-3 w-full gap-2" disabled={busy || !hasExpectedCash} onClick={() => void closeSession()}><Check size={16} aria-hidden="true" />Finalkan Closing</Button>}
                 </div>
               </div>
-            </Panel>
+              </div>
+            </section>
           )}
-          {selectedSession && (
+          {selectedSession && tab === 'Riwayat' && (
             <Panel judul="Aktivitas Keuangan" sub="Riwayat transaksi keuangan terbaru." kanan={
               <div className="flex flex-wrap items-center gap-2">
                 <label className="relative block"><Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><input value={expenseSearch} onChange={(e) => setExpenseSearch(e.target.value)} className="h-10 w-64 max-w-full rounded-md border border-input bg-background/60 pl-9 pr-3 text-xs" placeholder="Cari transaksi, keterangan, atau nominal..." /></label>
                 <Button variant="outline" className="h-10 gap-2" onClick={() => setFilterBuka((v) => !v)}><SlidersHorizontal size={15} aria-hidden="true" />Filter</Button>
               </div>
             }>
-              {filterBuka && <div className="mb-3 flex flex-wrap gap-2">{(['', 'Penerimaan', 'Setoran', 'Pengeluaran', 'Refund'] as const).map((jenis) => <button key={jenis || 'semua'} type="button" onClick={() => setFilterJenis(jenis)} className={`rounded-full border px-3 py-1 text-xs ${filterJenis === jenis ? 'border-gold bg-gold/15 text-gold' : 'border-gold/15 text-muted-foreground'}`}>{jenis || 'Semua'}</button>)}</div>}
+              {filterBuka && <div className="mb-3 flex flex-wrap gap-2">{(['', 'Penerimaan', 'Setoran', 'Pengeluaran', 'Refund'] as const).map((jenis) => <Button variant="outline" size="sm" key={jenis || 'semua'} type="button" onClick={() => setFilterJenis(jenis)} className={`rounded-full border px-3 py-1 text-xs ${filterJenis === jenis ? 'border-gold bg-gold/15 text-gold' : 'border-gold/15 text-muted-foreground'}`}>{jenis || 'Semua'}</Button>)}</div>}
               <div className="max-h-96 overflow-auto rounded-md border border-gold/15">
                 <table className="w-full min-w-[680px] text-left text-sm">
                   <thead className="bg-secondary text-[11px] uppercase tracking-wider text-gold"><tr><th className="px-3 py-3 font-semibold">Tanggal / Waktu</th><th className="px-3 py-3 font-semibold">Jenis</th><th className="px-3 py-3 font-semibold">Keterangan</th><th className="px-3 py-3 font-semibold">Metode</th><th className="px-3 py-3 font-semibold">Nominal</th><th className="px-3 py-3 font-semibold">Petugas</th></tr></thead>
@@ -405,9 +432,9 @@ function HalamanKeuangan() {
             </Panel>
           )}
         </div>
-        <div className="min-w-0 space-y-5">
+        <div className="kf-colonne">
           {selectedSession && (
-            <Panel judul="Setoran" sub="Ajukan setoran uang ke rekening owner.">
+            <Panel judul="Setoran ke Owner" sub="Ajukan setoran uang ke rekening owner.">
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className={label}><span className="mb-1.5 block">Nominal Setoran</span><RpInput value={depositAmount} onChange={setDepositAmount} /></label>
                 <label className={label}><span className="mb-1.5 block">Metode Setoran</span><select value={depositMethod} onChange={(e) => setDepositMethod(e.target.value)} className={input}><option value="Transfer">Transfer Bank</option><option value="CASH">Cash</option></select></label>
@@ -425,19 +452,20 @@ function HalamanKeuangan() {
           )}
           {handoffs.rows.filter((handoff) => handoff.status === 'MENUNGGU_HITUNG').length > 0 && <Panel judul="Serah terima DI LACI"><ul className="space-y-3">{handoffs.rows.filter((handoff) => handoff.status === 'MENUNGGU_HITUNG').map((handoff) => <li key={handoff.id} className="rounded-md bg-secondary p-3 text-sm"><p>Ekspektasi: {rupiah(Number(handoff.expected_amount))}</p><div className="mt-3 grid gap-3 sm:grid-cols-2"><input value={handoffActual} onChange={(e) => setHandoffActual(e.target.value)} type="number" min="0" className={input} placeholder="Hitungan aktual" /><input value={handoffReason} onChange={(e) => setHandoffReason(e.target.value)} className={input} placeholder="Alasan selisih bila ada" /><Button disabled={busy} onClick={() => void confirmHandoff(handoff.id)}>Konfirmasi</Button></div></li>)}</ul></Panel>}
           {isOwner && (
-            <Panel judul="Refund Owner" sub="Catat pengembalian dana kepada tamu (atas persetujuan owner).">
+            <Panel judul="Refund Tamu" sub="Catat pengembalian dana kepada tamu (atas persetujuan owner).">
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className={label}><span className="mb-1.5 block">Pilih Transaksi / Booking</span><select value={refundTransactionId} onChange={(e) => setRefundTransactionId(e.target.value)} className={input}><option value="">Pilih transaksi</option>{transactions.rows.filter((transaction) => transaction.status !== 'cancelled').map((transaction) => <option key={transaction.id} value={transaction.id}>{transaction.transaction_number}</option>)}</select></label>
                 <label className={label}><span className="mb-1.5 block">Nominal Refund</span><RpInput value={refundAmount} onChange={setRefundAmount} /></label>
                 <label className={label}><span className="mb-1.5 block">Sumber Dana</span><select value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)} className={input}><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select></label>
                 <label className={label}><span className="mb-1.5 block">Alasan Refund</span><input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} className={input} placeholder="Contoh: Pembatalan oleh tamu" /></label>
-                <label className={label}><span className="mb-1.5 block">Asal Dana</span><select value={refundSourceType} onChange={(e) => setRefundSourceType(e.target.value)} className={input}><option value="OWNER_FUNDS">Dana Owner</option><option value="SHIFT_CASH">Kas sesi</option><option value="DRAWER">Laci</option></select></label>
+                <details className="sm:col-span-2"><summary>Asal Dana &amp; Sesi Sumber</summary><div className="grid gap-3 sm:grid-cols-2"><label className={label}><span className="mb-1.5 block">Asal Dana</span><select value={refundSourceType} onChange={(e) => setRefundSourceType(e.target.value)} className={input}><option value="OWNER_FUNDS">Dana Owner</option><option value="SHIFT_CASH">Kas sesi</option><option value="DRAWER">Laci</option></select></label>
                 {refundSourceType !== 'OWNER_FUNDS' && <label className={label}><span className="mb-1.5 block">Sesi Sumber</span><select value={refundSourceSessionId} onChange={(e) => setRefundSourceSessionId(e.target.value)} className={input}><option value="">Pilih sesi sumber</option>{sessions.rows.filter((session) => session.status === 'OPEN' || session.status === 'FINAL').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select></label>}
+</div></details>
               </div>
               <Button className="mt-4 w-full gap-2" disabled={!isOwner || busy} onClick={() => void refund()}><RotateCcw size={16} aria-hidden="true" />Catat Refund</Button>
             </Panel>
           )}
-          {selectedSession && (
+          {selectedSession && (tab === 'Komisi' || tab === 'Sesi Kas') && (
             <Panel judul="Ringkasan Hari Ini" kanan={<span className="text-sm text-muted-foreground">{tanggalPanjang}</span>}>
               <ul className="divide-y divide-gold/10 rounded-lg border border-gold/15 bg-background/40 text-sm">
                 {([
@@ -459,13 +487,14 @@ function HalamanKeuangan() {
           )}
         </div>
       </div>
+      </div>
     </Kerangka>
   );
 }
 
 function RpInput({ value, onChange, readOnly, disabled }: { value: string; onChange?: (value: string) => void; readOnly?: boolean; disabled?: boolean }) {
   return (
-    <span className="flex h-11 min-w-0 overflow-hidden rounded-md border border-input bg-background/60 text-sm">
+    <span className="kf-rp flex h-11 min-w-0 overflow-hidden rounded-md border border-input bg-background/60 text-sm">
       <span className="flex items-center border-r border-input px-3 text-muted-foreground">Rp</span>
       <input value={value} onChange={(e) => onChange?.(e.target.value)} readOnly={readOnly} disabled={disabled} type="number" min="0" className="min-w-0 flex-1 bg-transparent px-3 text-foreground outline-none" />
     </span>
