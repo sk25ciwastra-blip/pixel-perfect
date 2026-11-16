@@ -1,8 +1,8 @@
 # Revisi tampilan Baturaden 25 Homestay
 
 ## Tim & Akses — relief dan tombol 16 November
-- [ ] Perhalus empat ringkasan hitam–emas dengan relief dan efek kursor tanpa memperbesar; tombol tambah menjadi Tambah Karyawan, simpan baru menjadi Simpan, ubah menjadi Perbaharui.
-- [ ] Periksa ringkasan dan kedua formulir pada komputer/HP tanpa menyimpan akun atau publikasi.
+- [x] Perhalus empat ringkasan hitam–emas dengan relief dan efek kursor tanpa memperbesar; tombol tambah menjadi Tambah Karyawan, simpan baru menjadi Simpan, ubah menjadi Perbaharui.
+- [x] Akun aktif komputer/HP: efek naik 2px, kedua tombol formulir sesuai dan tidak meluap; tiga tes ID/isian terkunci lulus, tanpa error, tanpa menyimpan akun atau publikasi.
 
 ## Tim & Akses — referensi 16 November
 - [x] Sesuaikan empat ringkasan, tab, pencarian/filter dan tabel putih hangat dengan referensi; data, izin dan formulir tetap. Pelatihan — serta tab hak akses/riwayat nonaktif karena belum tersedia; tanpa foto atau status rekaan.
