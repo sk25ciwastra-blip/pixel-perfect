@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { housekeepingSections, housekeepingShortageNote } from '@/lib/housekeeping-queue';
@@ -55,6 +55,18 @@ function Halaman() {
   const [filter, setFilter] = useState('');
   const [halaman, setHalaman] = useState(0);
   const [detailRoomId, setDetailRoomId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tutup = (event: Event) => {
+      if (event instanceof KeyboardEvent && event.key !== 'Escape') return;
+      document.querySelectorAll<HTMLDetailsElement>('.hk-aksi-menu[open]').forEach((menu) => {
+        if (event instanceof KeyboardEvent || !menu.contains(event.target as Node)) menu.open = false;
+      });
+    };
+    document.addEventListener('pointerdown', tutup);
+    document.addEventListener('keydown', tutup);
+    return () => { document.removeEventListener('pointerdown', tutup); document.removeEventListener('keydown', tutup); };
+  }, []);
 
   const rooms = useTable('rooms');
   const types = useTable('room_types');
