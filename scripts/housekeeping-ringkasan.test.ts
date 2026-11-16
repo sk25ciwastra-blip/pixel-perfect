@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { ringkasanHousekeeping } from './housekeeping-ringkasan';
+import { ringkasanHousekeeping } from '../src/lib/housekeeping-ringkasan';
 
 describe('ringkasan dari pembersihan tercatat', () => {
   test('menghitung selesai saja dalam hari WIB, minggu Senin dan bulan berjalan', () => {
