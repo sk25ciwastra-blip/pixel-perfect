@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { rupiah } from '@/lib/data-contoh';
+import { labelSkala, skalaArusKas } from '@/lib/keuangan-skala';
 
 type Catatan = { created_at: string; amount: number };
 type Props = { penerimaan: Catatan[]; pengeluaran: Catatan[] };
