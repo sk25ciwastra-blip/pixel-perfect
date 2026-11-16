@@ -59,7 +59,7 @@
 .lp-panel-actions .lp-closing { background:var(--success-dark-button); color:var(--foreground); }
 .lp-table-scroll { overflow-x:auto; }
 .lp-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--premium-line); border-radius:8px; overflow:hidden; font-size:12px; text-align:center; }
-.lp-table th { background:var(--premium-highlight); font-weight:700; padding:7px 10px; white-space:nowrap; }
+.lp-halaman .lp-table th { background:var(--premium-highlight); color:var(--premium-ink); font-weight:700; padding:7px 10px; white-space:nowrap; text-transform:none; letter-spacing:0; font-size:12px; }
 .lp-table td { padding:7px 10px; font-weight:500; border-bottom:1px solid var(--premium-line); white-space:nowrap; }
 .lp-table tr:last-child td { border-bottom:0; }
 .lp-table td + td, .lp-table th + th { border-left:1px solid var(--premium-line); }
@@ -70,6 +70,9 @@
 .lp-session-row { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; border-bottom:1px solid var(--premium-line); padding:12px 0; font-size:12px; }
 .lp-note { color:var(--premium-muted); font-size:12px; line-height:1.7; }
 .lp-error { margin-bottom:12px; color:var(--premium-danger); font-size:12px; }
+.lp-halaman .lp-chart .kf-chart-legend li { color:var(--premium-ink); }
+.lp-contenu .text-muted-foreground { color:var(--premium-muted); }
+.lp-contenu .text-gold-light { color:var(--gold-krem); }
 @media(min-width:1024px) {
   main:has(.lp-halaman) > div.lg\:flex { position:absolute; top:12px; right:24px; padding-top:0; }
   main:has(.lp-halaman) > .header-fitur { padding-top:28px; margin-bottom:10px; }

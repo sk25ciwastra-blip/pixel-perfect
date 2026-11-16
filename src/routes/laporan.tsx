@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
-import { BarChart3, BedDouble, CalendarDays, ClipboardCheck, History, TrendingUp, Coins, Users, UserRound, Layers, UserRoundPlus, Settings, Download, Search, Eye } from 'lucide-react';
+import { BarChart3, BedDouble, CalendarDays, ClipboardCheck, History, TrendingUp, Coins, Users, UserRound, Layers, UserRoundPlus, Settings, Download, Search, Eye, ReceiptText } from 'lucide-react';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { KeuanganArus } from '@/components/keuangan-arus';
@@ -66,11 +66,11 @@ function Halaman() {
     <Kerangka judul="Laporan Operasional" keterangan="Analisis aktivitas, pendapatan, dan kinerja operasional homestay.">
       <div className="lp-halaman">
       <nav className="lp-tabs" aria-label="Bagian laporan">
-        {daftarBagian.map((b) => (
-          <Link key={b.kode} to="/laporan" search={{ bagian: b.kode }}
-            aria-current={bagian === b.kode ? 'page' : undefined}>
-            <b.ikon />{b.label}
-          </Link>
+        {daftarBagian.filter(b => b.kode !== 'riwayat').map((b) => (
+          <span key={b.kode} className="contents">
+            {b.kode === 'harian' && <><Link to="/transaksi"><ReceiptText />Transaksi</Link><Link to="/housekeeping"><BedDouble />Kamar &amp; Housekeeping</Link></>}
+            <Link to="/laporan" search={{ bagian: b.kode }} aria-current={bagian === b.kode ? 'page' : undefined}><b.ikon />{b.label}</Link>
+          </span>
         ))}
       </nav>
       <section className="lp-contenu">
