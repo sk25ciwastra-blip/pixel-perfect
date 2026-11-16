@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { Eye, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, History, MapPin, CalendarDays, Users, ChevronRight } from 'lucide-react';
+import { Eye, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, History, MapPin, CalendarDays, Users, ChevronRight, BedDouble, FileText, X, Clock, Layers, CircleCheck, Info, ReceiptText } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { usePeran } from '@/lib/peran';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import '@/components/tamu.css';
+import '@/components/detail-tamu.css';
 import { empatDigitWA, kunjunganTamu, urutTamu } from '@/lib/tamu-tampilan';
 
 export const Route = createFileRoute('/tamu')({
