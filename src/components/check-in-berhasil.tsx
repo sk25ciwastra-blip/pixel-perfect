@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 import { featureFlags } from '@/lib/feature-flags';
 import { rupiah } from '@/lib/data-contoh';
-import logoPopup from '@/assets/logo-popup-original-emas-final.png.asset.json';
+import logoPopup from '@/assets/logo-popup-management-emas.png.asset.json';
 import '@/components/check-in-berhasil.css';
 
 export function CheckInBerhasil({ transactionNumber, room, roomType, packageName, onClose }: {
