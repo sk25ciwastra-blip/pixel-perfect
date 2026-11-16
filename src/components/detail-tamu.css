@@ -122,7 +122,7 @@
   background: linear-gradient(180deg, color-mix(in oklab, var(--gold) 88%, var(--card)), color-mix(in oklab, var(--gold-krem) 92%, var(--card)));
   border-bottom: 1px solid color-mix(in oklab, var(--gold-krem) 60%, transparent);
 }
-.dt-tabel tbody td { padding: 9px 12px; border-bottom: 1px solid color-mix(in oklab, var(--premium-line) 75%, transparent); white-space: nowrap; }
+.dt-tabel tbody td { padding: 8px 9px; border-bottom: 1px solid color-mix(in oklab, var(--premium-line) 75%, transparent); white-space: nowrap; }
 .dt-tabel tbody tr:last-child td { border-bottom: 0; }
 .dt-tabel tbody tr:hover td { background: color-mix(in oklab, var(--gold) 7%, transparent); }
 .dt-nomor { color: color-mix(in oklab, var(--premium-ink) 60%, transparent); }
