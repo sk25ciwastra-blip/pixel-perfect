@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
@@ -13,6 +13,7 @@ import { labelStatusKamar, type StatusKamar } from "@/lib/data-contoh";
 import { useTable, type Room } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
 import { usePeran } from "@/lib/peran";
+import { roomOvertimeIndicator } from "@/lib/room-overtime";
 
 export const Route = createFileRoute("/kamar")({
   head: () => meta("Status Kamar", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
@@ -90,6 +91,11 @@ function HalamanKamar() {
   const queryClient = useQueryClient();
   const canCheckIn = bolehCheckIn(posisiKode);
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const [waktuSekarang, setWaktuSekarang] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = window.setInterval(() => setWaktuSekarang(Date.now()), 30_000);
+    return () => window.clearInterval(tick);
+  }, []);
   const rooms = useTable("rooms");
   const types = useTable("room_types");
   const transactions = useTable("transactions");
@@ -243,6 +249,7 @@ function HalamanKamar() {
                               new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
                           )[0]
                       : undefined;
+                  const overtime = transaction ? roomOvertimeIndicator(transaction, waktuSekarang).needsAction : false;
                   const housekeepingJob =
                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
                   const checklist = latestChecklist.get(room.id);
@@ -253,7 +260,7 @@ function HalamanKamar() {
                       key={room.id}
                       className="panel-mewah group relative flex flex-col overflow-hidden p-4 pl-5 transition hover:-translate-y-0.5 hover:border-gold/50"
                     >
-                      <span className={`absolute inset-y-0 left-0 w-1 ${latar[status]}`} aria-hidden="true" />
+                      <span className={`absolute inset-y-0 left-0 w-1 ${overtime ? "bg-bahaya-foreground" : latar[status]}`} aria-hidden="true" />
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-[0.6rem] font-semibold tracking-[0.3em] text-muted-foreground">KAMAR</p>
@@ -269,6 +276,11 @@ function HalamanKamar() {
                       <span className={`mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-current/30 bg-navy-deep/70 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wider ${teks[status]}`}>
                         <span className={`size-1.5 rounded-full ${latar[status]}`} />{labelStatusKamar[status]}
                       </span>
+                      {overtime && (
+                        <div role="status" className="mt-2 rounded-lg border border-bahaya-foreground/40 bg-bahaya/15 px-2.5 py-1.5 text-xs font-bold text-bahaya-foreground">
+                          PERLU TINDAKAN · Overtime lebih dari 120 menit
+                        </div>
+                      )}
                       <div className="mt-3 h-px bg-gradient-to-r from-gold/25 to-transparent" />
 
                       {transaction && (
