@@ -1,5 +1,10 @@
 /* Page-scoped presentation: never changes the shared shell or financial actions. */
 .kf-halaman { min-width: 0; }
+@media (min-width:1024px) {
+  main:has(.kf-halaman) > div.lg\:flex { position:absolute; top:12px; right:24px; padding-top:0; }
+  main:has(.kf-halaman) > .header-fitur { padding-top:28px; margin-bottom:12px; }
+  main:has(.kf-halaman) > .header-fitur > div:last-child { padding-bottom:18px; }
+}
 .kf-tabs { display:flex; gap:10px; margin:-10px 0 16px; overflow-x:auto; padding:3px 0 5px; scrollbar-width:thin; }
 .kf-tabs button { flex:1 0 auto; height:38px; border-radius:24px; border:1px solid var(--gold-dark); background:var(--permukaan-mewah); color:var(--foreground); padding:0 19px; font-size:12px; gap:9px; box-shadow:var(--shadow-lembut); }
 .kf-tabs button[aria-pressed=true], .kf-periode button[aria-pressed=true] { background:var(--success-metal); color:var(--premium-ink); border-color:var(--gold-light); }
