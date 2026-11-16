@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { Eye, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, History, MapPin, CalendarDays, Users, ChevronRight } from 'lucide-react';
+import { Eye, Search, Plus, ArrowDownUp, Pencil, UserRound, NotebookPen, CalendarDays, Users, BedDouble, FileText, X, Clock, Layers, CircleCheck, Info, ReceiptText } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { usePeran } from '@/lib/peran';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import '@/components/tamu.css';
+import '@/components/detail-tamu.css';
 import { empatDigitWA, kunjunganTamu, urutTamu } from '@/lib/tamu-tampilan';
 
 export const Route = createFileRoute('/tamu')({
@@ -21,11 +22,19 @@ function normalisasiNomor(value: string) {
   const digits = value.replace(/\D/g, '');
   return digits.startsWith('62') ? '0' + digits.slice(2) : digits;
 }
-function tanggalWib(value: string) {
-  return new Date(value).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' });
+function tanggalPendekWib(value: string) {
+  return new Date(value).toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' });
 }
-function waktuWib(value: string) {
-  return new Date(value).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
+function jamWib(value: string) {
+  return new Date(value).toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false });
+}
+function rupiah(nilai: number) {
+  return 'Rp' + nilai.toLocaleString('id-ID');
+}
+function terbanyak(items: string[]) {
+  const hitung = new Map<string, number>();
+  for (const item of items) if (item !== '—') hitung.set(item, (hitung.get(item) ?? 0) + 1);
+  return [...hitung.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'id-ID')).at(0)?.[0] ?? '—';
 }
 const statusTransaksi: Record<string, string> = { booking: 'BOOKING', check_in: 'CHECK-IN', check_out: 'SELESAI', cancelled: 'DIBATALKAN' };
 function pembuatCatatan(role: string | null, name: string | null) {
@@ -48,16 +57,15 @@ function IkonWhatsApp({ className = "size-5" }: { className?: string }) {
   return <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.05 0C5.46 0 .1 5.36.1 11.95c0 2.1.55 4.16 1.6 5.98L0 24l6.23-1.63a11.96 11.96 0 0 0 5.82 1.49h.01c6.58 0 11.94-5.36 11.94-11.95 0-3.2-1.24-6.2-3.48-8.43ZM12.05 21.85a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.7.97.99-3.61-.24-.37a9.87 9.87 0 0 1-1.51-5.3c0-5.48 4.46-9.94 9.94-9.94a9.87 9.87 0 0 1 7.03 2.91 9.87 9.87 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94Zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.2 5.08 4.49.71.31 1.27.5 1.7.64.71.22 1.36.19 1.87.12.57-.09 1.77-.73 2.02-1.43.25-.7.25-1.3.17-1.43-.07-.12-.27-.2-.57-.35Z" /></svg>;
 }
 
-function InformasiTamu({ label, value, icon: Icon }: { label: string; value: string; icon: React.ComponentType<{ className?: string }> }) {
-  return <div className="flex min-w-0 items-end gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-lg border border-gold/25 bg-primary-soft/30 text-gold"><Icon className="size-5" /></span><div className="min-w-0 flex-1"><dt className="mb-1 text-xs text-muted-foreground">{label}</dt><dd className="min-h-10 rounded-lg border border-gold/25 bg-navy-deep/60 px-3 py-2 text-sm font-medium leading-relaxed break-words">{value}</dd></div></div>;
-}
-
 function HalamanTamu() {
   const { posisiKode } = usePeran();
   const readOnly = posisiKode === 'inspector';
   const { rows, loading, error, refresh } = useTable('guests');
   const transactions = useTable('transactions');
   const notes = useTable('guest_notes');
+  const rooms = useTable('rooms');
+  const roomTypes = useTable('room_types');
+  const packages = useTable('packages');
   const [cari, setCari] = useState('');
   const [urutan, setUrutan] = useState<'nama' | 'terbanyak' | 'tersedikit'>('nama');
   const [open, setOpen] = useState(false);
@@ -71,12 +79,10 @@ function HalamanTamu() {
   const [saving, setSaving] = useState(false);
   const [detailTamu, setDetailTamu] = useState<Guest | null>(null);
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
-  const [semuaTransaksi, setSemuaTransaksi] = useState(false);
-  const [semuaCatatan, setSemuaCatatan] = useState(false);
+  const [tabDetail, setTabDetail] = useState<'kunjungan' | 'transaksi' | 'booking' | 'catatan'>('kunjungan');
   const detailTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
-    setSemuaTransaksi(false);
-    setSemuaCatatan(false);
+    setTabDetail('kunjungan');
   }, [detailTamu?.id]);
   const queryText = cari.trim().toLocaleLowerCase('id-ID');
   const queryDigits = normalisasiNomor(cari);
@@ -85,10 +91,20 @@ function HalamanTamu() {
   const jumlahKunjungan = (id: string) => kunjunganTamu(transactions.rows, id).length;
   const detail = rows.find(t => t.id === detailTamu?.id) ?? detailTamu;
   const riwayat = detail ? transaksiTamu(detail.id) : [];
-  const pertama = detail ? kunjunganTamu(transactions.rows, detail.id).map(t => t.started_at).filter((time): time is string => !!time).sort().at(0) : undefined;
   const terakhir = detail ? kunjunganTamu(transactions.rows, detail.id).map(t => t.started_at).filter((time): time is string => !!time).sort().at(-1) : undefined;
   const catatanTamu = detail ? notes.rows.filter(n => n.guest_id === detail.id).sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id)) : [];
   const daftarCatatan = catatanTamu.length ? catatanTamu : detail?.notes.trim() ? [{ id: 'legacy', body: detail.notes, author_role: null, author_name: null, created_at: null }] : [];
+  const nomorKamar = (id: string) => rooms.rows.find(r => r.id === id)?.room_number ?? '—';
+  const tipeKamar = (id: string) => { const kamar = rooms.rows.find(r => r.id === id); return roomTypes.rows.find(t => t.id === kamar?.room_type_id)?.name ?? '—'; };
+  const namaPaket = (id: string | null) => packages.rows.find(p => p.id === id)?.name ?? '—';
+  const kunjunganList = detail ? kunjunganTamu(transactions.rows, detail.id).sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id)) : [];
+  const bookingList = riwayat.filter(t => t.status === 'booking');
+  const barisRiwayat = tabDetail === 'booking' ? bookingList : tabDetail === 'transaksi' ? riwayat : kunjunganList;
+  const totalTransaksi = riwayat.reduce((sum, t) => sum + (t.price_snapshot ?? t.base_price_snapshot ?? 0), 0);
+  const tipeFavorit = terbanyak(riwayat.map(t => tipeKamar(t.room_id)));
+  const paketFavorit = terbanyak(riwayat.map(t => namaPaket(t.package_id)));
+  const tamuUmum = riwayat.length ? Math.round(riwayat.reduce((sum, t) => sum + (t.guest_count ?? 0), 0) / riwayat.length) : 0;
+  const catatanPreferensi = daftarCatatan[0]?.body ?? '—';
 
   function edit(t?: Guest, hanyaCatatan = false) {
     setCatatanSaja(hanyaCatatan);
@@ -153,14 +169,16 @@ function HalamanTamu() {
       </div>
       <Dialog.Root open={(!!detail || open) && !detailTransactionId} onOpenChange={value => { if (!value && !saving && !detailTransactionId) tutup(); }}>
         <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-navy-deep/75 backdrop-blur-sm" />
-          <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className="fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut">
-            <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
+          <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { if (detailTransactionId) { event.preventDefault(); return; } if (detailTrigger.current?.isConnected) { event.preventDefault(); detailTrigger.current.focus(); } }} className={open ? "fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[720px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-gold/30 bg-background text-base shadow-lembut" : "detail-tamu-popup fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[1130px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto text-base"}>
+            {open ? <header className="relative isolate overflow-hidden border-b border-gold/20 bg-navy-deep px-5 py-4 sm:px-7 sm:py-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0"><p className="text-[10px] font-semibold text-gold">BATURADEN 25 HOMESTAY</p>
-                <Dialog.Title className="mt-1.5 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{open ? catatanSaja ? 'Tambah Catatan' : editing ? 'Perbarui Data' : 'Tambah Tamu' : 'Detail Tamu'}</Dialog.Title></div>
-                {!open && detail && !readOnly && <Button className="h-11 shrink-0 gap-2 px-3 text-sm" onClick={() => edit(detail)}><Pencil className="size-4" />Perbarui Data</Button>}
+                <Dialog.Title className="mt-1.5 font-serif text-3xl leading-tight text-foreground sm:text-4xl">{catatanSaja ? 'Tambah Catatan' : editing ? 'Perbarui Data' : 'Tambah Tamu'}</Dialog.Title></div>
               </div>
-            </header>
+            </header> : <header className="dt-header">
+              <div className="dt-judul"><BedDouble aria-hidden="true" /><Dialog.Title asChild><h2>Detail Tamu</h2></Dialog.Title></div>
+              <Dialog.Close asChild><button type="button" className="dt-tutup-ikon" aria-label="Tutup detail tamu"><X className="size-5" /></button></Dialog.Close>
+            </header>}
             {open && !readOnly ? <form onSubmit={save}>
               <div className="space-y-5 p-5 sm:p-7">
                 {!catatanSaja && <div className="grid gap-4 sm:grid-cols-2">{([['Nama lengkap', nama, setNama], ['Nomor HP/WhatsApp', telepon, setTelepon], ['Alamat', alamat, setAlamat]] as const).map(([label, value, setter]) => <label key={label} className={`block min-w-0 text-base ${label === 'Alamat' ? 'sm:col-span-2' : ''}`}><span className="font-medium text-gold-light">{label}</span><input required value={value} onChange={e => setter(e.target.value)} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>)}</div>}
@@ -170,33 +188,74 @@ function HalamanTamu() {
               </div>
               <footer className="flex flex-wrap justify-end gap-3 border-t border-gold/20 bg-navy-deep/50 px-5 py-4 sm:px-7"><Button type="button" variant="outline" className="h-11 text-base" disabled={saving} onClick={() => { setOpen(false); setEditing(null); if (!detail) tutup(); }}>Batal</Button><Button type="submit" className="h-11 text-base" disabled={saving}>{saving ? 'Menyimpan…' : catatanSaja ? 'Simpan Catatan' : 'Simpan'}</Button></footer>
             </form> : detail && <>
-              <div className="space-y-3 p-4 sm:p-5">
-                <section className="rounded-xl border border-gold/30 bg-navy-deep/35 p-4">
-                  <h3 className="flex items-center gap-2 border-b border-gold/20 pb-3 text-sm font-semibold text-gold"><UserRound className="size-5" />INFORMASI TAMU</h3>
-                  <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                    <InformasiTamu label="Nama Tamu" value={detail.full_name} icon={UserRound} />
-                    <InformasiTamu label="Total Kunjungan" value={transactions.loading ? 'Memuat…' : `${jumlahKunjungan(detail.id)} kali`} icon={Users} />
-                    <InformasiTamu label="Nomor WhatsApp" value={detail.phone} icon={IkonWhatsApp} />
-                    <InformasiTamu label="Kunjungan Pertama" value={pertama ? tanggalWib(pertama) : 'Belum tersedia'} icon={CalendarDays} />
-                    <InformasiTamu label="Alamat" value={detail.address || '—'} icon={MapPin} />
-                    <InformasiTamu label="Kunjungan Terakhir" value={terakhir ? tanggalWib(terakhir) : 'Belum tersedia'} icon={CalendarDays} />
-                  </dl>
-                  <p className="mt-3 text-xs text-muted-foreground">Terdaftar {tanggalWib(detail.created_at)}</p>
-                </section>
-                <div className="grid min-w-0 gap-3">
-                  <section className="min-w-0 rounded-xl border border-gold/30 bg-navy-deep/35 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-gold/20 pb-3"><h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gold"><NotebookPen className="size-5" />Catatan Tamu</h3>{daftarCatatan.length > 1 && <Button variant="ghost" size="sm" className="h-8 px-2 text-sm text-gold-light" onClick={() => setSemuaCatatan(!semuaCatatan)}>{semuaCatatan ? 'Ringkas' : 'Lihat Semua'}</Button>}</div>
-                    {notes.error && <p className="mt-3 text-sm text-muted-foreground">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
-                    <ul className={`mt-1 divide-y divide-border/60 ${semuaCatatan ? 'max-h-56 overflow-y-auto pr-3' : ''}`}>{(semuaCatatan ? daftarCatatan : daftarCatatan.slice(0, 1)).map(note => <li key={note.id} className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_210px] sm:items-center"><p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{note.body}</p><p className="text-right text-xs sm:border-l sm:border-gold/20 sm:pl-3 leading-relaxed text-muted-foreground"><span className="block break-words">{pembuatCatatan(note.author_role, note.author_name)}</span><span className="block">{note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</span></p></li>)}</ul>
-                    {!daftarCatatan.length && <p className="mt-3 text-base text-muted-foreground">Belum ada catatan tamu</p>}
-                  </section>
-                  <section className="min-w-0 rounded-xl border border-gold/30 bg-navy-deep/35 p-4"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-gold/20 pb-3"><h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gold"><History className="size-5" />Riwayat Transaksi</h3>{riwayat.length > 2 && <Button variant="ghost" size="sm" className="h-8 px-2 text-sm text-gold-light" onClick={() => setSemuaTransaksi(!semuaTransaksi)}>{semuaTransaksi ? 'Ringkas' : 'Lihat Semua'}</Button>}</div>
-                    {transactions.error && <p role="alert" className="mt-3 text-sm text-destructive">Riwayat transaksi belum dapat dimuat.</p>}
-                    <ul className={`mt-1 divide-y divide-border/60 ${semuaTransaksi ? 'max-h-56 overflow-y-auto pr-3' : ''}`}>{(semuaTransaksi ? riwayat : riwayat.slice(0, 2)).map(tr => <li key={tr.id} className="flex items-center gap-3 py-3"><span className="grid size-10 shrink-0 place-items-center rounded-lg border border-gold/20 bg-primary-soft/20 text-gold"><History className="size-5" /></span><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><Button type="button" variant="link" className="h-auto whitespace-normal break-all p-0 text-left font-mono text-sm text-gold" onClick={() => setDetailTransactionId(tr.id)}>{tr.transaction_number}</Button><span className="text-xs text-muted-foreground">•</span><span className="text-xs font-medium">{statusTransaksi[tr.status] ?? tr.status}</span></div><p className="mt-1 text-xs text-muted-foreground">{waktuWib(tr.created_at)}</p></div><Button size="icon" variant="ghost" className="size-8 shrink-0 text-gold-light" aria-label={`Detail transaksi ${tr.transaction_number}`} onClick={() => setDetailTransactionId(tr.id)}><ChevronRight className="size-4" /></Button></li>)}</ul>
-                    {!transactions.loading && !transactions.error && !riwayat.length && <p className="mt-3 text-base text-muted-foreground">Belum ada riwayat transaksi</p>}
-                  </section>
+              <div className="dt-tamu">
+                <span className="dt-avatar"><UserRound aria-hidden="true" /></span>
+                <div className="dt-identitas">
+                  <h3>{detail.full_name.toUpperCase()} · {empatDigitWA(detail.phone)}</h3>
+                  <p className="dt-telepon"><IkonWhatsApp className="size-[19px]" />{detail.phone}</p>
+                  <span className="dt-pill-status" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span>
+                </div>
+                <div className="dt-statistik">
+                  <div className="dt-stat"><span className="dt-stat-ikon"><BedDouble aria-hidden="true" /></span><div><p>Total Kunjungan</p><strong>{transactions.loading ? '…' : `${jumlahKunjungan(detail.id)} Kali`}</strong></div></div>
+                  <div className="dt-stat"><span className="dt-stat-ikon"><FileText aria-hidden="true" /></span><div><p>Total Transaksi</p><strong>{transactions.loading ? '…' : rupiah(totalTransaksi)}</strong></div></div>
+                  <div className="dt-stat"><span className="dt-stat-ikon"><CalendarDays aria-hidden="true" /></span><div><p>Kunjungan Terakhir</p><strong>{terakhir ? tanggalPendekWib(terakhir) : '—'}</strong></div></div>
                 </div>
               </div>
-              <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-gold/20 bg-navy-deep/50 px-4 py-4 sm:px-5"><Button variant="outline" className="h-11 text-sm text-gold-light" onClick={tutup}>Tutup</Button>{!readOnly && <Button className="h-11 gap-2 text-sm" onClick={() => openWhatsApp(detail.phone)}><IkonWhatsApp />Hubungi</Button>}</footer>
+              <section className="dt-bagian">
+                <h3 className="dt-bagian-judul"><Info aria-hidden="true" />Informasi Tamu</h3>
+                <dl className="dt-info-grid">
+                  <div><dt>Nama Lengkap</dt><dd>{detail.full_name.toUpperCase()}</dd></div>
+                  <div><dt>No. HP / WhatsApp</dt><dd><span className="dt-telepon-inline"><IkonWhatsApp className="size-[17px]" />{detail.phone}</span></dd></div>
+                  <div><dt>No. Whatsapp</dt><dd className="dt-tebal">{detail.phone || '—'}</dd></div>
+                  <div><dt>Email</dt><dd>—</dd></div>
+                  <div><dt>Alamat</dt><dd>{detail.address || '—'}</dd></div>
+                  <div><dt>Catatan</dt><dd>{catatanPreferensi}</dd></div>
+                </dl>
+              </section>
+              <section className="dt-bagian">
+                <h3 className="dt-bagian-judul"><Layers aria-hidden="true" />Preferensi &amp; Riwayat Umum</h3>
+                <div className="dt-pref">
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><BedDouble aria-hidden="true" /></span><div><p>Tipe Favorit</p><strong>{tipeFavorit}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><Layers aria-hidden="true" /></span><div><p>Paket Favorit</p><strong>{paketFavorit}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><Users aria-hidden="true" /></span><div><p>Jumlah Tamu Umum</p><strong>{tamuUmum ? `${tamuUmum} Orang` : '—'}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><NotebookPen aria-hidden="true" /></span><div><p>Catatan Preferensi</p><strong>{catatanPreferensi}</strong></div></div>
+                </div>
+              </section>
+              <div className="dt-tab-bar" role="tablist" aria-label="Riwayat tamu">
+                <button type="button" role="tab" aria-selected={tabDetail === 'kunjungan'} data-aktif={tabDetail === 'kunjungan'} className="dt-tab" onClick={() => setTabDetail('kunjungan')}><Clock aria-hidden="true" />Riwayat Kunjungan ({kunjunganList.length})</button>
+                <button type="button" role="tab" aria-selected={tabDetail === 'transaksi'} data-aktif={tabDetail === 'transaksi'} className="dt-tab" onClick={() => setTabDetail('transaksi')}><Layers aria-hidden="true" />Riwayat Transaksi</button>
+                <button type="button" role="tab" aria-selected={tabDetail === 'booking'} data-aktif={tabDetail === 'booking'} className="dt-tab" onClick={() => setTabDetail('booking')}><CalendarDays aria-hidden="true" />Riwayat Booking</button>
+                <button type="button" role="tab" aria-selected={tabDetail === 'catatan'} data-aktif={tabDetail === 'catatan'} className="dt-tab" onClick={() => setTabDetail('catatan')}><NotebookPen aria-hidden="true" />Catatan</button>
+              </div>
+              {tabDetail === 'catatan' ? <>
+                {notes.error && <p className="dt-kosong">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
+                {daftarCatatan.length ? <ul className="dt-catatan-list">{daftarCatatan.map(note => <li key={note.id} className="dt-catatan-item"><p>{note.body}</p><p className="dt-catatan-meta">{pembuatCatatan(note.author_role, note.author_name)} · {note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</p></li>)}</ul> : !notes.error && <p className="dt-kosong">Belum ada catatan tamu</p>}
+              </> : <>
+                {transactions.error && <p role="alert" className="dt-kosong">Riwayat transaksi belum dapat dimuat.</p>}
+                {barisRiwayat.length ? <div className="dt-tabel-wrap"><table className="dt-tabel">
+                  <thead><tr><th>No.</th><th>Tgl Kunjungan</th><th>No. Transaksi</th><th>Kamar</th><th>Tipe</th><th>Paket</th><th>Check-in</th><th>Check-out</th><th>Total</th><th>Status</th><th aria-label="Struk" /></tr></thead>
+                  <tbody>{barisRiwayat.map((tr, index) => <tr key={tr.id}>
+                    <td className="dt-nomor">{index + 1}</td>
+                    <td>{tanggalPendekWib(tr.started_at ?? tr.created_at)}</td>
+                    <td className="dt-mono">{tr.transaction_number}</td>
+                    <td><span className="dt-kamar-pill">{nomorKamar(tr.room_id)}</span></td>
+                    <td>{tipeKamar(tr.room_id)}</td>
+                    <td>{namaPaket(tr.package_id)}</td>
+                    <td>{tr.started_at ? jamWib(tr.started_at) : '—'}</td>
+                    <td>{tr.checked_out_at ?? tr.ends_at ? jamWib((tr.checked_out_at ?? tr.ends_at) as string) : '—'}</td>
+                    <td>{rupiah(tr.price_snapshot ?? tr.base_price_snapshot ?? 0)}</td>
+                    <td><span className="dt-status" data-state={tr.status}>{tr.status === 'check_out' && <CircleCheck aria-hidden="true" />}{statusTransaksi[tr.status] ?? tr.status}</span></td>
+                    <td><button type="button" className="dt-struk" aria-label={`Detail transaksi ${tr.transaction_number}`} onClick={() => setDetailTransactionId(tr.id)}><ReceiptText aria-hidden="true" /></button></td>
+                  </tr>)}</tbody>
+                </table></div> : !transactions.loading && !transactions.error && <p className="dt-kosong">{tabDetail === 'booking' ? 'Belum ada riwayat booking' : 'Belum ada riwayat transaksi'}</p>}
+              </>}
+              <footer className="dt-footer">
+                <div className="dt-footer-kiri">
+                  {!readOnly && <button type="button" className="dt-tombol" onClick={() => edit(detail)}><Pencil aria-hidden="true" />Perbarui Data</button>}
+                  {!readOnly && <button type="button" className="dt-tombol" onClick={() => openWhatsApp(detail.phone)}><IkonWhatsApp className="size-[18px]" />Hubungi</button>}
+                </div>
+                <button type="button" className="dt-tutup" onClick={tutup}>Tutup</button>
+              </footer>
             </>}
           </Dialog.Content>
         </Dialog.Portal>
