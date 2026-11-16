@@ -1,0 +1,10 @@
+diff --git a/src/routes/kamar.tsx b/src/routes/kamar.tsx
+--- a/src/routes/kamar.tsx
++++ b/src/routes/kamar.tsx
+@@ -64,7 +64,6 @@ function formatIssueDetails(checklist: ChecklistRow) {
+     !checklist.tissue_ok && (checklist.tissue_reason || "Tisu"),
+     !checklist.towel_ok && (checklist.towel_reason || "Handuk"),
+     !checklist.tv_remote_ok && (checklist.tv_remote_reason || "Remote TV"),
+-    checklist.issue_note.trim(),
+   ].filter((item): item is string => Boolean(item));
+ }
