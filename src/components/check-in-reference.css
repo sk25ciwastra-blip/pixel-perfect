@@ -1,4 +1,5 @@
 .checkin-reference { --foreground: var(--checkin-ink); --muted-foreground: var(--checkin-muted); --background: var(--checkin-paper); --input: var(--checkin-border); --secondary: var(--checkin-read); --gold: var(--checkin-gold); --gold-light: var(--checkin-gold); color-scheme: light; color: var(--checkin-ink); font-family: var(--font-sans); max-width: 960px; padding: 0; border-radius: 12px; background: var(--checkin-paper); box-shadow: var(--checkin-shadow); }
+.checkin-reference { --checkin-paper: var(--success-paper); --checkin-read: var(--premium-highlight); --checkin-panel-border: var(--premium-line); background:var(--finance-paper-satin); box-shadow:var(--premium-shadow),var(--finance-paper-relief); }
 .checkin-reference .ci-header { position: relative; padding: 12px 28px 16px; margin: 0; min-height: 84px; color: var(--kamar-popup-white); background: var(--checkin-head); }
 .ci-header p { font-size: 12px; line-height: 18px; font-weight: 500; }
 .ci-header-title { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; margin-top: 6px; }
@@ -8,6 +9,15 @@
 .ci-form { padding: 16px; }
 .ci-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 .ci-pane { min-width: 0; padding: 0 16px 16px; border: 1px solid var(--checkin-panel-border); border-radius: 12px; }
+.checkin-reference .ci-pane { background:var(--success-surface); box-shadow:var(--premium-panel-shadow); border-radius:8px; }
+.checkin-reference .ci-pane input,.checkin-reference .ci-pane select,.checkin-reference .ci-pane textarea { background:var(--premium-paper); box-shadow:var(--finance-field-inset); transition:border-color .18s ease,box-shadow .18s ease; }
+.checkin-reference .ci-pane input:focus-visible,.checkin-reference .ci-pane select:focus-visible,.checkin-reference .ci-pane textarea:focus-visible { outline:2px solid var(--checkin-gold); outline-offset:2px; }
+.checkin-reference .ci-pane label > div[aria-readonly] { box-shadow:var(--finance-field-inset); }
+.checkin-reference .ci-summary .ci-total,.checkin-reference .ci-summary .ci-balance { box-shadow:var(--premium-panel-shadow); }
+.checkin-reference .ci-methods button,.checkin-reference .ci-footer-actions button { box-shadow:var(--premium-panel-shadow); transition:box-shadow .18s ease,filter .18s ease; }
+.checkin-reference .ci-methods button[aria-pressed='true'],.checkin-reference .ci-footer-actions button[type='submit'] { box-shadow:var(--finance-metal-relief); }
+@media (hover:hover) and (pointer:fine) { .checkin-reference .ci-footer-actions button:not(:disabled):hover,.checkin-reference .ci-methods button:not(:disabled):hover { box-shadow:var(--finance-hover-relief); } }
+@media (prefers-reduced-motion:reduce) { .checkin-reference .ci-pane input,.checkin-reference .ci-pane select,.checkin-reference .ci-pane textarea,.checkin-reference .ci-methods button,.checkin-reference .ci-footer-actions button { transition:none; } }
 .ci-pane h3 { position: relative; display: flex; align-items: center; gap: 12px; padding: 0 0 14px; margin-bottom: 12px; min-height: 44px; font-size: 22px; line-height: 28px; font-weight: 800; color: var(--checkin-heading); }
 .ci-pane h3::after { content: ''; position: absolute; bottom: 4px; left: 0; width: 92px; height: 5px; border-radius: 4px; background: var(--checkin-button); }
 .ci-pane h3 svg { width: 28px; height: 28px; color: var(--checkin-gold); stroke-width: 1.6; flex-shrink: 0; }

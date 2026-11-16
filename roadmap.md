@@ -1,5 +1,9 @@
 # Revisi tampilan Baturaden 25 Homestay
 
+## Formulir operasional — putih hangat 16 November
+- [x] Perhalus Check-in Langsung, Reservasi dan Pengeluaran dengan putih hangat serta relief ringan; ukuran, isian, data, aturan dan fungsi tetap.
+- [ ] Periksa ketiga formulir dengan akun aktif di komputer dan HP tanpa menyimpan transaksi.
+
 ## Detail Karyawan — referensi 16 November
 - [x] Susun popup dua kolom krem–emas sesuai referensi dengan profil/foto asli; isian/status tanpa sumber tetap —, tanpa sandi atau data contoh.
 - [x] Akun aktif komputer/HP: tujuh panel, baca profil tanpa error, tutup berjalan dan tanpa overflow; tiga tes ID/isian lulus, tanpa perubahan akun atau publikasi.
