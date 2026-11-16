@@ -174,7 +174,7 @@
 .dt-catatan-item p { margin: 0; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .dt-catatan-meta { margin-top: 6px; font-size: 13px; color: var(--premium-muted); }
 
-.dt-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 22px 15px; border-top: 1px solid var(--premium-line); }
+.dt-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; padding: 11px 22px 15px; border-top: 1px solid var(--premium-line); }
 .dt-footer-kiri { display: flex; flex-wrap: wrap; gap: 9px; }
 .dt-tombol {
   display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 12px; cursor: pointer;
@@ -186,8 +186,8 @@
 .dt-tombol svg { width: 16px; height: 16px; color: var(--gold-krem); }
 .dt-tombol:hover { transform: translateY(-1px); }
 .dt-tutup {
-  display: inline-flex; align-items: center; gap: 7px; padding: 10px 36px; border-radius: 13px; cursor: pointer;
-  font-family: var(--font-serif, serif); font-size: 18px; font-weight: 700; color: var(--premium-paper);
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 40px; padding: 7px 28px; border-radius: 11px; cursor: pointer;
+  font-family: var(--font-serif, serif); font-size: 16px; font-weight: 700; color: var(--premium-paper);
   background: var(--dt-metal);
   border: 1px solid color-mix(in oklab, var(--gold-krem) 80%, transparent);
   box-shadow: 0 6px 14px -5px color-mix(in oklab, var(--gold-krem) 70%, transparent), inset 0 1px 0 color-mix(in oklab, var(--card) 45%, transparent);
