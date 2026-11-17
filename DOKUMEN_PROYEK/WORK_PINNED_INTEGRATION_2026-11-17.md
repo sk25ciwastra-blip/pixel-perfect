@@ -42,7 +42,7 @@ that all four features are active after merging this PR.
 | Booking + assisted-session focused tests | 13 PASS | Against candidate; source assertions / representative logic |
 | Whole eight-file patch check/apply, TSX transpilation, combined invariants | PASS | Disposable copy of seven exact original fixtures + new helper |
 | Native PostgreSQL 17.11 concurrency / constraint tests | 5 PASS | Actual pending overtime trigger/index; minimal fixture schema |
-| Chromium checklist DOM acceptance | BLOCKED before launch | Environment denies browser singleton Unix socket (`Operation not permitted`); no DOM case PASS |
+| Chromium checklist DOM acceptance | **4 PASS** | GitHub-hosted Ubuntu 24.04, Playwright 1.56.1; actual checklist component with fake data/RPC, no external browser requests |
 | Authenticated browser/Cloud acceptance | NOT REACHED | Safe sync and separate data-write authorization required |
 
 The same 13 HK cases were used to validate the packaged patch and candidate; they
@@ -89,8 +89,9 @@ node scripts/verify-operational-lovable-integration.mjs
 
 The browser harness is prepared at `scripts/housekeeping-browser-local.test.mjs`.
 It uses an actual checklist component with fake data/RPC and rejects non-localhost
-requests. It has not completed a DOM test in this environment. Its callbacks must
-not be mistaken for Cloud transactions. It requires a browser-capable environment.
+requests. Its four DOM cases subsequently passed on a GitHub-hosted runner after specific
+Owner approval; the original Work browser launch remains historically blocked.
+Its fake callbacks must not be mistaken for Cloud transactions.
 
 ## Current release gate
 
@@ -109,10 +110,40 @@ job/TRX, READY, refresh/retry readback). Do not use override READY. Pending SQL
 activation still needs matching Cloud role/ACL/dependency review, backup/rollback
 readiness and specific Owner approval. Native fixture PASS alone is insufficient.
 
-Checkpoint integration preparation: **5/7 = 71.4%** (source export, combined patch,
-full typecheck, full build, native concurrency complete; browser acceptance and live
-integration outstanding). This is not total application completion.
+Checkpoint integration preparation: **6/7 = 85.7%** (source export, combined patch,
+full typecheck, full build, native concurrency and isolated component-browser
+acceptance complete; live integration outstanding). This is not total application
+completion. Authenticated multi-role/Cloud end-to-end acceptance is still required
+after integration before any operational GO.
 
 No merge/deploy/publish, Cloud SQL/data, DEMO reset, flags, reconnect or Lovable credit
 use. Owner's latest “ok lanjutkan” authorizes continued technical/review work; it is
 not treated as approval for those release actions.
+
+## Verified hosted-browser result — 17 November 2026, 07:46 WIB
+
+Specific Owner approval was received for the four isolated browser cases and a
+maximum 10-minute job. Run [43990081701](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/43990081701),
+job [133728128319](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/43990081701/job/133728128319),
+completed **success**. Logs show all four PASS lines and the final assertion:
+4 real browser cases PASS; no external requests and no Cloud writes.
+
+Tested PR source head: `d943c392661e5126603ff41c7eb7c6e1801a4cf8`; GitHub's
+disposable test merge ref: `6f5fcec...`, not a merge into main. Node v22.23.4,
+Playwright 1.56.1, Ubuntu 24.04. Tested component uses actual code, real Chromium DOM,
+and deliberately fake data, primitive Button and RPC/callbacks. This is not the
+full styled Housekeeping route, authenticated role/RLS or live Room 10 acceptance.
+
+Cases: empty answers send no RPC; post-commit refresh failure retries refresh only;
+returned RPC error freezes answers and retry keeps UUID; processing disables submit.
+
+Initial run [43989884664](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/43989884664)
+failed installing Chromium because ubuntu-latest was Ubuntu 26.04, unsupported by
+the pinned Playwright. No browser case ran there. Pinning Ubuntu 24.04 resolved it;
+application source was not changed. Existing action Node-20 deprecation warnings
+were nonfatal and left outside this task's scope.
+
+Automatic pull-request triggering was removed after success; workflow is manual-only
+on this review branch, preventing ordinary PR updates from repeating these passing
+cases. Both workflow/template use the supported image. No application changes were
+needed for the browser result; no merge, deploy, publish, Cloud mutation or flags.
