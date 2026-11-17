@@ -68,3 +68,27 @@ Next independent technical priority: cover payment-batch versus single-payment
 concurrency, fingerprint conflict rollback and post-closing refund immutability using
 actual remaining dependencies. Review existing Finance PASS records before selecting
 new cases. Can proceed locally/SELECT-only without Owner approval; activation cannot.
+
+## Continuation: five new batch cases PASS
+
+`finance-batch-concurrency.test.mjs` runs only the new batch cases, reusing setup
+but not executing any prior PASS cases. Two backend connections and observed lock
+wait verify combined settlement versus single payment and identical batch retry.
+Exactly two components total Rp100,000 remain, without overpayment or duplicate UUIDs.
+A fixture-only trigger forces the second component to fail after the first insert;
+assertions confirm zero payments and zero batch ledger rows survive. Removing that
+fault allows the same request/key retry to complete exactly two components. Changed
+fingerprint on a committed request is rejected without extra payments.
+
+Current Cloud combined RPC MD5 `00fc2bf9830a5d05c29691f7d09c9ddc` matched the
+exported function body by SELECT-only inspection after execution. No additional
+application RPC change was required. No previous four-case, six-case or broader
+Finance suites reran. No Cloud data writes, migration, merge or Lovable AI used.
+
+Batch checkpoint 5/5 = 100% local scoped, FAIL 0, authenticated Cloud/JWT/full-schema
+acceptance NOT REACHED. Overall source integration preparation remains 6/7 = 85.7%.
+Operational NO-GO. Payment retry/closing identity repair stays pending, separately
+from these baseline batch tests. Next independent work is post-closing refund versus
+immutable closing snapshot with actual refund RPC/dependencies; prior refund PASS
+coverage must first be checked. Local fixture/SELECT exports can proceed directly;
+Cloud SQL, data mutations, merge and release still require explicit Owner approval.
