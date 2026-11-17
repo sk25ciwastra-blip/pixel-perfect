@@ -1,26 +1,20 @@
-# REVIEW TEMPLATE ONLY. This path does not register a GitHub Actions workflow.
-# Activation requires separate Owner approval, then copy unchanged to
-# .github/workflows/b25-housekeeping-browser-review.yml on this PR branch.
+# Four approved component-browser cases passed on 17 November 2026.
+# Manual-only afterward: do not repeat passing tests on ordinary PR updates.
 name: B25 isolated checklist browser review
 
 on:
-  pull_request:
-    types: [synchronize, reopened]
-    paths:
-      - '.github/workflows/b25-housekeeping-browser-review.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: b25-hk-browser-review-${{ github.event.pull_request.number }}
+  group: b25-hk-browser-review-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   checklist-browser:
-    if: >-
-      github.event.pull_request.head.ref == 'fix/hk-operational-consolidated-20261117' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+    if: github.ref == 'refs/heads/fix/hk-operational-consolidated-20261117'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
