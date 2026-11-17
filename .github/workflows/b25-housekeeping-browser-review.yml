@@ -1,0 +1,48 @@
+# REVIEW TEMPLATE ONLY. This path does not register a GitHub Actions workflow.
+# Activation requires separate Owner approval, then copy unchanged to
+# .github/workflows/b25-housekeeping-browser-review.yml on this PR branch.
+name: B25 isolated checklist browser review
+
+on:
+  pull_request:
+    types: [synchronize, reopened]
+    paths:
+      - '.github/workflows/b25-housekeeping-browser-review.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-hk-browser-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checklist-browser:
+    if: >-
+      github.event.pull_request.head.ref == 'fix/hk-operational-consolidated-20261117' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out review branch without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install application dependencies without lifecycle scripts
+        run: npm install --ignore-scripts --no-package-lock --no-audit --no-fund
+      - name: Install isolated browser test dependency
+        run: npm install --prefix "$RUNNER_TEMP/b25-browser" --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Install Chromium and system dependencies
+        run: node "$RUNNER_TEMP/b25-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Run only the four unverified browser cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          export B25_SOURCE_ROOT="$GITHUB_WORKSPACE"
+          export B25_PLAYWRIGHT_MODULE="$RUNNER_TEMP/b25-browser/node_modules/playwright/index.mjs"
+          export B25_CHROMIUM="$(node --input-type=module -e 'const {chromium}=await import(process.env.B25_PLAYWRIGHT_MODULE); process.stdout.write(chromium.executablePath())')"
+          node scripts/housekeeping-browser-local.test.mjs
