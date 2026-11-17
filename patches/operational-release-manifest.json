@@ -32,12 +32,16 @@
     {
       "path": "src/lib/checklist-for-ready-job.ts",
       "sha256": null
+    },
+    {
+      "path": "src/routes/keuangan.tsx",
+      "sha256": "f8a0cbbc7742a9d28e4b5f5986c8b7b86b8ec9be31a4b9a8b5ada288a83fdc07"
     }
   ],
   "artifacts": [
     {
       "path": "patches/operational-integration-lovable-3218bd2.patch",
-      "sha256": "51f6ce3eaec3afabd960ff1a0900e1ff28c98dec1ca3fcc33fadce903bf4bf2c"
+      "sha256": "cfa9ded085e576aadd54dd64b3aca32fe8002f5ce96097a053c0bf2f5275b2bf"
     },
     {
       "path": "supabase/pending/20261113150233_overtime_walkin_guard.sql",

@@ -1,5 +1,7 @@
 # Baturaden 25 Homestay — employee acceptance and activation gate
 
+> Latest Closing preflight: see CLOSING_SESSION_PREFLIGHT_2026-11-17.md. The source package now contains NINE files including Finance context alignment. Earlier eight-file references below describe the dd8dc97 checkpoint; use the current manifest and package once. New source repair is local/GitHub only, not active in Lovable. DEMO session still OPEN; no Closing authorized or executed.
+
 17 November 2026 WIB. Latest verified live scenario: BTRDTRX-000028.
 This checkpoint supersedes the earlier pre-submit-only status in this file.
 Operational decision remains NO-GO; successful normal flow does not activate pending fixes.

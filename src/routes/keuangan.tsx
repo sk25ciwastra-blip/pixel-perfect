@@ -1,15 +1,14 @@
 import { rpc } from "@/lib/data-live";
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Wallet, Banknote, QrCode, Landmark, Percent, RotateCcw, ArrowUpRight, ArrowDownLeft, ClipboardCheck, CalendarDays, ReceiptText, Coins, Check, Search, SlidersHorizontal, Send, BadgeCheck, Clock, Upload, Info, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Kerangka } from '@/components/kerangka';
 import { useTable } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
-import { supabase } from '@/integrations/supabase/client';
 import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
-import { setSesiKasKonteks } from '@/lib/sesi-kas';
+import { useSesiKasKonteks } from '@/lib/sesi-kas';
 
 export const Route = createFileRoute('/keuangan')({
   head: () => meta('Keuangan', 'Sesi kas, penerimaan, closing, dan pengawasan keuangan.'),
@@ -63,11 +62,12 @@ function HalamanKeuangan() {
   const isTraining = training.is_training;
   const isOwner = posisiKode === 'owner' && !isTraining;
   const canCloseOthers = !isTraining && (isOwner || posisiKode === 'supervisor');
-  const [userId, setUserId] = useState('');
-  const [selectedSessionId, setSelectedSessionId] = useState('');
+  const { activeSession: selectedSession, ownSession, needsAssistedContext, selectAssistedSession } = useSesiKasKonteks();
+  const activeSession = isTraining ? selectedSession : ownSession;
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState<Summary>({});
+  const [summarySessionId, setSummarySessionId] = useState('');
   const [openingCash, setOpeningCash] = useState('0');
   const [setorCash, setSetorCash] = useState('0');
   const [setorTransfer, setSetorTransfer] = useState('0');
@@ -101,28 +101,6 @@ function HalamanKeuangan() {
   const payments = useTable('payments');
   const refunds = useTable('finance_refunds', isOwner);
 
-  useEffect(() => {
-    void supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? ''));
-  }, []);
-
-  const activeSession = useMemo(
-    () => isTraining
-      ? sessions.rows.find((session) => session.id === training.session_id && session.status === 'OPEN')
-      : sessions.rows.find((session) => session.opened_by === userId && session.status === 'OPEN'),
-    [isTraining, sessions.rows, training.session_id, userId],
-  );
-
-  const selectedSession = activeSession ?? (canCloseOthers
-    ? sessions.rows.find((session) => session.id === selectedSessionId && session.status === 'OPEN')
-      ?? sessions.rows.find((session) => session.status === 'OPEN')
-    : undefined);
-
-  useEffect(() => {
-    if (!sessions.loading) {
-      setSesiKasKonteks(selectedSession?.id ?? null);
-    }
-  }, [selectedSession?.id, sessions.loading]);
-
   async function refreshFinance() {
     await Promise.all([sessions.refresh(), deposits.refresh(), payments.refresh(), refunds.refresh(), banks.refresh(), employees.refresh(), handoffs.refresh(), expenses.refresh()]);
     if (selectedSession) {
@@ -130,17 +108,29 @@ function HalamanKeuangan() {
         _session_id: selectedSession.id,
       });
       setSummary((data as Summary | null) ?? {});
+      setSummarySessionId(data ? selectedSession.id : '');
     }
   }
 
   useEffect(() => {
-    if (!selectedSession) {
-      setSummary({});
-      return;
+    let cancelled = false;
+    setSummary({});
+    setSummarySessionId('');
+    setSetorCash('0');
+    setSetorTransfer('0');
+    setDiLaci('0');
+    setDibawa('0');
+    setRecipientUserId('');
+    setClosingReason('');
+    if (selectedSession) {
+      const sessionId = selectedSession.id;
+      void rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', { _session_id: sessionId }).then(({ data, error }) => {
+        if (cancelled) return;
+        setSummary(error ? {} : (data as Summary | null) ?? {});
+        setSummarySessionId(!error && data ? sessionId : '');
+      });
     }
-    void rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', { _session_id: selectedSession.id }).then(({ data }) => {
-      setSummary((data as Summary | null) ?? {});
-    });
+    return () => { cancelled = true; };
   }, [isTraining, selectedSession?.id]);
 
   async function run(action: () => Promise<{ error?: { message: string } | null }>) {
@@ -162,7 +152,7 @@ function HalamanKeuangan() {
     });
   }
 
-  const expectedCash = angkaRingkasan(summary.expected_cash)
+  const expectedCash = summarySessionId !== selectedSession?.id ? null : angkaRingkasan(summary.expected_cash)
     ?? angkaRingkasan(summary.snapshot?.expected_cash)
     ?? (() => {
       const openingCash = angkaRingkasan(summary.opening_cash);
@@ -289,6 +279,7 @@ function HalamanKeuangan() {
 
   return (
     <Kerangka judul="Keuangan" keterangan="Penerimaan, sesi kas, closing, dan pengawasan Owner">
+      {needsAssistedContext && <p role="alert" className="mb-4 rounded-md bg-secondary px-3 py-2 text-sm">Pilih sesi kas OPEN melalui Bantu Sesi Aktif. Sesi tidak dialihkan otomatis.</p>}
       {message && <p role="alert" className="mb-4 rounded-md bg-secondary px-3 py-2 text-sm">{message}</p>}
       {isTraining && (
         <p className="mb-4 rounded-md bg-perlu px-3 py-2 text-sm text-perlu-foreground">
@@ -343,7 +334,7 @@ function HalamanKeuangan() {
           )}
           {selectedSession && (
             <Panel judul="Closing Sesi Kas" sub="Input hasil perhitungan kas di akhir sesi.">
-              {canCloseOthers && !activeSession && <select value={selectedSession.id} onChange={(e) => setSelectedSessionId(e.target.value)} className={`${input} mb-4`}>{sessions.rows.filter((session) => session.status === 'OPEN').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select>}
+              {canCloseOthers && <select aria-label="Sesi kas yang ditangani" value={selectedSession.id} onChange={(e) => selectAssistedSession(e.target.value)} className={`${input} mb-4`}>{sessions.rows.filter((session) => session.status === 'OPEN').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select>}
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.5fr]">
                 <label className={label}><span className="mb-1.5 block">Total Cash (Fisik)</span><RpInput value={String(totalCash)} readOnly /></label>
                 <label className={label}><span className="mb-1.5 block">Total QRIS</span><RpInput value={String(totalQris)} readOnly /></label>
