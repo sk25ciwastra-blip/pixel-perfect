@@ -6,12 +6,16 @@
 This checkpoint supersedes the earlier pre-submit-only status in this file.
 Operational decision remains NO-GO; successful normal flow does not activate pending fixes.
 
+## Latest live Closing checkpoint
+
+17 Nov 2026, 16:33 WIB: Owner separately approved and Receptionist executed ONE Closing of session 947a7922-60db-4365-88e8-9fb963386eec. Status FINAL; exact closer/snapshot verified; original QRIS payments retained. Laporan -> Riwayat Closing works for Receptionist. This approval is consumed. See CLOSING_SESSION_PREFLIGHT_2026-11-17.md for postcheck. No replacement session was opened. Negative Closing and different-operator assistance remain untested live.
+
 ## Source and authority
 
 - Actual Lovable source: 3218bd2ebe8fd98a6a046c9fe105d21293de34ca, rechecked after the employee DEMO.
 - PR #83 code baseline: 14be505e60bdb18bc7bf4c2ac13ce22f59017299; DRAFT, unmerged.
 - GitHub main: 17161ef9aee2bcbf2ab702f3598a43d9b2efdcb1.
-- Owner explicitly approved ONE employee DEMO: one new session if needed, opening Rp0, two guests, Rp70,000, DP Rp28,000 + settlement Rp42,000, same TRX, checkout and authorized Housekeeping through READY. No extra transaction, closing, refund, assistance transaction or race write is authorized.
+- Owner explicitly approved ONE employee DEMO: one new session if needed, opening Rp0, two guests, Rp70,000, DP Rp28,000 + settlement Rp42,000, same TRX, checkout and authorized Housekeeping through READY. No extra transaction, refund, assistance transaction or race write is authorized. One subsequent normal Closing was separately approved and completed; that permission is consumed.
 - Owner saved Receptionist BTRDEMP-0001 through the application and subsequently created Housekeeping BTRDEMP-0002. The agent did not reset existing accounts/passwords. Both logins used the private authentication mechanism; no credentials/tokens/hashes are included here.
 
 ## Current acceptance matrix
@@ -19,7 +23,7 @@ Operational decision remains NO-GO; successful normal flow does not activate pen
 | Flow | PASS LIVE LOVABLE | PASS LOKAL / GITHUB | SUDAH DIPERBAIKI TAPI BELUM AKTIF | BELUM DIUJI |
 |---|---|---|---|---|
 | Login and role routing | Receptionist BTRDEMP-0001 and HK BTRDEMP-0002 logged in with their own accounts. Receptionist /karyawan redirected to Dashboard. HK navigation limited to Dashboard/Kamar/Housekeeping. | Prior access evidence retained | Existing role/Training packages retain their own gates | Full privilege matrix, Supervisor assistance and Training signed-in acceptance |
-| Cash session | Receptionist opened exactly one session with Rp0; date 17 Nov 2026; OPEN. UI shows Rp70,000 QRIS from two payment records | Prior cash-context tests retained, not rerun | Reactive assisted-session selector in PR83 | Closing, handover, assistance with a DIFFERENT operator |
+| Cash session | Receptionist opened exactly one session with Rp0; date 17 Nov 2026; OPEN. UI showed Rp70,000 QRIS from two payment records; subsequent own-session Closing FINAL and Laporan history PASS under separate approval | Prior cash-context tests retained, not rerun | Reactive assisted-session selector in PR83 | Negative Closing, handover, assistance with a DIFFERENT operator |
 | Booking | BTRDTRX-000028, Room12, Standard P2/Weekday, exactly 2 guests, Rp70,000; DP Rp28,000 saved | Previous unchanged tests retained | Preserve original Reservasi form | Retry/concurrent submission in actual Cloud |
 | Settlement and Check-in | QRIS settlement Rp42,000 saved once; total exactly Rp70,000; Check-in kept same UUID/number | Previous native payment/occupancy tests retained | Pending RPC retry/closing-identity repair; source session package | Live concurrent retry and combined-payment races; no new writes authorized |
 | Check-out | Same TRX check_out at 15:29:24 WIB, room DIRTY | Prior guard evidence retained | Overtime/fixed-window packages separately pending | Live overtime override not part of this DEMO |
@@ -34,7 +38,7 @@ Exactly two payments without duplication were observed; this is not a live concu
 ## Exact preserved DEMO evidence
 
 - Receptionist employee: BTRDEMP-0001, user abb11176-8f20-45f8-8514-5869ff00a9e7.
-- Cash session: 947a7922-60db-4365-88e8-9fb963386eec; opened_by equals Receptionist user; opening_cash=0; remains OPEN. No closing executed.
+- Cash session: 947a7922-60db-4365-88e8-9fb963386eec; opened_by equals Receptionist user; opening_cash=0; remains was OPEN at the DEMO checkpoint, then became FINAL at 16:33 WIB under separate Owner authorization; no replacement session.
 - Transaction: bbe16673-ac9d-4672-a758-6098dcd08134, BTRDTRX-000028.
 - Room: ad20aec8-6160-4fa1-a02c-59cb26638cda (12).
 - Synthetic guest label: DEMO RCP WORK 20261117; guest_transactions=1.
