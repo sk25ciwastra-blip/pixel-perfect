@@ -409,6 +409,15 @@
  
    const indikatorStatus = [
      { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
+@@ -513,7 +520,7 @@
+         wa: guest?.phone ? guest.phone.replace(/\D/g, "").slice(-4) : "",
+         catatan: "",
+         operator: "",
+-        sub: "Booking",
++        sub: trx?.scheduled_check_in ? "Booking" : trx?.started_at ? "Walk-in" : "Pembayaran",
+         nomor: trx?.transaction_number ?? "—",
+         nominal: Number(p.amount),
+         metode: p.method,
 @@ -709,6 +716,29 @@
                  <div role="status" className="mx-5 mb-3 space-y-1 rounded-xl border border-gold/25 bg-gold/10 px-3 py-2 text-xs sm:mx-6">
                    {bookingPeringatan.map(({ item, status }) => <p key={item.id}><span className={`font-bold ${status?.kelas}`}>{status?.label}</span> · {guests.rows.find((guest) => guest.id === item.guest_id)?.full_name ?? "Tamu"} · <span className="font-mono text-gold">{item.transaction_number}</span></p>)}
@@ -439,6 +448,15 @@
                )}
                {statusKamarBaris.length === 0 ? (
                  <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
+@@ -879,7 +909,7 @@
+                           ) : <span className="font-mono text-[11px] text-gold">{t.nomor}</span>}
+                         </div>
+                         <div className="flex flex-col items-center gap-1 border-l border-gold/20 pl-2.5">
+-                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Booking") : "Pengeluaran"}</span>
++                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Pembayaran") : "Pengeluaran"}</span>
+                           <span className="text-[11px] tabular-nums text-muted-foreground">{jamWib(t.waktu)} WIB</span>
+                         </div>
+                         <div className="flex flex-col items-end gap-1">
 --- a/src/routes/kamar.tsx
 +++ b/src/routes/kamar.tsx
 @@ -1,5 +1,7 @@

@@ -41,7 +41,7 @@
   "artifacts": [
     {
       "path": "patches/operational-integration-lovable-3218bd2.patch",
-      "sha256": "cfa9ded085e576aadd54dd64b3aca32fe8002f5ce96097a053c0bf2f5275b2bf"
+      "sha256": "9d502711b3346a7a98a63e5d5e2625f4141ca42f98fc6dbe8c5e8056646c92a6"
     },
     {
       "path": "supabase/pending/20261113150233_overtime_walkin_guard.sql",
