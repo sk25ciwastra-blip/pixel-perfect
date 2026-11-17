@@ -1,8 +1,50 @@
 # Baturaden 25 Homestay — Closing and assisted-session preflight
 
 17 November 2026 WIB. Baseline PR83 dd8dc97664479f8c705be878ed32d75b1a2c9288.
-SELECT/source inspection only in Cloud. No Closing, payment, refund, new DEMO,
-migration, account change, merge, deploy, publish or Connect performed.
+Historical preflight was SELECT/source inspection only. The one separately approved
+normal Closing was subsequently executed; see POSTCHECK LIVE below.
+No additional transaction, payment, refund, migration, account change, merge,
+deploy, publish or Connect performed.
+
+## POSTCHECK LIVE — Owner approval executed 17 Nov 2026, 16:33 WIB
+
+This section supersedes the earlier OPEN/preflight-only/permission-pending status below.
+Owner specifically approved ONE normal Closing as Receptionist, zero allocations.
+Authenticated LIVE via private login as DEMO RECEPTIONIST WORK / BTRDEMP-0001.
+Clicked Finalkan Closing ONCE through actual Lovable UI; no SQL write used.
+
+PASS LIVE LOVABLE:
+- Session 947a7922-60db-4365-88e8-9fb963386eec became FINAL.
+- closed_at 2026-11-17T09:33:03.311304Z = 17 Nov 2026 16:33:03 WIB.
+- opened_by unchanged; closed_by and snapshot.closed_by both
+  abb11176-8f20-45f8-8514-5869ff00a9e7 (Receptionist owner/operator).
+- closing_reason: DEMO WORK — closing penerimaan QRIS BTRDTRX-000028.
+- Snapshot opening_cash, cash_received, transfer_received, cash_expenses,
+  cash_refunds, expected_cash, setor_cash, setor_transfer, di_laci, dibawa all 0.
+- Two original payment UUIDs retained: cf6306cb-4de3-4f93-b09d-00998c27ba03
+  (QRIS 28000) and 3e7f62c5-7460-4ee2-9d0a-2981816ae081 (QRIS 42000).
+- Allocations=0, handoffs=0, this Receptionist's OPEN sessions=0.
+- Finance refresh removed Finalkan Closing and offered Buka Sesi; NOT clicked.
+- Further read-only UI acceptance: Laporan -> Riwayat Closing displays
+  2026-11-17 / FINAL / 17 Nov 2026, 16.33 under Receptionist account.
+- No new transaction/payment/refund/expense/deposit/session or money movement.
+  Existing Room12 READY proof was not rerun.
+
+Closing own QRIS-only session and employee history access PASS LIVE.
+Negative Closing, assistance with a DIFFERENT operator, post-Closing refund,
+and live concurrency are NOT newly proved. Prior local PASS scopes unchanged.
+Historical view lists date/status/close time; it does not provide full snapshot
+breakdown or actor detail. Backend exact fields above were verified SELECT-only.
+
+The authorized Closing is consumed; do not repeat/reopen it or open a replacement.
+Next priority is activation of the already prepared HK navigation + Finance
+context package, after Support confirms safe original-repository recovery and
+Owner separately approves source integration. Latest inspected Support search
+still shows no newer technical reply than 17 Nov 12:07 WIB. No email sent.
+
+Preflight 6/6 complete; scoped new live checks 2/2 (Closing + history) PASS.
+Integration preparation still 6/7=85.7%, overall operational NO-GO.
+No new execution permission is requested merely to wait on the integration gate.
 
 ## Six preflight checks completed (6/6 inspection, NOT six live functional PASS)
 
