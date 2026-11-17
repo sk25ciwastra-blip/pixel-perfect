@@ -28,20 +28,36 @@ Receptionist BTRDEMP-0001 / user abb11176-8f20-45f8-8514-5869ff00a9e7.
   Handoffs0. Ini dataDEMO, tidak ada uang sungguhan dipindahkan.
 - Tidak membuka sesi lanjutan untuk menguji saldo bawaan70000.
 
-## TERHAMBAT — jangan menyatakan READY
+## PASS LIVE LOVABLE — Housekeeping tuntas 17 November 2026, 18:43 WIB
 
-Login privat yang dimintaHK pertama masih berakhir sebagaiReceptionist.
-Tidak melakukan tindakanHK dengan peran tersebut.
-Percobaan privat berikutnya ditolak aplikasi:
-'Alamat email atau kata sandi tidak sesuai.'
-Tidak mengulang tebakan password, resetakun/password, atau mengubah akses.
+Owner berhasil login sendiri menggunakan akun HK baru, HK Work Demo:
+BTRDEMP-0003 / user cb898468-3298-4af4-a079-40745e16059a.
+SELECT membuktikan active=true, position=housekeeping. Akun dibuat Owner;
+agen tidak membuat akun/reset password atau mengubah akun Dedi Mulyadi.
 
-SELECT akhir: TRXcheck_out, roomDIRTY, hk_jobs0, checklists0.
-Pekerjaan tersisa yang sudah DIIZINKAN adalah login sahHK BTRDEMP-0002/
-Dedi Mulyadi, mulai bersihkan -> checklist7 -> selesaiREADY untuk TRX29 ini saja.
-Boleh memakai routechecklist yang sudah diketahui sebagai workaround navigasi.
-Tidak membuatTRX/sesi/pembayaran baru. Handofflogin privat disiapkan.
-Persetujuan skenario tetap berlaku untuk sisaHK; tidak perlu meminta izinDEMO ulang.
+Melanjutkan SISA skenario yang telah diizinkan, tanpa TRX/sesi/pembayaran baru:
+- Mulai Bersihkan sekali melalui menu Kamar12 pada akun HK yang benar.
+- DIRTY -> CLEANING pada 18:42:47.332297 WIB.
+- Job BTRDHK-000004 / 6addd6c8-92dd-41b3-ab99-47398cbeb95d,
+  transaction_id=1c8a9e0a-e2f9-4cc5-b273-449eb97e22c1.
+- Start history 18a77aa2-8eee-4db2-9753-919f549582c6.
+- Checklist ceed9c01-7420-425e-9698-692a30871f08: tujuh jawaban true,
+  result=passed, housekeeping_history_id menunjuk start di atas.
+- Finish history 2e3d8645-d50d-4654-a2a1-3c68879c3370:
+  CLEANING -> READY pada 18:43:35.944880 WIB.
+- Job created_by, kedua history performed_by dan checklist performed_by
+  semuanya akun HK Work Demo, bukan Dedi atau Receptionist.
+- SELECT akhir: roomREADY; tepat satu job, satu checklist, satu start dan
+  satu finish pada TRX29. Pembayaran tetap satu, total70000.
+- UI menampilkan HK Work Demo / Petugas Kebersihan, antrean kosong,
+  Perlu Dibersihkan0, Sedang Dibersihkan0, riwayat Kamar12 Selesai18.43.
+- Jawaban checklist adalah data DEMO sintetis, bukan pemeriksaan fisik kamar.
+- Tetap memakai route /housekeeping?bagian=checklist karena navigasi checklist
+  utama yang diketahui belum diperbaiki di live. Tidak mengklaim navigasi PASS.
+
+Hambatan login sebelumnya selesai melalui login sah akun HK baru oleh Owner.
+Skenario Walk-in Cash + Closing positif + HK READY selesai seluruhnya.
+Jangan ulangi skenario atau membuka sesi lanjutan (saldo bawaan70000) tanpa izin baru.
 
 ## Bug live baru dan kandidat perbaikan
 
@@ -73,10 +89,12 @@ SUDAH DIPERBAIKI TAPI BELUM AKTIF; Cloudsource tidak disentuh.
 ## Batas dan prioritas
 
 PASSLIVE: Walk-inCash + Closingpositif.
-NOTREACHED: cleanupHK→READY karena autentikasiHK, bukan bukti RPCgagal.
+PASSLIVE: cleanupHK→READY oleh HK Work Demo pada TRX29; tidak ada duplikasi.
 KnownFAILnavigasiHK tetappending. NoGOkeseluruhan.
 Persiapanintegrasi tetap6/7=85.7%, bukan kemajuan seluruh aplikasi.
-Prioritaslangsung: tuntaskan sisaHK pada TRX29 setelah loginprivat yang sah.
-Sesudahnya integrasi9file setelah Supportaman + izinOwnerkhusus.
+Prioritaslangsung: integrasi9file setelah Support mengonfirmasi prosedur aman
+untuk repository lama dan arah sync, kemudian izinOwnerkhusus. Tidak ada lagi
+sisa transaksiDEMO yang diizinkan untuk dijalankan; bantuan sesi lintas identitas,
+closingminus live, SQLpending dan aktivasi source belum diklaim PASSLIVE.
 Tidak merge/deploy/publish/SQLCloud/flag/credit/Connect; tidak menyentuh
 TRX27/TRX28 atau menghapus buktidemo. Tidak ada hak untuk mengulangi skenario ini.
