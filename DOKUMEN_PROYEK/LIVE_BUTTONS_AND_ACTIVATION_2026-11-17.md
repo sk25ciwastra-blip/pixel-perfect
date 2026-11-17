@@ -10,6 +10,10 @@ Operational decision remains NO-GO; successful normal flow does not activate pen
 
 17 Nov 2026, 16:33 WIB: Owner separately approved and Receptionist executed ONE Closing of session 947a7922-60db-4365-88e8-9fb963386eec. Status FINAL; exact closer/snapshot verified; original QRIS payments retained. Laporan -> Riwayat Closing works for Receptionist. This approval is consumed. See CLOSING_SESSION_PREFLIGHT_2026-11-17.md for postcheck. No replacement session was opened. Negative Closing and different-operator assistance remain untested live.
 
+## Latest receipt check after Closing
+
+Receptionist opened BTRDTRX-000028 after its session became FINAL, downloaded PDF and JPG successfully. PDF contents/one page and JPEG validity verified. Cloud receipts/print_requests remained 0; payment rows and FINAL snapshot unchanged. See RECEIPT_POST_CLOSING_2026-11-17.md. This is digital PAYMENT CONFIRMATION acceptance, not thermal Model A printing activation. Cetak Struk remains disabled; no flag or copy-number write performed.
+
 ## Source and authority
 
 - Actual Lovable source: 3218bd2ebe8fd98a6a046c9fe105d21293de34ca, rechecked after the employee DEMO.
@@ -29,7 +33,7 @@ Operational decision remains NO-GO; successful normal flow does not activate pen
 | Check-out | Same TRX check_out at 15:29:24 WIB, room DIRTY | Prior guard evidence retained | Overtime/fixed-window packages separately pending | Live overtime override not part of this DEMO |
 | Housekeeping | HK BTRDEMP-0002 started CLEANING, job BTRDHK-000003, seven synthetic answers passed, room READY. One checklist and one finish | Existing HK source/native/browser evidence retained | Navigation/retry/job-warning patch in existing eight-file package | Integrated-source navigation acceptance and live race |
 | Navigation to checklist | Direct /housekeeping?bagian=checklist works with HK account | Existing patch contains nav aria-label="Bagian Housekeeping" with links for each section | Main HK page has no Checklist tab; message tells employee to use that missing tab. Reproduced in this DEMO; DO NOT duplicate existing repair | Ordinary employee navigation after source integration |
-| Receipt/closing/refund | No new acceptance claimed; prior Owner Room12 proof retained separately | Previous scoped evidence retained | Finance/receipt packages remain separately gated | Authenticated printing, closing and refund acceptance as required before GO |
+| Receipt/closing/refund | Own-session Closing/history and post-Closing Receptionist PDF/JPG PASS; prior Owner Room12 proof retained | Previous scoped evidence retained, not rerun | Thermal activation and remaining Finance repairs separately gated | Thermal/copy-number/printer acceptance, closing minus, assisted financial writes and refunds live |
 
 PASS LIVE for the HK handler used a direct route workaround. It is not a PASS for the missing normal navigation.
 Same-owner payment identity is verified; different-operator assisted-session acceptance is NOT implied.
