@@ -1,3 +1,4 @@
+import { checklistForReadyJob } from '@/lib/checklist-for-ready-job';
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, type FormEvent } from "react";
 import { CheckCircle2, UserRound, Brush, Sparkles, BedDouble, Pencil, Clock3, CalendarDays, NotebookPen, Plus } from "lucide-react";
@@ -81,7 +82,6 @@ function formatIssueDetails(checklist: ChecklistRow) {
     !checklist.tissue_ok && (checklist.tissue_reason || "Tisu"),
     !checklist.towel_ok && (checklist.towel_reason || "Handuk"),
     !checklist.tv_remote_ok && (checklist.tv_remote_reason || "Remote TV"),
-    checklist.issue_note.trim(),
   ].filter((item): item is string => Boolean(item));
 }
 
@@ -124,22 +124,6 @@ function HalamanKamar() {
 
     return map;
   }, [historyRows]);
-
-  const latestChecklist = useMemo(() => {
-    const map = new Map<string, (typeof checklistRows)[number]>();
-
-    for (const item of checklistRows) {
-      const current = map.get(item.room_id);
-      if (
-        !current ||
-        new Date(item.created_at).getTime() > new Date(current.created_at).getTime()
-      ) {
-        map.set(item.room_id, item);
-      }
-    }
-
-    return map;
-  }, [checklistRows]);
 
   const { bagian = "semua" } = Route.useSearch();
   const statusFilter = filterBagian[bagian] ?? null;
@@ -245,7 +229,7 @@ function HalamanKamar() {
                       : undefined;
                   const housekeepingJob =
                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
-                  const checklist = latestChecklist.get(room.id);
+                  const checklist = checklistForReadyJob(housekeepingJob, historyRows, checklistRows);
                   const issues = checklist ? formatIssueDetails(checklist) : [];
 
                   return (
