@@ -54,6 +54,10 @@
     {
       "path": "supabase/pending/20261117100000_payment_retry_closing_identity.sql",
       "sha256": "44566dac0c48ea900922e7fb5e16a1efbf04eac4fe24f26ea814608222962662"
+    },
+    {
+      "path": "supabase/pending/20261117104000_refund_retry_payload_guard.sql",
+      "sha256": "70dd8fba4b1509269e221c1a1f4e994723fcced9cd7f48faf2458c4238ba2f62"
     }
   ]
 }
