@@ -1,6 +1,6 @@
 """Run native concurrency tests in a new disposable LOCAL cluster; never Cloud."""
 import argparse,pathlib,subprocess,tempfile,socket,time,shutil,os
-parser=argparse.ArgumentParser();parser.add_argument('--pg-bin',type=pathlib.Path,required=True);parser.add_argument('--test-script',choices=['scripts/overtime-native-concurrency.test.mjs','scripts/housekeeping-native-readiness.test.mjs','scripts/housekeeping-native-access-races.test.mjs'],default='scripts/overtime-native-concurrency.test.mjs');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--pg-bin',type=pathlib.Path,required=True);parser.add_argument('--test-script',choices=['scripts/overtime-native-concurrency.test.mjs','scripts/housekeeping-native-readiness.test.mjs','scripts/housekeeping-native-access-races.test.mjs','scripts/operational-trigger-rls.test.mjs','scripts/operational-training-context.test.mjs'],default='scripts/overtime-native-concurrency.test.mjs');args=parser.parse_args()
 root=pathlib.Path(__file__).resolve().parent.parent
 cluster=pathlib.Path(tempfile.mkdtemp(prefix='b25-native-concurrency-'))
 with socket.socket() as reservation:
