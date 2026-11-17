@@ -70,7 +70,7 @@ Regressionbaru scripts/finance-expense-operator.test.cjs:
 Complete updated9filepatch diterapkan terhadap9pinnedsourcehashes, artifacthashPASS.
 Tidak menjalankan ulang suitePASS lama. Ini PASS LOKAL/GITHUB; belum aktifLovable.
 
-## Paket DEMO minimal yang diminta — BELUM DIIZINKAN, BELUM DIJALANKAN
+## Paket DEMO minimal — DISETUJUI BERSYARAT, BELUM DIJALANKAN
 
 Tujuan: membuktikan bantuanOwner pada sesiReceptionist dan Closingminus dengan
 SATU sesi baru, SATU pengeluaran sintetis, SATUClosing; tanpaBooking/payment/refund
@@ -136,6 +136,65 @@ PASSLIVE lama dipertahankan; assistedexpense/assistedClosing/negativeClosingLIVE
 belumdiuji. Sourcefix SUDAH DIPERBAIKI TAPI BELUM AKTIF.
 
 Prioritas: selesaikan dependensiExpenseoptions dan aktivasiSource secara terpisah
-setelah aman, baru satuDEMO gabungan di atas. Owner dapat menyetujui scopeDEMO
-bersyarat sekarang; izinDEMO tidak mengizinkanSQL/integrasi/deploy/akun/Connect.
+setelah aman, baru satuDEMO gabungan di atas. Owner telah menyetujui scopeDEMO bersyarat melalui pesan 'ok saya setuju'
+setelah laporan commit8e94262; izinDEMO tidak mengizinkanSQL/integrasi/deploy/akun/Connect.
 Tidak ada tindakanCloudwrite yang boleh berjalan hanya karena dokumenini dibuat.
+
+
+## Persetujuan DEMO tercatat dan rencana penerapan opsi pengeluaran
+
+Owner menyetujui satu skenario sesi70000 -> expense71000 -> Closing-1000.
+Tidak ada izin baru untukSQL/source/Connect. Tidak menjalankan DEMO sebelum
+prasyarat di atas tersedia. Tidak mengulang pengujian yang sudahPASS.
+
+PreflightSELECT tambahan setelah persetujuan:
+- Target public.finance_expense_options tetap tidak ada, sehingga tidak ada
+  isi tabel lama yang akan ditimpa atau perlu dipindahkan.
+- public.can_operate(uuid), public.has_role(uuid,app_role), auth.uid(),
+  gen_random_uuid(), rolesauthenticated/service_role tersedia.
+- can_operate prosrcMD5=8f676083af6ccfdedc51b40bfd21aa84;
+  has_role=329c61a02658089cb1486c876cc6405d.
+- record_finance_expense prosrcMD5 tetap4c5473061181fa5c3f47952cf0a7381e.
+- Existing pendingSQL blobd1ead807f6d79f1185b6dc7c8589c6b21406d864
+  dibaca ulang dari head8e94262; belum dijalankan.
+- Support search tetap tidak menemukan instruksi lebih baru. Ini tidak
+  diartikan izinConnect atau konfirmasi reattachment selesai.
+
+Rencana perubahan terpisah yang siap dimintakan izin:
+1. Hanya BagianA dari existing
+   supabase/pending/20261023_expense_options_and_extra_guest.sql.
+   Pinblob di atas, ulangi precondition targetabsent/dependencyfingerprints
+   tepat sebelum eksekusi. Jika berubah, STOP; jangan DROP/overwrite.
+2. Bungkus seluruhDDL BagianA dalam satuBEGIN/COMMIT, lock_timeout5s,
+   statement_timeout60s; validasi target/schema/policies sebelumCOMMIT.
+   Satu tabel baru; empat policyRLS (read, Ownerinsert/update/delete);
+   grantauthenticated/service_role sesuaiSQLexisting. Tidak mengubah tabel,
+   RPC, transaksi, sesi atau auth yang sudah ada.
+3. Bila validasi/DDLgagal sebelumCOMMIT: ROLLBACK seluruhtransaction,
+   kemudianSELECTtarget untuk konfirmasi; tidakmelanjutkan sebagian.
+4. SetelahCOMMIT, Owner login sah membuat tepatduaopsi melaluiUI:
+   kindjenis/nameDEMO WORK dan kindkeperluan/nameDEMO WORK, keduanyaactive.
+   created_by harus auth.uid()Owner, bukan UIDkosong dari querySQL.
+   Tidak mengisi pilihan bisnis permanen atau membuat kategori lainnya.
+5. PostcheckSELECT: kolom/constraint, RLSaktif, policyroles/qual sesuai,
+   granttidakmelebar, hanya duaopsi yang disetujui; kemudian cek dropdownUI.
+   Tidak menyimpanKasKeluar/Closing pada tahap penyiapandepedensiini.
+
+Dampak: halamanDaftarPengeluaran dapat menyimpan pilihan Owner; formKasKeluar
+yang sebelumnya dropdowndisabled dapat memakai pilihan aktif. HakCRUDpilihan
+tetapOwner; pembacaan mengikuti policyexistingcan_operate/Owner.
+Penerapan ini tidak memperbaiki sendiri kontekshelper atau mengaktifkan9file.
+Tidak ada perubahan jumlah tamu, harga, DP, flag atau desain.
+
+Pemulihan setelahCOMMIT:
+- Bila hanya masalahduaopsi dan belum dipakai, Owner dapat menonaktifkan
+  keduaopsi melaluiUI setelah izinpemulihan khusus; pertahankan bukti.
+- Jangan otomatisDROPtable setelahCOMMIT. Jika diperlukan, cekdependensi dan
+  eksporrows/DDL/grants/policy terlebihdahulu, minta izinpenghapusan terpisah,
+  lakukantransaction, dan verifikasitargetabsent. Jangan CASCADE.
+- RestoredataDB menyeluruh tidak diuji atau diklaimsiap. Baseline targetabsent
+  hanya mencakup perubahanaditif ini; tidak memberi izinmigrasilain.
+
+Izin yang masih diperlukan untuk tahapdependensi: terapkanBagianA saja dan
+buatduaopsiDEMO WORK. IzinDEMO yang telah diterima tidak mencakup tahaptersebut.
+Integrasi9file tetap menunggu prosedurSupport dan persetujuanOwner sendiri.
