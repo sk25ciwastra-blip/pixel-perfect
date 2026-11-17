@@ -1,0 +1,560 @@
+--- a/src/components/checklist-housekeeping.tsx
++++ b/src/components/checklist-housekeeping.tsx
+@@ -61,6 +61,10 @@
+   });
+   const [message, setMessage] = useState('');
+   const [saving, setSaving] = useState(false);
++  const inFlight = useRef(false);
++  const committed = useRef<'passed' | 'needs_action' | null>(null);
++  const [saved, setSaved] = useState(false);
++  const [uncertain, setUncertain] = useState(false);
+ 
+   const superiorBToilet =
+     roomTypeName === 'Superior B' && ['02', '03', '04'].includes(roomNumber)
+@@ -82,15 +86,16 @@
+     : undefined;
+ 
+   async function save() {
++    if (inFlight.current) return;
+     setMessage('');
+ 
+-    if (Object.values(checks).some((value) => value === null)) {
++    if (!committed.current && Object.values(checks).some((value) => value === null)) {
+       setMessage('Semua item checklist wajib dijawab.');
+       return;
+     }
+ 
+     if (
+-      items.some(
++      !committed.current && items.some(
+         (item) => checks[item.key] === false && !reasons[item.key].trim(),
+       )
+     ) {
+@@ -98,37 +103,56 @@
+       return;
+     }
+ 
++    inFlight.current = true;
+     setSaving(true);
+ 
+-    const { error } = await supabase.rpc('complete_housekeeping_checklist', {
+-      _room_id: roomId,
+-      _checklist_id: checklistId.current,
+-      _towel_ok: checks.towel_ok as boolean,
+-      _mineral_water_ok: checks.mineral_water_ok as boolean,
+-      _tissue_ok: checks.tissue_ok as boolean,
+-      _ashtray_ok: checks.ashtray_ok as boolean,
+-      _tv_remote_ok: checks.tv_remote_ok as boolean,
+-      _fan_ok: checks.fan_ok as boolean,
+-      _exhaust_fan_ok: checks.exhaust_fan_ok as boolean,
+-      _issue_note: JSON.stringify(
+-        Object.fromEntries(
+-          items.map((item) => [item.key.replace(/_ok$/, ''), reasons[item.key].trim()]),
+-        ),
+-      ),
+-    });
+-
+-    setSaving(false);
+-
+-    if (error) {
+-      setMessage(error.message);
+-      return;
++    try {
++      if (!committed.current) {
++        setUncertain(true);
++        const { error } = await supabase.rpc('complete_housekeeping_checklist', {
++          _room_id: roomId,
++          _checklist_id: checklistId.current,
++          _towel_ok: checks.towel_ok as boolean,
++          _mineral_water_ok: checks.mineral_water_ok as boolean,
++          _tissue_ok: checks.tissue_ok as boolean,
++          _ashtray_ok: checks.ashtray_ok as boolean,
++          _tv_remote_ok: checks.tv_remote_ok as boolean,
++          _fan_ok: checks.fan_ok as boolean,
++          _exhaust_fan_ok: checks.exhaust_fan_ok as boolean,
++          _issue_note: JSON.stringify(
++            Object.fromEntries(
++              items.map((item) => [item.key.replace(/_ok$/, ''), reasons[item.key].trim()]),
++            ),
++          ),
++        });
++
++        if (error) {
++          // PostgREST also returns transport errors here; preserve the submitted
++          // answers and idempotency key until the outcome is confirmed.
++          setMessage(error.message);
++          return;
++        }
++
++        const result = Object.values(checks).every(Boolean)
++          ? 'passed'
++          : 'needs_action';
++        setUncertain(false);
++        committed.current = result;
++        setSaved(true);
++      }
++      try {
++        await onSaved(committed.current);
++      } catch {
++        setMessage('Checklist sudah tersimpan. Pemuatan ulang gagal. Coba muat ulang tanpa menyimpan kembali.');
++        return;
++      }
++      onClose();
++    } catch {
++      setMessage('Hasil penyimpanan belum dapat dipastikan. Coba lagi memakai ID checklist yang sama.');
++    } finally {
++      inFlight.current = false;
++      setSaving(false);
+     }
+-
+-    const result = Object.values(checks).every(Boolean)
+-      ? 'passed'
+-      : 'needs_action';
+-    await onSaved(result);
+-    onClose();
+   }
+ 
+   return (
+@@ -146,7 +170,7 @@
+             </p>
+             <h2 className="text-lg font-bold">Kamar {roomNumber}</h2>
+           </div>
+-          <Button type="button" variant="ghost" size="icon" onClick={onClose}>
++          <Button type="button" variant="ghost" size="icon" disabled={saving} onClick={onClose}>
+             <X className="h-4 w-4" />
+           </Button>
+         </div>
+@@ -162,6 +186,7 @@
+                 <div className="flex gap-2">
+                   <Button
+                     type="button"
++                    disabled={saving || saved || uncertain}
+                     size="sm"
+                     variant={checks[item.key] === true ? 'default' : 'outline'}
+                     aria-label={`${item.label} sesuai`}
+@@ -180,6 +205,7 @@
+                   </Button>
+                   <Button
+                     type="button"
++                    disabled={saving || saved || uncertain}
+                     size="sm"
+                     variant={checks[item.key] === false ? 'destructive' : 'outline'}
+                     aria-label={`${item.label} bermasalah`}
+@@ -199,6 +225,7 @@
+                   Alasan {item.label}
+                   <input
+                     required
++                    disabled={saving || saved || uncertain}
+                     value={reasons[item.key]}
+                     onChange={(event) =>
+                       setReasons((current) => ({
+@@ -232,11 +259,11 @@
+           )}
+ 
+           <div className="flex justify-end gap-2 pt-2">
+-            <Button type="button" variant="outline" onClick={onClose}>
++            <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
+               Batal
+             </Button>
+             <Button type="button" disabled={saving} onClick={() => void save()}>
+-              {saving ? 'Menyimpan…' : 'Selesai Bersihkan'}
++              {saving ? 'Memproses…' : saved ? 'Muat ulang status' : 'Selesai Bersihkan'}
+             </Button>
+           </div>
+         </div>
+--- a/src/components/kerangka.tsx
++++ b/src/components/kerangka.tsx
+@@ -5,6 +5,8 @@
+   IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, ChevronDown, type LucideIcon,
+ } from "lucide-react";
+ import { usePeran } from "@/lib/peran";
++import { setSesiKasKonteks, useSesiKasKonteks } from "@/lib/sesi-kas";
++import { useTable } from "@/lib/data-live";
+ import { LatarHeader } from "@/components/latar-header";
+ import gedungSate from "@/assets/gedung-sate-malam.jpg";
+ import logoBaturaden from "@/assets/logo-baturaden-25.png.asset.json";
+@@ -245,6 +247,9 @@
+ 
+ export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
+   const { nama, posisi, keluar } = usePeran();
++  const { isSessionHelper, isTraining, openSessions, activeSession, assistedSessionId, selectAssistedSession, loading: sesiLoading } = useSesiKasKonteks();
++  const employees = useTable("employees");
++  const namaPemilik = (openedBy: string) => employees.rows.find((employee) => employee.user_id === openedBy)?.name ?? "Pemilik sesi";
+   const [buka, setBuka] = useState(false);
+   const [yakin, setYakin] = useState(false);
+   const ref = useRef<HTMLDivElement>(null);
+@@ -269,16 +274,42 @@
+         <ChevronDown className={`size-4 text-gold transition ${buka ? "rotate-180" : ""}`} />
+       </button>
+       {buka && (
+-        <div role="menu" className="panel-mewah absolute right-0 top-full z-50 mt-2 w-60 p-3">
++        <div role="menu" className="panel-mewah absolute right-0 top-full z-50 mt-2 w-72 p-3">
+           <p className="truncate text-sm font-semibold">{nama || "Pengguna"}</p>
+           <p className="truncate text-xs text-gold">{posisi || "Pengguna"}</p>
++          {isSessionHelper && !isTraining && !yakin && (
++            <div className="mt-3 space-y-2 rounded-lg border border-gold/20 bg-background/40 p-2.5">
++              <label htmlFor={ringkas ? "sesi-bantu-mobile" : "sesi-bantu-desktop"} className="block text-xs font-bold text-gold-light">Bantu Sesi Aktif</label>
++              <select
++                id={ringkas ? "sesi-bantu-mobile" : "sesi-bantu-desktop"}
++                aria-label="Pilih sesi kas untuk dibantu"
++                className="w-full rounded-lg border border-gold/25 bg-background px-2 py-2 text-xs text-foreground"
++                value={assistedSessionId}
++                disabled={sesiLoading}
++                onChange={(event) => { selectAssistedSession(event.target.value || null); }}
++              >
++                <option value="">Gunakan sesi sendiri / otomatis</option>
++                {openSessions.map((session) => (
++                  <option key={session.id} value={session.id}>
++                    {namaPemilik(session.opened_by)} · {session.id.slice(0, 8)}
++                  </option>
++                ))}
++              </select>
++              <p className="text-xs text-muted-foreground">
++                {sesiLoading ? "Memuat sesi aktif…" : assistedSessionId && !openSessions.some((session) => session.id === assistedSessionId)
++                  ? "Sesi pilihan sudah ditutup. Pilih sesi OPEN lain atau keluar dari mode bantu."
++                  : activeSession ? `Sesi digunakan: ${namaPemilik(activeSession.opened_by)}` : "Belum ada sesi kas OPEN."}
++              </p>
++              {assistedSessionId && <button type="button" className="text-xs font-semibold text-gold-light underline" onClick={() => selectAssistedSession(null)}>Keluar dari mode bantu</button>}
++            </div>
++          )}
+           <div className="my-3 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
+           {yakin ? (
+             <div className="space-y-2">
+               <p className="text-xs text-muted-foreground">Yakin ingin keluar dari aplikasi?</p>
+               <div className="flex gap-2">
+                 <button type="button" onClick={() => setYakin(false)} className="flex-1 rounded-lg border border-border px-3 py-2 text-xs font-semibold">Batal</button>
+-                <button type="button" role="menuitem" onClick={() => void keluar()} className="flex-1 rounded-lg bg-bahaya px-3 py-2 text-xs font-semibold text-bahaya-foreground">Ya, keluar</button>
++                <button type="button" role="menuitem" onClick={() => { setSesiKasKonteks(null); void keluar(); }} className="flex-1 rounded-lg bg-bahaya px-3 py-2 text-xs font-semibold text-bahaya-foreground">Ya, keluar</button>
+               </div>
+             </div>
+           ) : (
+--- a/src/lib/data-live.ts
++++ b/src/lib/data-live.ts
+@@ -37,7 +37,7 @@
+   const [error, setError] = useState('');
+   const [loading, setLoading] = useState(true);
+ 
+-  const refresh = useCallback(async () => {
++  const refresh = useCallback(async (options?: { throwOnError?: boolean }) => {
+     if (!enabled) {
+       setRows([]);
+       setError('');
+@@ -60,6 +60,7 @@
+     );
+     setError(failure?.message ?? '');
+     setLoading(false);
++    if (failure && options?.throwOnError) throw new Error(failure.message);
+   }, [table, enabled, scopeColumn, scopeValue]);
+ 
+   useEffect(() => {
+--- a/src/lib/sesi-kas.ts
++++ b/src/lib/sesi-kas.ts
+@@ -4,6 +4,7 @@
+ import { usePeran } from '@/lib/peran';
+ 
+ const ACTIVE_SESSION_KEY = 'baturaden25.active_finance_session_id';
++const SESSION_CONTEXT_CHANGE = 'baturaden25:sesi-kas-konteks';
+ 
+ export function setSesiKasKonteks(sessionId: string | null) {
+   if (typeof window === 'undefined') return;
+@@ -12,6 +13,8 @@
+   } else {
+     window.sessionStorage.removeItem(ACTIVE_SESSION_KEY);
+   }
++  // Native storage events do not fire in the same tab that makes the change.
++  window.dispatchEvent(new Event(SESSION_CONTEXT_CHANGE));
+ }
+ 
+ function bacaSesiKasKonteks() {
+@@ -32,9 +35,16 @@
+   }, []);
+ 
+   useEffect(() => {
+-    const handleStorage = () => setAssistedSessionId(bacaSesiKasKonteks());
++    const sync = () => setAssistedSessionId(bacaSesiKasKonteks());
++    const handleStorage = (event: StorageEvent) => {
++      if (event.key === ACTIVE_SESSION_KEY || event.key === null) sync();
++    };
+     window.addEventListener('storage', handleStorage);
+-    return () => window.removeEventListener('storage', handleStorage);
++    window.addEventListener(SESSION_CONTEXT_CHANGE, sync);
++    return () => {
++      window.removeEventListener('storage', handleStorage);
++      window.removeEventListener(SESSION_CONTEXT_CHANGE, sync);
++    };
+   }, []);
+ 
+   const openSessions = useMemo(
+@@ -54,16 +64,29 @@
+   const trainingSession = training.is_training && training.session_id
+     ? openSessions.find((session) => session.id === training.session_id)
+     : undefined;
++  // An explicit Owner/Supervisor selection wins over an owned session.
++  // If that selection closes, never silently switch the operator to another cash drawer.
+   const activeSession = training.is_training
+     ? trainingSession
+-    : ownSession ?? assistedSession ?? onlyOpenSession;
++    : isSessionHelper && assistedSessionId
++      ? assistedSession
++      : ownSession ?? onlyOpenSession;
+   const needsAssistedContext = training.is_training
+     ? !trainingSession
+-    : isSessionHelper && !ownSession && openSessions.length > 1 && !assistedSession;
++    : isSessionHelper && !activeSession && (openSessions.length > 0 || Boolean(assistedSessionId));
+ 
+   return {
+     sessionId: activeSession?.id ?? '',
+     activeSession,
++    openSessions,
++    ownSession,
++    assistedSessionId: isSessionHelper ? assistedSessionId : '',
++    selectAssistedSession: (sessionId: string | null) => {
++      if (!isSessionHelper || training.is_training) return false;
++      if (sessionId && !openSessions.some((session) => session.id === sessionId)) return false;
++      setSesiKasKonteks(sessionId);
++      return true;
++    },
+     isSessionHelper,
+     isTraining: training.is_training,
+     trainingStatus: training.status,
+--- a/src/routes/housekeeping.tsx
++++ b/src/routes/housekeeping.tsx
+@@ -239,6 +239,14 @@
+           </div>
+         </div>
+       </header>
++      <nav aria-label="Bagian Housekeeping" className="hk-tabs">
++        {bagianHk.map((b) => (
++          <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }}
++            aria-current={bagian === b.kode ? 'page' : undefined} className="hk-tab">
++            <b.ikon aria-hidden="true" /><span>{b.label}</span>
++          </Link>
++        ))}
++      </nav>
+       {message && <p role="status" className="mb-4 rounded-lg border border-gold/20 bg-secondary px-4 py-3 text-sm">{message}</p>}
+ 
+       {bagian === 'riwayat' && (
+@@ -344,7 +352,11 @@
+           roomTypeName={checklistRoomType?.name ?? ''}
+           onClose={() => setChecklistRoomId(null)}
+           onSaved={async () => {
+-            await refreshAll();
++            await Promise.all([
++              rooms.refresh({ throwOnError: true }),
++              history.refresh({ throwOnError: true }),
++              checklists.refresh({ throwOnError: true }),
++            ]);
+           }}
+         />
+       )}
+--- a/src/routes/index.tsx
++++ b/src/routes/index.tsx
+@@ -43,6 +43,7 @@
+ import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
+ import { supabase } from "@/integrations/supabase/client";
+ import { useSesiKasKonteks } from "@/lib/sesi-kas";
++import { roomOvertimeIndicator } from "@/lib/room-overtime";
+ import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
+ import "@/components/dashboard-panel.css";
+ 
+@@ -253,12 +254,11 @@
+   );
+ 
+   const bookingHariIni = useMemo(() => {
+-    const awalHari = new Date(`${tanggalWib(sekarang)}T00:00:00+07:00`).getTime();
+-    const akhirHari = awalHari + 86_400_000;
++    const hariKedatanganWib = tanggalWib(sekarang);
+     return bookingAktif.filter((item) => {
+       const mulai = item.scheduled_check_in ? new Date(item.scheduled_check_in).getTime() : NaN;
+       const akhir = item.scheduled_check_out ? new Date(item.scheduled_check_out).getTime() : NaN;
+-      return Number.isFinite(mulai) && Number.isFinite(akhir) && mulai < akhirHari && akhir > awalHari;
++      return Number.isFinite(mulai) && Number.isFinite(akhir) && akhir > mulai && tanggalWib(mulai) === hariKedatanganWib;
+     });
+   }, [bookingAktif, sekarang]);
+ 
+@@ -454,10 +454,16 @@
+     .sort((a, b) => new Date(a.item.scheduled_check_in ?? 0).getTime() - new Date(b.item.scheduled_check_in ?? 0).getTime())
+     .slice(0, 3), [bookingHariIni, sekarang]);
+ 
++  // Overtime >120 menit tetap occupied dan dapat di-checkout; hanya dipindah tampilan.
++  const overtimePerluTindakan = useMemo(
++    () => kamarTerisi.filter(({ transaksi }) => roomOvertimeIndicator(transaksi, sekarang).needsAction),
++    [kamarTerisi, sekarang],
++  );
++
+   // Satu baris utama per kamar: stay aktif lebih dahulu, lalu booking terdekat.
+   const statusKamarBaris = useMemo(
+     () => kamarAktif.flatMap((room) => {
+-      const terisi = kamarTerisi.find((item) => item.room?.id === room.id);
++      const terisi = kamarTerisi.find((item) => item.room?.id === room.id && !roomOvertimeIndicator(item.transaksi, sekarang).excludeFromRoomStatus);
+       const bookings = bookingHariIni
+         .filter((item) => item.room_id === room.id)
+         .sort((a, b) => new Date(a.scheduled_check_in ?? 0).getTime() - new Date(b.scheduled_check_in ?? 0).getTime());
+@@ -481,14 +487,15 @@
+       }
+     }
+     return {
+-      terisi: statusKamarBaris.filter((row) => row.terisi).length,
++      // Occupied overtime rooms remain occupied even when displayed in the action queue.
++      terisi: kamarTerisi.length,
+       booking: bookingHariIni.length,
+       persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
+       terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in ?? "", item.scheduled_check_out ?? "", sekarang)?.status === "late").length,
+       perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
+-      overtime: statusKamarBaris.filter(({ terisi }) => terisi && formatSisaWaktu(terisi.transaksi.ends_at ?? null, sekarang).status === "expired").length,
++      overtime: overtimePerluTindakan.length,
+     };
+-  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris]);
++  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, kamarTerisi, sekarang, overtimePerluTindakan]);
+ 
+   const indikatorStatus = [
+     { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
+@@ -709,6 +716,29 @@
+                 <div role="status" className="mx-5 mb-3 space-y-1 rounded-xl border border-gold/25 bg-gold/10 px-3 py-2 text-xs sm:mx-6">
+                   {bookingPeringatan.map(({ item, status }) => <p key={item.id}><span className={`font-bold ${status?.kelas}`}>{status?.label}</span> · {guests.rows.find((guest) => guest.id === item.guest_id)?.full_name ?? "Tamu"} · <span className="font-mono text-gold">{item.transaction_number}</span></p>)}
+                 </div>
++              )}
++              {overtimePerluTindakan.length > 0 && (
++                <section aria-label="PERLU TINDAKAN: overtime kamar" className="mx-5 mb-3 rounded-xl border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-4 py-3 sm:mx-6">
++                  <h3 className="mb-2 text-sm font-bold text-bahaya-foreground">PERLU TINDAKAN · Overtime lebih dari 120 menit</h3>
++                  <div className="space-y-2">
++                    {overtimePerluTindakan.map(({ transaksi: item, room, guest }) => {
++                      const alasan = checkoutDisabledReason(item, room);
++                      return (
++                        <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 py-2 last:border-0">
++                          <div className="min-w-0 text-xs">
++                            <p className="font-bold">Kamar {room?.room_number ?? "—"} · {guest?.full_name ?? "Tamu"} · <span className="text-bahaya-foreground">PERLU TINDAKAN</span></p>
++                            <Button variant="link" className="h-auto px-0 text-xs text-gold-krem" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>
++                            <p className="text-muted-foreground">Batas checkout: {item.ends_at ? jamWib(item.ends_at) : "—"} WIB</p>
++                          </div>
++                          <div className="flex gap-2">
++                            <Button type="button" variant="outline" size="sm" onClick={() => setDetailTransactionId(item.id)}>Detail</Button>
++                            <Button type="button" size="sm" disabled={Boolean(alasan) || checkingOutId !== null} title={alasan || "Check-out"} onClick={() => void checkOut(item.id)}>Check-out</Button>
++                          </div>
++                        </div>
++                      );
++                    })}
++                  </div>
++                </section>
+               )}
+               {statusKamarBaris.length === 0 ? (
+                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
+--- a/src/routes/kamar.tsx
++++ b/src/routes/kamar.tsx
+@@ -1,5 +1,7 @@
++import { roomOvertimeIndicator } from '@/lib/room-overtime';
++import { checklistForReadyJob } from '@/lib/checklist-for-ready-job';
+ import { createFileRoute } from "@tanstack/react-router";
+-import { useMemo, useState } from "react";
++import { useEffect, useMemo, useState } from "react";
+ import { UserRound, Brush, BedDouble, Clock3, CalendarDays, NotebookPen, LogIn } from "lucide-react";
+ import "@/components/kamar.css";
+ import { LatarHeader } from "@/components/latar-header";
+@@ -64,7 +66,6 @@
+     !checklist.tissue_ok && (checklist.tissue_reason || "Tisu"),
+     !checklist.towel_ok && (checklist.towel_reason || "Handuk"),
+     !checklist.tv_remote_ok && (checklist.tv_remote_reason || "Remote TV"),
+-    checklist.issue_note.trim(),
+   ].filter((item): item is string => Boolean(item));
+ }
+ 
+@@ -73,6 +74,11 @@
+   const queryClient = useQueryClient();
+   const canCheckIn = bolehCheckIn(posisiKode);
+   const [checkInOpen, setCheckInOpen] = useState(false);
++  const [waktuSekarang, setWaktuSekarang] = useState(() => Date.now());
++  useEffect(() => {
++    const tick = window.setInterval(() => setWaktuSekarang(Date.now()), 30_000);
++    return () => window.clearInterval(tick);
++  }, []);
+   const rooms = useTable("rooms");
+   const types = useTable("room_types");
+   const transactions = useTable("transactions");
+@@ -103,22 +109,6 @@
+ 
+     return map;
+   }, [historyRows]);
+-
+-  const latestChecklist = useMemo(() => {
+-    const map = new Map<string, (typeof checklistRows)[number]>();
+-
+-    for (const item of checklistRows) {
+-      const current = map.get(item.room_id);
+-      if (
+-        !current ||
+-        new Date(item.created_at).getTime() > new Date(current.created_at).getTime()
+-      ) {
+-        map.set(item.room_id, item);
+-      }
+-    }
+-
+-    return map;
+-  }, [checklistRows]);
+ 
+   const { bagian = "semua" } = Route.useSearch();
+   const statusFilter = filterBagian[bagian] ?? null;
+@@ -203,15 +193,16 @@
+                               new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+                           )[0]
+                       : undefined;
++                  const overtime = transaction ? roomOvertimeIndicator(transaction, waktuSekarang).needsAction : false;
+                   const housekeepingJob =
+                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
+-                  const checklist = latestChecklist.get(room.id);
++                  const checklist = checklistForReadyJob(housekeepingJob, historyRows, checklistRows);
+                   const issues = checklist ? formatIssueDetails(checklist) : [];
+ 
+                   return (
+                     <div
+                       key={room.id}
+-                      className="kamar-kartu"
++                      className={`kamar-kartu ${overtime ? "ring-2 ring-destructive" : ""}`}
+                       role="button" tabIndex={0}
+                       aria-label={`Kamar ${room.room_number} · ${room.active ? labelStatusKamar[status] : 'Tidak aktif'}`}
+                       onClick={() => openRoom(room)}
+@@ -236,6 +227,7 @@
+                         {roomType?.name ?? "Tipe kamar belum tersedia"}
+                       </p>
+                       <div className="kamar-info">
++                      {overtime && <p role="status" className="text-xs font-bold text-destructive">PERLU TINDAKAN · Overtime lebih dari 120 menit</p>}
+                       {transaction && (
+                         <Button
+                           variant="link"
+--- /dev/null
++++ b/src/lib/checklist-for-ready-job.ts
+@@ -0,0 +1,35 @@
++type HistoryLink = {
++  id: string;
++  room_id: string;
++  transaction_id: string | null;
++  job_id: string | null;
++  job_number: string | null;
++  action: string;
++  to_status: string;
++};
++type ChecklistLink = {
++  housekeeping_history_id: string;
++  room_id: string;
++  transaction_id: string | null;
++};
++
++/** A checklist links to start_cleaning, not the later finish_cleaning row.
++ * Never infer legacy links from room number, timestamp, or transaction alone.
++ */
++export function checklistForReadyJob<T extends ChecklistLink>(
++  ready: HistoryLink | undefined,
++  history: readonly HistoryLink[],
++  checklists: readonly T[],
++): T | undefined {
++  if (!ready || ready.action !== 'finish_cleaning' || ready.to_status !== 'ready'
++      || !ready.job_id || !ready.job_number) return undefined;
++  const starts = history.filter(row => row.action === 'start_cleaning'
++    && row.room_id === ready.room_id && row.job_id === ready.job_id
++    && row.job_number === ready.job_number
++    && row.transaction_id === ready.transaction_id);
++  const matches = checklists.filter(row => row.room_id === ready.room_id
++    && row.transaction_id === ready.transaction_id
++    && starts.some(start => start.id === row.housekeeping_history_id));
++  // Ambiguous legacy/corrupt relationships must not label a different job.
++  return matches.length === 1 ? matches[0] : undefined;
++}

@@ -162,11 +162,6 @@
              </Button>
            </div>
          </div>
-@@ -244,4 +271,3 @@
-     </div>
-   );
- }
--
 --- a/src/lib/data-live.ts
 +++ b/src/lib/data-live.ts
 @@ -37,7 +37,7 @@

@@ -1,0 +1,118 @@
+# Baturaden 25 Homestay — pinned-source integration checkpoint
+
+17 November 2026, WIB. **NO-GO operational; review candidate only.**
+
+## New progress
+
+The actual Lovable functional source at `3218bd2ebe8fd98a6a046c9fe105d21293de34ca`
+was exported read-only: 175 application/config text files, including complete
+TS/TSX/CSS source, current package.json and tsconfig. It was overlaid in a disposable
+local checkout, preserving existing binary assets from GitHub. Binary asset visual
+parity was not independently verified; no environment file or credential was fetched.
+Current Lovable dependencies were installed locally without committing a new lockfile.
+
+One eight-file candidate combines:
+
+- #83 Housekeeping commit-aware retry / strict refresh / exact job checklist link;
+- #76 navigation, #79 audit-note indicator correction (do not double-apply);
+- #80 arrival-date WIB Dashboard predicate;
+- #81 >120 minutes action queue, guarded Detail/Check-out and occupied KPI;
+- #82 explicit OPEN cash drawer selection and same-tab consumer refresh.
+
+The current Kamar card markup, status popup and background are retained. Overtime
+uses a conditional red ring and status text on that card, rather than importing the
+older GitHub card. The newer Dashboard success popup and transaction typography
+are preserved. Session context remains per-tab; cross-tab role/payment behavior is
+not claimed. No SQL, price, finance, severity SOP, flag or authorization rule changed.
+
+**Candidate:** `patches/operational-integration-lovable-3218bd2.patch`.
+This supersedes the smaller Housekeeping-only package for a combined integration.
+Choose one package; do not layer #76, #79 or the five-file package over it.
+The main GitHub application source still contains the HK fix only; the combined
+candidate is specifically an offline patch for the newer Lovable source, not a claim
+that all four features are active after merging this PR.
+
+## Evidence and limits
+
+| Check | Result | Scope |
+|---|---|---|
+| Full TypeScript `tsc --noEmit` | PASS | Exported latest Lovable source + all candidate changes |
+| Full `npm run build` | PASS | Same source/dependencies; existing binary assets reused |
+| HK actual-handler / helper / refresh tests | 13 PASS | Against patched live-source candidate, local fakes |
+| Booking + assisted-session focused tests | 13 PASS | Against candidate; source assertions / representative logic |
+| Whole eight-file patch check/apply, TSX transpilation, combined invariants | PASS | Disposable copy of seven exact original fixtures + new helper |
+| Native PostgreSQL 17.11 concurrency / constraint tests | 5 PASS | Actual pending overtime trigger/index; minimal fixture schema |
+| Chromium checklist DOM acceptance | BLOCKED before launch | Environment denies browser singleton Unix socket (`Operation not permitted`); no DOM case PASS |
+| Authenticated browser/Cloud acceptance | NOT REACHED | Safe sync and separate data-write authorization required |
+
+The same 13 HK cases were used to validate the packaged patch and candidate; they
+are not additional distinct tests. The 26 focused candidate cases include structural
+assertions, not a comprehensive browser/RLS test suite. The old Finance/Training/
+payment/printing suites were not repeated.
+
+### Patch application failure caught and corrected
+
+The prior offline fixture had one extra trailing blank line introduced while copying
+source. Its generated checklist hunk included EOF cleanup and failed against a fresh
+actual export. Fixtures were corrected, both packages regenerated, and the full
+candidate now checks/applies against the actual source. This was a real integration
+failure, not a Cloud/runtime failure. Original fixture bytes are retained for review.
+
+### Native concurrency details
+
+The launcher creates a new local cluster on a dynamically allocated localhost port,
+checks its exact data directory before any test write, and stops/removes it afterward.
+No Cloud connection string, DEMO data, account or credential is used.
+
+Actual pending `20261113150233_overtime_walkin_guard.sql` is executed unchanged in
+that fixture. Two distinct native PostgreSQL backend PIDs are verified, with an
+observed lock wait before committing the first arrival. Cases:
+
+1. Direct arrival vs direct arrival: exactly one active stay.
+2. Booking conversion vs Booking conversion: exactly one active stay.
+3. Direct arrival vs Booking conversion: exactly one active stay.
+4. Unique-index backstop still rejects duplicate occupancy when a fixture admin
+   bypasses triggers.
+5. An unrelated room remains usable while another room is locked.
+
+This closes the native two-session concurrency evidence gap for the candidate
+trigger/index only. Authorization helper stubs are deliberately non-permissive and
+are not tested here; no claim of real Cloud role/RLS, payment RPC, Training wrapper,
+Owner release or live schema compatibility PASS.
+
+Reproduce with a local PostgreSQL 17 binary directory:
+
+```sh
+python scripts/run-overtime-native-concurrency.py --pg-bin /absolute/path/to/pgsql/bin
+node scripts/verify-operational-lovable-integration.mjs
+```
+
+The browser harness is prepared at `scripts/housekeeping-browser-local.test.mjs`.
+It uses an actual checklist component with fake data/RPC and rejects non-localhost
+requests. It has not completed a DOM test in this environment. Its callbacks must
+not be mistaken for Cloud transactions. It requires a browser-capable environment.
+
+## Current release gate
+
+Support thread still has only the original request and Sam's 16 November reply.
+Lovable SHA remains 3218bd2 and reports out_of_credits. No reconnect or AI message
+was sent. The existing response monitor was not duplicated.
+
+**Do not merge GitHub and assume the latest Lovable app is updated.** First confirm
+safe original-repository reattach, inspect both resulting SHAs and sync direction,
+then apply/review the minimal combined patch to the matching source. If source
+changes, recheck context and regenerate; never force application or overwrite pages.
+
+After integration and full source checks, request separate Owner authorization for
+Room 10 normal checklist acceptance (one checklist, one finish history, correct
+job/TRX, READY, refresh/retry readback). Do not use override READY. Pending SQL
+activation still needs matching Cloud role/ACL/dependency review, backup/rollback
+readiness and specific Owner approval. Native fixture PASS alone is insufficient.
+
+Checkpoint integration preparation: **5/7 = 71.4%** (source export, combined patch,
+full typecheck, full build, native concurrency complete; browser acceptance and live
+integration outstanding). This is not total application completion.
+
+No merge/deploy/publish, Cloud SQL/data, DEMO reset, flags, reconnect or Lovable credit
+use. Owner's latest “ok lanjutkan” authorizes continued technical/review work; it is
+not treated as approval for those release actions.
