@@ -15,4 +15,4 @@ result=subprocess.run(['git','status','--porcelain','--untracked-files=all'],cwd
 if result.returncode or result.stdout.strip():fail.append('source checkout must be clean and tracked')
 if fail:
  print('STOP: source or package drift; do not apply:',*fail,sep='\n');raise SystemExit(1)
-print('PASS: eight source paths match pinned bytes, artifacts intact, checkout clean. No patch applied. Owner integration approval still required.')
+print('PASS: pinned source paths match pinned bytes, artifacts intact, checkout clean. No patch applied. Owner integration approval still required.')

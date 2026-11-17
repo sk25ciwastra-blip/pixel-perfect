@@ -1,0 +1,44 @@
+{
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "packages": [
+    {
+      "id": "payment-closing",
+      "path": "supabase/pending/20261117100000_payment_retry_closing_identity.sql",
+      "sha256": "44566dac0c48ea900922e7fb5e16a1efbf04eac4fe24f26ea814608222962662",
+      "functions": [
+        {
+          "signature": "public.record_transaction_payment(uuid,numeric,text,uuid,uuid)",
+          "original_md5": "e39b532635f0aa14a30992c6a87b3de9",
+          "candidate_md5": "e9e88c3e70c76450ecc89744adc78471",
+          "owner": "postgres",
+          "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+        },
+        {
+          "signature": "public.close_finance_cash_session(uuid,jsonb,text)",
+          "original_md5": "2e6b21c915118dbf490796b0ecd86868",
+          "candidate_md5": "e994975f0e77a0c692ba3d89e5772538",
+          "owner": "postgres",
+          "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+        }
+      ],
+      "requires_other_package": false
+    },
+    {
+      "id": "refund",
+      "path": "supabase/pending/20261117104000_refund_retry_payload_guard.sql",
+      "sha256": "70dd8fba4b1509269e221c1a1f4e994723fcced9cd7f48faf2458c4238ba2f62",
+      "functions": [
+        {
+          "signature": "public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text)",
+          "original_md5": "695152a80fcd4e561759f34b27652c5a",
+          "candidate_md5": "80bcdeabfc038907ee6dcea4d9d0e714",
+          "owner": "postgres",
+          "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+        }
+      ],
+      "requires_other_package": false
+    }
+  ],
+  "recovery_restores_known_defects": true,
+  "backup_restore_verified": false
+}
