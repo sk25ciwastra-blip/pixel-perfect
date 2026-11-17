@@ -198,3 +198,63 @@ Pemulihan setelahCOMMIT:
 Izin yang masih diperlukan untuk tahapdependensi: terapkanBagianA saja dan
 buatduaopsiDEMO WORK. IzinDEMO yang telah diterima tidak mencakup tahaptersebut.
 Integrasi9file tetap menunggu prosedurSupport dan persetujuanOwner sendiri.
+
+
+## HASIL PREFLIGHT PENERAPAN TERBATAS — STOP SEBELUM WRITE
+
+Owner memberi izin eksplisit hanyaBagianA versi blobd1ead807f6d79f1185b6dc7c8589c6b21406d864,
+duaopsiOwner, dan postcheck. Owner memerintahkan STOP bila preflighttidaksesuai.
+
+Pemeriksaan terbaru:
+- SQLblob, targetabsent, dependencies dan prosrcfingerprints sesuai baseline.
+- PemeriksaanACLdefault yang belum tercakup preflightsebelumnya menemukan
+  defaultgrants milik rolepostgres (executoraktual) untuk objekTABLE schemapublic:
+  anon dan authenticated mendapat SELECT/INSERT/UPDATE/DELETE/TRUNCATE/
+  REFERENCES/TRIGGER/MAINTAIN. service_role memperoleh hakpenuh;
+  sandbox_exec memperolehSELECT/INSERT. Hakservice/sandboxinternal tidak diubah.
+- BagianA hanya menambahGRANTCRUDauthenticated dan RLS, tidak mencabut
+  hakdefaultanon/authenticated. GRANT bukan pengganti atau pembatas hakexisting.
+  Maka hasilakses efektif tidak sesuai rencana hak yang telah direview.
+- RLS tidak menjamin pembatasanTRUNCATE. Ini risikoSQLrole, bukan klaim bahwa
+  browseranon langsung mempunyai endpointTRUNCATE. Tidak mencoba exploit.
+- Existingpending operational_truncate_acl hanya mencakup rooms/transactions/
+  housekeeping_history/housekeeping_checklists, bukan tabelopsibaru.
+  Tidak menjalankan pendingtersebut atau mengubahprivilege tabel lain.
+- Penerapan dihentikan SEBELUM BEGIN/DDL/write. Tidak ada COMMIT/ROLLBACK
+  yang dijalankan karena tidak ada transaksi perubahan dimulai.
+  Duaopsi belum dibuat, dropdownbelumdiuji. Tidak adaDROP/reset.
+
+Kandidat koreksi disiapkan pada FILESQLPENDINGYANGSAMA (bukan migrasibaru):
+sesudah CREATE TABLE, sebelumGRANTexisting, tambahkan tepat:
+REVOKE ALL PRIVILEGES ON TABLE public.finance_expense_options FROM PUBLIC, anon, authenticated;
+Kemudian GRANTCRUDauthenticated dan ALLservice_roleexisting, empatpolicyRLSexisting.
+BagianB dan keputusanreservasi2tamu tidak berubah; tidakmengubahdefaultACLglobal,
+roleinheritance, RPC, akun atau tabeloperasionalexisting.
+
+Status: koreksi baru reviewsource saja, BELUM DITERAPKAN CLOUD,
+BELUM DIUJI LIVE. SQLoriginal tidak pernah diterapkan.
+Sebelum approvalbaru, janganmenggunakan versiSQLkoreksi sebagai izinimplisit.
+Tidak menjalankan suitelokalPASS lama atau membuatfixture tambahan.
+
+Penerapan setelah persetujuan versi koreksi:
+- Rechecksameproject/targetabsent/dependencies/fingerprints dan sourceblobbaru.
+- SatuBEGIN/COMMIT membungkus BagianA+REVOKEtargeted, lock_timeout5s,
+  statement_timeout60s. Tidak ada executeBagianB.
+- ValidasiSEBELUMCOMMIT wajib: enamkolomsesuaiDDL, constraintPK/unique/checks,
+  RLStrue, empatpolicyroles/predicate persisrencana, rowcount0,
+  authenticated memilikiCRUD dan tidakTRUNCATE/REFERENCES/TRIGGER/MAINTAIN,
+  anon/PUBLIC tidak memiliki hak tabel, service_role tetap hakpenuh.
+  Gunakan effectiveprivilegechecks ditambahaclexplode untukPUBLIC;
+  jangan hanya menghitungGRANTeksplisit.
+- Bila hak efektif masih lebih luas atau validasilain gagal: ROLLBACK,
+  SELECTpastikantargetabsent; STOP danlapor, tanpaREVOKEglobal/DROP/reset.
+- SetelahCOMMITbaru loginOwner yang sah dan buat tepat2opsiDEMO WORK melaluiUI,
+  lalu postcheckactor/rowcount/RLS/ACL/dropdown. Tidak memalsukan auth.uid()
+  atau memasukkanrow lewatSQLprivileged.
+- Efekfungsional formKasKeluar menjadi dapat memakai pilihanaktif tetap
+  sama dengan rencana yang sudahdijelaskan; tidakmenyimpanexpense/Closing.
+
+IZINBARUYANGDIPERLUKAN: menyetujui BagianA yang ditambahREVOKEtargeted diatas,
+tetap satu transaksi dengan validasisebelumCOMMIT, lalu tepatduaopsiDEMO WORK.
+Ini tidak meminta perluasan keSQLlain/sourceintegration/DEMOwrite/Connect.
+Integrationpreparation tetap6/7=85.7%, overallNO-GO.

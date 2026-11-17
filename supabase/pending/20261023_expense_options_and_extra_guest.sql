@@ -9,6 +9,9 @@ CREATE TABLE public.finance_expense_options (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (kind, name)
 );
+-- PENDING RE-APPROVAL: neutralize inherited default grants on this new table only.
+-- Does not change database-wide defaults or privileges on any existing table.
+REVOKE ALL PRIVILEGES ON TABLE public.finance_expense_options FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.finance_expense_options TO authenticated;
 GRANT ALL ON public.finance_expense_options TO service_role;
 ALTER TABLE public.finance_expense_options ENABLE ROW LEVEL SECURITY;
