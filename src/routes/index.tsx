@@ -519,7 +519,7 @@ function Ringkasan() {
         wa: guest?.phone ? guest.phone.replace(/\D/g, "").slice(-4) : "",
         catatan: "",
         operator: "",
-        sub: "Booking",
+        sub: trx?.scheduled_check_in ? "Booking" : trx?.started_at ? "Walk-in" : "Pembayaran",
         nomor: trx?.transaction_number ?? "—",
         nominal: Number(p.amount),
         metode: p.method,
@@ -885,7 +885,7 @@ function Ringkasan() {
                           ) : <span className="font-mono text-[11px] text-gold">{t.nomor}</span>}
                         </div>
                         <div className="flex flex-col items-center gap-1 border-l border-gold/20 pl-2.5">
-                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Booking") : "Pengeluaran"}</span>
+                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Pembayaran") : "Pengeluaran"}</span>
                           <span className="text-[11px] tabular-nums text-muted-foreground">{jamWib(t.waktu)} WIB</span>
                         </div>
                         <div className="flex flex-col items-end gap-1">

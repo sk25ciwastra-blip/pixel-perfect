@@ -1,0 +1,73 @@
+{
+  "pinned_lovable_sha": "3218bd2ebe8fd98a6a046c9fe105d21293de34ca",
+  "source_files": [
+    {
+      "path": "src/components/checklist-housekeeping.tsx",
+      "sha256": "05a9c532bea2d052632012edb6f9e89915ce2258dc6bceaf9d8a500a47082b6c"
+    },
+    {
+      "path": "src/components/kerangka.tsx",
+      "sha256": "fed80fa7fea153cc305ab194bce41bf0647f16f2c914409920c90a74ac641c1d"
+    },
+    {
+      "path": "src/lib/data-live.ts",
+      "sha256": "55f06bda5f15711c22bfddc06df97e137600f4f8fc39a449b42d074aaf1f5242"
+    },
+    {
+      "path": "src/lib/sesi-kas.ts",
+      "sha256": "ece42dabddfa7b5c3a38ea69a9e6a80998c7bdb2d85082f4a3db26536ac109a9"
+    },
+    {
+      "path": "src/routes/housekeeping.tsx",
+      "sha256": "ac542e8cc65fa658971293181672c69fce8b14adc1031368633cfa031c5701c9"
+    },
+    {
+      "path": "src/routes/index.tsx",
+      "sha256": "12ecd357c6dbd46e3ba59ee55d7fe4ec9aa8f02fb46a10520d3fc3094ec2d0de"
+    },
+    {
+      "path": "src/routes/kamar.tsx",
+      "sha256": "f0eb98d59631b8bea0b34f857e8aeff55f251272203724b4040ec6b92ce3d10f"
+    },
+    {
+      "path": "src/lib/checklist-for-ready-job.ts",
+      "sha256": null
+    },
+    {
+      "path": "src/routes/keuangan.tsx",
+      "sha256": "f8a0cbbc7742a9d28e4b5f5986c8b7b86b8ec9be31a4b9a8b5ada288a83fdc07"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "patches/operational-integration-lovable-3218bd2.patch",
+      "sha256": "b5b0823dc7aa55e530b1c8cc2a20191919b90d591e8b09d6211bdbb16e30b3a0"
+    },
+    {
+      "path": "supabase/pending/20261113150233_overtime_walkin_guard.sql",
+      "sha256": "286e631d2e9c512ff2c2c1735db174de5135c53acd93b77ba02e3bd45d43d4af"
+    },
+    {
+      "path": "supabase/pending/20261117081000_housekeeping_retry_after_room_lock.sql",
+      "sha256": "a330be4fb98ffd7d28ce1804afa5101390d33b26202f4269c632c1fa7f21df6a"
+    },
+    {
+      "path": "supabase/pending/20261117093000_operational_truncate_acl.sql",
+      "sha256": "b56abd84db14c0684144d637df8ce7a4da4179a1869e25dfdae059632e5427a6"
+    },
+    {
+      "path": "supabase/pending/20261117100000_payment_retry_closing_identity.sql",
+      "sha256": "44566dac0c48ea900922e7fb5e16a1efbf04eac4fe24f26ea814608222962662"
+    },
+    {
+      "path": "supabase/pending/20261117104000_refund_retry_payload_guard.sql",
+      "sha256": "70dd8fba4b1509269e221c1a1f4e994723fcced9cd7f48faf2458c4238ba2f62"
+    }
+  ],
+  "preserved_files": [
+    {
+      "path": "src/components/kamar.css",
+      "sha256": "1b0af4379320cd5024f0d587e52df50006dfff3435b9eb7e67eb79aafaeaa0b3"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+[
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.next_expense_number()\n RETURNS text\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE\n  sequence_value bigint;\nBEGIN\n  sequence_value := nextval('public.owner_expense_number_seq');\n  RETURN format(\n    'BTRDEXP-%s',\n    CASE\n      WHEN sequence_value < 1000000 THEN lpad(sequence_value::text, 6, '0')\n      ELSE sequence_value::text\n    END\n  );\nEND;\n$function$\n",
+    "proname": "next_expense_number"
+  }
+]

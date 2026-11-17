@@ -361,7 +361,11 @@ function Halaman() {
           roomTypeName={checklistRoomType?.name ?? ''}
           onClose={() => setChecklistRoomId(null)}
           onSaved={async () => {
-            await refreshAll();
+            await Promise.all([
+              rooms.refresh({ throwOnError: true }),
+              history.refresh({ throwOnError: true }),
+              checklists.refresh({ throwOnError: true }),
+            ]);
           }}
         />
       )}

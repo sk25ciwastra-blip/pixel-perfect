@@ -1,0 +1,94 @@
+[
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role app_role)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role) $function$\n",
+    "proname": "has_role"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.can_view_operations(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'owner'::public.app_role)\n    or public.has_employee_position(\n      _user_id,\n      array[\n        'receptionist',\n        'housekeeping',\n        'supervisor',\n        'inspector'\n      ]::public.employee_position[]\n    );\n$function$\n",
+    "proname": "can_view_operations"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.next_transaction_number()\n RETURNS text\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE\n  sequence_value bigint;\nBEGIN\n  sequence_value := nextval('public.owner_transaction_number_seq');\n  RETURN format(\n    'BTRDTRX-%s',\n    CASE\n      WHEN sequence_value < 1000000 THEN lpad(sequence_value::text, 6, '0')\n      ELSE sequence_value::text\n    END\n  );\nEND;\n$function$\n",
+    "proname": "next_transaction_number"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.can_view_finance(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'owner'::public.app_role)\n    or public.has_employee_position(\n      _user_id,\n      array['supervisor','investor']::public.employee_position[]\n    );\n$function$\n",
+    "proname": "can_view_finance"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.has_employee_position(_user_id uuid, _positions employee_position[])\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'employee'::public.app_role)\n    and exists (\n      select 1\n      from public.employees\n      where user_id = _user_id\n        and active\n        and position = any(_positions)\n    );\n$function$\n",
+    "proname": "has_employee_position"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_valid(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_context_assignment(\n    _user_id,\n    NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid\n  ) IS NOT NULL;\n$function$\n",
+    "proname": "finance_training_context_valid"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_forbidden_finance_mutation_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak dapat mengubah objek Finance ini';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+    "proname": "finance_training_forbidden_finance_mutation_guard"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_assignment(_user_id uuid, _session_id uuid)\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT a.id\n  FROM public.finance_training_assignments a\n  WHERE a.trainee_user_id = _user_id\n    AND a.status = 'ACTIVE'\n    AND public.finance_training_session_is_valid(_user_id, _session_id)\n  ORDER BY a.starts_on DESC, a.created_at DESC\n  LIMIT 1;\n$function$\n",
+    "proname": "finance_training_context_assignment"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_matches_session(_user_id uuid, _session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT _session_id IS NOT NULL\n    AND NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid = _session_id\n    AND public.finance_training_context_assignment(_user_id, _session_id) IS NOT NULL;\n$function$\n",
+    "proname": "finance_training_context_matches_session"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_transaction_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid())\n     AND NOT public.finance_training_context_valid(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training wajib memakai wrapper transaksi dengan sesi kas penanggung jawab';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+    "proname": "finance_training_transaction_guard"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak boleh membuka, mengubah, atau menutup sesi kas';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+    "proname": "finance_training_session_guard"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_row_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  payload jsonb;\n  row_session_id uuid;\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    payload := CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;\n    row_session_id := COALESCE(\n      NULLIF(payload->>'cash_session_id', '')::uuid,\n      NULLIF(payload->>'session_id', '')::uuid\n    );\n    IF NOT public.finance_training_context_matches_session(auth.uid(), row_session_id) THEN\n      RAISE EXCEPTION 'Peserta Training wajib memakai sesi kas penanggung jawab yang valid';\n    END IF;\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+    "proname": "finance_training_session_row_guard"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_audit_row()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  assignment_id_value uuid;\n  session_id_value uuid;\n  payload jsonb := to_jsonb(NEW);\n  transaction_id_value uuid;\n  payment_id_value uuid;\n  supervisor_id_value uuid;\nBEGIN\n  IF NOT public.finance_training_context_valid(auth.uid()) THEN\n    RETURN NEW;\n  END IF;\n\n  session_id_value := COALESCE(\n    NULLIF(payload->>'cash_session_id', '')::uuid,\n    NULLIF(payload->>'session_id', '')::uuid,\n    NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid\n  );\n\n  assignment_id_value := public.finance_training_context_assignment(\n    auth.uid(), session_id_value\n  );\n\n  SELECT s.opened_by\n  INTO supervisor_id_value\n  FROM public.finance_cash_sessions s\n  WHERE s.id = session_id_value\n    AND s.status = 'OPEN'\n    AND public.finance_training_context_matches_session(auth.uid(), s.id);\n\n  IF assignment_id_value IS NULL OR supervisor_id_value IS NULL THEN\n    RAISE EXCEPTION 'Konteks audit Training tidak lengkap';\n  END IF;\n\n  transaction_id_value := CASE\n    WHEN TG_TABLE_NAME = 'transactions' THEN (payload->>'id')::uuid\n    ELSE NULLIF(payload->>'transaction_id', '')::uuid\n  END;\n  payment_id_value := CASE\n    WHEN TG_TABLE_NAME = 'payments' THEN (payload->>'id')::uuid\n    ELSE NULL\n  END;\n\n  INSERT INTO public.finance_training_audit (\n    assignment_id, action, entity_type, entity_id,\n    transaction_id, payment_id, session_id,\n    operator_id, supervisor_id, details\n  )\n  VALUES (\n    assignment_id_value, TG_OP, TG_TABLE_NAME, (payload->>'id')::uuid,\n    transaction_id_value, payment_id_value, session_id_value,\n    auth.uid(), supervisor_id_value,\n    jsonb_build_object('label', 'Training', 'table', TG_TABLE_NAME)\n  );\n\n  RETURN NEW;\nEND;\n$function$\n",
+    "proname": "finance_training_audit_row"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_current_user_is_restricted()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_is_restricted(auth.uid());\n$function$\n",
+    "proname": "finance_training_current_user_is_restricted"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_current_user_can_read_session(_session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_session_is_valid(auth.uid(), _session_id);\n$function$\n",
+    "proname": "finance_training_current_user_can_read_session"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_assignment_for(_user_id uuid)\n RETURNS TABLE(id uuid, trainee_user_id uuid, supervisor_user_id uuid, starts_on date, ends_on date, status text, label text)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT a.id, a.trainee_user_id, a.supervisor_user_id,\n         a.starts_on, a.ends_on, a.status, a.label\n  FROM public.finance_training_assignments a\n  WHERE a.trainee_user_id = _user_id\n  ORDER BY a.starts_on DESC, a.created_at DESC\n  LIMIT 1;\n$function$\n",
+    "proname": "finance_training_assignment_for"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_is_restricted(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT COALESCE(\n    (\n      SELECT a.status <> 'PASSED'\n      FROM public.finance_training_assignments a\n      WHERE a.trainee_user_id = _user_id\n      ORDER BY a.starts_on DESC, a.created_at DESC\n      LIMIT 1\n    ),\n    false\n  );\n$function$\n",
+    "proname": "finance_training_is_restricted"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_is_valid(_user_id uuid, _session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT EXISTS (\n    SELECT 1\n    FROM public.finance_training_assignments a\n    JOIN public.finance_cash_sessions s\n      ON s.id = _session_id\n     AND s.opened_by = a.supervisor_user_id\n     AND s.status = 'OPEN'\n    WHERE a.trainee_user_id = _user_id\n      AND a.status = 'ACTIVE'\n      AND ((now() AT TIME ZONE 'Asia/Jakarta')::date BETWEEN a.starts_on AND a.ends_on)\n      AND (\n        public.has_role(a.supervisor_user_id, 'owner')\n        OR public.has_employee_position(\n          a.supervisor_user_id,\n          ARRAY['supervisor'::public.employee_position]\n        )\n      )\n  );\n$function$\n",
+    "proname": "finance_training_session_is_valid"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.can_frontdesk(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_context_valid(_user_id)\n    OR (\n      NOT public.finance_training_is_restricted(_user_id)\n      AND (\n        public.has_role(_user_id, 'owner')\n        OR public.has_employee_position(\n          _user_id,\n          ARRAY['receptionist'::public.employee_position, 'supervisor'::public.employee_position]\n        )\n      )\n    );\n$function$\n",
+    "proname": "can_frontdesk"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.can_housekeeping(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'owner'::public.app_role)\n    or public.has_employee_position(\n      _user_id,\n      array['housekeeping','supervisor']::public.employee_position[]\n    );\n$function$\n",
+    "proname": "can_housekeeping"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.can_operate(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'owner'::public.app_role)\n    or public.has_employee_position(\n      _user_id,\n      array[\n        'receptionist',\n        'housekeeping',\n        'supervisor'\n      ]::public.employee_position[]\n    );\n$function$\n",
+    "proname": "can_operate"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.can_view_finance(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'owner'::public.app_role)\n    or public.has_employee_position(\n      _user_id,\n      array['supervisor','investor']::public.employee_position[]\n    );\n$function$\n",
+    "proname": "can_view_finance"
+  },
+  {
+    "definition": "CREATE OR REPLACE FUNCTION public.can_view_operations(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'owner'::public.app_role)\n    or public.has_employee_position(\n      _user_id,\n      array[\n        'receptionist',\n        'housekeeping',\n        'supervisor',\n        'inspector'\n      ]::public.employee_position[]\n    );\n$function$\n",
+    "proname": "can_view_operations"
+  }
+]

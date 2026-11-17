@@ -1,0 +1,298 @@
+--- a/src/components/checklist-housekeeping.tsx
++++ b/src/components/checklist-housekeeping.tsx
+@@ -61,6 +61,10 @@
+   });
+   const [message, setMessage] = useState('');
+   const [saving, setSaving] = useState(false);
++  const inFlight = useRef(false);
++  const committed = useRef<'passed' | 'needs_action' | null>(null);
++  const [saved, setSaved] = useState(false);
++  const [uncertain, setUncertain] = useState(false);
+ 
+   const superiorBToilet =
+     roomTypeName === 'Superior B' && ['02', '03', '04'].includes(roomNumber)
+@@ -82,15 +86,16 @@
+     : undefined;
+ 
+   async function save() {
++    if (inFlight.current) return;
+     setMessage('');
+ 
+-    if (Object.values(checks).some((value) => value === null)) {
++    if (!committed.current && Object.values(checks).some((value) => value === null)) {
+       setMessage('Semua item checklist wajib dijawab.');
+       return;
+     }
+ 
+     if (
+-      items.some(
++      !committed.current && items.some(
+         (item) => checks[item.key] === false && !reasons[item.key].trim(),
+       )
+     ) {
+@@ -98,37 +103,56 @@
+       return;
+     }
+ 
++    inFlight.current = true;
+     setSaving(true);
+ 
+-    const { error } = await supabase.rpc('complete_housekeeping_checklist', {
+-      _room_id: roomId,
+-      _checklist_id: checklistId.current,
+-      _towel_ok: checks.towel_ok as boolean,
+-      _mineral_water_ok: checks.mineral_water_ok as boolean,
+-      _tissue_ok: checks.tissue_ok as boolean,
+-      _ashtray_ok: checks.ashtray_ok as boolean,
+-      _tv_remote_ok: checks.tv_remote_ok as boolean,
+-      _fan_ok: checks.fan_ok as boolean,
+-      _exhaust_fan_ok: checks.exhaust_fan_ok as boolean,
+-      _issue_note: JSON.stringify(
+-        Object.fromEntries(
+-          items.map((item) => [item.key.replace(/_ok$/, ''), reasons[item.key].trim()]),
+-        ),
+-      ),
+-    });
+-
+-    setSaving(false);
+-
+-    if (error) {
+-      setMessage(error.message);
+-      return;
++    try {
++      if (!committed.current) {
++        setUncertain(true);
++        const { error } = await supabase.rpc('complete_housekeeping_checklist', {
++          _room_id: roomId,
++          _checklist_id: checklistId.current,
++          _towel_ok: checks.towel_ok as boolean,
++          _mineral_water_ok: checks.mineral_water_ok as boolean,
++          _tissue_ok: checks.tissue_ok as boolean,
++          _ashtray_ok: checks.ashtray_ok as boolean,
++          _tv_remote_ok: checks.tv_remote_ok as boolean,
++          _fan_ok: checks.fan_ok as boolean,
++          _exhaust_fan_ok: checks.exhaust_fan_ok as boolean,
++          _issue_note: JSON.stringify(
++            Object.fromEntries(
++              items.map((item) => [item.key.replace(/_ok$/, ''), reasons[item.key].trim()]),
++            ),
++          ),
++        });
++
++        if (error) {
++          // PostgREST also returns transport errors here; preserve the submitted
++          // answers and idempotency key until the outcome is confirmed.
++          setMessage(error.message);
++          return;
++        }
++
++        const result = Object.values(checks).every(Boolean)
++          ? 'passed'
++          : 'needs_action';
++        setUncertain(false);
++        committed.current = result;
++        setSaved(true);
++      }
++      try {
++        await onSaved(committed.current);
++      } catch {
++        setMessage('Checklist sudah tersimpan. Pemuatan ulang gagal. Coba muat ulang tanpa menyimpan kembali.');
++        return;
++      }
++      onClose();
++    } catch {
++      setMessage('Hasil penyimpanan belum dapat dipastikan. Coba lagi memakai ID checklist yang sama.');
++    } finally {
++      inFlight.current = false;
++      setSaving(false);
+     }
+-
+-    const result = Object.values(checks).every(Boolean)
+-      ? 'passed'
+-      : 'needs_action';
+-    await onSaved(result);
+-    onClose();
+   }
+ 
+   return (
+@@ -146,7 +170,7 @@
+             </p>
+             <h2 className="text-lg font-bold">Kamar {roomNumber}</h2>
+           </div>
+-          <Button type="button" variant="ghost" size="icon" onClick={onClose}>
++          <Button type="button" variant="ghost" size="icon" disabled={saving} onClick={onClose}>
+             <X className="h-4 w-4" />
+           </Button>
+         </div>
+@@ -162,6 +186,7 @@
+                 <div className="flex gap-2">
+                   <Button
+                     type="button"
++                    disabled={saving || saved || uncertain}
+                     size="sm"
+                     variant={checks[item.key] === true ? 'default' : 'outline'}
+                     aria-label={`${item.label} sesuai`}
+@@ -180,6 +205,7 @@
+                   </Button>
+                   <Button
+                     type="button"
++                    disabled={saving || saved || uncertain}
+                     size="sm"
+                     variant={checks[item.key] === false ? 'destructive' : 'outline'}
+                     aria-label={`${item.label} bermasalah`}
+@@ -199,6 +225,7 @@
+                   Alasan {item.label}
+                   <input
+                     required
++                    disabled={saving || saved || uncertain}
+                     value={reasons[item.key]}
+                     onChange={(event) =>
+                       setReasons((current) => ({
+@@ -232,11 +259,11 @@
+           )}
+ 
+           <div className="flex justify-end gap-2 pt-2">
+-            <Button type="button" variant="outline" onClick={onClose}>
++            <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
+               Batal
+             </Button>
+             <Button type="button" disabled={saving} onClick={() => void save()}>
+-              {saving ? 'Menyimpan…' : 'Selesai Bersihkan'}
++              {saving ? 'Memproses…' : saved ? 'Muat ulang status' : 'Selesai Bersihkan'}
+             </Button>
+           </div>
+         </div>
+--- a/src/lib/data-live.ts
++++ b/src/lib/data-live.ts
+@@ -37,7 +37,7 @@
+   const [error, setError] = useState('');
+   const [loading, setLoading] = useState(true);
+ 
+-  const refresh = useCallback(async () => {
++  const refresh = useCallback(async (options?: { throwOnError?: boolean }) => {
+     if (!enabled) {
+       setRows([]);
+       setError('');
+@@ -60,6 +60,7 @@
+     );
+     setError(failure?.message ?? '');
+     setLoading(false);
++    if (failure && options?.throwOnError) throw new Error(failure.message);
+   }, [table, enabled, scopeColumn, scopeValue]);
+ 
+   useEffect(() => {
+--- a/src/routes/kamar.tsx
++++ b/src/routes/kamar.tsx
+@@ -1,3 +1,4 @@
++import { checklistForReadyJob } from '@/lib/checklist-for-ready-job';
+ import { createFileRoute } from "@tanstack/react-router";
+ import { useMemo, useState } from "react";
+ import { UserRound, Brush, BedDouble, Clock3, CalendarDays, NotebookPen, LogIn } from "lucide-react";
+@@ -64,7 +65,6 @@
+     !checklist.tissue_ok && (checklist.tissue_reason || "Tisu"),
+     !checklist.towel_ok && (checklist.towel_reason || "Handuk"),
+     !checklist.tv_remote_ok && (checklist.tv_remote_reason || "Remote TV"),
+-    checklist.issue_note.trim(),
+   ].filter((item): item is string => Boolean(item));
+ }
+ 
+@@ -103,22 +103,6 @@
+ 
+     return map;
+   }, [historyRows]);
+-
+-  const latestChecklist = useMemo(() => {
+-    const map = new Map<string, (typeof checklistRows)[number]>();
+-
+-    for (const item of checklistRows) {
+-      const current = map.get(item.room_id);
+-      if (
+-        !current ||
+-        new Date(item.created_at).getTime() > new Date(current.created_at).getTime()
+-      ) {
+-        map.set(item.room_id, item);
+-      }
+-    }
+-
+-    return map;
+-  }, [checklistRows]);
+ 
+   const { bagian = "semua" } = Route.useSearch();
+   const statusFilter = filterBagian[bagian] ?? null;
+@@ -205,7 +189,7 @@
+                       : undefined;
+                   const housekeepingJob =
+                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
+-                  const checklist = latestChecklist.get(room.id);
++                  const checklist = checklistForReadyJob(housekeepingJob, historyRows, checklistRows);
+                   const issues = checklist ? formatIssueDetails(checklist) : [];
+ 
+                   return (
+--- a/src/routes/housekeeping.tsx
++++ b/src/routes/housekeeping.tsx
+@@ -239,6 +239,14 @@
+           </div>
+         </div>
+       </header>
++      <nav aria-label="Bagian Housekeeping" className="hk-tabs">
++        {bagianHk.map((b) => (
++          <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }}
++            aria-current={bagian === b.kode ? 'page' : undefined} className="hk-tab">
++            <b.ikon aria-hidden="true" /><span>{b.label}</span>
++          </Link>
++        ))}
++      </nav>
+       {message && <p role="status" className="mb-4 rounded-lg border border-gold/20 bg-secondary px-4 py-3 text-sm">{message}</p>}
+ 
+       {bagian === 'riwayat' && (
+@@ -344,7 +352,11 @@
+           roomTypeName={checklistRoomType?.name ?? ''}
+           onClose={() => setChecklistRoomId(null)}
+           onSaved={async () => {
+-            await refreshAll();
++            await Promise.all([
++              rooms.refresh({ throwOnError: true }),
++              history.refresh({ throwOnError: true }),
++              checklists.refresh({ throwOnError: true }),
++            ]);
+           }}
+         />
+       )}
+--- /dev/null
++++ b/src/lib/checklist-for-ready-job.ts
+@@ -0,0 +1,35 @@
++type HistoryLink = {
++  id: string;
++  room_id: string;
++  transaction_id: string | null;
++  job_id: string | null;
++  job_number: string | null;
++  action: string;
++  to_status: string;
++};
++type ChecklistLink = {
++  housekeeping_history_id: string;
++  room_id: string;
++  transaction_id: string | null;
++};
++
++/** A checklist links to start_cleaning, not the later finish_cleaning row.
++ * Never infer legacy links from room number, timestamp, or transaction alone.
++ */
++export function checklistForReadyJob<T extends ChecklistLink>(
++  ready: HistoryLink | undefined,
++  history: readonly HistoryLink[],
++  checklists: readonly T[],
++): T | undefined {
++  if (!ready || ready.action !== 'finish_cleaning' || ready.to_status !== 'ready'
++      || !ready.job_id || !ready.job_number) return undefined;
++  const starts = history.filter(row => row.action === 'start_cleaning'
++    && row.room_id === ready.room_id && row.job_id === ready.job_id
++    && row.job_number === ready.job_number
++    && row.transaction_id === ready.transaction_id);
++  const matches = checklists.filter(row => row.room_id === ready.room_id
++    && row.transaction_id === ready.transaction_id
++    && starts.some(start => start.id === row.housekeeping_history_id));
++  // Ambiguous legacy/corrupt relationships must not label a different job.
++  return matches.length === 1 ? matches[0] : undefined;
++}

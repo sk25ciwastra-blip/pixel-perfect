@@ -1,4 +1,6 @@
--- DISIAPKAN, BELUM DITERAPKAN. Menunggu persetujuan Owner.
+-- BAGIAN A APPLIED CLOUD 2026-11-17 19:14 WIB with explicit Owner approval.
+-- Evidence: DOKUMEN_PROYEK/ASSISTED_SESSION_NEGATIVE_CLOSING_PLAN_2026-11-17.md
+-- DO NOT RE-RUN. Original approved executable body is unchanged; Bagian B is not applied.
 -- Bagian A: daftar Jenis Pengeluaran & Keperluan untuk Siapa yang dikelola Owner.
 CREATE TABLE public.finance_expense_options (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -9,6 +11,9 @@ CREATE TABLE public.finance_expense_options (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (kind, name)
 );
+-- Owner-approved correction: neutralize inherited default grants on this new table only.
+-- Does not change database-wide defaults or privileges on any existing table.
+REVOKE ALL PRIVILEGES ON TABLE public.finance_expense_options FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.finance_expense_options TO authenticated;
 GRANT ALL ON public.finance_expense_options TO service_role;
 ALTER TABLE public.finance_expense_options ENABLE ROW LEVEL SECURITY;

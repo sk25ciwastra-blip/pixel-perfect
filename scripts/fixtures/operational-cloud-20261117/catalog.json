@@ -1,0 +1,1068 @@
+{
+  "grants": [{"grantee":"anon","privilege_type":"REFERENCES","table_name":"housekeeping_checklists"},{"grantee":"anon","privilege_type":"SELECT","table_name":"housekeeping_checklists"},{"grantee":"anon","privilege_type":"TRIGGER","table_name":"housekeeping_checklists"},{"grantee":"anon","privilege_type":"TRUNCATE","table_name":"housekeeping_checklists"},{"grantee":"authenticated","privilege_type":"REFERENCES","table_name":"housekeeping_checklists"},{"grantee":"authenticated","privilege_type":"SELECT","table_name":"housekeeping_checklists"},{"grantee":"authenticated","privilege_type":"TRIGGER","table_name":"housekeeping_checklists"},{"grantee":"authenticated","privilege_type":"TRUNCATE","table_name":"housekeeping_checklists"},{"grantee":"anon","privilege_type":"REFERENCES","table_name":"housekeeping_history"},{"grantee":"anon","privilege_type":"SELECT","table_name":"housekeeping_history"},{"grantee":"anon","privilege_type":"TRIGGER","table_name":"housekeeping_history"},{"grantee":"anon","privilege_type":"TRUNCATE","table_name":"housekeeping_history"},{"grantee":"authenticated","privilege_type":"REFERENCES","table_name":"housekeeping_history"},{"grantee":"authenticated","privilege_type":"SELECT","table_name":"housekeeping_history"},{"grantee":"authenticated","privilege_type":"TRIGGER","table_name":"housekeeping_history"},{"grantee":"authenticated","privilege_type":"TRUNCATE","table_name":"housekeeping_history"},{"grantee":"anon","privilege_type":"DELETE","table_name":"rooms"},{"grantee":"anon","privilege_type":"INSERT","table_name":"rooms"},{"grantee":"anon","privilege_type":"REFERENCES","table_name":"rooms"},{"grantee":"anon","privilege_type":"SELECT","table_name":"rooms"},{"grantee":"anon","privilege_type":"TRIGGER","table_name":"rooms"},{"grantee":"anon","privilege_type":"TRUNCATE","table_name":"rooms"},{"grantee":"anon","privilege_type":"UPDATE","table_name":"rooms"},{"grantee":"authenticated","privilege_type":"DELETE","table_name":"rooms"},{"grantee":"authenticated","privilege_type":"INSERT","table_name":"rooms"},{"grantee":"authenticated","privilege_type":"REFERENCES","table_name":"rooms"},{"grantee":"authenticated","privilege_type":"SELECT","table_name":"rooms"},{"grantee":"authenticated","privilege_type":"TRIGGER","table_name":"rooms"},{"grantee":"authenticated","privilege_type":"TRUNCATE","table_name":"rooms"},{"grantee":"authenticated","privilege_type":"UPDATE","table_name":"rooms"},{"grantee":"anon","privilege_type":"DELETE","table_name":"transactions"},{"grantee":"anon","privilege_type":"REFERENCES","table_name":"transactions"},{"grantee":"anon","privilege_type":"SELECT","table_name":"transactions"},{"grantee":"anon","privilege_type":"TRIGGER","table_name":"transactions"},{"grantee":"anon","privilege_type":"TRUNCATE","table_name":"transactions"},{"grantee":"anon","privilege_type":"UPDATE","table_name":"transactions"},{"grantee":"authenticated","privilege_type":"DELETE","table_name":"transactions"},{"grantee":"authenticated","privilege_type":"REFERENCES","table_name":"transactions"},{"grantee":"authenticated","privilege_type":"SELECT","table_name":"transactions"},{"grantee":"authenticated","privilege_type":"TRIGGER","table_name":"transactions"},{"grantee":"authenticated","privilege_type":"TRUNCATE","table_name":"transactions"},{"grantee":"authenticated","privilege_type":"UPDATE","table_name":"transactions"}],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER audit_rooms AFTER INSERT OR UPDATE ON public.rooms FOR EACH ROW EXECUTE FUNCTION audit_changes()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.audit_changes()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  actor uuid;\n  reason_text text;\nBEGIN\n  actor := auth.uid();\n  reason_text := COALESCE(\n    NULLIF(current_setting('app.price_reason', true), ''),\n    'Perubahan harga'\n  );\n\n  IF TG_TABLE_NAME = 'packages' AND TG_OP = 'UPDATE' THEN\n    IF OLD.weekday_price IS DISTINCT FROM NEW.weekday_price THEN\n      INSERT INTO public.package_price_history(\n        package_id,\n        old_price,\n        new_price,\n        price_type,\n        reason,\n        changed_by\n      )\n      VALUES (\n        NEW.id,\n        OLD.weekday_price,\n        NEW.weekday_price,\n        'weekday',\n        reason_text,\n        actor\n      );\n    END IF;\n\n    IF OLD.weekend_price IS DISTINCT FROM NEW.weekend_price THEN\n      INSERT INTO public.package_price_history(\n        package_id,\n        old_price,\n        new_price,\n        price_type,\n        reason,\n        changed_by\n      )\n      VALUES (\n        NEW.id,\n        OLD.weekend_price,\n        NEW.weekend_price,\n        'weekend',\n        reason_text,\n        actor\n      );\n    END IF;\n  END IF;\n\n  IF TG_OP = 'INSERT' THEN\n    INSERT INTO public.activity_logs(\n      user_id,\n      action,\n      entity_type,\n      entity_id,\n      description\n    )\n    VALUES (\n      actor,\n      'buat',\n      TG_TABLE_NAME,\n      NEW.id,\n      'Data dibuat'\n    );\n  ELSE\n    INSERT INTO public.activity_logs(\n      user_id,\n      action,\n      entity_type,\n      entity_id,\n      description\n    )\n    VALUES (\n      actor,\n      'ubah',\n      TG_TABLE_NAME,\n      NEW.id,\n      'Data diubah'\n    );\n  END IF;\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "audit_changes",
+      "relname": "rooms",
+      "tgname": "audit_rooms"
+    },
+    {
+      "definition": "CREATE TRIGGER room_transition BEFORE UPDATE ON public.rooms FOR EACH ROW EXECUTE FUNCTION validate_room_transition()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.validate_room_transition()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\ndeclare\n  allow_ready_override boolean;\nbegin\n  allow_ready_override :=\n    coalesce(current_setting('app.room_ready_override', true), '') = 'true';\n\n  if NEW.status <> OLD.status\n     and not (\n       (OLD.status = 'ready' and NEW.status = 'occupied')\n       or (OLD.status = 'occupied' and NEW.status = 'dirty')\n       or (OLD.status = 'dirty' and NEW.status = 'cleaning')\n       or (OLD.status = 'cleaning' and NEW.status = 'ready')\n       or (\n         allow_ready_override\n         and OLD.status in ('dirty', 'cleaning')\n         and NEW.status = 'ready'\n       )\n     )\n  then\n    raise exception 'Perubahan status kamar tidak sesuai urutan';\n  end if;\n\n  return NEW;\nend;\n$function$\n",
+      "proname": "validate_room_transition",
+      "relname": "rooms",
+      "tgname": "room_transition"
+    },
+    {
+      "definition": "CREATE TRIGGER touch_rooms BEFORE UPDATE ON public.rooms FOR EACH ROW EXECUTE FUNCTION touch_updated_at()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.touch_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$ BEGIN NEW.updated_at := now(); RETURN NEW; END $function$\n",
+      "proname": "touch_updated_at",
+      "relname": "rooms",
+      "tgname": "touch_rooms"
+    },
+    {
+      "definition": "CREATE TRIGGER audit_transactions AFTER INSERT OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION audit_changes()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.audit_changes()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  actor uuid;\n  reason_text text;\nBEGIN\n  actor := auth.uid();\n  reason_text := COALESCE(\n    NULLIF(current_setting('app.price_reason', true), ''),\n    'Perubahan harga'\n  );\n\n  IF TG_TABLE_NAME = 'packages' AND TG_OP = 'UPDATE' THEN\n    IF OLD.weekday_price IS DISTINCT FROM NEW.weekday_price THEN\n      INSERT INTO public.package_price_history(\n        package_id,\n        old_price,\n        new_price,\n        price_type,\n        reason,\n        changed_by\n      )\n      VALUES (\n        NEW.id,\n        OLD.weekday_price,\n        NEW.weekday_price,\n        'weekday',\n        reason_text,\n        actor\n      );\n    END IF;\n\n    IF OLD.weekend_price IS DISTINCT FROM NEW.weekend_price THEN\n      INSERT INTO public.package_price_history(\n        package_id,\n        old_price,\n        new_price,\n        price_type,\n        reason,\n        changed_by\n      )\n      VALUES (\n        NEW.id,\n        OLD.weekend_price,\n        NEW.weekend_price,\n        'weekend',\n        reason_text,\n        actor\n      );\n    END IF;\n  END IF;\n\n  IF TG_OP = 'INSERT' THEN\n    INSERT INTO public.activity_logs(\n      user_id,\n      action,\n      entity_type,\n      entity_id,\n      description\n    )\n    VALUES (\n      actor,\n      'buat',\n      TG_TABLE_NAME,\n      NEW.id,\n      'Data dibuat'\n    );\n  ELSE\n    INSERT INTO public.activity_logs(\n      user_id,\n      action,\n      entity_type,\n      entity_id,\n      description\n    )\n    VALUES (\n      actor,\n      'ubah',\n      TG_TABLE_NAME,\n      NEW.id,\n      'Data diubah'\n    );\n  END IF;\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "audit_changes",
+      "relname": "transactions",
+      "tgname": "audit_transactions"
+    },
+    {
+      "definition": "CREATE CONSTRAINT TRIGGER finance_booking_payment_guard_trigger AFTER INSERT OR UPDATE OF status, price_snapshot ON public.transactions DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finance_booking_payment_guard()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_booking_payment_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  total_paid numeric;\nBEGIN\n  IF NEW.status <> 'booking' THEN\n    RETURN NEW;\n  END IF;\n\n  IF NEW.price_snapshot IS NULL OR NEW.price_snapshot <= 0 THEN\n    RAISE EXCEPTION 'Booking wajib memiliki tagihan valid';\n  END IF;\n\n  -- Legacy bookings created before the snapshot column existed are not\n  -- retroactively reinterpreted by a later Owner setting change.\n  IF NEW.minimum_dp_amount_snapshot IS NULL THEN\n    RETURN NEW;\n  END IF;\n\n  SELECT COALESCE(SUM(p.amount), 0)\n  INTO total_paid\n  FROM public.payments p\n  WHERE p.transaction_id = NEW.id;\n\n  IF total_paid < NEW.minimum_dp_amount_snapshot THEN\n    RAISE EXCEPTION 'Booking wajib memiliki DP minimum sesuai snapshot transaksi';\n  END IF;\n\n  IF total_paid > NEW.price_snapshot THEN\n    RAISE EXCEPTION 'Total pembayaran melebihi tagihan transaksi';\n  END IF;\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_booking_payment_guard",
+      "relname": "transactions",
+      "tgname": "finance_booking_payment_guard_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_snapshot_booking_dp_trigger BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION finance_snapshot_booking_dp()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_snapshot_booking_dp()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  setting_row public.finance_settings;\n  raw_minimum numeric;\nBEGIN\n  IF NEW.status <> 'booking' OR NEW.minimum_dp_mode_snapshot IS NOT NULL THEN\n    RETURN NEW;\n  END IF;\n\n  SELECT * INTO setting_row\n  FROM public.finance_settings\n  WHERE id = true;\n\n  IF NOT FOUND THEN\n    RETURN NEW;\n  END IF;\n\n  NEW.minimum_dp_mode_snapshot := setting_row.minimum_dp_mode;\n  NEW.minimum_dp_value_snapshot := setting_row.minimum_dp_value;\n\n  raw_minimum := CASE setting_row.minimum_dp_mode\n    WHEN 'PERCENTAGE' THEN COALESCE(NEW.price_snapshot, 0) * setting_row.minimum_dp_value / 100\n    ELSE setting_row.minimum_dp_value\n  END;\n\n  -- Payment storage is numeric(12,2); the Owner rule requires a whole-rupiah\n  -- ceiling, so no rounding to thousands is performed.\n  NEW.minimum_dp_amount_snapshot := CEIL(raw_minimum);\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_snapshot_booking_dp",
+      "relname": "transactions",
+      "tgname": "finance_snapshot_booking_dp_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_training_transactions_audit_trigger AFTER INSERT OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION finance_training_audit_row()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_training_audit_row()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  assignment_id_value uuid;\n  session_id_value uuid;\n  payload jsonb := to_jsonb(NEW);\n  transaction_id_value uuid;\n  payment_id_value uuid;\n  supervisor_id_value uuid;\nBEGIN\n  IF NOT public.finance_training_context_valid(auth.uid()) THEN\n    RETURN NEW;\n  END IF;\n\n  session_id_value := COALESCE(\n    NULLIF(payload->>'cash_session_id', '')::uuid,\n    NULLIF(payload->>'session_id', '')::uuid,\n    NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid\n  );\n\n  assignment_id_value := public.finance_training_context_assignment(\n    auth.uid(), session_id_value\n  );\n\n  SELECT s.opened_by\n  INTO supervisor_id_value\n  FROM public.finance_cash_sessions s\n  WHERE s.id = session_id_value\n    AND s.status = 'OPEN'\n    AND public.finance_training_context_matches_session(auth.uid(), s.id);\n\n  IF assignment_id_value IS NULL OR supervisor_id_value IS NULL THEN\n    RAISE EXCEPTION 'Konteks audit Training tidak lengkap';\n  END IF;\n\n  transaction_id_value := CASE\n    WHEN TG_TABLE_NAME = 'transactions' THEN (payload->>'id')::uuid\n    ELSE NULLIF(payload->>'transaction_id', '')::uuid\n  END;\n  payment_id_value := CASE\n    WHEN TG_TABLE_NAME = 'payments' THEN (payload->>'id')::uuid\n    ELSE NULL\n  END;\n\n  INSERT INTO public.finance_training_audit (\n    assignment_id, action, entity_type, entity_id,\n    transaction_id, payment_id, session_id,\n    operator_id, supervisor_id, details\n  )\n  VALUES (\n    assignment_id_value, TG_OP, TG_TABLE_NAME, (payload->>'id')::uuid,\n    transaction_id_value, payment_id_value, session_id_value,\n    auth.uid(), supervisor_id_value,\n    jsonb_build_object('label', 'Training', 'table', TG_TABLE_NAME)\n  );\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_audit_row",
+      "relname": "transactions",
+      "tgname": "finance_training_transactions_audit_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_training_transactions_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION finance_training_transaction_guard()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_training_transaction_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid())\n     AND NOT public.finance_training_context_valid(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training wajib memakai wrapper transaksi dengan sesi kas penanggung jawab';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_transaction_guard",
+      "relname": "transactions",
+      "tgname": "finance_training_transactions_guard_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER touch_transactions BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION touch_updated_at()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.touch_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$ BEGIN NEW.updated_at := now(); RETURN NEW; END $function$\n",
+      "proname": "touch_updated_at",
+      "relname": "transactions",
+      "tgname": "touch_transactions"
+    },
+    {
+      "definition": "CREATE TRIGGER transaction_identity BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION protect_transaction_number()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.protect_transaction_number()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$ BEGIN IF NEW.transaction_number <> OLD.transaction_number OR NEW.guest_id <> OLD.guest_id OR NEW.created_by <> OLD.created_by THEN RAISE EXCEPTION 'Identitas transaksi tidak dapat diubah'; END IF; RETURN NEW; END $function$\n",
+      "proname": "protect_transaction_number",
+      "relname": "transactions",
+      "tgname": "transaction_identity"
+    },
+    {
+      "definition": "CREATE TRIGGER transaction_identity_insert BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION enforce_transaction_identity()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.enforce_transaction_identity()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nBEGIN\n  IF auth.uid() IS NOT NULL THEN\n    NEW.created_by := auth.uid();\n  END IF;\n\n  -- The trigger is the single insert path. Dropping the historical default\n  -- above avoids consuming two sequence values and prevents caller-supplied\n  -- numbers from bypassing the Owner-final generator.\n  NEW.transaction_number := public.next_transaction_number();\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "enforce_transaction_identity",
+      "relname": "transactions",
+      "tgname": "transaction_identity_insert"
+    }
+  ],
+  "helpers": [
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role app_role)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role) $function$\n",
+      "proname": "has_role"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.can_view_operations(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'owner'::public.app_role)\n    or public.has_employee_position(\n      _user_id,\n      array[\n        'receptionist',\n        'housekeeping',\n        'supervisor',\n        'inspector'\n      ]::public.employee_position[]\n    );\n$function$\n",
+      "proname": "can_view_operations"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.next_transaction_number()\n RETURNS text\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public'\nAS $function$\nDECLARE\n  sequence_value bigint;\nBEGIN\n  sequence_value := nextval('public.owner_transaction_number_seq');\n  RETURN format(\n    'BTRDTRX-%s',\n    CASE\n      WHEN sequence_value < 1000000 THEN lpad(sequence_value::text, 6, '0')\n      ELSE sequence_value::text\n    END\n  );\nEND;\n$function$\n",
+      "proname": "next_transaction_number"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.can_view_finance(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'owner'::public.app_role)\n    or public.has_employee_position(\n      _user_id,\n      array['supervisor','investor']::public.employee_position[]\n    );\n$function$\n",
+      "proname": "can_view_finance"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.has_employee_position(_user_id uuid, _positions employee_position[])\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  select\n    public.has_role(_user_id, 'employee'::public.app_role)\n    and exists (\n      select 1\n      from public.employees\n      where user_id = _user_id\n        and active\n        and position = any(_positions)\n    );\n$function$\n",
+      "proname": "has_employee_position"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_valid(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_context_assignment(\n    _user_id,\n    NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid\n  ) IS NOT NULL;\n$function$\n",
+      "proname": "finance_training_context_valid"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_forbidden_finance_mutation_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak dapat mengubah objek Finance ini';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_forbidden_finance_mutation_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_assignment(_user_id uuid, _session_id uuid)\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT a.id\n  FROM public.finance_training_assignments a\n  WHERE a.trainee_user_id = _user_id\n    AND a.status = 'ACTIVE'\n    AND public.finance_training_session_is_valid(_user_id, _session_id)\n  ORDER BY a.starts_on DESC, a.created_at DESC\n  LIMIT 1;\n$function$\n",
+      "proname": "finance_training_context_assignment"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_matches_session(_user_id uuid, _session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT _session_id IS NOT NULL\n    AND NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid = _session_id\n    AND public.finance_training_context_assignment(_user_id, _session_id) IS NOT NULL;\n$function$\n",
+      "proname": "finance_training_context_matches_session"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_transaction_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid())\n     AND NOT public.finance_training_context_valid(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training wajib memakai wrapper transaksi dengan sesi kas penanggung jawab';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_transaction_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak boleh membuka, mengubah, atau menutup sesi kas';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_session_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_row_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  payload jsonb;\n  row_session_id uuid;\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    payload := CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;\n    row_session_id := COALESCE(\n      NULLIF(payload->>'cash_session_id', '')::uuid,\n      NULLIF(payload->>'session_id', '')::uuid\n    );\n    IF NOT public.finance_training_context_matches_session(auth.uid(), row_session_id) THEN\n      RAISE EXCEPTION 'Peserta Training wajib memakai sesi kas penanggung jawab yang valid';\n    END IF;\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_session_row_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_audit_row()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  assignment_id_value uuid;\n  session_id_value uuid;\n  payload jsonb := to_jsonb(NEW);\n  transaction_id_value uuid;\n  payment_id_value uuid;\n  supervisor_id_value uuid;\nBEGIN\n  IF NOT public.finance_training_context_valid(auth.uid()) THEN\n    RETURN NEW;\n  END IF;\n\n  session_id_value := COALESCE(\n    NULLIF(payload->>'cash_session_id', '')::uuid,\n    NULLIF(payload->>'session_id', '')::uuid,\n    NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid\n  );\n\n  assignment_id_value := public.finance_training_context_assignment(\n    auth.uid(), session_id_value\n  );\n\n  SELECT s.opened_by\n  INTO supervisor_id_value\n  FROM public.finance_cash_sessions s\n  WHERE s.id = session_id_value\n    AND s.status = 'OPEN'\n    AND public.finance_training_context_matches_session(auth.uid(), s.id);\n\n  IF assignment_id_value IS NULL OR supervisor_id_value IS NULL THEN\n    RAISE EXCEPTION 'Konteks audit Training tidak lengkap';\n  END IF;\n\n  transaction_id_value := CASE\n    WHEN TG_TABLE_NAME = 'transactions' THEN (payload->>'id')::uuid\n    ELSE NULLIF(payload->>'transaction_id', '')::uuid\n  END;\n  payment_id_value := CASE\n    WHEN TG_TABLE_NAME = 'payments' THEN (payload->>'id')::uuid\n    ELSE NULL\n  END;\n\n  INSERT INTO public.finance_training_audit (\n    assignment_id, action, entity_type, entity_id,\n    transaction_id, payment_id, session_id,\n    operator_id, supervisor_id, details\n  )\n  VALUES (\n    assignment_id_value, TG_OP, TG_TABLE_NAME, (payload->>'id')::uuid,\n    transaction_id_value, payment_id_value, session_id_value,\n    auth.uid(), supervisor_id_value,\n    jsonb_build_object('label', 'Training', 'table', TG_TABLE_NAME)\n  );\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_audit_row"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_current_user_is_restricted()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_is_restricted(auth.uid());\n$function$\n",
+      "proname": "finance_training_current_user_is_restricted"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_current_user_can_read_session(_session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_session_is_valid(auth.uid(), _session_id);\n$function$\n",
+      "proname": "finance_training_current_user_can_read_session"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_assignment_for(_user_id uuid)\n RETURNS TABLE(id uuid, trainee_user_id uuid, supervisor_user_id uuid, starts_on date, ends_on date, status text, label text)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT a.id, a.trainee_user_id, a.supervisor_user_id,\n         a.starts_on, a.ends_on, a.status, a.label\n  FROM public.finance_training_assignments a\n  WHERE a.trainee_user_id = _user_id\n  ORDER BY a.starts_on DESC, a.created_at DESC\n  LIMIT 1;\n$function$\n",
+      "proname": "finance_training_assignment_for"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_is_restricted(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT COALESCE(\n    (\n      SELECT a.status <> 'PASSED'\n      FROM public.finance_training_assignments a\n      WHERE a.trainee_user_id = _user_id\n      ORDER BY a.starts_on DESC, a.created_at DESC\n      LIMIT 1\n    ),\n    false\n  );\n$function$\n",
+      "proname": "finance_training_is_restricted"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_is_valid(_user_id uuid, _session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT EXISTS (\n    SELECT 1\n    FROM public.finance_training_assignments a\n    JOIN public.finance_cash_sessions s\n      ON s.id = _session_id\n     AND s.opened_by = a.supervisor_user_id\n     AND s.status = 'OPEN'\n    WHERE a.trainee_user_id = _user_id\n      AND a.status = 'ACTIVE'\n      AND ((now() AT TIME ZONE 'Asia/Jakarta')::date BETWEEN a.starts_on AND a.ends_on)\n      AND (\n        public.has_role(a.supervisor_user_id, 'owner')\n        OR public.has_employee_position(\n          a.supervisor_user_id,\n          ARRAY['supervisor'::public.employee_position]\n        )\n      )\n  );\n$function$\n",
+      "proname": "finance_training_session_is_valid"
+    }
+  ],
+  "columns": [
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "activity_logs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "user_id",
+      "default_expr": null,
+      "table_name": "activity_logs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "action",
+      "default_expr": null,
+      "table_name": "activity_logs",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "entity_type",
+      "default_expr": null,
+      "table_name": "activity_logs",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "entity_id",
+      "default_expr": null,
+      "table_name": "activity_logs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "description",
+      "default_expr": "''::text",
+      "table_name": "activity_logs",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "activity_logs",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "employees",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "user_id",
+      "default_expr": null,
+      "table_name": "employees",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "name",
+      "default_expr": null,
+      "table_name": "employees",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "employee_id",
+      "default_expr": null,
+      "table_name": "employees",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "position",
+      "default_expr": null,
+      "table_name": "employees",
+      "type": "employee_position"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "active",
+      "default_expr": "true",
+      "table_name": "employees",
+      "type": "boolean"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "employees",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "updated_at",
+      "default_expr": "now()",
+      "table_name": "employees",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_cash_sessions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "opened_by",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "operational_date",
+      "default_expr": "((now() AT TIME ZONE 'Asia/Jakarta'::text))::date",
+      "table_name": "finance_cash_sessions",
+      "type": "date"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "opened_at",
+      "default_expr": "now()",
+      "table_name": "finance_cash_sessions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "opening_cash",
+      "default_expr": "0",
+      "table_name": "finance_cash_sessions",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "opening_source_session_id",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "status",
+      "default_expr": "'OPEN'::text",
+      "table_name": "finance_cash_sessions",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "closed_at",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "closed_by",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "closing_reason",
+      "default_expr": "''::text",
+      "table_name": "finance_cash_sessions",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "closing_snapshot",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "jsonb"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_cash_sessions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "true",
+      "table_name": "finance_settings",
+      "type": "boolean"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "minimum_dp_mode",
+      "default_expr": "'AMOUNT'::text",
+      "table_name": "finance_settings",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "minimum_dp_value",
+      "default_expr": "0",
+      "table_name": "finance_settings",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "updated_by",
+      "default_expr": null,
+      "table_name": "finance_settings",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "updated_at",
+      "default_expr": "now()",
+      "table_name": "finance_settings",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "trainee_user_id",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "supervisor_user_id",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "starts_on",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "date"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "ends_on",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "date"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "status",
+      "default_expr": "'ACTIVE'::text",
+      "table_name": "finance_training_assignments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "label",
+      "default_expr": "'Training'::text",
+      "table_name": "finance_training_assignments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_training_assignments",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "resolved_by",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "resolved_at",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "resolution_note",
+      "default_expr": "''::text",
+      "table_name": "finance_training_assignments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "assignment_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "label",
+      "default_expr": "'Training'::text",
+      "table_name": "finance_training_audit",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "action",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "entity_type",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "entity_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "transaction_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "payment_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "session_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "operator_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "supervisor_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_training_audit",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "details",
+      "default_expr": "'{}'::jsonb",
+      "table_name": "finance_training_audit",
+      "type": "jsonb"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "transaction_id",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "amount",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "method",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "kind",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "payments",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "recorded_by",
+      "default_expr": "auth.uid()",
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "cash_session_id",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "idempotency_key",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "charge_event_id",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_mode",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_rate",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "numeric(8,4)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_per_room_amount",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_rounding",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_recipient",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_amount",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "rooms",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "room_number",
+      "default_expr": null,
+      "table_name": "rooms",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "room_type_id",
+      "default_expr": null,
+      "table_name": "rooms",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "base_price",
+      "default_expr": "0",
+      "table_name": "rooms",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "status",
+      "default_expr": "'ready'::room_status",
+      "table_name": "rooms",
+      "type": "room_status"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "notes",
+      "default_expr": "''::text",
+      "table_name": "rooms",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "active",
+      "default_expr": "true",
+      "table_name": "rooms",
+      "type": "boolean"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "rooms",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "updated_at",
+      "default_expr": "now()",
+      "table_name": "rooms",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "lantai",
+      "default_expr": null,
+      "table_name": "rooms",
+      "type": "smallint"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "transactions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "transaction_number",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "guest_id",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "room_id",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "status",
+      "default_expr": "'booking'::transaction_status",
+      "table_name": "transactions",
+      "type": "transaction_status"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": "auth.uid()",
+      "table_name": "transactions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "price_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "transactions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "updated_at",
+      "default_expr": "now()",
+      "table_name": "transactions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "package_id",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "started_at",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "ends_at",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "day_mode",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "checked_out_at",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "scheduled_check_in",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "scheduled_check_out",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_mode_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_rate_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "numeric(8,4)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_per_room_amount_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_rounding_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "minimum_dp_mode_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "minimum_dp_value_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "numeric(8,4)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "minimum_dp_amount_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "base_price_snapshot",
+      "default_expr": null,
+      "table_name": "transactions",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "guest_count",
+      "default_expr": "2",
+      "table_name": "transactions",
+      "type": "integer"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "extra_guest_count",
+      "default_expr": "0",
+      "table_name": "transactions",
+      "type": "integer"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "extra_guest_unit_price",
+      "default_expr": "50000",
+      "table_name": "transactions",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "extra_guest_charge",
+      "default_expr": "0",
+      "table_name": "transactions",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "user_roles",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "user_id",
+      "default_expr": null,
+      "table_name": "user_roles",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "role",
+      "default_expr": null,
+      "table_name": "user_roles",
+      "type": "app_role"
+    }
+  ],
+  "enums": [
+    {
+      "enumlabel": "owner",
+      "typname": "app_role"
+    },
+    {
+      "enumlabel": "employee",
+      "typname": "app_role"
+    },
+    {
+      "enumlabel": "receptionist",
+      "typname": "employee_position"
+    },
+    {
+      "enumlabel": "housekeeping",
+      "typname": "employee_position"
+    },
+    {
+      "enumlabel": "supervisor",
+      "typname": "employee_position"
+    },
+    {
+      "enumlabel": "inspector",
+      "typname": "employee_position"
+    },
+    {
+      "enumlabel": "investor",
+      "typname": "employee_position"
+    },
+    {
+      "enumlabel": "ready",
+      "typname": "room_status"
+    },
+    {
+      "enumlabel": "occupied",
+      "typname": "room_status"
+    },
+    {
+      "enumlabel": "dirty",
+      "typname": "room_status"
+    },
+    {
+      "enumlabel": "cleaning",
+      "typname": "room_status"
+    },
+    {
+      "enumlabel": "booking",
+      "typname": "transaction_status"
+    },
+    {
+      "enumlabel": "check_in",
+      "typname": "transaction_status"
+    },
+    {
+      "enumlabel": "check_out",
+      "typname": "transaction_status"
+    },
+    {
+      "enumlabel": "cancelled",
+      "typname": "transaction_status"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "policyname": "housekeeping_checklists_read",
+      "qual": "(can_housekeeping(auth.uid()) OR has_employee_position(auth.uid(), ARRAY['inspector'::employee_position]))",
+      "roles": "{authenticated}",
+      "tablename": "housekeeping_checklists",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "policyname": "housekeeping_history_read",
+      "qual": "(can_housekeeping(auth.uid()) OR has_employee_position(auth.uid(), ARRAY['inspector'::employee_position]))",
+      "roles": "{authenticated}",
+      "tablename": "housekeeping_history",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "policyname": "rooms_read",
+      "qual": "(can_view_operations(auth.uid()) OR can_view_finance(auth.uid()))",
+      "roles": "{authenticated}",
+      "tablename": "rooms",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "policyname": "rooms_write",
+      "qual": "has_role(auth.uid(), 'owner'::app_role)",
+      "roles": "{authenticated}",
+      "tablename": "rooms",
+      "with_check": "has_role(auth.uid(), 'owner'::app_role)"
+    },
+    {
+      "cmd": "SELECT",
+      "policyname": "transactions_read",
+      "qual": "(can_frontdesk(auth.uid()) OR has_employee_position(auth.uid(), ARRAY['inspector'::employee_position]))",
+      "roles": "{authenticated}",
+      "tablename": "transactions",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "policyname": "transactions_supervisor_read",
+      "qual": "has_employee_position(auth.uid(), ARRAY['supervisor'::employee_position])",
+      "roles": "{authenticated}",
+      "tablename": "transactions",
+      "with_check": null
+    }
+  ]
+}

@@ -1,0 +1,414 @@
+{
+  "rows": [
+    {
+      "metadata": {
+        "helpers": [
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid, _role app_role",
+            "body_md5": "329c61a02658089cb1486c876cc6405d",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "has_role",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid",
+            "body_md5": "ef91badc8144e72930d801284980819b",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "is_receptionist",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "_at timestamp with time zone",
+            "body_md5": "d75010cdd60777f3fc957e917c192e38",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_commission_at",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "4411e4c40cce324b87047bf8fce02f7b",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_final_session_guard",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid",
+            "body_md5": "1bfaa40d56cd1fee8da1fc11c4fb8378",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_is_booking_operator",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid",
+            "body_md5": "4823f83823477a530a771ccd3d18b910",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_is_owner_or_supervisor",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "fc3d0b79cc4fb66964e18c01d36ffdfa",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_refund_source_session_guard",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid, _positions employee_position[]",
+            "body_md5": "039f50699568331f3f93ac7e74e7a6c8",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "has_employee_position",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid",
+            "body_md5": "e26c657380a82573e251de79f7b2ea9e",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_context_valid",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "108ac8db9bd691ccca9a20dc150b60f8",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_snapshot_booking_dp",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "3800a2123fe773c20a631dfbc1ceec59",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_booking_payment_guard",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "5707d8fda44a29a975cc6af17589fd2c",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_prepare_payment",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "f4bbce3b4e5f8731db29713e2c87105d",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_forbidden_finance_mutation_guard",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid, _session_id uuid",
+            "body_md5": "5faa4ea003a9b4d86328cc018a61736a",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_context_assignment",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid, _session_id uuid",
+            "body_md5": "19a63b511a9a6e7ab2c7ef12cf2542db",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_context_matches_session",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "68397d3e251ec0d8743ce30e6fb3c291",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_transaction_guard",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "138e1069b82372ef1567c1a7ddc55810",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_session_guard",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "7d4f20deb1ae3218cf104c8010ddb3e1",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_session_row_guard",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "153215c2b0425ab516ab3a398082ee68",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_audit_row",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "",
+            "body_md5": "ed37060c6771f2b6735e0109001be1c8",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_current_user_is_restricted",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+            "args": "_session_id uuid",
+            "body_md5": "54e5004018ea9e2bbb65fec9120990a3",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_current_user_can_read_session",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid",
+            "body_md5": "40104554cbb07c88e6b98104e0dfd6e8",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_assignment_for",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid",
+            "body_md5": "271faeaf07ad0c9f32b2e65bfeae3c29",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_is_restricted",
+            "owner": "postgres",
+            "security_definer": true
+          },
+          {
+            "acl": "{postgres=X/postgres,anon=X/postgres,service_role=X/postgres}",
+            "args": "_user_id uuid, _session_id uuid",
+            "body_md5": "2b00047c0f04ec36450bc76374832604",
+            "config": [
+              "search_path=public"
+            ],
+            "name": "finance_training_session_is_valid",
+            "owner": "postgres",
+            "security_definer": true
+          }
+        ],
+        "indexes": [
+          {
+            "definition": "CREATE UNIQUE INDEX finance_payment_batch_idempotency_pkey ON public.finance_payment_batch_idempotency USING btree (request_idempotency_key)",
+            "name": "finance_payment_batch_idempotency_pkey",
+            "table": "finance_payment_batch_idempotency"
+          },
+          {
+            "definition": "CREATE INDEX finance_payment_batch_transaction_idx ON public.finance_payment_batch_idempotency USING btree (transaction_id)",
+            "name": "finance_payment_batch_transaction_idx",
+            "table": "finance_payment_batch_idempotency"
+          },
+          {
+            "definition": "CREATE UNIQUE INDEX finance_refund_allocations_pkey ON public.finance_refund_allocations USING btree (id)",
+            "name": "finance_refund_allocations_pkey",
+            "table": "finance_refund_allocations"
+          },
+          {
+            "definition": "CREATE UNIQUE INDEX finance_refund_allocations_refund_id_payment_id_key ON public.finance_refund_allocations USING btree (refund_id, payment_id)",
+            "name": "finance_refund_allocations_refund_id_payment_id_key",
+            "table": "finance_refund_allocations"
+          },
+          {
+            "definition": "CREATE UNIQUE INDEX finance_refunds_pkey ON public.finance_refunds USING btree (id)",
+            "name": "finance_refunds_pkey",
+            "table": "finance_refunds"
+          },
+          {
+            "definition": "CREATE UNIQUE INDEX finance_refunds_idempotency_key_key ON public.finance_refunds USING btree (idempotency_key)",
+            "name": "finance_refunds_idempotency_key_key",
+            "table": "finance_refunds"
+          },
+          {
+            "definition": "CREATE UNIQUE INDEX payments_pkey ON public.payments USING btree (id)",
+            "name": "payments_pkey",
+            "table": "payments"
+          },
+          {
+            "definition": "CREATE UNIQUE INDEX payments_idempotency_key_unique ON public.payments USING btree (idempotency_key) WHERE (idempotency_key IS NOT NULL)",
+            "name": "payments_idempotency_key_unique",
+            "table": "payments"
+          }
+        ],
+        "triggers": [
+          {
+            "definition": "CREATE TRIGGER finance_final_session_guard_trigger BEFORE DELETE OR UPDATE ON public.finance_cash_sessions FOR EACH ROW EXECUTE FUNCTION finance_final_session_guard()",
+            "enabled": "O",
+            "name": "finance_final_session_guard_trigger",
+            "table": "finance_cash_sessions"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_training_session_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.finance_cash_sessions FOR EACH ROW EXECUTE FUNCTION finance_training_session_guard()",
+            "enabled": "O",
+            "name": "finance_training_session_guard_trigger",
+            "table": "finance_cash_sessions"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_training_refund_allocations_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.finance_refund_allocations FOR EACH ROW EXECUTE FUNCTION finance_training_forbidden_finance_mutation_guard()",
+            "enabled": "O",
+            "name": "finance_training_refund_allocations_guard_trigger",
+            "table": "finance_refund_allocations"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_refund_source_session_guard_trigger BEFORE INSERT ON public.finance_refunds FOR EACH ROW EXECUTE FUNCTION finance_refund_source_session_guard()",
+            "enabled": "O",
+            "name": "finance_refund_source_session_guard_trigger",
+            "table": "finance_refunds"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_training_refunds_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.finance_refunds FOR EACH ROW EXECUTE FUNCTION finance_training_forbidden_finance_mutation_guard()",
+            "enabled": "O",
+            "name": "finance_training_refunds_guard_trigger",
+            "table": "finance_refunds"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_prepare_payment_trigger BEFORE INSERT ON public.payments FOR EACH ROW EXECUTE FUNCTION finance_prepare_payment()",
+            "enabled": "O",
+            "name": "finance_prepare_payment_trigger",
+            "table": "payments"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_training_payments_audit_trigger AFTER INSERT ON public.payments FOR EACH ROW EXECUTE FUNCTION finance_training_audit_row()",
+            "enabled": "O",
+            "name": "finance_training_payments_audit_trigger",
+            "table": "payments"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_training_payments_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.payments FOR EACH ROW EXECUTE FUNCTION finance_training_session_row_guard()",
+            "enabled": "O",
+            "name": "finance_training_payments_guard_trigger",
+            "table": "payments"
+          },
+          {
+            "definition": "CREATE TRIGGER audit_transactions AFTER INSERT OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION audit_changes()",
+            "enabled": "O",
+            "name": "audit_transactions",
+            "table": "transactions"
+          },
+          {
+            "definition": "CREATE CONSTRAINT TRIGGER finance_booking_payment_guard_trigger AFTER INSERT OR UPDATE OF status, price_snapshot ON public.transactions DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION finance_booking_payment_guard()",
+            "enabled": "O",
+            "name": "finance_booking_payment_guard_trigger",
+            "table": "transactions"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_snapshot_booking_dp_trigger BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION finance_snapshot_booking_dp()",
+            "enabled": "O",
+            "name": "finance_snapshot_booking_dp_trigger",
+            "table": "transactions"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_training_transactions_audit_trigger AFTER INSERT OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION finance_training_audit_row()",
+            "enabled": "O",
+            "name": "finance_training_transactions_audit_trigger",
+            "table": "transactions"
+          },
+          {
+            "definition": "CREATE TRIGGER finance_training_transactions_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION finance_training_transaction_guard()",
+            "enabled": "O",
+            "name": "finance_training_transactions_guard_trigger",
+            "table": "transactions"
+          },
+          {
+            "definition": "CREATE TRIGGER touch_transactions BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION touch_updated_at()",
+            "enabled": "O",
+            "name": "touch_transactions",
+            "table": "transactions"
+          },
+          {
+            "definition": "CREATE TRIGGER transaction_identity BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION protect_transaction_number()",
+            "enabled": "O",
+            "name": "transaction_identity",
+            "table": "transactions"
+          },
+          {
+            "definition": "CREATE TRIGGER transaction_identity_insert BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION enforce_transaction_identity()",
+            "enabled": "O",
+            "name": "transaction_identity_insert",
+            "table": "transactions"
+          }
+        ]
+      }
+    }
+  ]
+}
