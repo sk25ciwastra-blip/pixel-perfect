@@ -50,6 +50,10 @@
     {
       "path": "supabase/pending/20261117093000_operational_truncate_acl.sql",
       "sha256": "b56abd84db14c0684144d637df8ce7a4da4179a1869e25dfdae059632e5427a6"
+    },
+    {
+      "path": "supabase/pending/20261117100000_payment_retry_closing_identity.sql",
+      "sha256": "44566dac0c48ea900922e7fb5e16a1efbf04eac4fe24f26ea814608222962662"
     }
   ]
 }

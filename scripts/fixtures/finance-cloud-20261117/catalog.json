@@ -1,0 +1,1339 @@
+{
+  "functions": [
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.is_receptionist(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_context_valid(_user_id)\n    OR (\n      NOT public.finance_training_is_restricted(_user_id)\n      AND public.has_role(_user_id, 'employee')\n      AND EXISTS (\n        SELECT 1 FROM public.employees e\n        WHERE e.user_id = _user_id AND e.active AND e.position = 'receptionist'\n      )\n    );\n$function$\n",
+      "proname": "is_receptionist"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.record_transaction_payment(_transaction_id uuid, _amount numeric, _method text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  RETURN public.record_transaction_payment(\n    _transaction_id, _amount, _method, gen_random_uuid(), NULL::uuid\n  );\nEND;\n$function$\n",
+      "proname": "record_transaction_payment"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.record_transaction_payment(_transaction_id uuid, _amount numeric, _method text, _idempotency_key uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  RETURN public.record_transaction_payment(\n    _transaction_id, _amount, _method, _idempotency_key, NULL::uuid\n  );\nEND;\n$function$\n",
+      "proname": "record_transaction_payment"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.record_transaction_payment(_transaction_id uuid, _amount numeric, _method text, _idempotency_key uuid, _session_id uuid)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  selected_transaction record;\n  existing_payment record;\n  already_paid numeric;\n  remaining_amount numeric;\n  new_payment_id uuid;\nBEGIN\n  IF NOT (\n    public.has_role(auth.uid(), 'owner')\n    OR public.is_receptionist(auth.uid())\n    OR public.has_employee_position(auth.uid(), ARRAY['supervisor'::public.employee_position])\n  ) THEN\n    RAISE EXCEPTION 'Akses ditolak';\n  END IF;\n\n  IF _idempotency_key IS NULL\n     OR _amount IS NULL\n     OR _amount <= 0\n     OR _method NOT IN ('Cash', 'QRIS', 'Transfer') THEN\n    RAISE EXCEPTION 'Data pembayaran tidak valid';\n  END IF;\n\n  SELECT p.id, p.transaction_id, p.amount, p.method\n  INTO existing_payment\n  FROM public.payments p\n  WHERE p.idempotency_key = _idempotency_key;\n\n  IF existing_payment.id IS NOT NULL THEN\n    IF existing_payment.transaction_id <> _transaction_id\n       OR existing_payment.amount <> _amount\n       OR existing_payment.method <> _method THEN\n      RAISE EXCEPTION 'Idempotency key sudah digunakan dengan payload berbeda';\n    END IF;\n    RETURN existing_payment.id;\n  END IF;\n\n  SELECT * INTO selected_transaction\n  FROM public.transactions\n  WHERE id = _transaction_id\n  FOR UPDATE;\n\n  IF NOT FOUND OR selected_transaction.status = 'cancelled' THEN\n    RAISE EXCEPTION 'Transaksi tidak dapat menerima pembayaran';\n  END IF;\n\n  already_paid := COALESCE((SELECT SUM(p.amount) FROM public.payments p WHERE p.transaction_id = _transaction_id), 0);\n  remaining_amount := selected_transaction.price_snapshot - already_paid;\n\n  IF remaining_amount <= 0 OR _amount > remaining_amount THEN\n    RAISE EXCEPTION 'Nominal pembayaran melebihi sisa tagihan';\n  END IF;\n\n  INSERT INTO public.payments (\n    transaction_id,\n    amount,\n    method,\n    kind,\n    recorded_by,\n    idempotency_key,\n    cash_session_id\n  )\n  VALUES (\n    _transaction_id,\n    _amount,\n    _method,\n    'payment',\n    auth.uid(),\n    _idempotency_key,\n    _session_id\n  )\n  ON CONFLICT (idempotency_key)\n  WHERE idempotency_key IS NOT NULL\n  DO NOTHING\n  RETURNING id INTO new_payment_id;\n\n  IF new_payment_id IS NULL THEN\n    SELECT p.id, p.transaction_id, p.amount, p.method\n    INTO existing_payment\n    FROM public.payments p\n    WHERE p.idempotency_key = _idempotency_key;\n    IF existing_payment.transaction_id <> _transaction_id\n       OR existing_payment.amount <> _amount\n       OR existing_payment.method <> _method THEN\n      RAISE EXCEPTION 'Idempotency key sudah digunakan dengan payload berbeda';\n    END IF;\n    RETURN existing_payment.id;\n  END IF;\n\n  RETURN new_payment_id;\nEND;\n$function$\n",
+      "proname": "record_transaction_payment"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.close_finance_cash_session(_session_id uuid, _allocation jsonb, _reason text DEFAULT ''::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  selected_session public.finance_cash_sessions;\n  cash_received numeric;\n  transfer_received numeric;\n  cash_expenses numeric;\n  cash_refunds numeric;\n  expected_cash numeric;\n  setor_cash numeric := COALESCE((_allocation->>'setor_cash')::numeric, 0);\n  setor_transfer numeric := COALESCE((_allocation->>'setor_transfer')::numeric, 0);\n  di_laci numeric := COALESCE((_allocation->>'di_laci')::numeric, 0);\n  dibawa numeric := COALESCE((_allocation->>'dibawa')::numeric, 0);\n  di_laci_allocation_id uuid;\n  total_allocated numeric;\n  snapshot jsonb;\nBEGIN\n  SELECT * INTO selected_session\n  FROM public.finance_cash_sessions s\n  WHERE s.id = _session_id\n  FOR UPDATE;\n\n  IF NOT FOUND OR selected_session.status <> 'OPEN' THEN\n    RAISE EXCEPTION 'Sesi kas tidak aktif';\n  END IF;\n\n  IF selected_session.opened_by <> auth.uid()\n     AND NOT public.finance_is_owner_or_supervisor(auth.uid()) THEN\n    RAISE EXCEPTION 'Tidak berwenang menutup sesi kas ini';\n  END IF;\n\n  IF selected_session.opened_by <> auth.uid()\n     AND length(trim(coalesce(_reason, ''))) = 0 THEN\n    RAISE EXCEPTION 'Alasan closing khusus wajib diisi';\n  END IF;\n\n  IF setor_cash < 0 OR setor_transfer < 0 OR di_laci < 0 OR dibawa < 0 THEN\n    RAISE EXCEPTION 'Nominal alokasi closing tidak boleh negatif';\n  END IF;\n\n  SELECT COALESCE(SUM(p.amount), 0) INTO cash_received\n  FROM public.payments p\n  WHERE p.cash_session_id = _session_id AND p.method = 'Cash';\n\n  SELECT COALESCE(SUM(p.amount), 0) INTO transfer_received\n  FROM public.payments p\n  WHERE p.cash_session_id = _session_id AND p.method = 'Transfer';\n\n  SELECT COALESCE(SUM(e.amount), 0) INTO cash_expenses\n  FROM public.finance_expenses e\n  WHERE e.session_id = _session_id AND e.method = 'CASH';\n\n  SELECT COALESCE(SUM(r.amount), 0) INTO cash_refunds\n  FROM public.finance_refunds r\n  WHERE r.source_session_id = _session_id AND r.refund_method = 'CASH';\n\n  expected_cash := selected_session.opening_cash + cash_received\n    - cash_expenses - cash_refunds;\n  total_allocated := setor_cash + di_laci + dibawa;\n\n  -- Saldo kas negatif adalah defisit sesi (bukan uang tunai fisik).\n  -- Simpan expected_cash negatif di closing_snapshot; jangan membuat\n  -- alokasi negatif atau catatan talangan pribadi terpisah.\n  -- Nilai alokasi fisik harus nol saat expected_cash <= 0.\n  IF expected_cash < 0 THEN\n    IF total_allocated <> 0 THEN\n      RAISE EXCEPTION 'Saldo kas minus: alokasi CASH harus nol';\n    END IF;\n  ELSIF expected_cash <> total_allocated THEN\n    RAISE EXCEPTION 'Alokasi kas tidak sama dengan saldo fisik yang diharapkan';\n  END IF;\n\n  IF setor_transfer <> transfer_received THEN\n    RAISE EXCEPTION 'Alokasi SETOR transfer harus sama dengan penerimaan transfer sesi';\n  END IF;\n\n  IF di_laci > 0 AND NULLIF(_allocation->>'recipient_user_id', '') IS NULL THEN\n    RAISE EXCEPTION 'Penerima DI LACI wajib dicatat';\n  END IF;\n\n  IF setor_cash > 0 THEN\n    INSERT INTO public.finance_session_allocations\n      (session_id, allocation_type, method, amount, created_by)\n    VALUES (_session_id, 'SETOR', 'CASH', setor_cash, auth.uid());\n  END IF;\n\n  IF setor_transfer > 0 THEN\n    INSERT INTO public.finance_session_allocations\n      (session_id, allocation_type, method, amount, created_by)\n    VALUES (_session_id, 'SETOR', 'TRANSFER', setor_transfer, auth.uid());\n  END IF;\n\n  IF di_laci > 0 THEN\n    INSERT INTO public.finance_session_allocations\n      (session_id, allocation_type, method, amount, recipient_user_id, created_by)\n    VALUES (_session_id, 'DI_LACI', 'CASH', di_laci,\n      NULLIF(_allocation->>'recipient_user_id', '')::uuid, auth.uid())\n    RETURNING id INTO di_laci_allocation_id;\n\n    INSERT INTO public.finance_drawer_handoffs\n      (allocation_id, source_session_id, recipient_user_id, expected_amount, created_by)\n    VALUES (\n      di_laci_allocation_id,\n      _session_id,\n      NULLIF(_allocation->>'recipient_user_id', '')::uuid,\n      di_laci,\n      auth.uid()\n    );\n  END IF;\n\n  IF dibawa > 0 THEN\n    INSERT INTO public.finance_session_allocations\n      (session_id, allocation_type, method, amount, recipient_user_id, created_by)\n    VALUES (_session_id, 'DIBAWA', 'CASH', dibawa, selected_session.opened_by, auth.uid());\n  END IF;\n\n  snapshot := jsonb_build_object(\n    'opening_cash', selected_session.opening_cash,\n    'cash_received', cash_received,\n    'transfer_received', transfer_received,\n    'cash_expenses', cash_expenses,\n    'cash_refunds', cash_refunds,\n    'expected_cash', expected_cash,\n    'setor_cash', setor_cash,\n    'setor_transfer', setor_transfer,\n    'di_laci', di_laci,\n    'dibawa', dibawa,\n    'closed_by', auth.uid(),\n    'closed_at', now()\n  );\n\n  UPDATE public.finance_cash_sessions\n  SET status = 'FINAL',\n      closed_at = now(),\n      closed_by = auth.uid(),\n      closing_reason = trim(coalesce(_reason, '')),\n      closing_snapshot = snapshot\n  WHERE id = _session_id;\n\n  RETURN snapshot;\nEND;\n$function$\n",
+      "proname": "close_finance_cash_session"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_commission_at(_at timestamp with time zone)\n RETURNS TABLE(mode text, rate numeric, per_room_amount numeric, rounding_rule text)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT c.mode, c.rate, c.per_room_amount, c.rounding_rule\n  FROM public.finance_commission_configs c\n  WHERE c.effective_from <= _at\n  ORDER BY c.effective_from DESC, c.created_at DESC\n  LIMIT 1;\n$function$\n",
+      "proname": "finance_commission_at"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_final_session_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF OLD.status = 'FINAL' THEN\n    RAISE EXCEPTION 'Closing final tidak dapat diubah atau dihapus';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_final_session_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_is_booking_operator(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_context_valid(_user_id)\n    OR (\n      NOT public.finance_training_is_restricted(_user_id)\n      AND (\n        public.has_role(_user_id, 'owner')\n        OR public.is_receptionist(_user_id)\n        OR public.has_employee_position(\n          _user_id, ARRAY['supervisor'::public.employee_position]\n        )\n      )\n    );\n$function$\n",
+      "proname": "finance_is_booking_operator"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_is_owner_or_supervisor(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_context_valid(_user_id)\n    OR (\n      NOT public.finance_training_is_restricted(_user_id)\n      AND (\n        public.has_role(_user_id, 'owner')\n        OR public.has_employee_position(\n          _user_id, ARRAY['supervisor'::public.employee_position]\n        )\n      )\n    );\n$function$\n",
+      "proname": "finance_is_owner_or_supervisor"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_refund_source_session_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  source_status text;\nBEGIN\n  IF NEW.source_session_id IS NULL THEN\n    RETURN NEW;\n  END IF;\n\n  SELECT status INTO source_status\n  FROM public.finance_cash_sessions\n  WHERE id = NEW.source_session_id;\n\n  IF source_status IS DISTINCT FROM 'OPEN' THEN\n    RAISE EXCEPTION 'Sumber dana refund harus berasal dari sesi kas OPEN';\n  END IF;\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_refund_source_session_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.get_finance_session_summary(_session_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  s public.finance_cash_sessions;\n  result jsonb;\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid())\n     AND NOT public.finance_training_context_matches_session(auth.uid(), _session_id) THEN\n    RAISE EXCEPTION 'Peserta Training hanya dapat melihat sesi kas penanggung jawab';\n  END IF;\n\n  SELECT * INTO s\n  FROM public.finance_cash_sessions\n  WHERE id = _session_id;\n\n  IF NOT FOUND\n     OR (\n       s.opened_by <> auth.uid()\n       AND NOT public.finance_is_owner_or_supervisor(auth.uid())\n       AND NOT public.has_role(auth.uid(), 'owner')\n       AND NOT public.finance_training_context_matches_session(auth.uid(), _session_id)\n     ) THEN\n    RAISE EXCEPTION 'Akses sesi ditolak';\n  END IF;\n\n  SELECT jsonb_build_object(\n    'opening_cash', s.opening_cash,\n    -- Preserve the deployed Finance contract: cash-only expected balance\n    -- can be negative; QRIS/Transfer must not inflate physical cash.\n    'expected_cash', s.opening_cash\n      + COALESCE((SELECT SUM(amount) FROM public.payments\n                  WHERE cash_session_id = _session_id AND method = 'Cash'), 0)\n      - COALESCE((SELECT SUM(amount) FROM public.finance_expenses\n                  WHERE session_id = _session_id AND method = 'CASH'), 0)\n      - COALESCE((SELECT SUM(amount) FROM public.finance_refunds\n                  WHERE source_session_id = _session_id AND refund_method = 'CASH'), 0),\n    'payments_total', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id), 0),\n    'cash', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'Cash'), 0),\n    'qris', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'QRIS'), 0),\n    'transfer', COALESCE((SELECT SUM(amount) FROM public.payments WHERE cash_session_id = _session_id AND method = 'Transfer'), 0),\n    'commission',\n      COALESCE((SELECT SUM(commission_amount) FROM public.payments WHERE cash_session_id = _session_id), 0)\n      + COALESCE((SELECT SUM(a.commission_delta)\n                  FROM public.finance_refund_allocations a\n                  JOIN public.payments p ON p.id = a.payment_id\n                  WHERE p.cash_session_id = _session_id), 0),\n    'expenses', COALESCE((SELECT SUM(amount) FROM public.finance_expenses WHERE session_id = _session_id), 0),\n    'refunds', COALESCE((SELECT SUM(amount) FROM public.finance_refunds WHERE source_session_id = _session_id), 0),\n    'status', s.status,\n    'snapshot', s.closing_snapshot\n  ) INTO result;\n  RETURN result;\nEND;\n$function$\n",
+      "proname": "get_finance_session_summary"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_valid(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_context_assignment(\n    _user_id,\n    NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid\n  ) IS NOT NULL;\n$function$\n",
+      "proname": "finance_training_context_valid"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_snapshot_booking_dp()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  setting_row public.finance_settings;\n  raw_minimum numeric;\nBEGIN\n  IF NEW.status <> 'booking' OR NEW.minimum_dp_mode_snapshot IS NOT NULL THEN\n    RETURN NEW;\n  END IF;\n\n  SELECT * INTO setting_row\n  FROM public.finance_settings\n  WHERE id = true;\n\n  IF NOT FOUND THEN\n    RETURN NEW;\n  END IF;\n\n  NEW.minimum_dp_mode_snapshot := setting_row.minimum_dp_mode;\n  NEW.minimum_dp_value_snapshot := setting_row.minimum_dp_value;\n\n  raw_minimum := CASE setting_row.minimum_dp_mode\n    WHEN 'PERCENTAGE' THEN COALESCE(NEW.price_snapshot, 0) * setting_row.minimum_dp_value / 100\n    ELSE setting_row.minimum_dp_value\n  END;\n\n  -- Payment storage is numeric(12,2); the Owner rule requires a whole-rupiah\n  -- ceiling, so no rounding to thousands is performed.\n  NEW.minimum_dp_amount_snapshot := CEIL(raw_minimum);\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_snapshot_booking_dp"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_booking_payment_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  total_paid numeric;\nBEGIN\n  IF NEW.status <> 'booking' THEN\n    RETURN NEW;\n  END IF;\n\n  IF NEW.price_snapshot IS NULL OR NEW.price_snapshot <= 0 THEN\n    RAISE EXCEPTION 'Booking wajib memiliki tagihan valid';\n  END IF;\n\n  -- Legacy bookings created before the snapshot column existed are not\n  -- retroactively reinterpreted by a later Owner setting change.\n  IF NEW.minimum_dp_amount_snapshot IS NULL THEN\n    RETURN NEW;\n  END IF;\n\n  SELECT COALESCE(SUM(p.amount), 0)\n  INTO total_paid\n  FROM public.payments p\n  WHERE p.transaction_id = NEW.id;\n\n  IF total_paid < NEW.minimum_dp_amount_snapshot THEN\n    RAISE EXCEPTION 'Booking wajib memiliki DP minimum sesuai snapshot transaksi';\n  END IF;\n\n  IF total_paid > NEW.price_snapshot THEN\n    RAISE EXCEPTION 'Total pembayaran melebihi tagihan transaksi';\n  END IF;\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_booking_payment_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_prepare_payment()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  selected_session public.finance_cash_sessions;\n  selected_transaction public.transactions;\n  selected_charge public.finance_charge_events;\n  config record;\n  payment_count integer;\n  paid_before numeric;\n  commission_before numeric;\n  target_commission numeric;\nBEGIN\n  IF NEW.idempotency_key IS NULL THEN\n    NEW.idempotency_key := gen_random_uuid();\n  END IF;\n\n  SELECT * INTO selected_transaction\n  FROM public.transactions t\n  WHERE t.id = NEW.transaction_id;\n  IF NOT FOUND THEN\n    RAISE EXCEPTION 'Transaksi pembayaran tidak ditemukan';\n  END IF;\n\n  IF NEW.cash_session_id IS NULL THEN\n    SELECT * INTO selected_session\n    FROM public.finance_cash_sessions s\n    WHERE s.opened_by = NEW.recorded_by\n      AND s.status = 'OPEN'\n    ORDER BY s.opened_at DESC\n    LIMIT 1\n    FOR UPDATE;\n  ELSE\n    SELECT * INTO selected_session\n    FROM public.finance_cash_sessions s\n    WHERE s.id = NEW.cash_session_id\n    FOR UPDATE;\n  END IF;\n\n  IF NOT FOUND OR selected_session.status <> 'OPEN' THEN\n    RAISE EXCEPTION 'Sesi kas aktif penerima pembayaran tidak ditemukan';\n  END IF;\n\n  -- Preserve the approved Owner/Supervisor assisted-session path while\n  -- allowing an assigned trainee only through a validated Training context.\n  -- Restricted trainees must not inherit the Owner/Supervisor shortcut.\n  IF selected_session.opened_by <> NEW.recorded_by\n     AND NOT (\n       NOT public.finance_training_is_restricted(NEW.recorded_by)\n       AND public.finance_is_owner_or_supervisor(NEW.recorded_by)\n     )\n     AND NOT public.finance_training_context_matches_session(\n       auth.uid(), selected_session.id\n     ) THEN\n    RAISE EXCEPTION 'Operator tidak berwenang membantu sesi kas ini';\n  END IF;\n\n  NEW.cash_session_id := selected_session.id;\n\n  IF NEW.charge_event_id IS NOT NULL THEN\n    SELECT * INTO selected_charge\n    FROM public.finance_charge_events c\n    WHERE c.id = NEW.charge_event_id;\n    IF NOT FOUND THEN\n      RAISE EXCEPTION 'Peristiwa Extend/Overtime tidak ditemukan';\n    END IF;\n    NEW.commission_mode := selected_charge.commission_mode;\n    NEW.commission_rate := selected_charge.commission_rate;\n    NEW.commission_per_room_amount := selected_charge.commission_per_room_amount;\n    NEW.commission_rounding := selected_charge.commission_rounding;\n    NEW.commission_recipient := CASE\n      WHEN selected_charge.commission_mode = 'PERCENTAGE' THEN NEW.recorded_by\n      WHEN selected_charge.commission_mode = 'PER_ROOM' THEN selected_charge.commission_recipient\n      ELSE NULL\n    END;\n  ELSE\n    IF selected_transaction.commission_mode_snapshot IS NULL THEN\n      SELECT * INTO config\n      FROM public.finance_commission_at(selected_transaction.created_at);\n      IF config.mode IS NULL THEN\n        config.mode := 'OFF';\n        config.rate := 0;\n        config.per_room_amount := 0;\n        config.rounding_rule := 'FLOOR_RP1000';\n      END IF;\n      UPDATE public.transactions\n      SET commission_mode_snapshot = config.mode,\n          commission_rate_snapshot = config.rate,\n          commission_per_room_amount_snapshot = config.per_room_amount,\n          commission_rounding_snapshot = config.rounding_rule\n      WHERE id = selected_transaction.id;\n      selected_transaction.commission_mode_snapshot := config.mode;\n      selected_transaction.commission_rate_snapshot := config.rate;\n      selected_transaction.commission_per_room_amount_snapshot := config.per_room_amount;\n      selected_transaction.commission_rounding_snapshot := config.rounding_rule;\n    END IF;\n\n    NEW.commission_mode := COALESCE(selected_transaction.commission_mode_snapshot, 'OFF');\n    NEW.commission_rate := COALESCE(selected_transaction.commission_rate_snapshot, 0);\n    NEW.commission_per_room_amount := COALESCE(selected_transaction.commission_per_room_amount_snapshot, 0);\n    NEW.commission_rounding := COALESCE(selected_transaction.commission_rounding_snapshot, 'FLOOR_RP1000');\n    NEW.commission_recipient := CASE\n      WHEN NEW.commission_mode = 'PERCENTAGE' THEN NEW.recorded_by\n      WHEN NEW.commission_mode = 'PER_ROOM'\n        AND NOT EXISTS (\n          SELECT 1 FROM public.payments p\n          WHERE p.transaction_id = NEW.transaction_id\n        )\n        THEN selected_transaction.created_by\n      ELSE NULL\n    END;\n  END IF;\n\n  SELECT COUNT(*)::integer INTO payment_count\n  FROM public.payments p\n  WHERE p.transaction_id = NEW.transaction_id;\n\n  SELECT COALESCE(SUM(p.amount), 0), COALESCE(SUM(p.commission_amount), 0)\n  INTO paid_before, commission_before\n  FROM public.payments p\n  WHERE p.transaction_id = NEW.transaction_id;\n\n  target_commission := floor(((paid_before + NEW.amount) * COALESCE(NEW.commission_rate, 0) / 100) / 1000) * 1000;\n  NEW.commission_amount := CASE\n    WHEN NEW.commission_mode = 'PERCENTAGE' THEN\n      GREATEST(target_commission - commission_before, 0)\n    WHEN NEW.commission_mode = 'PER_ROOM'\n      AND NEW.commission_recipient IS NOT NULL\n      AND (payment_count = 0 OR NEW.charge_event_id IS NOT NULL)\n      THEN NEW.commission_per_room_amount\n    ELSE 0\n  END;\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_prepare_payment"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_forbidden_finance_mutation_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak dapat mengubah objek Finance ini';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_forbidden_finance_mutation_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_assignment(_user_id uuid, _session_id uuid)\n RETURNS uuid\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT a.id\n  FROM public.finance_training_assignments a\n  WHERE a.trainee_user_id = _user_id\n    AND a.status = 'ACTIVE'\n    AND public.finance_training_session_is_valid(_user_id, _session_id)\n  ORDER BY a.starts_on DESC, a.created_at DESC\n  LIMIT 1;\n$function$\n",
+      "proname": "finance_training_context_assignment"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_context_matches_session(_user_id uuid, _session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT _session_id IS NOT NULL\n    AND NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid = _session_id\n    AND public.finance_training_context_assignment(_user_id, _session_id) IS NOT NULL;\n$function$\n",
+      "proname": "finance_training_context_matches_session"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_transaction_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid())\n     AND NOT public.finance_training_context_valid(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training wajib memakai wrapper transaksi dengan sesi kas penanggung jawab';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_transaction_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak boleh membuka, mengubah, atau menutup sesi kas';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_session_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_row_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  payload jsonb;\n  row_session_id uuid;\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    payload := CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;\n    row_session_id := COALESCE(\n      NULLIF(payload->>'cash_session_id', '')::uuid,\n      NULLIF(payload->>'session_id', '')::uuid\n    );\n    IF NOT public.finance_training_context_matches_session(auth.uid(), row_session_id) THEN\n      RAISE EXCEPTION 'Peserta Training wajib memakai sesi kas penanggung jawab yang valid';\n    END IF;\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_session_row_guard"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_audit_row()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  assignment_id_value uuid;\n  session_id_value uuid;\n  payload jsonb := to_jsonb(NEW);\n  transaction_id_value uuid;\n  payment_id_value uuid;\n  supervisor_id_value uuid;\nBEGIN\n  IF NOT public.finance_training_context_valid(auth.uid()) THEN\n    RETURN NEW;\n  END IF;\n\n  session_id_value := COALESCE(\n    NULLIF(payload->>'cash_session_id', '')::uuid,\n    NULLIF(payload->>'session_id', '')::uuid,\n    NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid\n  );\n\n  assignment_id_value := public.finance_training_context_assignment(\n    auth.uid(), session_id_value\n  );\n\n  SELECT s.opened_by\n  INTO supervisor_id_value\n  FROM public.finance_cash_sessions s\n  WHERE s.id = session_id_value\n    AND s.status = 'OPEN'\n    AND public.finance_training_context_matches_session(auth.uid(), s.id);\n\n  IF assignment_id_value IS NULL OR supervisor_id_value IS NULL THEN\n    RAISE EXCEPTION 'Konteks audit Training tidak lengkap';\n  END IF;\n\n  transaction_id_value := CASE\n    WHEN TG_TABLE_NAME = 'transactions' THEN (payload->>'id')::uuid\n    ELSE NULLIF(payload->>'transaction_id', '')::uuid\n  END;\n  payment_id_value := CASE\n    WHEN TG_TABLE_NAME = 'payments' THEN (payload->>'id')::uuid\n    ELSE NULL\n  END;\n\n  INSERT INTO public.finance_training_audit (\n    assignment_id, action, entity_type, entity_id,\n    transaction_id, payment_id, session_id,\n    operator_id, supervisor_id, details\n  )\n  VALUES (\n    assignment_id_value, TG_OP, TG_TABLE_NAME, (payload->>'id')::uuid,\n    transaction_id_value, payment_id_value, session_id_value,\n    auth.uid(), supervisor_id_value,\n    jsonb_build_object('label', 'Training', 'table', TG_TABLE_NAME)\n  );\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_audit_row"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_current_user_is_restricted()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_is_restricted(auth.uid());\n$function$\n",
+      "proname": "finance_training_current_user_is_restricted"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_current_user_can_read_session(_session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT public.finance_training_session_is_valid(auth.uid(), _session_id);\n$function$\n",
+      "proname": "finance_training_current_user_can_read_session"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_assignment_for(_user_id uuid)\n RETURNS TABLE(id uuid, trainee_user_id uuid, supervisor_user_id uuid, starts_on date, ends_on date, status text, label text)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT a.id, a.trainee_user_id, a.supervisor_user_id,\n         a.starts_on, a.ends_on, a.status, a.label\n  FROM public.finance_training_assignments a\n  WHERE a.trainee_user_id = _user_id\n  ORDER BY a.starts_on DESC, a.created_at DESC\n  LIMIT 1;\n$function$\n",
+      "proname": "finance_training_assignment_for"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_is_restricted(_user_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT COALESCE(\n    (\n      SELECT a.status <> 'PASSED'\n      FROM public.finance_training_assignments a\n      WHERE a.trainee_user_id = _user_id\n      ORDER BY a.starts_on DESC, a.created_at DESC\n      LIMIT 1\n    ),\n    false\n  );\n$function$\n",
+      "proname": "finance_training_is_restricted"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_is_valid(_user_id uuid, _session_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\n  SELECT EXISTS (\n    SELECT 1\n    FROM public.finance_training_assignments a\n    JOIN public.finance_cash_sessions s\n      ON s.id = _session_id\n     AND s.opened_by = a.supervisor_user_id\n     AND s.status = 'OPEN'\n    WHERE a.trainee_user_id = _user_id\n      AND a.status = 'ACTIVE'\n      AND ((now() AT TIME ZONE 'Asia/Jakarta')::date BETWEEN a.starts_on AND a.ends_on)\n      AND (\n        public.has_role(a.supervisor_user_id, 'owner')\n        OR public.has_employee_position(\n          a.supervisor_user_id,\n          ARRAY['supervisor'::public.employee_position]\n        )\n      )\n  );\n$function$\n",
+      "proname": "finance_training_session_is_valid"
+    },
+    {
+      "definition": "CREATE OR REPLACE FUNCTION public.record_transaction_payment_combined(_transaction_id uuid, _payments jsonb, _request_idempotency_key uuid, _request_fingerprint text, _session_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE selected_transaction record; batch_row public.finance_payment_batch_idempotency; payment_total numeric(12,2); already_paid numeric(12,2); payment_id uuid; component record; created_payment_ids uuid[] := ARRAY[]::uuid[]; computed_fingerprint text;\nBEGIN\n  IF _request_idempotency_key IS NULL OR length(trim(coalesce(_request_fingerprint, ''))) = 0 OR _session_id IS NULL THEN RAISE EXCEPTION 'Idempotency key, fingerprint, dan sesi kas wajib diisi'; END IF;\n  IF NOT public.finance_is_booking_operator(auth.uid()) THEN RAISE EXCEPTION 'Akses ditolak'; END IF;\n  IF jsonb_typeof(_payments) IS DISTINCT FROM 'array' OR jsonb_array_length(_payments) NOT BETWEEN 1 AND 2 THEN RAISE EXCEPTION 'Pembayaran gabungan harus berisi maksimal dua metode'; END IF;\n  IF EXISTS (SELECT 1 FROM jsonb_to_recordset(_payments) AS p(method text, amount numeric, idempotency_key uuid) WHERE coalesce(p.method NOT IN ('Cash', 'QRIS', 'Transfer'), true) OR p.amount IS NULL OR p.amount <= 0 OR p.amount <> trunc(p.amount) OR p.idempotency_key IS NULL) THEN RAISE EXCEPTION 'Setiap pembayaran harus memiliki metode, nominal rupiah positif, dan idempotency key'; END IF;\n  IF (SELECT count(DISTINCT p.method) FROM jsonb_to_recordset(_payments) AS p(method text, amount numeric, idempotency_key uuid)) <> jsonb_array_length(_payments) THEN RAISE EXCEPTION 'Metode pembayaran harus berbeda'; END IF;\n  IF (SELECT count(*) FROM jsonb_to_recordset(_payments) AS p(method text, amount numeric, idempotency_key uuid)) <> (SELECT count(DISTINCT p.idempotency_key) FROM jsonb_to_recordset(_payments) AS p(method text, amount numeric, idempotency_key uuid)) THEN RAISE EXCEPTION 'Idempotency key setiap pembayaran harus unik'; END IF;\n  -- Any changed payment amount, method, key, target, or session invalidates a retry.\n  computed_fingerprint := md5(jsonb_build_object(\n    'caller_fingerprint', _request_fingerprint, 'transaction_id', _transaction_id,\n    'payments', _payments, 'session_id', _session_id\n  )::text);\n  INSERT INTO public.finance_payment_batch_idempotency(request_idempotency_key, operation, request_fingerprint, created_by, transaction_id) VALUES(_request_idempotency_key, 'settlement', computed_fingerprint, auth.uid(), _transaction_id) ON CONFLICT (request_idempotency_key) DO NOTHING;\n  SELECT * INTO batch_row FROM public.finance_payment_batch_idempotency WHERE request_idempotency_key = _request_idempotency_key FOR UPDATE;\n  IF batch_row.created_by <> auth.uid() OR batch_row.operation <> 'settlement' OR batch_row.transaction_id <> _transaction_id OR batch_row.request_fingerprint <> computed_fingerprint THEN RAISE EXCEPTION 'Fingerprint pembayaran gabungan berbeda dari retry sebelumnya'; END IF;\n  IF batch_row.payment_ids <> '[]'::jsonb THEN RETURN jsonb_build_object('transaction_id', batch_row.transaction_id, 'transaction_number', batch_row.transaction_number, 'payment_ids', batch_row.payment_ids); END IF;\n  SELECT t.id, t.transaction_number, t.price_snapshot, t.status INTO selected_transaction FROM public.transactions t WHERE t.id = _transaction_id FOR UPDATE;\n  IF NOT FOUND OR selected_transaction.status NOT IN ('booking', 'check_in') THEN RAISE EXCEPTION 'Transaksi Booking tidak dapat menerima pelunasan'; END IF;\n  SELECT coalesce(sum(p.amount), 0) INTO payment_total FROM jsonb_to_recordset(_payments) AS p(method text, amount numeric, idempotency_key uuid);\n  SELECT coalesce(sum(p.amount), 0) INTO already_paid FROM public.payments p WHERE p.transaction_id = _transaction_id;\n  IF payment_total > selected_transaction.price_snapshot - already_paid THEN RAISE EXCEPTION 'Nominal pembayaran melebihi sisa tagihan'; END IF;\n  FOR component IN SELECT p.method, p.amount, p.idempotency_key FROM jsonb_to_recordset(_payments) AS p(method text, amount numeric, idempotency_key uuid) LOOP\n    IF EXISTS (SELECT 1 FROM public.payments WHERE idempotency_key = component.idempotency_key) THEN RAISE EXCEPTION 'Idempotency key pembayaran sudah digunakan'; END IF;\n    INSERT INTO public.payments(transaction_id, amount, method, kind, recorded_by, idempotency_key, cash_session_id) VALUES(_transaction_id, component.amount, component.method, 'payment', auth.uid(), component.idempotency_key, _session_id) RETURNING id INTO payment_id;\n    created_payment_ids := array_append(created_payment_ids, payment_id);\n  END LOOP;\n  UPDATE public.finance_payment_batch_idempotency SET transaction_number = selected_transaction.transaction_number, payment_ids = to_jsonb(created_payment_ids) WHERE request_idempotency_key = _request_idempotency_key;\n  RETURN jsonb_build_object('transaction_id', _transaction_id, 'transaction_number', selected_transaction.transaction_number, 'payment_ids', to_jsonb(created_payment_ids));\nEND;\n$function$\n",
+      "proname": "record_transaction_payment_combined"
+    }
+  ],
+  "columns": [
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_bank_accounts",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "bank_name",
+      "default_expr": null,
+      "table_name": "finance_bank_accounts",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "account_name",
+      "default_expr": null,
+      "table_name": "finance_bank_accounts",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "account_number",
+      "default_expr": null,
+      "table_name": "finance_bank_accounts",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "logo_key",
+      "default_expr": "''::text",
+      "table_name": "finance_bank_accounts",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "active",
+      "default_expr": "true",
+      "table_name": "finance_bank_accounts",
+      "type": "boolean"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_bank_accounts",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_bank_accounts",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_cash_sessions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "opened_by",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "operational_date",
+      "default_expr": "((now() AT TIME ZONE 'Asia/Jakarta'::text))::date",
+      "table_name": "finance_cash_sessions",
+      "type": "date"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "opened_at",
+      "default_expr": "now()",
+      "table_name": "finance_cash_sessions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "opening_cash",
+      "default_expr": "0",
+      "table_name": "finance_cash_sessions",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "opening_source_session_id",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "status",
+      "default_expr": "'OPEN'::text",
+      "table_name": "finance_cash_sessions",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "closed_at",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "closed_by",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "closing_reason",
+      "default_expr": "''::text",
+      "table_name": "finance_cash_sessions",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "closing_snapshot",
+      "default_expr": null,
+      "table_name": "finance_cash_sessions",
+      "type": "jsonb"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_cash_sessions",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_charge_events",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "idempotency_key",
+      "default_expr": null,
+      "table_name": "finance_charge_events",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "transaction_id",
+      "default_expr": null,
+      "table_name": "finance_charge_events",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "kind",
+      "default_expr": null,
+      "table_name": "finance_charge_events",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "amount",
+      "default_expr": null,
+      "table_name": "finance_charge_events",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "processed_by",
+      "default_expr": null,
+      "table_name": "finance_charge_events",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "commission_mode",
+      "default_expr": null,
+      "table_name": "finance_charge_events",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "commission_rate",
+      "default_expr": "0",
+      "table_name": "finance_charge_events",
+      "type": "numeric(8,4)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "commission_per_room_amount",
+      "default_expr": "0",
+      "table_name": "finance_charge_events",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "commission_rounding",
+      "default_expr": "'FLOOR_RP1000'::text",
+      "table_name": "finance_charge_events",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_recipient",
+      "default_expr": null,
+      "table_name": "finance_charge_events",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_charge_events",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_commission_configs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "mode",
+      "default_expr": null,
+      "table_name": "finance_commission_configs",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "rate",
+      "default_expr": "0",
+      "table_name": "finance_commission_configs",
+      "type": "numeric(8,4)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "per_room_amount",
+      "default_expr": "0",
+      "table_name": "finance_commission_configs",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "rounding_rule",
+      "default_expr": "'FLOOR_RP1000'::text",
+      "table_name": "finance_commission_configs",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "effective_from",
+      "default_expr": "now()",
+      "table_name": "finance_commission_configs",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_commission_configs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_commission_configs",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_deposits",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "idempotency_key",
+      "default_expr": null,
+      "table_name": "finance_deposits",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "session_id",
+      "default_expr": null,
+      "table_name": "finance_deposits",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "method",
+      "default_expr": null,
+      "table_name": "finance_deposits",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "amount",
+      "default_expr": null,
+      "table_name": "finance_deposits",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "bank_account_id",
+      "default_expr": null,
+      "table_name": "finance_deposits",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "proof_ref",
+      "default_expr": "''::text",
+      "table_name": "finance_deposits",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "status",
+      "default_expr": "'MENUNGGU_KONFIRMASI_OWNER'::text",
+      "table_name": "finance_deposits",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "submitted_by",
+      "default_expr": null,
+      "table_name": "finance_deposits",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "confirmed_by",
+      "default_expr": null,
+      "table_name": "finance_deposits",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "confirmed_at",
+      "default_expr": null,
+      "table_name": "finance_deposits",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "decision_reason",
+      "default_expr": "''::text",
+      "table_name": "finance_deposits",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_deposits",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_drawer_handoffs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "allocation_id",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "source_session_id",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "recipient_user_id",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "expected_amount",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "actual_amount",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "difference",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "status",
+      "default_expr": "'MENUNGGU_HITUNG'::text",
+      "table_name": "finance_drawer_handoffs",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "reason",
+      "default_expr": "''::text",
+      "table_name": "finance_drawer_handoffs",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "confirmed_by",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "confirmed_at",
+      "default_expr": null,
+      "table_name": "finance_drawer_handoffs",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_drawer_handoffs",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_expenses",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "idempotency_key",
+      "default_expr": null,
+      "table_name": "finance_expenses",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "session_id",
+      "default_expr": null,
+      "table_name": "finance_expenses",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "amount",
+      "default_expr": null,
+      "table_name": "finance_expenses",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "method",
+      "default_expr": null,
+      "table_name": "finance_expenses",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "category",
+      "default_expr": null,
+      "table_name": "finance_expenses",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "note",
+      "default_expr": "''::text",
+      "table_name": "finance_expenses",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "recorded_by",
+      "default_expr": null,
+      "table_name": "finance_expenses",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_expenses",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "expense_number",
+      "default_expr": "next_expense_number()",
+      "table_name": "finance_expenses",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "request_idempotency_key",
+      "default_expr": null,
+      "table_name": "finance_payment_batch_idempotency",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "operation",
+      "default_expr": null,
+      "table_name": "finance_payment_batch_idempotency",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "request_fingerprint",
+      "default_expr": null,
+      "table_name": "finance_payment_batch_idempotency",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_payment_batch_idempotency",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "transaction_id",
+      "default_expr": null,
+      "table_name": "finance_payment_batch_idempotency",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "transaction_number",
+      "default_expr": null,
+      "table_name": "finance_payment_batch_idempotency",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "payment_ids",
+      "default_expr": "'[]'::jsonb",
+      "table_name": "finance_payment_batch_idempotency",
+      "type": "jsonb"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_payment_batch_idempotency",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_refund_allocations",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "refund_id",
+      "default_expr": null,
+      "table_name": "finance_refund_allocations",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "payment_id",
+      "default_expr": null,
+      "table_name": "finance_refund_allocations",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "refunded_amount",
+      "default_expr": null,
+      "table_name": "finance_refund_allocations",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "original_commission",
+      "default_expr": "0",
+      "table_name": "finance_refund_allocations",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "adjusted_commission",
+      "default_expr": "0",
+      "table_name": "finance_refund_allocations",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "commission_delta",
+      "default_expr": "0",
+      "table_name": "finance_refund_allocations",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_refund_allocations",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_refunds",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "idempotency_key",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "transaction_id",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "amount",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "refund_method",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "source_type",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "source_session_id",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "reason",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "original_payment_total",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "commission_adjustment",
+      "default_expr": "0",
+      "table_name": "finance_refunds",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_refunds",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_refunds",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "idempotency_key",
+      "default_expr": null,
+      "table_name": "finance_reservation_idempotency",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "request_fingerprint",
+      "default_expr": null,
+      "table_name": "finance_reservation_idempotency",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "transaction_id",
+      "default_expr": null,
+      "table_name": "finance_reservation_idempotency",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "transaction_number",
+      "default_expr": null,
+      "table_name": "finance_reservation_idempotency",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_reservation_idempotency",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_reservation_idempotency",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_session_allocations",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "session_id",
+      "default_expr": null,
+      "table_name": "finance_session_allocations",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "allocation_type",
+      "default_expr": null,
+      "table_name": "finance_session_allocations",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "method",
+      "default_expr": null,
+      "table_name": "finance_session_allocations",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "amount",
+      "default_expr": null,
+      "table_name": "finance_session_allocations",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "recipient_user_id",
+      "default_expr": null,
+      "table_name": "finance_session_allocations",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_session_allocations",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_session_allocations",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "true",
+      "table_name": "finance_settings",
+      "type": "boolean"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "minimum_dp_mode",
+      "default_expr": "'AMOUNT'::text",
+      "table_name": "finance_settings",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "minimum_dp_value",
+      "default_expr": "0",
+      "table_name": "finance_settings",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "updated_by",
+      "default_expr": null,
+      "table_name": "finance_settings",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "updated_at",
+      "default_expr": "now()",
+      "table_name": "finance_settings",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "trainee_user_id",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "supervisor_user_id",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "starts_on",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "date"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "ends_on",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "date"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "status",
+      "default_expr": "'ACTIVE'::text",
+      "table_name": "finance_training_assignments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "label",
+      "default_expr": "'Training'::text",
+      "table_name": "finance_training_assignments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_by",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_training_assignments",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "resolved_by",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "resolved_at",
+      "default_expr": null,
+      "table_name": "finance_training_assignments",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "resolution_note",
+      "default_expr": "''::text",
+      "table_name": "finance_training_assignments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "assignment_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "label",
+      "default_expr": "'Training'::text",
+      "table_name": "finance_training_audit",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "action",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "entity_type",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "entity_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "transaction_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "payment_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "session_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "operator_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "supervisor_id",
+      "default_expr": null,
+      "table_name": "finance_training_audit",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "finance_training_audit",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "details",
+      "default_expr": "'{}'::jsonb",
+      "table_name": "finance_training_audit",
+      "type": "jsonb"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "id",
+      "default_expr": "gen_random_uuid()",
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "transaction_id",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "amount",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "method",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "kind",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "text"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "created_at",
+      "default_expr": "now()",
+      "table_name": "payments",
+      "type": "timestamp with time zone"
+    },
+    {
+      "attnotnull": true,
+      "column_name": "recorded_by",
+      "default_expr": "auth.uid()",
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "cash_session_id",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "idempotency_key",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "charge_event_id",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_mode",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_rate",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "numeric(8,4)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_per_room_amount",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "numeric(12,2)"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_rounding",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "text"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_recipient",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "uuid"
+    },
+    {
+      "attnotnull": false,
+      "column_name": "commission_amount",
+      "default_expr": null,
+      "table_name": "payments",
+      "type": "numeric(12,2)"
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER finance_final_session_guard_trigger BEFORE DELETE OR UPDATE ON public.finance_cash_sessions FOR EACH ROW EXECUTE FUNCTION finance_final_session_guard()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_final_session_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF OLD.status = 'FINAL' THEN\n    RAISE EXCEPTION 'Closing final tidak dapat diubah atau dihapus';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_final_session_guard",
+      "table_name": "finance_cash_sessions",
+      "tgname": "finance_final_session_guard_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_training_session_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.finance_cash_sessions FOR EACH ROW EXECUTE FUNCTION finance_training_session_guard()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak boleh membuka, mengubah, atau menutup sesi kas';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_session_guard",
+      "table_name": "finance_cash_sessions",
+      "tgname": "finance_training_session_guard_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_training_handoffs_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.finance_drawer_handoffs FOR EACH ROW EXECUTE FUNCTION finance_training_forbidden_finance_mutation_guard()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_training_forbidden_finance_mutation_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak dapat mengubah objek Finance ini';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_forbidden_finance_mutation_guard",
+      "table_name": "finance_drawer_handoffs",
+      "tgname": "finance_training_handoffs_guard_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_training_allocations_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.finance_session_allocations FOR EACH ROW EXECUTE FUNCTION finance_training_forbidden_finance_mutation_guard()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_training_forbidden_finance_mutation_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    RAISE EXCEPTION 'Peserta Training tidak dapat mengubah objek Finance ini';\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_forbidden_finance_mutation_guard",
+      "table_name": "finance_session_allocations",
+      "tgname": "finance_training_allocations_guard_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_prepare_payment_trigger BEFORE INSERT ON public.payments FOR EACH ROW EXECUTE FUNCTION finance_prepare_payment()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_prepare_payment()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  selected_session public.finance_cash_sessions;\n  selected_transaction public.transactions;\n  selected_charge public.finance_charge_events;\n  config record;\n  payment_count integer;\n  paid_before numeric;\n  commission_before numeric;\n  target_commission numeric;\nBEGIN\n  IF NEW.idempotency_key IS NULL THEN\n    NEW.idempotency_key := gen_random_uuid();\n  END IF;\n\n  SELECT * INTO selected_transaction\n  FROM public.transactions t\n  WHERE t.id = NEW.transaction_id;\n  IF NOT FOUND THEN\n    RAISE EXCEPTION 'Transaksi pembayaran tidak ditemukan';\n  END IF;\n\n  IF NEW.cash_session_id IS NULL THEN\n    SELECT * INTO selected_session\n    FROM public.finance_cash_sessions s\n    WHERE s.opened_by = NEW.recorded_by\n      AND s.status = 'OPEN'\n    ORDER BY s.opened_at DESC\n    LIMIT 1\n    FOR UPDATE;\n  ELSE\n    SELECT * INTO selected_session\n    FROM public.finance_cash_sessions s\n    WHERE s.id = NEW.cash_session_id\n    FOR UPDATE;\n  END IF;\n\n  IF NOT FOUND OR selected_session.status <> 'OPEN' THEN\n    RAISE EXCEPTION 'Sesi kas aktif penerima pembayaran tidak ditemukan';\n  END IF;\n\n  -- Preserve the approved Owner/Supervisor assisted-session path while\n  -- allowing an assigned trainee only through a validated Training context.\n  -- Restricted trainees must not inherit the Owner/Supervisor shortcut.\n  IF selected_session.opened_by <> NEW.recorded_by\n     AND NOT (\n       NOT public.finance_training_is_restricted(NEW.recorded_by)\n       AND public.finance_is_owner_or_supervisor(NEW.recorded_by)\n     )\n     AND NOT public.finance_training_context_matches_session(\n       auth.uid(), selected_session.id\n     ) THEN\n    RAISE EXCEPTION 'Operator tidak berwenang membantu sesi kas ini';\n  END IF;\n\n  NEW.cash_session_id := selected_session.id;\n\n  IF NEW.charge_event_id IS NOT NULL THEN\n    SELECT * INTO selected_charge\n    FROM public.finance_charge_events c\n    WHERE c.id = NEW.charge_event_id;\n    IF NOT FOUND THEN\n      RAISE EXCEPTION 'Peristiwa Extend/Overtime tidak ditemukan';\n    END IF;\n    NEW.commission_mode := selected_charge.commission_mode;\n    NEW.commission_rate := selected_charge.commission_rate;\n    NEW.commission_per_room_amount := selected_charge.commission_per_room_amount;\n    NEW.commission_rounding := selected_charge.commission_rounding;\n    NEW.commission_recipient := CASE\n      WHEN selected_charge.commission_mode = 'PERCENTAGE' THEN NEW.recorded_by\n      WHEN selected_charge.commission_mode = 'PER_ROOM' THEN selected_charge.commission_recipient\n      ELSE NULL\n    END;\n  ELSE\n    IF selected_transaction.commission_mode_snapshot IS NULL THEN\n      SELECT * INTO config\n      FROM public.finance_commission_at(selected_transaction.created_at);\n      IF config.mode IS NULL THEN\n        config.mode := 'OFF';\n        config.rate := 0;\n        config.per_room_amount := 0;\n        config.rounding_rule := 'FLOOR_RP1000';\n      END IF;\n      UPDATE public.transactions\n      SET commission_mode_snapshot = config.mode,\n          commission_rate_snapshot = config.rate,\n          commission_per_room_amount_snapshot = config.per_room_amount,\n          commission_rounding_snapshot = config.rounding_rule\n      WHERE id = selected_transaction.id;\n      selected_transaction.commission_mode_snapshot := config.mode;\n      selected_transaction.commission_rate_snapshot := config.rate;\n      selected_transaction.commission_per_room_amount_snapshot := config.per_room_amount;\n      selected_transaction.commission_rounding_snapshot := config.rounding_rule;\n    END IF;\n\n    NEW.commission_mode := COALESCE(selected_transaction.commission_mode_snapshot, 'OFF');\n    NEW.commission_rate := COALESCE(selected_transaction.commission_rate_snapshot, 0);\n    NEW.commission_per_room_amount := COALESCE(selected_transaction.commission_per_room_amount_snapshot, 0);\n    NEW.commission_rounding := COALESCE(selected_transaction.commission_rounding_snapshot, 'FLOOR_RP1000');\n    NEW.commission_recipient := CASE\n      WHEN NEW.commission_mode = 'PERCENTAGE' THEN NEW.recorded_by\n      WHEN NEW.commission_mode = 'PER_ROOM'\n        AND NOT EXISTS (\n          SELECT 1 FROM public.payments p\n          WHERE p.transaction_id = NEW.transaction_id\n        )\n        THEN selected_transaction.created_by\n      ELSE NULL\n    END;\n  END IF;\n\n  SELECT COUNT(*)::integer INTO payment_count\n  FROM public.payments p\n  WHERE p.transaction_id = NEW.transaction_id;\n\n  SELECT COALESCE(SUM(p.amount), 0), COALESCE(SUM(p.commission_amount), 0)\n  INTO paid_before, commission_before\n  FROM public.payments p\n  WHERE p.transaction_id = NEW.transaction_id;\n\n  target_commission := floor(((paid_before + NEW.amount) * COALESCE(NEW.commission_rate, 0) / 100) / 1000) * 1000;\n  NEW.commission_amount := CASE\n    WHEN NEW.commission_mode = 'PERCENTAGE' THEN\n      GREATEST(target_commission - commission_before, 0)\n    WHEN NEW.commission_mode = 'PER_ROOM'\n      AND NEW.commission_recipient IS NOT NULL\n      AND (payment_count = 0 OR NEW.charge_event_id IS NOT NULL)\n      THEN NEW.commission_per_room_amount\n    ELSE 0\n  END;\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_prepare_payment",
+      "table_name": "payments",
+      "tgname": "finance_prepare_payment_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_training_payments_audit_trigger AFTER INSERT ON public.payments FOR EACH ROW EXECUTE FUNCTION finance_training_audit_row()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_training_audit_row()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  assignment_id_value uuid;\n  session_id_value uuid;\n  payload jsonb := to_jsonb(NEW);\n  transaction_id_value uuid;\n  payment_id_value uuid;\n  supervisor_id_value uuid;\nBEGIN\n  IF NOT public.finance_training_context_valid(auth.uid()) THEN\n    RETURN NEW;\n  END IF;\n\n  session_id_value := COALESCE(\n    NULLIF(payload->>'cash_session_id', '')::uuid,\n    NULLIF(payload->>'session_id', '')::uuid,\n    NULLIF(current_setting('app.finance_training_session_id', true), '')::uuid\n  );\n\n  assignment_id_value := public.finance_training_context_assignment(\n    auth.uid(), session_id_value\n  );\n\n  SELECT s.opened_by\n  INTO supervisor_id_value\n  FROM public.finance_cash_sessions s\n  WHERE s.id = session_id_value\n    AND s.status = 'OPEN'\n    AND public.finance_training_context_matches_session(auth.uid(), s.id);\n\n  IF assignment_id_value IS NULL OR supervisor_id_value IS NULL THEN\n    RAISE EXCEPTION 'Konteks audit Training tidak lengkap';\n  END IF;\n\n  transaction_id_value := CASE\n    WHEN TG_TABLE_NAME = 'transactions' THEN (payload->>'id')::uuid\n    ELSE NULLIF(payload->>'transaction_id', '')::uuid\n  END;\n  payment_id_value := CASE\n    WHEN TG_TABLE_NAME = 'payments' THEN (payload->>'id')::uuid\n    ELSE NULL\n  END;\n\n  INSERT INTO public.finance_training_audit (\n    assignment_id, action, entity_type, entity_id,\n    transaction_id, payment_id, session_id,\n    operator_id, supervisor_id, details\n  )\n  VALUES (\n    assignment_id_value, TG_OP, TG_TABLE_NAME, (payload->>'id')::uuid,\n    transaction_id_value, payment_id_value, session_id_value,\n    auth.uid(), supervisor_id_value,\n    jsonb_build_object('label', 'Training', 'table', TG_TABLE_NAME)\n  );\n\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_audit_row",
+      "table_name": "payments",
+      "tgname": "finance_training_payments_audit_trigger"
+    },
+    {
+      "definition": "CREATE TRIGGER finance_training_payments_guard_trigger BEFORE INSERT OR DELETE OR UPDATE ON public.payments FOR EACH ROW EXECUTE FUNCTION finance_training_session_row_guard()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.finance_training_session_row_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nDECLARE\n  payload jsonb;\n  row_session_id uuid;\nBEGIN\n  IF public.finance_training_is_restricted(auth.uid()) THEN\n    payload := CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;\n    row_session_id := COALESCE(\n      NULLIF(payload->>'cash_session_id', '')::uuid,\n      NULLIF(payload->>'session_id', '')::uuid\n    );\n    IF NOT public.finance_training_context_matches_session(auth.uid(), row_session_id) THEN\n      RAISE EXCEPTION 'Peserta Training wajib memakai sesi kas penanggung jawab yang valid';\n    END IF;\n  END IF;\n  IF TG_OP = 'DELETE' THEN\n    RETURN OLD;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n",
+      "proname": "finance_training_session_row_guard",
+      "table_name": "payments",
+      "tgname": "finance_training_payments_guard_trigger"
+    }
+  ],
+  "indexes": [
+    {
+      "indexdef": "CREATE UNIQUE INDEX finance_payment_batch_idempotency_pkey ON public.finance_payment_batch_idempotency USING btree (request_idempotency_key)",
+      "indexname": "finance_payment_batch_idempotency_pkey",
+      "tablename": "finance_payment_batch_idempotency"
+    },
+    {
+      "indexdef": "CREATE INDEX finance_payment_batch_transaction_idx ON public.finance_payment_batch_idempotency USING btree (transaction_id)",
+      "indexname": "finance_payment_batch_transaction_idx",
+      "tablename": "finance_payment_batch_idempotency"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX payments_pkey ON public.payments USING btree (id)",
+      "indexname": "payments_pkey",
+      "tablename": "payments"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX payments_idempotency_key_unique ON public.payments USING btree (idempotency_key) WHERE (idempotency_key IS NOT NULL)",
+      "indexname": "payments_idempotency_key_unique",
+      "tablename": "payments"
+    }
+  ]
+}
