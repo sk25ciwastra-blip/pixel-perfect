@@ -258,3 +258,190 @@ IZINBARUYANGDIPERLUKAN: menyetujui BagianA yang ditambahREVOKEtargeted diatas,
 tetap satu transaksi dengan validasisebelumCOMMIT, lalu tepatduaopsiDEMO WORK.
 Ini tidak meminta perluasan keSQLlain/sourceintegration/DEMOwrite/Connect.
 Integrationpreparation tetap6/7=85.7%, overallNO-GO.
+
+## POSTCHECK AKTUAL — BAGIAN A BERHASIL DITERAPKAN
+
+17 November 2026 WIB. Owner secara eksplisit menyetujui BagianA versikoreksi
+commit e0dc6b15e95e85e283ccd806c70052d84be1e7e7 dan tepatduaopsiOwner.
+Bagian ini menggantikan statusSTOP/pending untuk DEPENDENSI OPSIPENGELUARAN saja.
+Source9file dan semua pendingSQLlain tetap BELUM AKTIF/tidakdiizinkan.
+
+### PASS CLOUD — DDL atomic dan hakakses
+
+Preflight tepatsebelumwrite: targetabsent, executorpostgres, sourceblob
+eb6bbdbf6e00a4d23c80f9a28a2a24c4cb031ac8, helper/expenseRPCfingerprints cocok.
+Hanya substringCREATE TABLE sampai akhirBagianA yang dieksekusi.
+SatuBEGIN; lock_timeout5s; statement_timeout60s; satuDO berisi precondition,
+DDLapproved persis, dan validasisebelumCOMMIT; kemudianCOMMIT.
+Tidak ada error/rollback. Timestampresult2026-11-17T12:14:00.784597Z
+=19:14:00.784597WIB.
+
+ValidatedbeforeCOMMIT:
+- Enamkolom, tipe/nullability/defaultsesuaiDDL.
+- Empatconstraint: PKid, uniquekind+name, duaCHECKvalidated.
+- RLSenabled, tepatempatpolicy; nama/cmd/authenticatedrole/permissive/
+  USING/WITHCHECK cocok dengan predicateapproved.
+- Effectiveprivilegeanon semuaSELECT/INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/
+  TRIGGER/MAINTAIN=false; aclexplode menunjukkan tidakadaPUBLICgrant.
+- authenticatedCRUD=true, privilegeextraTRUNCATE/REFERENCES/TRIGGER/MAINTAIN=false,
+  tidakadagrantoption. service_role hakpenuh tetap.
+- DefaultACLglobal hash sebelum/sesudah sama. Hakinternalpostgres/sandbox_exec
+  bawaan tidak diubah. Tidak ada alterdefaultprivileges atau revoke pada tabelold.
+- Rowcount0sebelumCOMMIT. HasilsetelahCOMMIT: tableexists, RLStrue,
+  policycount4, optioncount0, anon_anyfalse, authenticated_extrafalse.
+Ini pemeriksaancatalog/effectiveACL, bukan percobaanmerusak/truncate.
+
+### PASS LIVE LOVABLE — Owner membuat duaopsi, dropdown dapat dipilih
+
+AkunHK logoutnormal, Owner login sendiri melalui mekanismesah.
+Requestprivatecredential berakhirdeclined; DOMfresh menunjukkan Pemilik/Owner
+sudahlogin secara manual. Tidak mengulangi request atau membaca password.
+
+Melalui Pengaturan->DaftarPengeluaran, dua kaliklikTambah masing-masingsekali:
+1. kindjenis/nameDEMO WORK/activetrue,
+   UUID e15ffd1a-2ef4-475d-8b0a-d3536d71f692,
+   created_at19:17:47.162007WIB.
+2. kindkeperluan/nameDEMO WORK/activetrue,
+   UUID c40102b7-54f2-495a-94de-954154412cbe,
+   created_at19:18:04.421991WIB.
+Keduacreated_by=33fb197c-352a-4d1f-bf3a-39bd513ab255;
+SELECT has_role(created_by,'owner')=true. Tidakinsert lewatSQL/impersonation.
+
+Dashboard->EXPENSE dibuka untukpostcheckread-only. Kedua native selectenabled,
+masing-masing memuat tepatplaceholder+DEMO WORK. Keduanya berhasilselectDEMO WORK.
+Tidakmengisinominal/keterangan dan TIDAKklikSimpanPengeluaran.
+Form ditutup melaluiBatal. BuktiJPEG b25_expense_options_live.jpg menunjukkan
+duapilihan dipilih padaactualform, sebelumdibatalkan.
+
+SELECTakhir:
+options_total2, valid_owner_options2,
+new_expenses0/new_sessions0/new_payments0/new_transactions0
+sejak2026-11-17T12:14:00Z. ACL dan empatpolicy dicaptureulang; sesuai.
+Tidak menghapusdata atau mengulang teslamaPASS. Tidakmengubahakun/password,
+jumlahtamu, roomstatus, sourceLovable, flag, BagianB atauSQLlain.
+
+### Kelanjutan dan batas
+
+Cakupanterbatas ini selesai3/3: (1) DDL+validasiatomic,
+(2) duaopsiOwner, (3) DB+dropdownpostcheck =100%.
+Bukan100%aplikasi atau izinGO.
+Integrationpreparation tetap6/7=85.7%, operasionalNO-GO.
+Bantuanlintasakun/Closingminus tetap BELUMDIUJI LIVE.
+Finance/sessioncontext/actormapping candidate tetap SUDAH DIPERBAIKI TAPI BELUM AKTIF.
+Approvalterakhir secaraeksplisit tidakmencakup expense/Closing/integrasi9file.
+Jangan menganggap persetujuanDEMO bersyarat sebelumnya menghapus gate baruini.
+
+PemeriksaanindependenSupport: pencarianGmail tidakmenemukan instruksiSyncbaru;
+pesanterbaruSam17Nov12:07WIB masihminta janganConnect, tunggureattachmentmanusia.
+Tidak mengirimemail atauConnect.
+Prioritasteknis: prosedurSupportoriginalrepo/arahsync -> persetujuanintegrasi9file
+-> penerapan dan contextacceptanceread-only -> izin eksekusiDEMO yang masihberlaku
+atau diperbaruisesuai batasOwner. Jangan membuka sesi atau menyimpan expense sekarang.
+
+### SQL transaksi yang benar-benar dieksekusi
+
+Disimpan untukauditableevidence saja. JANGANjalankanulang: tabelsudahada.
+Tidak disimpan sebagai migrasibaru atau ditambahkan ke migrasihistory.
+
+```sql
+BEGIN;
+SET LOCAL lock_timeout='5s';
+SET LOCAL statement_timeout='60s';
+SET LOCAL search_path=public;
+DO $validated$
+DECLARE
+  defaults_before text;
+  defaults_after text;
+  col_record record;
+  got_columns text[];
+  got_defaults text[];
+  acl_bad boolean;
+BEGIN
+  IF current_user <> 'postgres' OR to_regclass('public.finance_expense_options') IS NOT NULL
+     OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.can_operate(uuid)'::regprocedure) <> '8f676083af6ccfdedc51b40bfd21aa84'
+     OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.has_role(uuid,public.app_role)'::regprocedure) <> '329c61a02658089cb1486c876cc6405d'
+     OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.record_finance_expense(uuid,uuid,numeric,text,text,text)'::regprocedure) <> '4c5473061181fa5c3f47952cf0a7381e'
+     OR to_regprocedure('auth.uid()') IS NULL OR to_regprocedure('gen_random_uuid()') IS NULL
+     OR (SELECT count(*) FROM pg_roles WHERE rolname IN ('anon','authenticated','service_role')) <> 3
+  THEN RAISE EXCEPTION 'STOP: approved source dependency/target drift'; END IF;
+  SELECT md5(coalesce(jsonb_agg(to_jsonb(d) ORDER BY d.oid)::text,'')) INTO defaults_before FROM pg_default_acl d;
+  EXECUTE $approved_bag_a$
+CREATE TABLE public.finance_expense_options (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind text NOT NULL CHECK (kind IN ('jenis', 'keperluan')),
+  name text NOT NULL CHECK (char_length(btrim(name)) BETWEEN 1 AND 60),
+  active boolean NOT NULL DEFAULT true,
+  created_by uuid NOT NULL DEFAULT auth.uid(),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (kind, name)
+);
+-- PENDING RE-APPROVAL: neutralize inherited default grants on this new table only.
+-- Does not change database-wide defaults or privileges on any existing table.
+REVOKE ALL PRIVILEGES ON TABLE public.finance_expense_options FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.finance_expense_options TO authenticated;
+GRANT ALL ON public.finance_expense_options TO service_role;
+ALTER TABLE public.finance_expense_options ENABLE ROW LEVEL SECURITY;
+CREATE POLICY expense_options_read ON public.finance_expense_options FOR SELECT TO authenticated
+  USING (public.can_operate(auth.uid()) OR public.has_role(auth.uid(), 'owner'));
+CREATE POLICY expense_options_owner_insert ON public.finance_expense_options FOR INSERT TO authenticated
+  WITH CHECK (public.has_role(auth.uid(), 'owner') AND created_by = auth.uid());
+CREATE POLICY expense_options_owner_update ON public.finance_expense_options FOR UPDATE TO authenticated
+  USING (public.has_role(auth.uid(), 'owner')) WITH CHECK (public.has_role(auth.uid(), 'owner'));
+CREATE POLICY expense_options_owner_delete ON public.finance_expense_options FOR DELETE TO authenticated
+  USING (public.has_role(auth.uid(), 'owner'));
+$approved_bag_a$;
+  SELECT array_agg(a.attname::text||':'||format_type(a.atttypid,a.atttypmod)||':'||a.attnotnull::text ORDER BY a.attnum),
+         array_agg(coalesce(pg_get_expr(d.adbin,d.adrelid),'') ORDER BY a.attnum)
+    INTO got_columns,got_defaults
+    FROM pg_attribute a LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
+    WHERE a.attrelid='public.finance_expense_options'::regclass AND a.attnum>0 AND NOT a.attisdropped;
+  IF got_columns IS DISTINCT FROM ARRAY['id:uuid:true','kind:text:true','name:text:true','active:boolean:true','created_by:uuid:true','created_at:timestamp with time zone:true']
+     OR got_defaults IS DISTINCT FROM ARRAY['gen_random_uuid()','','','true','auth.uid()','now()']
+  THEN RAISE EXCEPTION 'STOP: column/default mismatch % %',got_columns,got_defaults; END IF;
+  IF (SELECT count(*) FROM pg_constraint WHERE conrelid='public.finance_expense_options'::regclass)<>4
+     OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.finance_expense_options'::regclass AND contype='p' AND conkey=ARRAY[1]::smallint[])
+     OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.finance_expense_options'::regclass AND contype='u' AND conkey=ARRAY[2,3]::smallint[])
+     OR (SELECT count(*) FROM pg_constraint WHERE conrelid='public.finance_expense_options'::regclass AND contype='c' AND convalidated)<>2
+     OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.finance_expense_options'::regclass AND contype='c' AND pg_get_constraintdef(oid) LIKE '%jenis%' AND pg_get_constraintdef(oid) LIKE '%keperluan%')
+     OR NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.finance_expense_options'::regclass AND contype='c' AND pg_get_constraintdef(oid) LIKE '%char_length(btrim(name))%' AND pg_get_constraintdef(oid) LIKE '%60%')
+  THEN RAISE EXCEPTION 'STOP: constraint mismatch'; END IF;
+  IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid='public.finance_expense_options'::regclass)
+     OR (SELECT count(*) FROM pg_policy WHERE polrelid='public.finance_expense_options'::regclass)<>4
+  THEN RAISE EXCEPTION 'STOP: RLS mismatch'; END IF;
+  IF EXISTS (
+    WITH expected(policy_name,cmd,q,c) AS (VALUES
+      ('expense_options_read','r','can_operateauth.uidORhas_roleauth.uid,''owner''',''),
+      ('expense_options_owner_insert','a','','has_roleauth.uid,''owner''ANDcreated_by=auth.uid'),
+      ('expense_options_owner_update','w','has_roleauth.uid,''owner''','has_roleauth.uid,''owner'''),
+      ('expense_options_owner_delete','d','has_roleauth.uid,''owner''','')
+    ), actual AS (
+      SELECT polname::text AS policy_name,polcmd::text AS cmd,polpermissive,polroles,
+        regexp_replace(replace(replace(coalesce(pg_get_expr(polqual,polrelid),''),'public.',''),'::app_role',''),'[[:space:]()]','','g') AS q,
+        regexp_replace(replace(replace(coalesce(pg_get_expr(polwithcheck,polrelid),''),'public.',''),'::app_role',''),'[[:space:]()]','','g') AS c
+      FROM pg_policy WHERE polrelid='public.finance_expense_options'::regclass
+    )
+    SELECT 1 FROM expected e FULL JOIN actual a USING(policy_name)
+    WHERE a.cmd IS DISTINCT FROM e.cmd OR a.q IS DISTINCT FROM e.q OR a.c IS DISTINCT FROM e.c
+      OR NOT a.polpermissive OR a.polroles IS DISTINCT FROM ARRAY[(SELECT oid FROM pg_roles WHERE rolname='authenticated')]
+  ) THEN RAISE EXCEPTION 'STOP: policy identity/predicate mismatch'; END IF;
+  IF has_table_privilege('anon','public.finance_expense_options','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER,MAINTAIN')
+     OR EXISTS(SELECT 1 FROM pg_class t CROSS JOIN LATERAL aclexplode(t.relacl) a WHERE t.oid='public.finance_expense_options'::regclass AND a.grantee=0)
+     OR EXISTS(SELECT 1 FROM unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE']) p WHERE NOT has_table_privilege('authenticated','public.finance_expense_options',p))
+     OR has_table_privilege('authenticated','public.finance_expense_options','TRUNCATE,REFERENCES,TRIGGER,MAINTAIN')
+     OR EXISTS(SELECT 1 FROM pg_class t CROSS JOIN LATERAL aclexplode(t.relacl) a WHERE t.oid='public.finance_expense_options'::regclass AND a.grantee=(SELECT oid FROM pg_roles WHERE rolname='authenticated') AND a.is_grantable)
+     OR EXISTS(SELECT 1 FROM unnest(ARRAY['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER','MAINTAIN']) p WHERE NOT has_table_privilege('service_role','public.finance_expense_options',p))
+  THEN RAISE EXCEPTION 'STOP: effective ACL mismatch'; END IF;
+  IF (SELECT count(*) FROM public.finance_expense_options)<>0 THEN RAISE EXCEPTION 'STOP: unexpected rows'; END IF;
+  SELECT md5(coalesce(jsonb_agg(to_jsonb(d) ORDER BY d.oid)::text,'')) INTO defaults_after FROM pg_default_acl d;
+  IF defaults_after IS DISTINCT FROM defaults_before THEN RAISE EXCEPTION 'STOP: global defaults changed'; END IF;
+END;
+$validated$;
+COMMIT;
+SELECT to_regclass('public.finance_expense_options')::text AS created_table,
+ (SELECT relrowsecurity FROM pg_class WHERE oid='public.finance_expense_options'::regclass) AS rls_enabled,
+ (SELECT count(*) FROM pg_policy WHERE polrelid='public.finance_expense_options'::regclass) AS policy_count,
+ (SELECT count(*) FROM public.finance_expense_options) AS option_count,
+ has_table_privilege('anon','public.finance_expense_options','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER,MAINTAIN') AS anon_any,
+ has_table_privilege('authenticated','public.finance_expense_options','TRUNCATE,REFERENCES,TRIGGER,MAINTAIN') AS authenticated_extra,
+ now() AS verified_at;
+```
