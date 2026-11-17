@@ -258,7 +258,7 @@ function HalamanKeuangan() {
   const aktivitas: Aktivitas[] = [
     ...sessionPayments.map((payment) => ({ id: `p-${payment.id}`, waktu: payment.created_at, jenis: 'Penerimaan' as const, ket: `Pembayaran ${nomorTrx(payment.transaction_id)}`, metode: payment.method, nominal: Number(payment.amount), petugas: nama(payment.recorded_by) })),
     ...sessionDeposits.map((deposit) => ({ id: `d-${deposit.id}`, waktu: deposit.created_at, jenis: 'Setoran' as const, ket: 'Setoran ke rekening owner', metode: deposit.method, nominal: Number(deposit.amount), petugas: nama(deposit.submitted_by) })),
-    ...sessionExpenses.map((expense) => ({ id: `e-${expense.id}`, waktu: expense.created_at, jenis: 'Pengeluaran' as const, ket: [expense.expense_number, expense.category, expense.note].filter(Boolean).join(' · '), metode: expense.method, nominal: Number(expense.amount), petugas: nama((expense as { created_by?: string }).created_by) })),
+    ...sessionExpenses.map((expense) => ({ id: `e-${expense.id}`, waktu: expense.created_at, jenis: 'Pengeluaran' as const, ket: [expense.expense_number, expense.category, expense.note].filter(Boolean).join(' · '), metode: expense.method, nominal: Number(expense.amount), petugas: nama(expense.recorded_by) })),
     ...sessionRefunds.map((item) => ({ id: `r-${item.id}`, waktu: item.created_at, jenis: 'Refund' as const, ket: `Refund ${nomorTrx(item.transaction_id)} - ${item.reason}`, metode: item.refund_method, nominal: Number(item.amount), petugas: nama(item.created_by) })),
   ]
     .filter((row) => !filterJenis || row.jenis === filterJenis)
