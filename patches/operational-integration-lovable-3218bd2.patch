@@ -538,6 +538,23 @@
                        {transaction && (
                          <Button
                            variant="link"
+@@ -286,6 +278,7 @@
+                         <Button
+                           variant="link"
+                           className="mt-1 text-left"
++                          title={issues.join(" · ")}
+                           onClick={event => {
+                             event.stopPropagation();
+                             setDetailHousekeeping({
+@@ -299,7 +292,7 @@
+                             });
+                           }}
+                         >
+-                          ❌ {issues.join(" · ")}
++                          ❌ {issues.length} catatan HK
+                         </Button>
+                       )}
+ 
 --- /dev/null
 +++ b/src/lib/checklist-for-ready-job.ts
 @@ -0,0 +1,35 @@

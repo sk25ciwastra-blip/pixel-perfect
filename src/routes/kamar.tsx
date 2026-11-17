@@ -303,6 +303,7 @@ function HalamanKamar() {
                         <button
                           type="button"
                           className="mt-3 rounded-xl bg-bahaya px-3 py-2 text-left text-xs text-bahaya-foreground hover:bg-bahaya/80"
+                          title={issues.join(" · ")}
                           onClick={() =>
                             setDetailHousekeeping({
                               roomNumber: room.room_number,
@@ -315,7 +316,7 @@ function HalamanKamar() {
                             })
                           }
                         >
-                          ❌ {issues.join(" · ")}
+                          ❌ {issues.length} catatan HK
                         </button>
                       )}
 

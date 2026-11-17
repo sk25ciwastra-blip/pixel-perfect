@@ -41,7 +41,7 @@
   "artifacts": [
     {
       "path": "patches/operational-integration-lovable-3218bd2.patch",
-      "sha256": "a15eded0fd118629eb87c910369764a13664d23f6bf65dfb47f1e47a2bfc7737"
+      "sha256": "b5b0823dc7aa55e530b1c8cc2a20191919b90d591e8b09d6211bdbb16e30b3a0"
     },
     {
       "path": "supabase/pending/20261113150233_overtime_walkin_guard.sql",
@@ -62,6 +62,12 @@
     {
       "path": "supabase/pending/20261117104000_refund_retry_payload_guard.sql",
       "sha256": "70dd8fba4b1509269e221c1a1f4e994723fcced9cd7f48faf2458c4238ba2f62"
+    }
+  ],
+  "preserved_files": [
+    {
+      "path": "src/components/kamar.css",
+      "sha256": "1b0af4379320cd5024f0d587e52df50006dfff3435b9eb7e67eb79aafaeaa0b3"
     }
   ]
 }
