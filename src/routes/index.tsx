@@ -454,7 +454,7 @@ function Ringkasan() {
     .sort((a, b) => new Date(a.item.scheduled_check_in ?? 0).getTime() - new Date(b.item.scheduled_check_in ?? 0).getTime())
     .slice(0, 3), [bookingHariIni, sekarang]);
 
-  // Overtime >120 menit tetap occupied dan dapat di-checkout; hanya dipindah tampilan.
+  // Overtime >120 menit tetap occupied DAN muncul di tabel utama; ringkasan tetap memberi peringatan.
   const overtimePerluTindakan = useMemo(
     () => kamarTerisi.filter(({ transaksi }) => roomOvertimeIndicator(transaksi, sekarang).needsAction),
     [kamarTerisi, sekarang],
@@ -463,7 +463,7 @@ function Ringkasan() {
   // Satu baris utama per kamar: stay aktif lebih dahulu, lalu booking terdekat.
   const statusKamarBaris = useMemo(
     () => kamarAktif.flatMap((room) => {
-      const terisi = kamarTerisi.find((item) => item.room?.id === room.id && !roomOvertimeIndicator(item.transaksi, sekarang).excludeFromRoomStatus);
+      const terisi = kamarTerisi.find((item) => item.room?.id === room.id);
       const bookings = bookingHariIni
         .filter((item) => item.room_id === room.id)
         .sort((a, b) => new Date(a.scheduled_check_in ?? 0).getTime() - new Date(b.scheduled_check_in ?? 0).getTime());
@@ -718,26 +718,9 @@ function Ringkasan() {
                 </div>
               )}
               {overtimePerluTindakan.length > 0 && (
-                <section aria-label="PERLU TINDAKAN: overtime kamar" className="mx-5 mb-3 rounded-xl border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-4 py-3 sm:mx-6">
-                  <h3 className="mb-2 text-sm font-bold text-bahaya-foreground">PERLU TINDAKAN · Overtime lebih dari 120 menit</h3>
-                  <div className="space-y-2">
-                    {overtimePerluTindakan.map(({ transaksi: item, room, guest }) => {
-                      const alasan = checkoutDisabledReason(item, room);
-                      return (
-                        <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 py-2 last:border-0">
-                          <div className="min-w-0 text-xs">
-                            <p className="font-bold">Kamar {room?.room_number ?? "—"} · {guest?.full_name ?? "Tamu"} · <span className="text-bahaya-foreground">PERLU TINDAKAN</span></p>
-                            <Button variant="link" className="h-auto px-0 text-xs text-gold-krem" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>
-                            <p className="text-muted-foreground">Batas checkout: {item.ends_at ? jamWib(item.ends_at) : "—"} WIB</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => setDetailTransactionId(item.id)}>Detail</Button>
-                            <Button type="button" size="sm" disabled={Boolean(alasan) || checkingOutId !== null} title={alasan || "Check-out"} onClick={() => void checkOut(item.id)}>Check-out</Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                <section aria-label="PERLU TINDAKAN: overtime kamar" role="status" className="mx-5 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-3 py-2 sm:mx-6">
+                  <span className="text-xs font-bold text-bahaya-foreground">PERLU TINDAKAN · {overtimePerluTindakan.length} kamar overtime lebih dari 120 menit</span>
+                  <span className="text-xs text-muted-foreground">Kamar {overtimePerluTindakan.map(({ room }) => room?.room_number ?? "—").join(", ")} · Detail dan Check-out tersedia di tabel.</span>
                 </section>
               )}
               {statusKamarBaris.length === 0 ? (

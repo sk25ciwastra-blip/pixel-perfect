@@ -227,7 +227,7 @@ function HalamanKamar() {
                         {roomType?.name ?? "Tipe kamar belum tersedia"}
                       </p>
                       <div className="kamar-info">
-                      {overtime && <p role="status" className="text-xs font-bold text-destructive">PERLU TINDAKAN · Overtime lebih dari 120 menit</p>}
+                      {overtime && <p role="status" title="Overtime lebih dari 120 menit" className="text-xs font-bold text-destructive">PERLU TINDAKAN · &gt;120 menit</p>}
                       {transaction && (
                         <Button
                           variant="link"
