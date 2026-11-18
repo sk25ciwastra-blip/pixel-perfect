@@ -212,7 +212,7 @@ export function DetailTransaksi({
                     <Baris label="No. Kamar">{room?.room_number ?? '—'}</Baris>
                     <Baris label="Kode Paket">{kodePaket(packageItem?.name)}</Baris>
                     <Baris label="Tipe Kamar">{roomType?.name?.toUpperCase() ?? '—'}</Baris>
-                    <Baris label="Jenis Transaksi"><span className={`dtx-jenis ${viaBooking ? 'dtx-jenis-booking' : 'dtx-jenis-langsung'}`}>{viaBooking ? 'BOOKING' : 'CHECK-IN LANGSUNG'}</span></Baris>
+                    <Baris label="Jenis Transaksi"><span className={`dtx-jenis ${viaBooking ? 'dtx-jenis-booking' : 'dtx-jenis-langsung'}`}>{viaBooking ? 'BOOKING' : 'WALK-IN'}</span></Baris>
                     <Baris label="Jadwal Check-in"><WaktuMenginap value={transaction.scheduled_check_in} /></Baris>
                     <Baris label="Check-in Aktual"><WaktuMenginap value={transaction.started_at} /></Baris>
                     <Baris label="Batas Sewa"><WaktuMenginap value={transaction.scheduled_check_out} /></Baris>
