@@ -1,0 +1,25 @@
+name: B25 room status visual correction validation (no deploy)
+on:
+  push:
+    branches:
+      - validation/room-density-pr86-20261119
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile:
+    name: Typecheck and build isolated integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - name: Install exact locked dependencies
+        run: bun install --frozen-lockfile
+      - name: TypeScript typecheck
+        run: bunx tsc --noEmit
+      - name: Production build
+        if: always()
+        run: bun run build
