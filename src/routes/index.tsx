@@ -718,10 +718,10 @@ function Ringkasan() {
                 </div>
               )}
               {overtimePerluTindakan.length > 0 && (
-                <section aria-label="PERLU TINDAKAN: overtime kamar" role="status" className="mx-5 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-3 py-2 sm:mx-6">
+                <Link to="/kamar" search={{ bagian: "overtime" }} aria-label={`Lihat semua ${overtimePerluTindakan.length} kamar overtime lebih dari 120 menit`} className="mx-5 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-3 py-2 transition-colors hover:bg-bahaya-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:mx-6">
                   <span className="text-xs font-bold text-bahaya-foreground">PERLU TINDAKAN · {overtimePerluTindakan.length} kamar overtime lebih dari 120 menit</span>
-                  <span className="text-xs text-muted-foreground">Kamar {overtimePerluTindakan.map(({ room }) => room?.room_number ?? "—").join(", ")} · Detail dan Check-out tersedia di tabel.</span>
-                </section>
+                  <span className="text-xs text-muted-foreground">Kamar {overtimePerluTindakan.map(({ room }) => room?.room_number ?? "—").join(", ")} · Lihat semua kamar overtime →</span>
+                </Link>
               )}
               {statusKamarBaris.length === 0 ? (
                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
