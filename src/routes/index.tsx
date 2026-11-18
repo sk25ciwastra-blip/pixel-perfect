@@ -43,6 +43,7 @@ import { meta } from "@/lib/meta";
 import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
+import { roomOvertimeIndicator } from "@/lib/room-overtime";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 import "@/components/dashboard-panel.css";
 
@@ -253,12 +254,11 @@ function Ringkasan() {
   );
 
   const bookingHariIni = useMemo(() => {
-    const awalHari = new Date(`${tanggalWib(sekarang)}T00:00:00+07:00`).getTime();
-    const akhirHari = awalHari + 86_400_000;
+    const hariKedatanganWib = tanggalWib(sekarang);
     return bookingAktif.filter((item) => {
       const mulai = item.scheduled_check_in ? new Date(item.scheduled_check_in).getTime() : NaN;
       const akhir = item.scheduled_check_out ? new Date(item.scheduled_check_out).getTime() : NaN;
-      return Number.isFinite(mulai) && Number.isFinite(akhir) && mulai < akhirHari && akhir > awalHari;
+      return Number.isFinite(mulai) && Number.isFinite(akhir) && akhir > mulai && tanggalWib(mulai) === hariKedatanganWib;
     });
   }, [bookingAktif, sekarang]);
 
@@ -454,10 +454,16 @@ function Ringkasan() {
     .sort((a, b) => new Date(a.item.scheduled_check_in ?? 0).getTime() - new Date(b.item.scheduled_check_in ?? 0).getTime())
     .slice(0, 3), [bookingHariIni, sekarang]);
 
+  // Overtime >120 menit tetap occupied dan dapat di-checkout; hanya dipindah tampilan.
+  const overtimePerluTindakan = useMemo(
+    () => kamarTerisi.filter(({ transaksi }) => roomOvertimeIndicator(transaksi, sekarang).needsAction),
+    [kamarTerisi, sekarang],
+  );
+
   // Satu baris utama per kamar: stay aktif lebih dahulu, lalu booking terdekat.
   const statusKamarBaris = useMemo(
     () => kamarAktif.flatMap((room) => {
-      const terisi = kamarTerisi.find((item) => item.room?.id === room.id);
+      const terisi = kamarTerisi.find((item) => item.room?.id === room.id && !roomOvertimeIndicator(item.transaksi, sekarang).excludeFromRoomStatus);
       const bookings = bookingHariIni
         .filter((item) => item.room_id === room.id)
         .sort((a, b) => new Date(a.scheduled_check_in ?? 0).getTime() - new Date(b.scheduled_check_in ?? 0).getTime());
@@ -481,14 +487,15 @@ function Ringkasan() {
       }
     }
     return {
-      terisi: statusKamarBaris.filter((row) => row.terisi).length,
+      // Occupied overtime rooms remain occupied even when displayed in the action queue.
+      terisi: kamarTerisi.length,
       booking: bookingHariIni.length,
       persiapan: kamarAktif.filter((room) => room.status === "dirty" || room.status === "cleaning").length,
       terlambat: bookingHariIni.filter((item) => formatStatusBooking(item.scheduled_check_in ?? "", item.scheduled_check_out ?? "", sekarang)?.status === "late").length,
       perluTindakan: housekeepingChecklists.error ? null : kamarAktif.filter((room) => checklistTerbaru.get(room.id)?.result === "needs_action").length,
-      overtime: statusKamarBaris.filter(({ terisi }) => terisi && formatSisaWaktu(terisi.transaksi.ends_at ?? null, sekarang).status === "expired").length,
+      overtime: overtimePerluTindakan.length,
     };
-  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, sekarang, statusKamarBaris]);
+  }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, kamarTerisi, sekarang, overtimePerluTindakan]);
 
   const indikatorStatus = [
     { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
@@ -513,7 +520,7 @@ function Ringkasan() {
         wa: guest?.phone ? guest.phone.replace(/\D/g, "").slice(-4) : "",
         catatan: "",
         operator: "",
-        sub: "Booking",
+        sub: trx?.scheduled_check_in ? "Booking" : trx?.started_at ? "Walk-in" : "Pembayaran",
         nomor: trx?.transaction_number ?? "—",
         nominal: Number(p.amount),
         metode: p.method,
@@ -710,6 +717,29 @@ function Ringkasan() {
                   {bookingPeringatan.map(({ item, status }) => <p key={item.id}><span className={`font-bold ${status?.kelas}`}>{status?.label}</span> · {guests.rows.find((guest) => guest.id === item.guest_id)?.full_name ?? "Tamu"} · <span className="font-mono text-gold">{item.transaction_number}</span></p>)}
                 </div>
               )}
+              {overtimePerluTindakan.length > 0 && (
+                <section aria-label="PERLU TINDAKAN: overtime kamar" className="mx-5 mb-3 rounded-xl border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-4 py-3 sm:mx-6">
+                  <h3 className="mb-2 text-sm font-bold text-bahaya-foreground">PERLU TINDAKAN · Overtime lebih dari 120 menit</h3>
+                  <div className="space-y-2">
+                    {overtimePerluTindakan.map(({ transaksi: item, room, guest }) => {
+                      const alasan = checkoutDisabledReason(item, room);
+                      return (
+                        <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 py-2 last:border-0">
+                          <div className="min-w-0 text-xs">
+                            <p className="font-bold">Kamar {room?.room_number ?? "—"} · {guest?.full_name ?? "Tamu"} · <span className="text-bahaya-foreground">PERLU TINDAKAN</span></p>
+                            <Button variant="link" className="h-auto px-0 text-xs text-gold-krem" onClick={() => setDetailTransactionId(item.id)}>{item.transaction_number}</Button>
+                            <p className="text-muted-foreground">Batas checkout: {item.ends_at ? jamWib(item.ends_at) : "—"} WIB</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => setDetailTransactionId(item.id)}>Detail</Button>
+                            <Button type="button" size="sm" disabled={Boolean(alasan) || checkingOutId !== null} title={alasan || "Check-out"} onClick={() => void checkOut(item.id)}>Check-out</Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
               {statusKamarBaris.length === 0 ? (
                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
                   <BedDouble className="size-8 text-gold/60" strokeWidth={1.4} />
@@ -879,7 +909,7 @@ function Ringkasan() {
                           ) : <span className="font-mono text-[11px] text-gold">{t.nomor}</span>}
                         </div>
                         <div className="flex flex-col items-center gap-1 border-l border-gold/20 pl-2.5">
-                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Booking") : "Pengeluaran"}</span>
+                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Pembayaran") : "Pengeluaran"}</span>
                           <span className="text-[11px] tabular-nums text-muted-foreground">{jamWib(t.waktu)} WIB</span>
                         </div>
                         <div className="flex flex-col items-end gap-1">

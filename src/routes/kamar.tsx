@@ -1,5 +1,7 @@
+import { roomOvertimeIndicator } from '@/lib/room-overtime';
+import { checklistForReadyJob } from '@/lib/checklist-for-ready-job';
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { UserRound, Brush, BedDouble, Clock3, CalendarDays, NotebookPen, LogIn } from "lucide-react";
 import "@/components/kamar.css";
 import { LatarHeader } from "@/components/latar-header";
@@ -64,7 +66,6 @@ function formatIssueDetails(checklist: ChecklistRow) {
     !checklist.tissue_ok && (checklist.tissue_reason || "Tisu"),
     !checklist.towel_ok && (checklist.towel_reason || "Handuk"),
     !checklist.tv_remote_ok && (checklist.tv_remote_reason || "Remote TV"),
-    checklist.issue_note.trim(),
   ].filter((item): item is string => Boolean(item));
 }
 
@@ -73,6 +74,11 @@ function HalamanKamar() {
   const queryClient = useQueryClient();
   const canCheckIn = bolehCheckIn(posisiKode);
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const [waktuSekarang, setWaktuSekarang] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = window.setInterval(() => setWaktuSekarang(Date.now()), 30_000);
+    return () => window.clearInterval(tick);
+  }, []);
   const rooms = useTable("rooms");
   const types = useTable("room_types");
   const transactions = useTable("transactions");
@@ -103,22 +109,6 @@ function HalamanKamar() {
 
     return map;
   }, [historyRows]);
-
-  const latestChecklist = useMemo(() => {
-    const map = new Map<string, (typeof checklistRows)[number]>();
-
-    for (const item of checklistRows) {
-      const current = map.get(item.room_id);
-      if (
-        !current ||
-        new Date(item.created_at).getTime() > new Date(current.created_at).getTime()
-      ) {
-        map.set(item.room_id, item);
-      }
-    }
-
-    return map;
-  }, [checklistRows]);
 
   const { bagian = "semua" } = Route.useSearch();
   const statusFilter = filterBagian[bagian] ?? null;
@@ -203,15 +193,16 @@ function HalamanKamar() {
                               new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
                           )[0]
                       : undefined;
+                  const overtime = transaction ? roomOvertimeIndicator(transaction, waktuSekarang).needsAction : false;
                   const housekeepingJob =
                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
-                  const checklist = latestChecklist.get(room.id);
+                  const checklist = checklistForReadyJob(housekeepingJob, historyRows, checklistRows);
                   const issues = checklist ? formatIssueDetails(checklist) : [];
 
                   return (
                     <div
                       key={room.id}
-                      className="kamar-kartu"
+                      className={`kamar-kartu ${overtime ? "ring-2 ring-destructive" : ""}`}
                       role="button" tabIndex={0}
                       aria-label={`Kamar ${room.room_number} · ${room.active ? labelStatusKamar[status] : 'Tidak aktif'}`}
                       onClick={() => openRoom(room)}
@@ -236,6 +227,7 @@ function HalamanKamar() {
                         {roomType?.name ?? "Tipe kamar belum tersedia"}
                       </p>
                       <div className="kamar-info">
+                      {overtime && <p role="status" className="text-xs font-bold text-destructive">PERLU TINDAKAN · Overtime lebih dari 120 menit</p>}
                       {transaction && (
                         <Button
                           variant="link"
@@ -286,6 +278,7 @@ function HalamanKamar() {
                         <Button
                           variant="link"
                           className="mt-1 text-left"
+                          title={issues.join(" · ")}
                           onClick={event => {
                             event.stopPropagation();
                             setDetailHousekeeping({
@@ -299,7 +292,7 @@ function HalamanKamar() {
                             });
                           }}
                         >
-                          ❌ {issues.join(" · ")}
+                          ❌ {issues.length} catatan HK
                         </Button>
                       )}
 

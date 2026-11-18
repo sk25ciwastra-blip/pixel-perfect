@@ -61,6 +61,10 @@ export function ChecklistHousekeeping({
   });
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
+  const inFlight = useRef(false);
+  const committed = useRef<'passed' | 'needs_action' | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
 
   const superiorBToilet =
     roomTypeName === 'Superior B' && ['02', '03', '04'].includes(roomNumber)
@@ -82,15 +86,16 @@ export function ChecklistHousekeeping({
     : undefined;
 
   async function save() {
+    if (inFlight.current) return;
     setMessage('');
 
-    if (Object.values(checks).some((value) => value === null)) {
+    if (!committed.current && Object.values(checks).some((value) => value === null)) {
       setMessage('Semua item checklist wajib dijawab.');
       return;
     }
 
     if (
-      items.some(
+      !committed.current && items.some(
         (item) => checks[item.key] === false && !reasons[item.key].trim(),
       )
     ) {
@@ -98,37 +103,56 @@ export function ChecklistHousekeeping({
       return;
     }
 
+    inFlight.current = true;
     setSaving(true);
 
-    const { error } = await supabase.rpc('complete_housekeeping_checklist', {
-      _room_id: roomId,
-      _checklist_id: checklistId.current,
-      _towel_ok: checks.towel_ok as boolean,
-      _mineral_water_ok: checks.mineral_water_ok as boolean,
-      _tissue_ok: checks.tissue_ok as boolean,
-      _ashtray_ok: checks.ashtray_ok as boolean,
-      _tv_remote_ok: checks.tv_remote_ok as boolean,
-      _fan_ok: checks.fan_ok as boolean,
-      _exhaust_fan_ok: checks.exhaust_fan_ok as boolean,
-      _issue_note: JSON.stringify(
-        Object.fromEntries(
-          items.map((item) => [item.key.replace(/_ok$/, ''), reasons[item.key].trim()]),
-        ),
-      ),
-    });
+    try {
+      if (!committed.current) {
+        setUncertain(true);
+        const { error } = await supabase.rpc('complete_housekeeping_checklist', {
+          _room_id: roomId,
+          _checklist_id: checklistId.current,
+          _towel_ok: checks.towel_ok as boolean,
+          _mineral_water_ok: checks.mineral_water_ok as boolean,
+          _tissue_ok: checks.tissue_ok as boolean,
+          _ashtray_ok: checks.ashtray_ok as boolean,
+          _tv_remote_ok: checks.tv_remote_ok as boolean,
+          _fan_ok: checks.fan_ok as boolean,
+          _exhaust_fan_ok: checks.exhaust_fan_ok as boolean,
+          _issue_note: JSON.stringify(
+            Object.fromEntries(
+              items.map((item) => [item.key.replace(/_ok$/, ''), reasons[item.key].trim()]),
+            ),
+          ),
+        });
 
-    setSaving(false);
+        if (error) {
+          // PostgREST also returns transport errors here; preserve the submitted
+          // answers and idempotency key until the outcome is confirmed.
+          setMessage(error.message);
+          return;
+        }
 
-    if (error) {
-      setMessage(error.message);
-      return;
+        const result = Object.values(checks).every(Boolean)
+          ? 'passed'
+          : 'needs_action';
+        setUncertain(false);
+        committed.current = result;
+        setSaved(true);
+      }
+      try {
+        await onSaved(committed.current);
+      } catch {
+        setMessage('Checklist sudah tersimpan. Pemuatan ulang gagal. Coba muat ulang tanpa menyimpan kembali.');
+        return;
+      }
+      onClose();
+    } catch {
+      setMessage('Hasil penyimpanan belum dapat dipastikan. Coba lagi memakai ID checklist yang sama.');
+    } finally {
+      inFlight.current = false;
+      setSaving(false);
     }
-
-    const result = Object.values(checks).every(Boolean)
-      ? 'passed'
-      : 'needs_action';
-    await onSaved(result);
-    onClose();
   }
 
   return (
@@ -146,7 +170,7 @@ export function ChecklistHousekeeping({
             </p>
             <h2 className="text-lg font-bold">Kamar {roomNumber}</h2>
           </div>
-          <Button type="button" variant="ghost" size="icon" onClick={onClose}>
+          <Button type="button" variant="ghost" size="icon" disabled={saving} onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -162,6 +186,7 @@ export function ChecklistHousekeeping({
                 <div className="flex gap-2">
                   <Button
                     type="button"
+                    disabled={saving || saved || uncertain}
                     size="sm"
                     variant={checks[item.key] === true ? 'default' : 'outline'}
                     aria-label={`${item.label} sesuai`}
@@ -180,6 +205,7 @@ export function ChecklistHousekeeping({
                   </Button>
                   <Button
                     type="button"
+                    disabled={saving || saved || uncertain}
                     size="sm"
                     variant={checks[item.key] === false ? 'destructive' : 'outline'}
                     aria-label={`${item.label} bermasalah`}
@@ -199,6 +225,7 @@ export function ChecklistHousekeeping({
                   Alasan {item.label}
                   <input
                     required
+                    disabled={saving || saved || uncertain}
                     value={reasons[item.key]}
                     onChange={(event) =>
                       setReasons((current) => ({
@@ -232,11 +259,11 @@ export function ChecklistHousekeeping({
           )}
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
               Batal
             </Button>
             <Button type="button" disabled={saving} onClick={() => void save()}>
-              {saving ? 'Menyimpan…' : 'Selesai Bersihkan'}
+              {saving ? 'Memproses…' : saved ? 'Muat ulang status' : 'Selesai Bersihkan'}
             </Button>
           </div>
         </div>
