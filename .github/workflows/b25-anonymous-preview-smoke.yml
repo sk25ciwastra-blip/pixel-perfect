@@ -1,0 +1,61 @@
+name: B25 anonymous preview smoke after PR84 (no writes)
+on:
+  push:
+    branches:
+      - validation/browser-smoke-after-pr84-20261118
+permissions:
+  contents: read
+jobs:
+  anonymous-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout review branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install isolated Playwright Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/b25-browser" --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          node "$RUNNER_TEMP/b25-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Inspect anonymous preview pages only
+        shell: bash
+        env:
+          PREVIEW_URL: https://id-preview--017f6e78-15f2-4d07-a38c-87cb185279bf.lovable.app
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/b25-preview-output"
+          export B25_BROWSER_MODULE="$RUNNER_TEMP/b25-browser/node_modules/playwright/index.mjs"
+          export B25_OUTPUT="$RUNNER_TEMP/b25-preview-output"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const {chromium} = await import(process.env.B25_BROWSER_MODULE);
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1365,height:900},deviceScaleFactor:1});
+          const paths = ['/', '/housekeeping?bagian=checklist', '/kamar', '/keuangan'];
+          const out = [];
+          for (const [i,path] of paths.entries()) {
+            const url=new URL(path,process.env.PREVIEW_URL).href;
+            try {
+              const resp=await page.goto(url,{waitUntil:'domcontentloaded',timeout:22000});
+              await page.waitForTimeout(2500);
+              const text=await page.locator('body').innerText({timeout:7000}).catch(()=> '');
+              const record={path,status:resp?.status()||null,final_url:page.url(),title:await page.title(),body_first_180:text.slice(0,180),contains_login:/masuk|login|sign in/i.test(text.slice(0,500)),contains_housekeeping_tab:/tugas petugas/i.test(text.slice(0,4000)),contains_assisted_session:/bantu sesi aktif/i.test(text.slice(0,4000))};
+              out.push(record);
+              await page.screenshot({path:process.env.B25_OUTPUT+'/page-'+i+'.png',fullPage:false});
+            }catch(err){
+              out.push({path,error:String(err).slice(0,360)});
+            }
+          }
+          fs.writeFileSync(process.env.B25_OUTPUT+'/results.json',JSON.stringify(out,null,2));
+          console.log(JSON.stringify(out,null,2));
+          await browser.close();
+          if(out.some(x=>x.error))process.exitCode=1;
+          JS
+      - name: Upload read-only browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b25-anonymous-preview-evidence
+          path: ${{ runner.temp }}/b25-preview-output/
+          retention-days: 3
