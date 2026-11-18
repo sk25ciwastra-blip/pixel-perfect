@@ -14,10 +14,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Install isolated Playwright Chromium
+      - name: Use system Chrome for isolated Playwright smoke
         run: |
           npm install --prefix "$RUNNER_TEMP/b25-browser" --ignore-scripts --no-audit --no-fund playwright@1.56.1
-          node "$RUNNER_TEMP/b25-browser/node_modules/playwright/cli.js" install --with-deps chromium
       - name: Inspect anonymous preview pages only
         shell: bash
         env:
@@ -30,7 +29,7 @@ jobs:
           node --input-type=module <<'JS'
           import fs from 'node:fs';
           const {chromium} = await import(process.env.B25_BROWSER_MODULE);
-          const browser = await chromium.launch({headless:true});
+          const browser = await chromium.launch({channel:'chrome',headless:true});
           const page = await browser.newPage({viewport:{width:1365,height:900},deviceScaleFactor:1});
           const paths = ['/', '/housekeeping?bagian=checklist', '/kamar', '/keuangan'];
           const out = [];
