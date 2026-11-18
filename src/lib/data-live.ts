@@ -37,7 +37,7 @@ export function useTable<T extends string>(
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (options?: { throwOnError?: boolean }) => {
     if (!enabled) {
       setRows([]);
       setError('');
@@ -60,6 +60,7 @@ export function useTable<T extends string>(
     );
     setError(failure?.message ?? '');
     setLoading(false);
+    if (failure && options?.throwOnError) throw new Error(failure.message);
   }, [table, enabled, scopeColumn, scopeValue]);
 
   useEffect(() => {

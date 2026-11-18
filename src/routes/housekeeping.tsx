@@ -239,6 +239,14 @@ function Halaman() {
           </div>
         </div>
       </header>
+      <nav aria-label="Bagian Housekeeping" className="hk-tabs">
+        {bagianHk.map((b) => (
+          <Link key={b.kode} to="/housekeeping" search={{ bagian: b.kode }}
+            aria-current={bagian === b.kode ? 'page' : undefined} className="hk-tab">
+            <b.ikon aria-hidden="true" /><span>{b.label}</span>
+          </Link>
+        ))}
+      </nav>
       {message && <p role="status" className="mb-4 rounded-lg border border-gold/20 bg-secondary px-4 py-3 text-sm">{message}</p>}
 
       {bagian === 'riwayat' && (
@@ -344,7 +352,11 @@ function Halaman() {
           roomTypeName={checklistRoomType?.name ?? ''}
           onClose={() => setChecklistRoomId(null)}
           onSaved={async () => {
-            await refreshAll();
+            await Promise.all([
+              rooms.refresh({ throwOnError: true }),
+              history.refresh({ throwOnError: true }),
+              checklists.refresh({ throwOnError: true }),
+            ]);
           }}
         />
       )}
