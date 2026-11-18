@@ -113,3 +113,15 @@
   .kamar-terisi-popup .kamar-terisi-pilih svg:last-child { width: 18px; }
   .kamar-terisi-gelombang { border-radius: 0 0 26px 26px; }
 }
+
+/* Only the existing red overtime lamp breathes; card geometry/paper stay static. */
+.kamar-kartu[data-overtime="true"] > .kamar-lampu-terisi {
+  animation: kamar-overtime-lampu 3.2s ease-in-out infinite;
+}
+@keyframes kamar-overtime-lampu {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .68; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kamar-kartu[data-overtime="true"] > .kamar-lampu-terisi { animation: none; }
+}

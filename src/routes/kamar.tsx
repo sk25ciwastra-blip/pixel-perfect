@@ -1,6 +1,6 @@
-import { roomOvertimeIndicator } from '@/lib/room-overtime';
+import { overtimeRoomIds } from '@/lib/room-overtime';
 import { checklistForReadyJob } from '@/lib/checklist-for-ready-job';
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { UserRound, Brush, BedDouble, Clock3, CalendarDays, NotebookPen, LogIn } from "lucide-react";
 import "@/components/kamar.css";
@@ -22,8 +22,8 @@ import { usePeran } from "@/lib/peran";
 
 export const Route = createFileRoute("/kamar")({
   head: () => meta("Status Kamar", "Status dan pengelolaan kamar Baturaden 25 Homestay."),
-  validateSearch: (s: Record<string, unknown>): { bagian?: "semua" | "tersedia" | "terisi" | "perlu" | undefined } => ({
-    bagian: ["semua", "tersedia", "terisi", "perlu"].includes(String(s["bagian"])) ? (s["bagian"] as "semua") : undefined,
+  validateSearch: (s: Record<string, unknown>): { bagian?: "semua" | "tersedia" | "terisi" | "perlu" | "overtime" | undefined } => ({
+    bagian: ["semua", "tersedia", "terisi", "perlu", "overtime"].includes(String(s["bagian"])) ? (s["bagian"] as "semua") : undefined,
   }),
   component: HalamanKamar,
 });
@@ -112,23 +112,33 @@ function HalamanKamar() {
 
   const { bagian = "semua" } = Route.useSearch();
   const statusFilter = filterBagian[bagian] ?? null;
+  const overtimeIds = useMemo(
+    () => overtimeRoomIds(rooms.rows, transactions.rows, waktuSekarang),
+    [rooms.rows, transactions.rows, waktuSekarang],
+  );
+  const overtimeView = bagian === "overtime";
+  const overtimePending = overtimeView && (rooms.loading || transactions.loading);
+  const overtimeError = overtimeView && (rooms.error || transactions.error);
   const groupedRooms = useMemo(() => {
+    const visible = (room: Room) => overtimeView
+      ? !overtimePending && !overtimeError && overtimeIds.has(room.id)
+      : !statusFilter || room.status === statusFilter;
     const groups: Array<{ label: string; rooms: Room[] }> = kelompokKamar.map((group) => ({
       label: group.label,
       rooms: group.nomor
         .map((roomNumber) => rooms.rows.find((room) => room.room_number === roomNumber))
         .filter((room): room is Room => Boolean(room))
-        .filter((room) => !statusFilter || room.status === statusFilter),
+        .filter(visible),
     }));
 
-    const otherRooms = rooms.rows.filter((room) => !nomorKamarTerpetakan.has(room.room_number) && (!statusFilter || room.status === statusFilter));
+    const otherRooms = rooms.rows.filter((room) => !nomorKamarTerpetakan.has(room.room_number) && visible(room));
 
     if (otherRooms.length) {
       groups.push({ label: "KAMAR LAINNYA", rooms: otherRooms });
     }
 
     return groups.filter((group) => group.rooms.length > 0);
-  }, [rooms.rows, statusFilter]);
+  }, [rooms.rows, statusFilter, overtimeView, overtimeIds, overtimePending, overtimeError]);
 
   function openRoom(room: Room) {
     const action = aksiKartuKamar(room, canCheckIn);
@@ -163,6 +173,12 @@ function HalamanKamar() {
             {canCheckIn && <Button className="h-10 shrink-0 gap-3 rounded-xl px-6" onClick={() => { setSelectedRoomId(''); setCheckInOpen(true); }}><LogIn className="size-5" />Check-in Langsung</Button>}
           </div>
         </header>
+        {overtimeView && <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <p role="status">Overtime &gt;120 menit · {overtimePending || overtimeError ? "Belum terverifikasi" : `${overtimeIds.size} kamar`} · Tetap TERISI sampai Check-out yang sah.</p>
+          <Link to="/kamar" search={{ bagian: "semua" }} className="text-gold underline underline-offset-4">Lihat semua kamar</Link>
+        </div>}
+        {overtimeView && transactions.error && <p role="alert" className="mt-3 text-sm text-destructive">Gagal memuat transaksi: {transactions.error}</p>}
+        {overtimeView && !rooms.loading && transactions.loading && <p className="mt-5 text-sm text-muted-foreground">Memuat transaksi kamar…</p>}
         {rooms.error && (
           <p role="alert" className="mt-3 text-sm text-destructive">
             {rooms.error}
@@ -193,7 +209,7 @@ function HalamanKamar() {
                               new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
                           )[0]
                       : undefined;
-                  const overtime = transaction ? roomOvertimeIndicator(transaction, waktuSekarang).needsAction : false;
+                  const overtime = overtimeIds.has(room.id);
                   const housekeepingJob =
                     status === "siap" ? latestReadyHistory.get(room.id) : undefined;
                   const checklist = checklistForReadyJob(housekeepingJob, historyRows, checklistRows);
@@ -203,6 +219,7 @@ function HalamanKamar() {
                     <div
                       key={room.id}
                       className={`kamar-kartu ${overtime ? "ring-2 ring-destructive" : ""}`}
+                      data-overtime={overtime ? "true" : undefined}
                       role="button" tabIndex={0}
                       aria-label={`Kamar ${room.room_number} · ${room.active ? labelStatusKamar[status] : 'Tidak aktif'}`}
                       onClick={() => openRoom(room)}
@@ -314,8 +331,8 @@ function HalamanKamar() {
           <div className="kamar-legenda-item kamar-lampu-perlu"><span className="kamar-lampu" /><span>Perlu dibersihkan</span></div>
         </div>}
 
-        {!rooms.loading && !groupedRooms.length && (
-          <p className="mt-8 text-center text-sm text-muted-foreground">Kamar tidak ditemukan.</p>
+        {!rooms.loading && !rooms.error && !overtimePending && !overtimeError && !statusFilter && !groupedRooms.length && (
+          <p className="mt-8 text-center text-sm text-muted-foreground">{overtimeView ? "Tidak ada kamar overtime lebih dari 120 menit saat ini." : "Kamar tidak ditemukan."}</p>
         )}
       </div>
 
