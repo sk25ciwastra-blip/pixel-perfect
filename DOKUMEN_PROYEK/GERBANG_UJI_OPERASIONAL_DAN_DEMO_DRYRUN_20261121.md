@@ -43,6 +43,19 @@ Di aplikasi dengan staf asli, bukan JWT palsu / login pinjaman:
 
 Uji negatif role tanpa sesi dan integritas database pasca 6 SQL **telah PASS sebelumnya** dan **tidak perlu diulang** (lihat `DOKUMEN_PROYEK/CHECKPOINT_VERIFIKASI_LIVE_READONLY_20261121.md`). Uji positif memakai data baru pada LIVE **memerlukan izin Owner terpisah**, penanggung jawab nyata dan batas data uji. Tidak boleh mensimulasikan login seolah-olah itu staf asli.
 
+## Keterhubungan kode UI dengan RPC (review source, bukan uji aplikasi)
+
+Pemeriksaan read-only source GitHub `main` menemukan handler aplikasi sudah mengarah pada RPC yang akan diuji:
+- `src/components/formulir-pemesanan.tsx`: `create_reservation` / wrapper Training.
+- `src/routes/booking.tsx`: `record_transaction_payment` dan `check_in_booking` / varian Training.
+- `src/routes/index.tsx`: aksi Check-out memanggil `check_out_transaction` / varian Training.
+- `src/routes/keuangan.tsx`: `open_finance_cash_session`, `close_finance_cash_session`.
+- `src/routes/housekeeping.tsx`: `advance_room_cleaning`, `override_room_ready`.
+- `src/components/checklist-housekeeping.tsx`: `complete_housekeeping_checklist`.
+- `src/components/receipt-actions.tsx`: `printReceiptBatch` melalui `src/lib/receipt-print.ts`.
+
+Ini **bukan PASS tombol/browser**; runtime login, state, pembayaran, thermal device, dan hak role tetap harus diuji pada aplikasi sebelum GO.
+
 ## Jalur tercepat dan batas izin saat ini
 
 1. Owner menyetujui **uji transaksi positif DEMO terkontrol** (boleh dilakukan oleh staf dengan login masing-masing) sambil Londo memeriksa katalog dan hasil read-only. Pengujian ini belum dilakukan.
