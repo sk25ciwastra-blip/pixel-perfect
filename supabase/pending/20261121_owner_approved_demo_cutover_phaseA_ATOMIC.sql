@@ -59,7 +59,7 @@ BEGIN
  IF (SELECT count(*) FROM storage.buckets s JOIN _b25_demo_employees d
      ON (s.owner=d.user_id OR s.owner_id=d.user_id::text))<>0
  THEN RAISE EXCEPTION 'STOP: staff owns Storage buckets'; END IF;
- IF (SELECT sum(n) FROM (
+ IF (SELECT sum(checked_demo_counts.n) FROM (
   SELECT count(*)::int AS n FROM public.finance_cash_sessions
   UNION ALL
   SELECT count(*)::int AS n FROM public.finance_charge_events
