@@ -80,6 +80,7 @@ export function useSesiKasKonteks() {
     activeSession,
     openSessions,
     ownSession,
+    refreshSessions: sessions.refresh,
     assistedSessionId: isSessionHelper ? assistedSessionId : '',
     selectAssistedSession: (sessionId: string | null) => {
       if (!isSessionHelper || training.is_training) return false;
