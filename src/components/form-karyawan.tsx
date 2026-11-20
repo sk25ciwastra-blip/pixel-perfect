@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { createEmployee, manageEmployee } from '@/lib/employee.functions';
 import { nextEmployeeId } from '@/lib/employee-id';
 import { employeeEditProfile } from '@/lib/employee-edit';
+import { validateEmployeePhoto, employeePhotoPath } from '@/lib/employee-photo';
 import type { Employee } from '@/lib/data-live';
 
 type Posisi = 'receptionist' | 'housekeeping' | 'supervisor' | 'inspector' | 'investor';
@@ -46,8 +47,9 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
   const ubah = (k: keyof typeof kosong) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setP(v => ({ ...v, [k]: e.target.value }));
   function pilihFoto(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || f.size > 2 * 1024 * 1024 || f.size === 0) {
-      setFotoError('Foto harus JPG, PNG, atau WebP, berukuran lebih dari 0 byte dan maksimal 2 MB.');
+    const validationError = validateEmployeePhoto(f);
+    if (validationError) {
+      setFotoError(validationError);
       e.target.value = '';
       return;
     }
@@ -72,7 +74,7 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
       if (!id) throw new Error('Karyawan belum tersimpan.');
       let photo_path: string | undefined;
       if (foto) {
-        photo_path = `${id}.${foto.type === 'image/jpeg' ? 'jpg' : foto.type.split('/')[1]}`;
+        photo_path = employeePhotoPath(id, foto.type);
         const { error } = await supabase.storage.from('employee-photos').upload(photo_path, foto, { upsert: true, contentType: foto.type });
         if (error) {
           setFotoError('Upload foto gagal. Silakan periksa koneksi dan ulangi Simpan.');
