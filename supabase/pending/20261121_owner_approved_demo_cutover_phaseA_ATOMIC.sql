@@ -59,6 +59,54 @@ BEGIN
  IF (SELECT count(*) FROM storage.buckets s JOIN _b25_demo_employees d
      ON (s.owner=d.user_id OR s.owner_id=d.user_id::text))<>0
  THEN RAISE EXCEPTION 'STOP: staff owns Storage buckets'; END IF;
+ IF (SELECT sum(n) FROM (
+  SELECT count(*)::int AS n FROM public.finance_cash_sessions
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_charge_events
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_deposits
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_drawer_handoffs
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_expenses
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_payment_batch_idempotency
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_refund_allocations
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_refunds
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_reservation_idempotency
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_session_allocations
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.finance_training_audit
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.guest_notes
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.guests
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.housekeeping_checklists
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.housekeeping_history
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.housekeeping_jobs
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.housekeeping_maintenance
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.housekeeping_transaction_resolutions
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.payment_receipts
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.payments
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.receipt_print_requests
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.room_overtime_owner_releases
+  UNION ALL
+  SELECT count(*)::int AS n FROM public.transactions
+ ) checked_demo_counts)<>102
+ THEN RAISE EXCEPTION 'STOP: expected precisely 102 DEMO operational rows'; END IF;
  IF (SELECT count(*) FROM public.transactions)<>17
   OR (SELECT count(*) FROM public.payments)<>24
   OR (SELECT count(*) FROM public.finance_cash_sessions)<>5
