@@ -1,0 +1,54 @@
+name: B25 ACL default grants and post-commit recovery (dummy only)
+
+on:
+  push:
+    branches:
+      - validation/b25-acl-pg17-isolated-20261121
+    paths:
+      - .github/workflows/b25-acl-default-and-recovery.yml
+      - scripts/acl_followup/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-acl-followup-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-dummy:
+    if: github.ref == 'refs/heads/validation/b25-acl-pg17-isolated-20261121'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: b25_acl_focused_dummy_only
+          POSTGRES_DB: b25_acl_dummy
+        ports:
+          - "127.0.0.1:55439:5432"
+        options: >-
+          --health-cmd "pg_isready -U postgres -d b25_acl_dummy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "55439"
+      PGUSER: postgres
+      PGPASSWORD: b25_acl_focused_dummy_only
+      PGDATABASE: b25_acl_dummy
+      B25_DUMMY_ONLY: "true"
+    steps:
+      - name: Checkout review branch only; credentials not persisted
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test only NEW default privileges and post-commit metadata restoration scenarios
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/acl_followup/verify_default_priv_and_recovery_pg17.py
