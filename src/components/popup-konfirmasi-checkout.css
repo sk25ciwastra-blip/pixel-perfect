@@ -1,0 +1,9 @@
+/* Uses the same premium receipt/success popup surface, logo and rows. */
+.checkout-confirm-popup { position: fixed; z-index: 51; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.checkout-confirm-icon { background: linear-gradient(150deg, var(--success-gold), var(--success-gold-deep)); color: var(--success-ink); }
+.checkout-confirm-actions { margin-top: 16px; }
+.checkout-confirm-actions button { justify-content: center; text-align: center; font-size: 12px; font-weight: 700; }
+@media (max-width: 480px) {
+  .checkout-confirm-actions { grid-template-columns: minmax(0, .75fr) minmax(0, 1.25fr); gap: 8px; }
+  .checkout-confirm-actions button { font-size: 11px; padding-inline: 8px; }
+}
