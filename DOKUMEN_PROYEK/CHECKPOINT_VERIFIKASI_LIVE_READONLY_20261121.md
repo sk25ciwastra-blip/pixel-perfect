@@ -34,6 +34,19 @@ Dijalankan di LIVE melalui database query tool sebagai **satu transaksi PostgreS
 - 0 refund, 0 alokasi refund; 5 checklist, 10 HK history, 4 HK jobs.
 - Pembacaan ulang terakhir setelah probes read-only: tetap **17 transaksi, 24 pembayaran, 2 OPEN, 4 occupied, 5 checklist dan 0/40 TRUNCATE**.
 
+### Ringkasan kesiapan login staf aktif (read-only)
+
+`auth.users` dan `employees` dibaca secara agregat, **tanpa mengambil email/identitas/password individu**.
+
+| Posisi | Aktif | Auth tersedia | Email sudah terkonfirmasi | Belum ada catatan login |
+|---|---:|---:|---:|---:|
+| Receptionist | 4 | 4 | 4 | 1 |
+| Housekeeping | 4 | 4 | 4 | 1 |
+| Supervisor | 1 | 1 | 1 | 0 |
+| **Total** | **9** | **9** | **9** | **2** |
+
+Tidak ada dari 9 akun aktif yang terdeteksi `banned_until > now()`; semua memiliki `user_roles`. **Riwayat login bukan bukti keberhasilan login saat ini**, dan akun tanpa `last_sign_in_at` tidak berarti password rusak. Tetap butuh uji login oleh masing-masing staf dan bukti hak aksi pada aplikasi.
+
 ## 3. Cakupan data DEMO untuk rancangan cleanup, BELUM DIJALANKAN
 
 | Objek terinventaris | Jumlah saat checkpoint | Rencana kebijakan |
