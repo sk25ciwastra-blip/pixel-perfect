@@ -5,7 +5,7 @@ export type PasswordFields = {
   confirmPassword: string;
 };
 
-type AuthErrorLike = { message: string; code?: string } | null;
+type AuthErrorLike = { message: string; code?: string | undefined } | null;
 type AuthUserLike = { id: string; email?: string | null } | null;
 
 export type OwnPasswordAuth = {
