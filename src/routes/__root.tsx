@@ -159,6 +159,10 @@ function AccessGate({ children }: { children: ReactNode }) {
 
   function bolehAksesHalaman(pathname: string) {
     if (peran === 'owner') return true;
+    // Hanya Pengaturan pribadi dan Keamanan dapat dibuka staf.
+    if (pathname === '/pengaturan' || pathname === '/pengaturan-keamanan') {
+      return Boolean(posisiKode);
+    }
 
     switch (posisiKode) {
       case 'supervisor':
