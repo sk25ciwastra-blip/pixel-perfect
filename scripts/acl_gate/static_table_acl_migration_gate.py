@@ -21,7 +21,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SCAN_DIRS = ("drizzle/migrations", "supabase/migrations", "supabase/pending")
 CREATE = re.compile(
-    r'\bCREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?'
+    r'^\s*CREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?'
     r'(?:(?P<schema>"?[\w]+"?)\s*\.\s*)?(?P<name>"?[\w]+"?)\s*\(',
     re.IGNORECASE,
 )
