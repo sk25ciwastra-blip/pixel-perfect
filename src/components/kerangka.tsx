@@ -5,6 +5,7 @@ import {
   IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
+import { canAccessSupervisorOperationalPage } from "@/lib/supervisor-routes";
 import { setSesiKasKonteks, useSesiKasKonteks } from "@/lib/sesi-kas";
 import { useTable } from "@/lib/data-live";
 import { LatarHeader } from "@/components/latar-header";
@@ -22,7 +23,7 @@ function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
 
   switch (posisiKode) {
     case "supervisor":
-      return !["/karyawan", "/pengaturan"].includes(ke);
+      return canAccessSupervisorOperationalPage(ke);
     case "receptionist":
       return ["/", "/kamar", "/booking", "/transaksi", "/tamu", "/keuangan", "/laporan"].includes(ke);
     case "housekeeping":
