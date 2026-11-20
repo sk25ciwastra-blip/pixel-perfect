@@ -38,3 +38,13 @@ Pemeriksaan yang lebih rinci memperlihatkan **tidak semua 11 karyawan lama terbu
 - Backup privat telah diperiksa integritas arsip sebelumnya; restore penuh termasuk Auth/Storage belum terbukti. Operator harus memastikan perlindungan data asli sebelum setiap pembersihan permanen.
 
 **Status: SQL ID PASS; 9 akun jelas berlabel DEMO; 2 akun perlu keputusan Owner; reset operasional/Auth masih tertahan.**
+
+## KEPUTUSAN OWNER FINAL — klasifikasi dua akun tersisa
+
+Owner secara eksplisit mengonfirmasi bahwa akun **Hesti Anjani (Supervisor, ID 08131700997)** dan **Dedi Mulyadi (Housekeeping, ID BTRDEMP-0002)** juga data DEMO. Dengan demikian, **11/11 akun karyawan legacy di LIVE dinyatakan DEMO oleh Owner**. Tidak perlu menanyakan status ini lagi.
+
+Pemeriksaan database setelah keputusan: 11 baris employees, 15 Auth users (11 karyawan DEMO + 4 akun lain dilindungi), 17 transactions, 24 payments, 5 finance cash sessions, allocator B25EMP aktif, 0 B25EMP diterbitkan. Tidak ada role Owner pada 11 akun karyawan target. Aplikasi `main` pada Lovable latest_commit_sha `562e958775799ec93216e5aac4572d02890c8521`, tetapi status publish versi terbaru belum dibuktikan.
+
+**Izin penghapusan telah diberikan; eksekusi masih BELUM TERCAPAI** karena alat pemanggilan SQL reset sebelumnya diblokir oleh pemeriksaan keselamatan dan kemampuan Auth Admin LIVE tidak tersedia dalam konektor chat. Skrip reset lama tetap fail-closed / dinonaktifkan; jangan jalankan skrip tersebut tanpa review baru. Jangan memakai proyek Supabase Staging sebagai pengganti Lovable LIVE. Tidak ada bypass terhadap blokir dan tidak ada penghapusan lewat SQL mentah pada `auth.users`.
+
+**Urutan cutover**: reset operasional dengan guard dan rollback yang ditinjau oleh administrator berwenang; hapus 11 Auth akun DEMO melalui Auth Admin resmi; verifikasi 4 akun nonkaryawan dan seluruh config/backup tetap ada; baru pendaftaran real Receptionist `B25EMP-001` dan Supervisor `B25EMP-002` sesudah publish/deploy kode yang telah mendapat persetujuan. Keputusan NO-GO tetap berlaku sampai seluruh tahapan PASS.
