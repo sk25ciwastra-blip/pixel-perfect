@@ -218,7 +218,7 @@ function Ringkasan() {
   const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
   const [checkingOutId, setCheckingOutId] = useState<string | null>(null);
   const [dashboardMessage, setDashboardMessage] = useState("");
-  const [overtimeNoticeOpen, setOvertimeNoticeOpen] = useState(false);
+  const [overtimeNoticeTrigger, setOvertimeNoticeTrigger] = useState<HTMLButtonElement | null>(null);
   const [pencarian, setPencarian] = useState("");
   const [kataCari, setKataCari] = useState("");
 
@@ -720,7 +720,7 @@ function Ringkasan() {
                 </div>
               )}
               {overtimePerluTindakan.length > 0 && (
-                <button type="button" onClick={() => setOvertimeNoticeOpen(true)} aria-label={'Lihat keterangan ' + overtimePerluTindakan.length + ' kamar yang perlu tindakan'} className="mx-5 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-3 py-2 text-left transition-colors hover:bg-bahaya-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:mx-6">
+                <button type="button" onClick={(event) => setOvertimeNoticeTrigger(event.currentTarget)} aria-label={'Lihat keterangan ' + overtimePerluTindakan.length + ' kamar yang perlu tindakan'} className="mx-5 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-3 py-2 text-left transition-colors hover:bg-bahaya-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:mx-6">
                   <span className="text-xs font-bold text-bahaya-foreground">PERLU TINDAKAN · {overtimePerluTindakan.length} kamar overtime lebih dari 120 menit</span>
                   <span className="text-xs text-muted-foreground">Kamar {overtimePerluTindakan.map(({ room }) => room?.room_number ?? "—").join(", ")} · Klik untuk lihat keterangan</span>
                 </button>
@@ -951,16 +951,17 @@ function Ringkasan() {
         </div>
       </div>
 
-      {overtimeNoticeOpen && overtimePerluTindakan.length > 0 && (
+      {overtimeNoticeTrigger && overtimePerluTindakan.length > 0 && (
         <PopupPerluTindakan
           rooms={overtimePerluTindakan.map(({ room, transaksi }) => ({
             roomNumber: room?.room_number ?? "—",
             transactionNumber: transaksi.transaction_number,
           }))}
-          onClose={() => setOvertimeNoticeOpen(false)}
+          trigger={overtimeNoticeTrigger}
+          onClose={() => setOvertimeNoticeTrigger(null)}
         />
       )}
-      {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />
+      {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {modal === "booking" && <FormulirPemesanan mode="booking" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {modal === "pengeluaran" && (
         <FormulirPengeluaran

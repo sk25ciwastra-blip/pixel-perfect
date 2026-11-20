@@ -17,16 +17,17 @@ assert.deepEqual([...overtimeRoomIds(rooms,stays.map(s=>({...s,status:'check_out
 assert.deepEqual([...overtimeRoomIds(rooms,[stay('03',500),stay('03',1,{created_at:'2026-11-19T00:00:00Z'})],now)],[]); // matches latest displayed TRX
 const page=fs.readFileSync('src/routes/kamar.tsx','utf8');
 const dash=fs.readFileSync('src/routes/index.tsx','utf8');
-assert.ok(dash.includes('onClick={() => setOvertimeNoticeOpen(true)}')); // dashboard warning opens popup
+assert.ok(dash.includes('setOvertimeNoticeTrigger(event.currentTarget)')); // dashboard warning opens popup
 assert.ok(dash.includes('<PopupPerluTindakan'));
 assert.ok(!dash.includes('to="/kamar" search={{ bagian: "overtime" }}')); // no dashboard redirect
 assert.ok(page.includes('Perlu tindakan!'));
-assert.ok(page.includes('setOvertimeNotice({ roomNumber: room.room_number'));
+assert.match(page,/setOvertimeNotice\(\{\s+roomNumber: room.room_number/);
 const popup=fs.readFileSync('src/components/popup-perlu-tindakan.tsx','utf8');
 assert.ok(popup.includes('kamar-terisi-popup kamar-perlu-popup'));
 assert.ok(popup.includes('Dialog.Description'));
 assert.ok(popup.includes('Kamar tetap TERISI'));
 assert.ok(popup.includes('onClick={onClose}'));
+assert.ok(popup.includes('onCloseAutoFocus'));
 assert.ok(dash.includes('to="/kamar" search={{ bagian: "terisi" } as never}')); // old Lihat semua preserved
 assert.match(page,/\["semua", "tersedia", "terisi", "perlu", "overtime"\]/);
 assert.match(page,/!overtimePending && !overtimeError && overtimeIds.has\(room.id\)/);

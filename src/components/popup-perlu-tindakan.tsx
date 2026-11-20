@@ -3,19 +3,25 @@ import { ArrowRight, BedDouble } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import '@/components/kamar.css';
 
-export type KamarPerluTindakan = { roomNumber: string; transactionNumber?: string | null };
+export type KamarPerluTindakan = { roomNumber: string; transactionNumber: string | null };
 
 /** Read-only warning, sharing the official room-status popup template. */
-export function PopupPerluTindakan({ rooms, onClose }: {
+export function PopupPerluTindakan({ rooms, onClose, trigger }: {
   rooms: readonly KamarPerluTindakan[];
   onClose: () => void;
+  trigger: HTMLButtonElement | null;
 }) {
-  const single = rooms.length === 1;
+  const singleRoom = rooms.length === 1 ? rooms[0] : undefined;
   return (
     <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="kamar-terisi-overlay" />
-        <Dialog.Content className="kamar-terisi-popup kamar-perlu-popup" data-status="overtime">
+        <Dialog.Content className="kamar-terisi-popup kamar-perlu-popup" data-status="overtime" onCloseAutoFocus={(event) => {
+          if (trigger?.isConnected) {
+            event.preventDefault();
+            trigger.focus();
+          }
+        }}>
           <svg className="kamar-terisi-gelombang" viewBox="0 0 580 140" preserveAspectRatio="none" aria-hidden="true">
             <path className="kamar-terisi-gelombang-lembut" d="M0 12C80 26 84 76 190 94S420 150 580 140H0Z" />
             <path className="kamar-terisi-gelombang-emas" d="M0 45C70 62 96 112 220 128S460 138 580 140H0Z" />
@@ -33,10 +39,10 @@ export function PopupPerluTindakan({ rooms, onClose }: {
           <div className="kamar-terisi-isi">
             <Dialog.Title className="kamar-terisi-judul">
               <span>Perlu Tindakan!</span>
-              {single ? <> Kamar {rooms[0].roomNumber}</> : <> {rooms.length} Kamar</>}
+              {singleRoom ? <> Kamar {singleRoom.roomNumber}</> : <> {rooms.length} Kamar</>}
             </Dialog.Title>
             <Dialog.Description className="kamar-terisi-pesan">
-              {single ? 'Kamar ini' : 'Kamar berikut'} masih terisi dan melewati waktu Check-out resmi lebih dari 120 menit. Hubungi tamu dan lakukan Check-out yang sah.
+              {singleRoom ? 'Kamar ini' : 'Kamar berikut'} masih terisi dan melewati waktu Check-out resmi lebih dari 120 menit. Hubungi tamu dan lakukan Check-out yang sah.
             </Dialog.Description>
             <ul className="kamar-perlu-daftar" aria-label="Kamar yang perlu tindakan">
               {rooms.map((room) => (
