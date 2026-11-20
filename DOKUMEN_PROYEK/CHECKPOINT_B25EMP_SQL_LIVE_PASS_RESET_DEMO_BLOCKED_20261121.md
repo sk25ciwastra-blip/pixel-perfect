@@ -25,3 +25,16 @@
 4. Sebelum GO: verifikasi restore Auth/Storage sesuai risiko, kondisi fisik kamar, deploy/publish yang disetujui terpisah, login staf asli dan pengujian operasional satu putaran.
 
 **Status saat checkpoint:** ID SQL aktif PASS; DEMO reset STOP/BLOCKED; tidak ada deploy, publish atau staging change; tetap NO-GO operasional nyata.
+
+## KOREKSI KRITIS — AUDIT TARGET DEMO 21 NOVEMBER 2026 (CHECKPOINT LANJUTAN)
+
+Pemeriksaan yang lebih rinci memperlihatkan **tidak semua 11 karyawan lama terbukti DEMO**. Klasifikasi hanya dari `employee_id NOT LIKE 'B25EMP-%'` **tidak sah untuk menentukan penghapusan**:
+
+- **9 akun** mempunyai penanda DEMO eksplisit pada nama atau kode `QA-` / `KR-DEMO-`.
+- **2 akun lainnya tidak berlabel DEMO**: satu Supervisor dan satu Housekeeping. Kedua akun ini **dilindungi / tidak termasuk penghapusan** hingga Owner menegaskan apakah akun tersebut nyata atau hanya akun uji dengan nama orang.
+- SQL pembuktian tanpa PII: `supabase/reconciliation/demo_employee_classification_READ_ONLY_20261121.sql`, benar-benar dijalankan terhadap Lovable LIVE, hasil **11 total / 9 berlabel / 2 perlu penentuan**.
+- **Script reset lama dinonaktifkan dengan RAISE EXCEPTION fail-closed**: `supabase/pending/20261121_owner_approved_demo_cutover_phaseA_ATOMIC.sql`. Jangan gunakan versi sebelumnya dari riwayat Git. Wajib membuat sasaran manifest eksplisit yang diverifikasi baru, tanpa asumsi semua 11 DEMO.
+- **Tidak ada penghapusan database atau Auth**. Angka transaksi 17, pembayaran 24, kas 5, Auth 15 belum berubah. Nomor resmi `B25EMP-` belum diterbitkan untuk karyawan, allocator sudah tersedia.
+- Backup privat telah diperiksa integritas arsip sebelumnya; restore penuh termasuk Auth/Storage belum terbukti. Operator harus memastikan perlindungan data asli sebelum setiap pembersihan permanen.
+
+**Status: SQL ID PASS; 9 akun jelas berlabel DEMO; 2 akun perlu keputusan Owner; reset operasional/Auth masih tertahan.**
