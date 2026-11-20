@@ -17,6 +17,8 @@ type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean }
 
 function bolehAksesMenu(ke: string, peran: string, posisiKode: string | null) {
   if (peran === "owner") return true;
+  // Semua karyawan operasional boleh mengelola password milik sendiri.
+  if (ke === "/pengaturan") return Boolean(posisiKode);
 
   switch (posisiKode) {
     case "supervisor":
@@ -44,7 +46,7 @@ const semuaMenu: Menu[] = [
   { ke: "/keuangan", label: "Keuangan", ikon: Wallet, ownerSaja: true },
   { ke: "/laporan", label: "Laporan", ikon: FileBarChart },
   { ke: "/karyawan", label: "Tim & Akses", ikon: IdCard, ownerSaja: true },
-  { ke: "/pengaturan", label: "Pengaturan", ikon: Settings, ownerSaja: true },
+  { ke: "/pengaturan", label: "Pengaturan", ikon: Settings },
 ];
 
 const bawah: Menu[] = [

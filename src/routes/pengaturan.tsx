@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import { Building2, Package, BedDouble, CreditCard, Percent, KeyRound, ChevronRight, Receipt, Wallet, LayoutGrid } from "lucide-react";
 import { Kerangka } from "@/components/kerangka";
+import { usePeran } from "@/lib/peran";
 import { meta } from "@/lib/meta";
 
 export const Route = createFileRoute("/pengaturan")({
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/pengaturan")({
   component: HalamanPengaturan,
 });
 
-type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan";
+type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan";
 type Item = { ikon: LucideIcon; label: string; ket: string; ke?: Ke };
 
 const kelompok: { judul: string; item: Item[] }[] = [
@@ -26,7 +27,7 @@ const kelompok: { judul: string; item: Item[] }[] = [
     { ikon: Wallet, label: "Rekening Owner", ket: "Rekening tujuan transfer.", ke: "/pengaturan-keuangan" },
   ]},
   { judul: "Akun & Keamanan", item: [
-    { ikon: KeyRound, label: "Keamanan", ket: "Kata sandi dan PIN." },
+    { ikon: KeyRound, label: "Keamanan", ket: "Ubah password akun Anda sendiri.", ke: "/pengaturan-keamanan" },
   ]},
 ];
 
@@ -56,11 +57,13 @@ a.atur-kartu:hover .atur-medali{border-color:var(--gold-light)}
 `;
 
 function HalamanPengaturan() {
+  const { peran } = usePeran();
+  const kelompokTampil = peran === "owner" ? kelompok : kelompok.filter((k) => k.judul === "Akun & Keamanan");
   return (
     <Kerangka judul="Pengaturan" keterangan="Kelola konfigurasi Baturaden 25 Homestay.">
       <style>{gaya}</style>
       <div className="space-y-8">
-        {kelompok.map((k) => (
+        {kelompokTampil.map((k) => (
           <section key={k.judul} aria-labelledby={`grup-${k.judul}`}>
             <h2 id={`grup-${k.judul}`} className="font-serif text-2xl text-gold-light">{k.judul}</h2>
             <div className="mb-4 mt-2 h-px w-20 bg-gold" />
