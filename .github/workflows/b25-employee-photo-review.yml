@@ -1,0 +1,34 @@
+name: B25 employee photo upload fix (review only)
+
+on:
+  push:
+    branches: [fix/employee-photo-upload-20261121]
+    paths:
+      - src/components/form-karyawan.tsx
+      - src/lib/employee-photo.ts
+      - scripts/employee-photo-upload.test.ts
+      - .github/workflows/b25-employee-photo-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  employee-photo:
+    if: github.ref == 'refs/heads/fix/employee-photo-upload-20261121'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Focused employee photo tests
+        run: bun test scripts/employee-photo-upload.test.ts
+      - name: Production app build
+        run: bun run build
+      - name: Typecheck
+        run: bunx tsc --noEmit
