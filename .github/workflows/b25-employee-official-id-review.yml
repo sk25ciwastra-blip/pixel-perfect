@@ -1,0 +1,83 @@
+name: B25 official employee ID allocator (review only)
+
+on:
+  push:
+    branches: [feat/b25emp-official-id-20261121]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  employee-id-contract:
+    if: github.ref == 'refs/heads/feat/b25emp-official-id-20261121'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: b25_dummy_local_only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: b25_id_dummy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 8
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: b25_dummy_local_only
+      PGDATABASE: b25_id_dummy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Pure numbering tests
+        run: bun test scripts/employee-id.test.ts
+      - name: Frontend production build
+        run: bun run build
+      - name: TypeScript typecheck
+        run: bunx tsc --noEmit
+      - name: Isolated PostgreSQL 17 allocator exercise (dummy database only)
+        run: |
+          psql -X -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE anon;
+          CREATE ROLE authenticated;
+          CREATE ROLE service_role NOLOGIN;
+          CREATE TABLE public.employees (employee_id text UNIQUE);
+          INSERT INTO public.employees VALUES ('BTRDEMP-0001'),('BTRDEMP-0002'),('BTRDEMP-0003');
+          SQL
+          psql -X -v ON_ERROR_STOP=1 -f supabase/pending/20261121033000_b25_employee_id_allocator.sql
+          psql -X -v ON_ERROR_STOP=1 <<'SQL'
+          DO $test$
+          DECLARE first_id text; second_id text; third_id text;
+          BEGIN
+            IF has_function_privilege('anon','public.allocate_b25_employee_id()','EXECUTE')
+               OR has_function_privilege('authenticated','public.allocate_b25_employee_id()','EXECUTE') THEN
+              RAISE EXCEPTION 'Anonymous/authenticated can allocate real employee IDs';
+            END IF;
+            SET LOCAL ROLE service_role;
+            SELECT public.allocate_b25_employee_id() INTO first_id;
+            SELECT public.allocate_b25_employee_id() INTO second_id;
+            RESET ROLE;
+            INSERT INTO public.employees VALUES (first_id),(second_id);
+            DELETE FROM public.employees WHERE employee_id=first_id;
+            SET LOCAL ROLE service_role;
+            SELECT public.allocate_b25_employee_id() INTO third_id;
+            RESET ROLE;
+            IF first_id<>'B25EMP-001' OR second_id<>'B25EMP-002' OR third_id<>'B25EMP-003' THEN
+              RAISE EXCEPTION 'Forward-only numbering failed: %, %, %',first_id,second_id,third_id;
+            END IF;
+          END
+          $test$;
+          SQL
+          echo 'PASS: no ID reuse after DEMO removal and no anon/authenticated allocator permission'
