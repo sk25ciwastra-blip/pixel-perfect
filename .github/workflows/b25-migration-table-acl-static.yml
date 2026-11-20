@@ -1,0 +1,34 @@
+name: B25 prospective SQL table ACL gate (static review only)
+
+on:
+  push:
+    branches:
+      - validation/b25-acl-pg17-isolated-20261121
+    paths:
+      - .github/workflows/b25-migration-table-acl-static.yml
+      - scripts/acl_gate/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-migration-table-acl-static-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migration-review:
+    if: github.ref == 'refs/heads/validation/b25-acl-pg17-isolated-20261121'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Read code on isolated branch without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Run static ACL test cases, historical inventory, and prospective gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/acl_gate/static_table_acl_migration_gate.py --selftest --audit-tree --gate-changes
