@@ -15,6 +15,7 @@ import { Kerangka } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import { aksiKartuKamar } from "@/lib/aksi-kartu-kamar";
 import { PopupKamarTerisi } from "@/components/popup-kamar-terisi";
+import { PopupPerluTindakan, type KamarPerluTindakan } from "@/components/popup-perlu-tindakan";
 import { labelStatusKamar, type StatusKamar } from "@/lib/data-contoh";
 import { useTable, type Room } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
@@ -90,6 +91,7 @@ function HalamanKamar() {
   const [selectedRoomId, setSelectedRoomId] = useState('');
   const [informationRoom, setInformationRoom] = useState<Room | null>(null);
   const [occupiedRoom, setOccupiedRoom] = useState<Room | null>(null);
+  const [overtimeNotice, setOvertimeNotice] = useState<(KamarPerluTindakan & { trigger: HTMLButtonElement }) | null>(null);
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
   const [detailHousekeeping, setDetailHousekeeping] = useState<DetailHousekeeping | null>(null);
 
@@ -244,7 +246,23 @@ function HalamanKamar() {
                         {roomType?.name ?? "Tipe kamar belum tersedia"}
                       </p>
                       <div className="kamar-info">
-                      {overtime && <p role="status" title="Overtime lebih dari 120 menit" className="text-xs font-bold text-destructive">PERLU TINDAKAN · &gt;120 menit</p>}
+                      {overtime && (
+                        <button
+                          type="button"
+                          className="kamar-perlu-tombol font-bold hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-destructive"
+                          aria-label={'Perlu tindakan! Lihat keterangan kamar ' + room.room_number}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setOvertimeNotice({
+                              roomNumber: room.room_number,
+                              transactionNumber: transaction?.transaction_number ?? null,
+                              trigger: event.currentTarget,
+                            });
+                          }}
+                        >
+                          Perlu tindakan!
+                        </button>
+                      )}
                       {transaction && (
                         <Button
                           variant="link"
@@ -358,6 +376,7 @@ function HalamanKamar() {
       )}
 
       {occupiedRoom && <PopupKamarTerisi nomor={occupiedRoom.room_number} room={occupiedRoom} onClose={() => setOccupiedRoom(null)} />}
+      {overtimeNotice && <PopupPerluTindakan rooms={[overtimeNotice]} trigger={overtimeNotice.trigger} onClose={() => setOvertimeNotice(null)} />}
 
       {detailTransactionId && (
         <DetailTransaksi
