@@ -1,8 +1,16 @@
 -- Baturaden 25 Homestay | OWNER-APPROVED LIVE DEMO CUTOVER: PHASE A
 -- ONE atomic transaction. This is NOT an Auth user deletion.
+-- RETIRED: NOT FOR EXECUTION. The legacy-ID selector incorrectly includes
+-- accounts whose status as DEMO has not been independently established.
+-- Do not remove this guard or copy the destructive statements into LIVE.
 -- Output postcheck follows COMMIT; preserves four nonstaff Auth accounts.
 -- Only legacy demo employee profiles/rows/roles and 23 demo operational tables.
 BEGIN;
+DO $blocked$
+BEGIN
+  RAISE EXCEPTION 'STOP: retired DEMO reset plan includes staff not confirmed as DEMO. Rebuild reviewed explicit-ID manifest before any deletion.';
+END
+$blocked$;
 SET LOCAL lock_timeout = '5s';
 SET LOCAL statement_timeout = '60s';
 LOCK TABLE public.employees, public.employee_profiles, public.user_roles,
