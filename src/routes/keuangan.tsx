@@ -70,7 +70,7 @@ function HalamanKeuangan() {
   const isTraining = training.is_training;
   const isOwner = posisiKode === 'owner' && !isTraining;
   const canCloseOthers = !isTraining && (isOwner || posisiKode === 'supervisor');
-  const { activeSession: selectedSession, ownSession, needsAssistedContext, selectAssistedSession } = useSesiKasKonteks();
+  const { activeSession: selectedSession, ownSession, needsAssistedContext, selectAssistedSession, refreshSessions } = useSesiKasKonteks();
   const activeSession = isTraining ? selectedSession : ownSession;
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -112,7 +112,7 @@ function HalamanKeuangan() {
   const refunds = useTable('finance_refunds', isOwner);
 
   async function refreshFinance() {
-    await Promise.all([sessions.refresh(), deposits.refresh(), payments.refresh(), refunds.refresh(), banks.refresh(), employees.refresh(), handoffs.refresh(), expenses.refresh()]);
+    await Promise.all([refreshSessions(), sessions.refresh(), deposits.refresh(), payments.refresh(), refunds.refresh(), banks.refresh(), employees.refresh(), handoffs.refresh(), expenses.refresh()]);
     if (selectedSession) {
       const { data } = await rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', {
         _session_id: selectedSession.id,
