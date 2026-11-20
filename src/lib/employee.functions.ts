@@ -17,7 +17,7 @@ export const createEmployee = createServerFn({method:'POST'}).middleware([requir
    }>;
  };
  const {data:employeeId,error:idError}=await sequenceClient.rpc('allocate_b25_employee_id');
- if(idError || !employeeId || !/^B25EMP-\\d{3,}$/.test(employeeId)){
+ if(idError || !employeeId || !/^B25EMP-\d{3,}$/.test(employeeId)){
    await supabaseAdmin.auth.admin.deleteUser(id);
    throw new Error('Penomoran ID karyawan belum siap. Akun tidak disimpan.');
  }
