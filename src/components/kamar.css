@@ -125,3 +125,11 @@
 @media (prefers-reduced-motion: reduce) {
   .kamar-kartu[data-overtime="true"] > .kamar-lampu-terisi { animation: none; }
 }
+
+/* Perlu Tindakan reuses the room popup template without altering card geometry. */
+.kamar-perlu-popup { max-height: min(86dvh, 660px); overflow-y: auto; }
+.kamar-perlu-daftar { display: grid; gap: 6px; max-height: 160px; overflow-y: auto; margin: 0 0 18px; padding: 10px 12px; list-style: none; border: 1px solid var(--kamar-popup-gold); border-radius: 14px; background: var(--kamar-popup-paper); font-size: 13px; line-height: 1.4; }
+.kamar-perlu-daftar li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
+.kamar-perlu-daftar li + li { border-top: 1px solid color-mix(in oklab, var(--kamar-popup-gold) 26%, transparent); padding-top: 6px; }
+.kamar-perlu-daftar span { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11px; color: var(--kamar-popup-muted); }
+.kamar-perlu-tombol { display: inline-block; width: fit-content; max-width: 100%; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }

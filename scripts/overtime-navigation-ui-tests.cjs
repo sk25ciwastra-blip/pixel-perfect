@@ -17,7 +17,16 @@ assert.deepEqual([...overtimeRoomIds(rooms,stays.map(s=>({...s,status:'check_out
 assert.deepEqual([...overtimeRoomIds(rooms,[stay('03',500),stay('03',1,{created_at:'2026-11-19T00:00:00Z'})],now)],[]); // matches latest displayed TRX
 const page=fs.readFileSync('src/routes/kamar.tsx','utf8');
 const dash=fs.readFileSync('src/routes/index.tsx','utf8');
-assert.match(dash,/to="\/kamar" search=\{\{ bagian: "overtime" \}\}/);
+assert.ok(dash.includes('onClick={() => setOvertimeNoticeOpen(true)}')); // dashboard warning opens popup
+assert.ok(dash.includes('<PopupPerluTindakan'));
+assert.ok(!dash.includes('to="/kamar" search={{ bagian: "overtime" }}')); // no dashboard redirect
+assert.ok(page.includes('Perlu tindakan!'));
+assert.ok(page.includes('setOvertimeNotice({ roomNumber: room.room_number'));
+const popup=fs.readFileSync('src/components/popup-perlu-tindakan.tsx','utf8');
+assert.ok(popup.includes('kamar-terisi-popup kamar-perlu-popup'));
+assert.ok(popup.includes('Dialog.Description'));
+assert.ok(popup.includes('Kamar tetap TERISI'));
+assert.ok(popup.includes('onClick={onClose}'));
 assert.ok(dash.includes('to="/kamar" search={{ bagian: "terisi" } as never}')); // old Lihat semua preserved
 assert.match(page,/\["semua", "tersedia", "terisi", "perlu", "overtime"\]/);
 assert.match(page,/!overtimePending && !overtimeError && overtimeIds.has\(room.id\)/);
@@ -25,4 +34,4 @@ assert.match(page,/event.stopPropagation\(\); setDetailTransactionId\(transactio
 const css=fs.readFileSync('src/components/kamar.css','utf8');
 assert.match(css,/\[data-overtime="true"\] > \.kamar-lampu-terisi/);
 assert.match(css,/@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none/);
-console.log('PASS: all 4 overtime rooms; boundary/non-occupied/inactive/booking/unknown excluded; newest TRX; no mutations; distinct filter; original navigation/TRX; pending/error gating; reduced motion CSS.');
+console.log('PASS: overtime popup on dashboard/card, no overtime redirect, TRX/details and Lihat semua kept, CSS red-lamp reduced-motion, read-only.');

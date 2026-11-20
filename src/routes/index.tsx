@@ -44,6 +44,7 @@ import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
 import { useSesiKasKonteks } from "@/lib/sesi-kas";
 import { roomOvertimeIndicator } from "@/lib/room-overtime";
+import { PopupPerluTindakan } from "@/components/popup-perlu-tindakan";
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from "@/components/detail-premium";
 import "@/components/dashboard-panel.css";
 
@@ -217,6 +218,7 @@ function Ringkasan() {
   const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
   const [checkingOutId, setCheckingOutId] = useState<string | null>(null);
   const [dashboardMessage, setDashboardMessage] = useState("");
+  const [overtimeNoticeOpen, setOvertimeNoticeOpen] = useState(false);
   const [pencarian, setPencarian] = useState("");
   const [kataCari, setKataCari] = useState("");
 
@@ -718,10 +720,10 @@ function Ringkasan() {
                 </div>
               )}
               {overtimePerluTindakan.length > 0 && (
-                <Link to="/kamar" search={{ bagian: "overtime" }} aria-label={`Lihat semua ${overtimePerluTindakan.length} kamar overtime lebih dari 120 menit`} className="mx-5 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-3 py-2 transition-colors hover:bg-bahaya-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:mx-6">
+                <button type="button" onClick={() => setOvertimeNoticeOpen(true)} aria-label={'Lihat keterangan ' + overtimePerluTindakan.length + ' kamar yang perlu tindakan'} className="mx-5 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-bahaya-foreground/30 bg-bahaya-foreground/5 px-3 py-2 text-left transition-colors hover:bg-bahaya-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:mx-6">
                   <span className="text-xs font-bold text-bahaya-foreground">PERLU TINDAKAN · {overtimePerluTindakan.length} kamar overtime lebih dari 120 menit</span>
-                  <span className="text-xs text-muted-foreground">Kamar {overtimePerluTindakan.map(({ room }) => room?.room_number ?? "—").join(", ")} · Lihat semua kamar overtime →</span>
-                </Link>
+                  <span className="text-xs text-muted-foreground">Kamar {overtimePerluTindakan.map(({ room }) => room?.room_number ?? "—").join(", ")} · Klik untuk lihat keterangan</span>
+                </button>
               )}
               {statusKamarBaris.length === 0 ? (
                 <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
@@ -949,7 +951,16 @@ function Ringkasan() {
         </div>
       </div>
 
-      {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />}
+      {overtimeNoticeOpen && overtimePerluTindakan.length > 0 && (
+        <PopupPerluTindakan
+          rooms={overtimePerluTindakan.map(({ room, transaksi }) => ({
+            roomNumber: room?.room_number ?? "—",
+            transactionNumber: transaksi.transaction_number,
+          }))}
+          onClose={() => setOvertimeNoticeOpen(false)}
+        />
+      )}
+      {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />
       {modal === "booking" && <FormulirPemesanan mode="booking" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {modal === "pengeluaran" && (
         <FormulirPengeluaran
