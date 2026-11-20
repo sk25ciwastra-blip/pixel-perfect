@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Baturaden 25 Homestay: ISOLATED PG17 ACL fixture test. No Cloud or live data."""
 import hashlib
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -154,7 +155,15 @@ def run():
     ident = query("""SELECT current_database()||'|'||host(inet_server_addr())||'|'||
   inet_server_port()||'|'||current_setting('server_version_num')||'|'||current_user""")
     parts = ident.split("|")
-    if len(parts)!=5 or parts[0]!=DB or parts[1]!="127.0.0.1" or parts[2]!="55439" or not parts[3].startswith("17") or parts[4]!="postgres":
+    # inet_server_addr() is the PostgreSQL CONTAINER-side endpoint (typically
+    # 172.18.x.x:5432), not the runner's client-side 127.0.0.1:55439 binding.
+    # PGHOST/PGPORT were checked above; require a private Docker IPv4 endpoint.
+    service_addr = ipaddress.ip_address(parts[1]) if len(parts)==5 else None
+    docker_private = isinstance(service_addr, ipaddress.IPv4Address) and any(
+        service_addr in ipaddress.ip_network(cidr)
+        for cidr in ("172.16.0.0/12", "10.0.0.0/8", "192.168.0.0/16")
+    )
+    if len(parts)!=5 or parts[0]!=DB or not docker_private or parts[2]!="5432" or not parts[3].startswith("17") or parts[4]!="postgres":
         stop("Database identity or PG17 major version failed: " + ident)
     print("PASS: isolated GitHub-hosted PostgreSQL 17 service at 127.0.0.1:55439 / dummy database",flush=True)
 
