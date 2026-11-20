@@ -1,0 +1,54 @@
+name: B25 ACL PostgreSQL 17 isolated validation (no Cloud)
+
+on:
+  push:
+    branches:
+      - validation/b25-acl-pg17-isolated-20261121
+    paths:
+      - .github/workflows/b25-acl-pg17-isolated.yml
+      - scripts/acl/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-acl-isolated-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dummy-acl:
+    if: github.ref == 'refs/heads/validation/b25-acl-pg17-isolated-20261121'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: b25_acl_only_local_dummy
+          POSTGRES_DB: b25_acl_dummy
+        ports:
+          - "127.0.0.1:55439:5432"
+        options: >-
+          --health-cmd "pg_isready -U postgres -d b25_acl_dummy"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "55439"
+      PGUSER: postgres
+      PGPASSWORD: b25_acl_only_local_dummy
+      PGDATABASE: b25_acl_dummy
+      B25_DUMMY_ONLY: "true"
+    steps:
+      - name: Checkout review branch, no persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify only disposable PostgreSQL 17 and transactional ACL behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/acl/verify_isolated_pg17.py
