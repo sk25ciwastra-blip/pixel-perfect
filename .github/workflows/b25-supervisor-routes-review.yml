@@ -1,0 +1,26 @@
+name: B25 Supervisor route access review
+on:
+  push:
+    branches: [fix/supervisor-owner-route-guard-20261121]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  supervisor-routes:
+    if: github.ref == 'refs/heads/fix/supervisor-owner-route-guard-20261121'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Focused route authorization tests
+        run: bun test scripts/supervisor-routes.test.ts
+      - name: Build
+        run: bun run build
+      - name: Typecheck
+        run: bunx tsc --noEmit

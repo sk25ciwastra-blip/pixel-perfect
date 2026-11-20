@@ -11,6 +11,7 @@ import {
 import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { usePeran } from "../lib/peran";
+import { canAccessSupervisorOperationalPage } from "../lib/supervisor-routes";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -166,7 +167,7 @@ function AccessGate({ children }: { children: ReactNode }) {
 
     switch (posisiKode) {
       case 'supervisor':
-        return !['/karyawan', '/pengaturan'].includes(pathname);
+        return canAccessSupervisorOperationalPage(pathname);
 
       case 'receptionist':
         return [
