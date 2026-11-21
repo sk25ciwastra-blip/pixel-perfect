@@ -1,0 +1,26 @@
+name: B25 four operational controls review
+on:
+  push:
+    branches: [fix/owner-four-operational-gaps-20261121]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  operational-four:
+    if: github.ref == 'refs/heads/fix/owner-four-operational-gaps-20261121'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Focused operational controls and employee photo tests
+        run: bun test scripts/owner-four-operational-gaps.test.ts scripts/employee-photo-upload.test.ts
+      - name: Production app build
+        run: bun run build
+      - name: Typecheck
+        run: bunx tsc --noEmit
