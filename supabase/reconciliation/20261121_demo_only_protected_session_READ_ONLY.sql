@@ -1,6 +1,6 @@
 -- Baturaden 25 Homestay | DEMO transaction reset preflight | READ-ONLY.
 -- NEVER DELETE/TRUNCATE from this file. No Auth/Storage/password or prices modified.
--- Approved scope: 102 historical operational DEMO rows. Preserve all employees,
+-- Approved scope: 102 historical operational DEMO rows. Separately protect four\n-- new Owner Housekeeping records (one job, two history, one checklist) dated\n-- 21 Nov 2026. Do NOT assume these records are DEMO solely by linked old TRX.\n-- Preserve all employees,
 -- Auth users, staff photos, room configuration and the REAL receptionist session.
 -- When any count changes, review afresh; do NOT force the counts to match.
 WITH known_legacy_sessions(session_id) AS (
@@ -54,21 +54,26 @@ WITH known_legacy_sessions(session_id) AS (
    (SELECT max(created_at) FROM storage.objects WHERE bucket_id LIKE 'database_export_%' AND name LIKE '%.backup') AS latest_database_export,
    (SELECT count(*)::int FROM public.transactions WHERE created_at>=TIMESTAMPTZ '2026-11-21 00:00+07') AS transactions_since_start,
    (SELECT count(*)::int FROM public.payments WHERE created_at>=TIMESTAMPTZ '2026-11-21 00:00+07') AS payments_since_start,
+   (SELECT count(*)::int FROM public.housekeeping_jobs WHERE created_at>=TIMESTAMPTZ '2026-11-21 00:00+07') AS recent_hk_jobs,
+   (SELECT count(*)::int FROM public.housekeeping_history WHERE created_at>=TIMESTAMPTZ '2026-11-21 00:00+07') AS recent_hk_history,
+   (SELECT count(*)::int FROM public.housekeeping_checklists WHERE created_at>=TIMESTAMPTZ '2026-11-21 00:00+07') AS recent_hk_checklists,
    (SELECT count(*)::int FROM public.transactions) AS historical_transactions,
    (SELECT count(*)::int FROM public.payments) AS historical_payments,
    (SELECT sum(n)::int FROM row_counts) AS total_operational_rows
 )
 SELECT known_legacy_sessions_present,all_cash_sessions,real_receptionist_sessions_preserved,
        real_staff,real_photos,historical_transactions,historical_payments,
-       total_operational_rows,(total_operational_rows-real_receptionist_sessions_preserved) AS candidate_historical_demo_rows,
+       total_operational_rows, recent_hk_jobs,recent_hk_history,recent_hk_checklists,
+       (total_operational_rows-real_receptionist_sessions_preserved-recent_hk_jobs-recent_hk_history-recent_hk_checklists) AS candidate_historical_demo_rows,
        transactions_since_start,payments_since_start,
        latest_database_export,real_staff_created,last_real_photo_created,
        (latest_database_export>greatest(real_staff_created,last_real_photo_created)) AS fresh_database_export_present,
        CASE
          WHEN known_legacy_sessions_present<>5 OR all_cash_sessions<>6 OR real_receptionist_sessions_preserved<>1
            OR real_staff<>2 OR real_photos<>2 THEN 'STOP: protected inventory changed'
-         WHEN historical_transactions<>17 OR historical_payments<>24 OR total_operational_rows<>103
-           OR transactions_since_start<>0 OR payments_since_start<>0 THEN 'STOP: DEMO data inventory changed'
+         WHEN historical_transactions<>17 OR historical_payments<>24 OR total_operational_rows<>107
+           OR recent_hk_jobs<>1 OR recent_hk_history<>2 OR recent_hk_checklists<>1
+           OR transactions_since_start<>0 OR payments_since_start<>0 THEN 'STOP: operational inventory changed, review newly created rows'
          WHEN NOT coalesce(latest_database_export>greatest(real_staff_created,last_real_photo_created),false)
            THEN 'BLOCKED: newer database export needed (also separately preserve photos)'
          ELSE 'READ-ONLY preflight counts match; backup restore and deletion procedure still require review'
