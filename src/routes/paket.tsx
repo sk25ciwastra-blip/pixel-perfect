@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ArrowLeft, ChevronRight, Lock, Plus } from 'lucide-react';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
-import { useTable, type Package, type PackageRoomTypePrice } from '@/lib/data-live';
+import { rpc, useTable, type Package, type PackageRoomTypePrice } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 import { hargaFormPaket, jamPaket, pilihanJam, teksJamWib } from '@/lib/paket-form';
 import { urutanPaket } from '@/lib/urutan-pilihan';
@@ -52,7 +52,7 @@ function TabelKelompok({baris,onUbah}:{baris:BarisKelompok[];onUbah:(p:Package,h
  return <div className="ph-tabel ph-tabel-paket"><table><thead><tr><th>Nama Paket</th><th>Durasi</th><th>Jam Berlaku</th><th>Weekday</th><th>Weekend</th><th>Status</th><th>Terakhir Diubah</th><th>Aksi</th></tr></thead><tbody>{baris.length===0?<tr><td colSpan={8} className="ph-kosong">Belum ada harga paket untuk tipe ini.</td></tr>:baris.map(({harga,paket})=><tr key={harga.id}><td><span className="ph-nama">{paket.name}</span></td><td><span className="ph-slot">{paket.duration_minutes ? `${paket.duration_minutes} menit` : '—'}</span></td><td><span className="ph-slot">{jamBerlaku(paket)}</span></td><td><span className="ph-harga">{rupiah(Number(harga.weekday_price))}</span></td><td><span className="ph-harga">{rupiah(Number(harga.weekend_price))}</span></td><td><span className={`ph-pil ${paket.active?'ph-pil-aktif':'ph-pil-nonaktif'}`}>{paket.active?'Aktif':'Nonaktif'}</span></td><td><span className="ph-slot">{waktuWib(harga.updated_at)}</span></td><td className="text-right"><Button type="button" variant="ghost" className="ph-ubah" onClick={()=>onUbah(paket,harga)}>Ubah</Button></td></tr>)}</tbody></table></div>;
 }
 
-function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packages');const hargaTipe=useTable('package_room_type_prices');const history=useTable('package_price_history');const [item,setItem]=useState<Package|null>(null);const [open,setOpen]=useState(false);const [hargaItem,setHargaItem]=useState<PackageRoomTypePrice|null>(null);const [tipeForm,setTipeForm]=useState<string|null>(null);const [groupeForm,setGroupeForm]=useState<string|null>(null);const [tipe,setTipe]=useState<string|null>(null);const [nama,setNama]=useState('');const [durasi,setDurasi]=useState('120');const [hargaWeekday,setHargaWeekday]=useState('0');const [hargaWeekend,setHargaWeekend]=useState('0');const [alasan,setAlasan]=useState('');const [deskripsi,setDeskripsi]=useState('');const [active,setActive]=useState(true);const [message,setMessage]=useState('');
+function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packages');const hargaTipe=useTable('package_room_type_prices');const history=useTable('package_price_history');const auditHarga=useTable('activity_logs');const [item,setItem]=useState<Package|null>(null);const [open,setOpen]=useState(false);const [hargaItem,setHargaItem]=useState<PackageRoomTypePrice|null>(null);const [tipeForm,setTipeForm]=useState<string|null>(null);const [groupeForm,setGroupeForm]=useState<string|null>(null);const [tipe,setTipe]=useState<string|null>(null);const [nama,setNama]=useState('');const [durasi,setDurasi]=useState('120');const [hargaWeekday,setHargaWeekday]=useState('0');const [hargaWeekend,setHargaWeekend]=useState('0');const [alasan,setAlasan]=useState('');const [deskripsi,setDeskripsi]=useState('');const [active,setActive]=useState(true);const [message,setMessage]=useState('');
  function edit(p?:Package,h?:PackageRoomTypePrice){
   const group=terpilih?.key??null;
   const relation=h??null;
@@ -85,7 +85,25 @@ function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packag
  }
  async function save(e:React.FormEvent){
  e.preventDefault();
- if(groupeForm){setMessage('Penyimpanan paket khusus tipe kamar belum tersedia; tidak ada data yang diubah.');return;}
+ if(groupeForm){
+   if(!item||!hargaItem){setMessage('Pilih paket yang sudah mempunyai harga pada tipe kamar ini.');return;}
+   const weekday=Number(hargaWeekday),weekend=Number(hargaWeekend);
+   if(!Number.isSafeInteger(weekday)||!Number.isSafeInteger(weekend)||weekday<=0||weekend<=0||weekday>100000000||weekend>100000000){
+     setMessage('Harga harus rupiah bulat positif yang valid.');return;
+   }
+   if(weekday===Number(hargaItem.weekday_price)&&weekend===Number(hargaItem.weekend_price)){
+     setOpen(false);return;
+   }
+   if(alasan.trim().length<3){setMessage('Alasan perubahan harga minimal 3 karakter.');return;}
+   const changed=await rpc('update_package_room_type_price',{
+     _package_id:item.id,_pricing_group:groupeForm,
+     _weekday_price:weekday,_weekend_price:weekend,_reason:alasan.trim()
+   });
+   if(changed.error){setMessage(changed.error.message);return;}
+   setOpen(false);
+   await Promise.all([hargaTipe.refresh(),auditHarga.refresh()]);
+   return;
+ }
  const weekdayPrice=Number(hargaWeekday);
  const weekendPrice=Number(hargaWeekend);
  if(!nama.trim()||Number(durasi)<=0||weekdayPrice<0||weekendPrice<0){
@@ -142,9 +160,24 @@ function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packag
  const adaHargaTipe=!muatPaket&&!hargaTipe.loading&&hargaTipe.rows.length>0;
  const terpilih=kelompok.find(k=>k.label===tipe)??null;
 
- const riwayatTipe=<details className="ph-riwayat"><summary>Riwayat Harga</summary><p>Riwayat perubahan harga khusus tipe kamar ini belum tersedia. Catatan riwayat saat ini belum mencatat tipe kamar, sehingga tidak ditampilkan agar tidak tercampur dengan tipe lain.</p></details>;
+ const logHargaTipe = auditHarga.rows.filter(log => log.action==='price_change'
+   && log.entity_type==='package_room_type_prices'
+   && terpilih?.baris.some(b=>b.harga.id===log.entity_id))
+   .sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,30);
+ const riwayatTipe=<details className="ph-riwayat"><summary>Riwayat Harga · {logHargaTipe.length} perubahan terbaru</summary>
+  {auditHarga.error?<p role="alert">{auditHarga.error}</p>:logHargaTipe.length===0?<p>Belum ada perubahan harga tipe kamar yang tercatat sejak fitur ini diaktifkan.</p>:
+  <ul className="space-y-2">{logHargaTipe.map(log=>{
+    let detail: Record<string,unknown>={};
+    try{detail=JSON.parse(log.description) as Record<string,unknown>;}catch{ /* Legacy log; do not reveal personal data */ }
+    const oldPrice=`${rupiah(Number(detail.weekday_before??0))} / ${rupiah(Number(detail.weekend_before??0))}`;
+    const newPrice=`${rupiah(Number(detail.weekday_after??0))} / ${rupiah(Number(detail.weekend_after??0))}`;
+    const name=terpilih?.baris.find(b=>b.harga.id===log.entity_id)?.paket.name??'Paket';
+    return <li key={log.id} className="rounded-lg border border-border/40 p-3 text-xs"><strong>{name}</strong>
+      <p>{waktuWib(log.created_at)} · Weekday/Weekend: {oldPrice} → {newPrice}</p>
+      <p>Alasan: {String(detail.reason??'—')}</p></li>;
+  })}</ul>}</details>;
 
- return <Kerangka judul="Paket & Harga" aksi={terpilih?<Button className="h-11 shrink-0 gap-2 rounded-xl px-5 text-base" onClick={()=>edit()}><Plus className="size-4" /><span className="leading-none">Tambah Paket</span></Button>:undefined}><SubPengaturan tanpaKembali={!!terpilih&&adaHargaTipe}>{error&&<p role="alert">{error}</p>}{hargaTipe.error&&<p role="alert">{hargaTipe.error}</p>}{adaHargaTipe?(terpilih?<><button type="button" className="ph-kembali-tipe" onClick={()=>setTipe(null)}><ArrowLeft/>Kembali</button><section className="ph-kelompok"><div className="ph-judul"><h2>{terpilih.label} Room</h2><span className="ph-jumlah">{terpilih.baris.length} paket</span><span className="ph-judul-garis"/></div><TabelKelompok baris={terpilih.baris} onUbah={edit}/></section>{riwayatTipe}</>:<><div className="ph-pilihan">{kelompok.map(k=><button key={k.label} type="button" className="ph-kartu-tipe" onClick={()=>setTipe(k.label)}><h2>{k.label} Room</h2><span className="ph-kartu-jumlah">{k.baris.length} paket tersedia</span><ChevronRight/></button>)}</div></>):(hargaTipe.loading?null:<><section className="ph-kelompok"><div className="ph-judul"><h2>Semua Tipe Kamar</h2><span className="ph-jumlah">{rows.length} paket</span><span className="ph-judul-garis"/></div><TabelKelompok baris={rows.slice().sort((a,b)=>urutanPaket(a.name)-urutanPaket(b.name)).map(p=>({harga:{id:p.id,weekday_price:Number(p.weekday_price),weekend_price:Number(p.weekend_price)} as PackageRoomTypePrice,paket:p}))} onUbah={edit}/></section></>)}{open&&<div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4"><form onSubmit={save} role="dialog" aria-modal="true" aria-label={item?'Ubah paket':'Tambah paket'} className="w-full max-w-md max-h-[90dvh] overflow-y-auto space-y-3 rounded-2xl bg-background p-5 shadow-lembut"><h2 className="text-lg font-bold">{item?'Ubah paket':'Tambah paket'}</h2><label className="block text-sm">Tipe Kamar<div className="relative mt-1"><input readOnly value={tipeForm??'Semua tipe kamar'} className="h-11 w-full rounded-xl border border-input bg-muted pl-3 pr-10"/><Lock className="absolute right-3 top-3 size-5 text-primary"/></div></label><label className="block text-sm">Nama paket
+ return <Kerangka judul="Paket & Harga" aksi={undefined}><SubPengaturan tanpaKembali={!!terpilih&&adaHargaTipe}>{error&&<p role="alert">{error}</p>}{hargaTipe.error&&<p role="alert">{hargaTipe.error}</p>}{adaHargaTipe?(terpilih?<><button type="button" className="ph-kembali-tipe" onClick={()=>setTipe(null)}><ArrowLeft/>Kembali</button><section className="ph-kelompok"><div className="ph-judul"><h2>{terpilih.label} Room</h2><span className="ph-jumlah">{terpilih.baris.length} paket</span><span className="ph-judul-garis"/></div><TabelKelompok baris={terpilih.baris} onUbah={edit}/></section>{riwayatTipe}</>:<><div className="ph-pilihan">{kelompok.map(k=><button key={k.label} type="button" className="ph-kartu-tipe" onClick={()=>setTipe(k.label)}><h2>{k.label} Room</h2><span className="ph-kartu-jumlah">{k.baris.length} paket tersedia</span><ChevronRight/></button>)}</div></>):(hargaTipe.loading?null:<><section className="ph-kelompok"><div className="ph-judul"><h2>Semua Tipe Kamar</h2><span className="ph-jumlah">{rows.length} paket</span><span className="ph-judul-garis"/></div><TabelKelompok baris={rows.slice().sort((a,b)=>urutanPaket(a.name)-urutanPaket(b.name)).map(p=>({harga:{id:p.id,weekday_price:Number(p.weekday_price),weekend_price:Number(p.weekend_price)} as PackageRoomTypePrice,paket:p}))} onUbah={edit}/></section></>)}{open&&<div className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 backdrop-blur-sm p-4"><form onSubmit={save} role="dialog" aria-modal="true" aria-label={item?'Ubah paket':'Tambah paket'} className="w-full max-w-md max-h-[90dvh] overflow-y-auto space-y-3 rounded-2xl bg-background p-5 shadow-lembut"><h2 className="text-lg font-bold">{item?'Ubah paket':'Tambah paket'}</h2><label className="block text-sm">Tipe Kamar<div className="relative mt-1"><input readOnly value={tipeForm??'Semua tipe kamar'} className="h-11 w-full rounded-xl border border-input bg-muted pl-3 pr-10"/><Lock className="absolute right-3 top-3 size-5 text-primary"/></div></label><label className="block text-sm">Nama paket
  {item
   ? <input value={nama} readOnly className="mt-1 h-11 w-full rounded-xl border border-input bg-muted px-3"/>
   : <select value={nama} onChange={e=>pilihPaketResmi(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3">
@@ -159,4 +192,4 @@ function Halaman(){const {rows,refresh,error,loading:muatPaket}=useTable('packag
  const opsi=[...new Set([...pilihanJam,...(nilai?[nilai]:[])])].sort();
  return <label key={key} className="block text-sm">{label}<select aria-label={label} value={nilai} disabled className="mt-1 h-11 w-full rounded-xl border border-input bg-muted px-3"><option value="">—</option>{opsi.map(j=><option key={j} value={j}>{teksJamWib(j)}</option>)}</select></label>;
  })}</div></fieldset>
-{[['Harga Weekday',hargaWeekday,setHargaWeekday],['Harga Weekend',hargaWeekend,setHargaWeekend]].map(([label,value,setter])=><label key={label as string} className="block text-sm">{label as string}<input required type="number" min="0" value={value as string} onChange={e=>(setter as (s:string)=>void)(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>)}{item&&(Number(hargaItem?.weekday_price??item.weekday_price)!==Number(hargaWeekday)||Number(hargaItem?.weekend_price??item.weekend_price)!==Number(hargaWeekend))&&<label className="block text-sm">Alasan perubahan harga<input required value={alasan} onChange={e=>setAlasan(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>}<label className="flex gap-2 text-sm"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/>Aktif</label>{groupeForm&&<p className="text-sm text-muted-foreground">Penyimpanan paket khusus tipe kamar belum tersedia. Tidak ada data yang diubah.</p>}{!item&&PAKET_RESMI.every(p=>rows.some(r=>r.name===p.name))&&<p className="text-sm text-muted-foreground">Semua 9 paket resmi sudah tersedia; paket yang sama tidak dapat ditambahkan kembali.</p>}{message&&<p role="alert" className="text-sm text-destructive">{message}</p>}<div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Batal</Button><Button disabled={!!groupeForm||!nama}>Simpan</Button></div></form></div>}</SubPengaturan></Kerangka>}
+{[['Harga Weekday',hargaWeekday,setHargaWeekday],['Harga Weekend',hargaWeekend,setHargaWeekend]].map(([label,value,setter])=><label key={label as string} className="block text-sm">{label as string}<input required type="number" min="0" value={value as string} onChange={e=>(setter as (s:string)=>void)(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>)}{item&&(Number(hargaItem?.weekday_price??item.weekday_price)!==Number(hargaWeekday)||Number(hargaItem?.weekend_price??item.weekend_price)!==Number(hargaWeekend))&&<label className="block text-sm">Alasan perubahan harga<input required value={alasan} onChange={e=>setAlasan(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-input bg-background px-3"/></label>}{!groupeForm&&<label className="flex gap-2 text-sm"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)}/>Aktif</label>}{groupeForm&&<p className="text-sm text-muted-foreground">Perubahan harga hanya berlaku untuk tipe kamar ini. Identitas dan durasi paket tidak diubah.</p>}{!item&&PAKET_RESMI.every(p=>rows.some(r=>r.name===p.name))&&<p className="text-sm text-muted-foreground">Semua 9 paket resmi sudah tersedia; paket yang sama tidak dapat ditambahkan kembali.</p>}{message&&<p role="alert" className="text-sm text-destructive">{message}</p>}<div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={()=>setOpen(false)}>Batal</Button><Button disabled={!nama}>{groupeForm?'Simpan Harga':'Simpan'}</Button></div></form></div>}</SubPengaturan></Kerangka>}
