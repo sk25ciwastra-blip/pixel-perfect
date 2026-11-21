@@ -21,6 +21,7 @@ import {
   type CombinedPaymentComponent,
 } from '@/lib/combined-payments';
 import { featureFlags } from '@/lib/feature-flags';
+import { choosePaymentMethods, amountAfterPaymentSwitch } from '@/lib/payment-method-choice';
 import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 import { DialogCheckInBerhasil } from '@/components/konfirmasi-pembayaran';
 
@@ -720,7 +721,7 @@ Terima kasih.`;
                 ))}
 
                 <div>
-                  <p className="mb-2 text-sm">Metode pembayaran (maks. 2)</p>
+                  <p className="mb-2 text-sm">Metode pembayaran (maks. {featureFlags.combinedPayment ? '2' : '1'})</p>
                   <div className="grid grid-cols-3 gap-2">
                     {(['Cash', 'QRIS', 'Transfer'] as const).map((method) => (
                       <Button
@@ -729,23 +730,18 @@ Terima kasih.`;
                         variant={paymentMethods.includes(method) ? 'default' : 'outline'}
                         disabled={!paymentMethods.includes(method) && paymentMethods.length >= 2}
                         onClick={() => {
-                          if (paymentMethods.includes(method)) {
-                            if (paymentMethods.length === 1) return;
-                            setPaymentMethods((current) => current.filter((item) => item !== method));
-                            setPaymentAmounts((current) => {
-                              const next = { ...current };
-                              delete next[method];
-                              return next;
-                            });
-                          } else {
-                            if (paymentMethods.length >= 1 && !featureFlags.combinedPayment) {
-                              setMessage('Pembayaran gabungan belum diaktifkan. Pilih satu metode pembayaran sampai backend siap.');
-                              return;
-                            }
-                            setPaymentMethods((current) => [...current, method]);
-                            setPaymentAmounts((current) => ({ ...current, [method]: '' }));
-                            setPaymentIdempotencyKeys((current) => ({ ...current, [method]: crypto.randomUUID() }));
-                          }
+                          const next = choosePaymentMethods(paymentMethods, method, featureFlags.combinedPayment);
+                          const newlySelected = !paymentMethods.includes(method);
+                          setPaymentAmounts(current => {
+                            if (!featureFlags.combinedPayment) return amountAfterPaymentSwitch(current, paymentMethods, method, false);
+                            const amounts = { ...current };
+                            if (newlySelected) amounts[method] = amounts[method] ?? '';
+                            else if (!next.includes(method)) delete amounts[method];
+                            return amounts;
+                          });
+                          setPaymentMethods(next);
+                          if (newlySelected) setPaymentIdempotencyKeys(current => ({ ...current, [method]: current[method] ?? crypto.randomUUID() }));
+                          setMessage('');
                         }}
                       >
                         {method}
