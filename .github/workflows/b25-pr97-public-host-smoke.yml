@@ -1,0 +1,45 @@
+name: B25 published app HTTP smoke (no credentials)
+on:
+  push:
+    branches: [validation/published-pr97-http-smoke-20261121]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-host-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Confirm host resolves and responds without touching authenticated data
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request, urllib.error, urllib.parse, re, sys
+          urls = {
+            "PRODUCTION": "https://pixel-perfect-homestay-hub.lovable.app/auth",
+            "PREVIEW": "https://id-preview--017f6e78-15f2-4d07-a38c-87cb185279bf.lovable.app/auth",
+          }
+          ok=False
+          for name,url in urls.items():
+            try:
+              req=urllib.request.Request(url,headers={"User-Agent":"B25-ReadOnly-HTTP-Smoke/1.0","Cache-Control":"no-cache"})
+              with urllib.request.urlopen(req,timeout=25) as r:
+                payload=r.read(1500000)
+                final=r.url
+                kind=r.headers.get("content-type","")
+                host=urllib.parse.urlparse(final).netloc
+                expected=urllib.parse.urlparse(url).netloc
+                print(f"{name}: HTTP {r.status}, host={host}, type={kind}, bytes={len(payload)}")
+                if name=="PRODUCTION" and r.status==200 and host==expected and "html" in kind:
+                  ok=True
+                  print("PRODUCTION HTTP reachable. DOES NOT prove latest bundle SHA or authenticated buttons.")
+                elif name=="PRODUCTION":
+                  print("PRODUCTION BLOCKED, redirected, or not HTML; verify publish in Lovable UI.")
+            except urllib.error.HTTPError as e:
+              print(f"{name}: HTTP {e.code}. Auth/publish visibility might restrict access.")
+            except Exception as e:
+              print(f"{name}: {type(e).__name__}: {e}")
+          if not ok:
+            print("NO externally verified production HTML availability; cannot claim deploy success.")
+            sys.exit(1)
+          PY
