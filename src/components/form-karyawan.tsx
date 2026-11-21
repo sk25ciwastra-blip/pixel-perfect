@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { createEmployee, manageEmployee } from '@/lib/employee.functions';
 import { nextEmployeeId } from '@/lib/employee-id';
 import { employeeEditProfile } from '@/lib/employee-edit';
+import { validateEmployeePhoto, employeePhotoPath } from '@/lib/employee-photo';
 import type { Employee } from '@/lib/data-live';
 
 type Posisi = 'receptionist' | 'housekeeping' | 'supervisor' | 'inspector' | 'investor';
@@ -28,6 +29,10 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
   const [foto, setFoto] = useState<File | null>(null); const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Registrasi akun Auth/employee bisa berhasil sebelum Storage/profile gagal.
+  // Simpan ID selama modal terbuka agar klik Simpan ulang TIDAK membuat akun ganda.
+  const createdEmployeeIdRef = useRef<string | null>(null);
+  const [fotoError, setFotoError] = useState('');
   const idPratinjau = item?.employee_id ?? nextEmployeeId(semua.map(k => k.employee_id));
 
   useEffect(() => {
@@ -35,37 +40,60 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
     supabase.from('employee_profiles').select('*').eq('employee_id', item.id).maybeSingle().then(async ({ data }) => {
       if (!data) return;
       setP({ nik: data.nik, birth_place: data.birth_place, birth_date: data.birth_date ?? '', gender: data.gender, phone: data.phone, address: data.address, emergency_name: data.emergency_name, emergency_relation: data.emergency_relation, emergency_phone: data.emergency_phone });
-      if (data.photo_path) { const { data: s } = await supabase.storage.from('employee-photos').createSignedUrl(data.photo_path, 3600); setFotoUrl(s?.signedUrl ?? null); }
+      if (data.photo_path) { const { data: s } = await supabase.storage.from('employee-photos').createSignedUrl(data.photo_path, 60); setFotoUrl(s?.signedUrl ?? null); }
     });
   }, [item]);
 
   const ubah = (k: keyof typeof kosong) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setP(v => ({ ...v, [k]: e.target.value }));
   function pilihFoto(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]; if (!f) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || f.size > 2 * 1024 * 1024) { setMessage('Foto harus JPG, PNG, atau WebP dengan ukuran maksimal 2 MB.'); return; }
+    const validationError = validateEmployeePhoto(f);
+    if (validationError) {
+      setFotoError(validationError);
+      e.target.value = '';
+      return;
+    }
+    setFotoError('');
     setFoto(f); setFotoUrl(URL.createObjectURL(f)); setMessage('');
+    e.target.value = '';
   }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!item && !/^\d{16}$/.test(p.nik)) { setMessage('NIK harus 16 digit angka.'); return; }
-    setBusy(true); setMessage('');
+    setBusy(true); setMessage(''); setFotoError('');
     try {
-      let id = item?.id;
-      if (item) await manage({ data: { id: item.id, name: item.name, position, active: item.active } });
-      else id = (await create({ data: { name, email, password, position, active } })).id;
-      let photo_path: string | undefined;
-      if (!item && foto && id) {
-        photo_path = `${id}.${foto.type.split('/')[1]}`;
-        const { error } = await supabase.storage.from('employee-photos').upload(photo_path, foto, { upsert: true, contentType: foto.type });
-        if (error) throw new Error('Akun tersimpan, tetapi pas foto gagal diunggah.');
+      let id: string | undefined = item?.id ?? createdEmployeeIdRef.current ?? undefined;
+      if (item) {
+        await manage({ data: { id: item.id, name: item.name, position, active: item.active } });
+      } else if (!id) {
+        const result = await create({ data: { name, email, password, position, active } });
+        id = result.id;
+        createdEmployeeIdRef.current = id;
       }
       if (!id) throw new Error('Karyawan belum tersimpan.');
-      const values = item ? employeeEditProfile(p) : { ...p, birth_date: p.birth_date || null, ...(photo_path ? { photo_path } : {}) };
+      let photo_path: string | undefined;
+      if (foto) {
+        photo_path = employeePhotoPath(id, foto.type);
+        const { error } = await supabase.storage.from('employee-photos').upload(photo_path, foto, { upsert: true, contentType: foto.type });
+        if (error) {
+          setFotoError('Upload foto gagal. Silakan periksa koneksi dan ulangi Simpan.');
+          throw new Error('Foto belum tersimpan di Storage.');
+        }
+      }
+      const values = {
+        ...(item ? employeeEditProfile(p) : { ...p, birth_date: p.birth_date || null }),
+        ...(photo_path ? { photo_path } : {}),
+      };
       const { error } = await supabase.from('employee_profiles').upsert({ employee_id: id, ...values });
-      if (error) throw new Error('Akun tersimpan, tetapi data identitas gagal disimpan.');
+      if (error) throw new Error('Data identitas belum berhasil disimpan.');
       onSelesai(true);
-    } catch (err) { setMessage(err instanceof Error ? err.message : 'Tidak dapat menyimpan karyawan.'); } finally { setBusy(false); }
+    } catch (err) {
+      const info = err instanceof Error ? err.message : 'Gagal menyimpan data karyawan.';
+      setMessage(createdEmployeeIdRef.current && !item
+        ? `Akun karyawan sudah dibuat, tetapi foto/profil belum lengkap. ${info} Perbaiki lalu klik Simpan lagi; akun tidak akan dibuat ulang.`
+        : info);
+    } finally { setBusy(false); }
   }
 
   const wajib = <span className="fk-wajib">*</span>;
@@ -116,9 +144,10 @@ export function FormKaryawan({ item, posisiAwal, semua, onSelesai }: { item: Emp
           <header className="fk-kepala"><span className="fk-ikon"><Camera /></span><div><h3>Pas Foto Wajah</h3><p>Unggah pas foto wajah karyawan.</p></div></header>
           <div className="fk-foto">
             <div className="fk-avatar">{fotoUrl ? <img src={fotoUrl} alt="Pas foto karyawan" /> : <UserRound />}</div>
-            <input disabled={Boolean(item)} ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={pilihFoto} />
-            <button disabled={Boolean(item)} type="button" className="fk-unggah" onClick={() => fileRef.current?.click()}><Upload />Unggah Foto</button>
+            <input disabled={busy} ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={pilihFoto} />
+            <button disabled={busy} type="button" className="fk-unggah" onClick={() => fileRef.current?.click()}><Upload />{fotoUrl ? "Ganti Foto" : "Unggah Foto"}</button>
             <small>JPG, PNG, WebP; maksimal 2 MB.</small>
+            {fotoError && <p role="alert" className="fk-pesan">{fotoError}</p>}
             <p className="fk-catatan"><Info />Hanya pas foto wajah, bukan foto KTP.</p>
           </div>
         </section>
