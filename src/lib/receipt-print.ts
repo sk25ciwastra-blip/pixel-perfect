@@ -153,7 +153,10 @@ export function receiptHtml(data: ReceiptPrintData) {
       "</small></footer>",
   };
 
-  return '<article class="receipt">' + blocks.map((key) => content[key]).join("") + "</article>";
+  const testBanner = s.is_test_print === true
+    ? '<div class="test-receipt-banner">TEST PRINT · DEMO<br>NOT A VALID RECEIPT</div>'
+    : '';
+  return '<article class="receipt">' + testBanner + blocks.map((key) => content[key]).join("") + "</article>";
 }
 export function openReceiptPrintWindow() {
   // Open synchronously on the user click, before any asynchronous RPC.
@@ -173,6 +176,7 @@ export function openReceiptPrintPreview(receipts: ReceiptPrintData[], popup: Win
     body{margin:0;background:#fff;color:#000;font:10px/1.3 Arial,sans-serif}
     .receipt{width:58mm;max-width:58mm;padding:3mm 2.5mm;page-break-after:always;overflow-wrap:anywhere}
     .receipt:last-child{page-break-after:auto}
+    .test-receipt-banner{border:2px solid #000;text-align:center;font-size:11px;font-weight:900;line-height:1.35;padding:2mm;margin:0 0 2mm}
     header{text-align:center;display:grid;gap:1px;padding-bottom:1mm}
     .thermal-logo{display:block;width:40mm;max-width:100%;height:auto;max-height:21mm;object-fit:contain;margin:0 auto 1mm;break-inside:avoid}
     header strong{font-size:14px;line-height:1.15}header span{font-size:9px}
@@ -213,6 +217,56 @@ export function openReceiptPrintPreview(receipts: ReceiptPrintData[], popup: Win
   popup.focus();
   popup.print();
 }
+/**
+ * Harmless local 58mm printer test: no customer data, Supabase read, receipt RPC,
+ * print-request counter, payment or transaction mutation. The real print button
+ * remains gated by all three existing feature flags.
+ */
+export function printReceiptSelfTest(): void {
+  const popup = openReceiptPrintWindow();
+  try {
+    const demo: ReceiptPrintData = {
+      print_request_id: 'LOCAL-TEST-NOT-STORED',
+      print_no: 1,
+      copy_label: '',
+      status: 'TEST_ONLY',
+      template_snapshot: {
+        language: 'en',
+        paper_width_mm: 58,
+        blocks: [
+          'header', 'transaction_details', 'description',
+          'payment_history', 'current_payment', 'totals', 'footer',
+        ].map(key => ({ key })),
+        header: { title: 'Baturaden 25 Homestay' },
+        footer: { thank_you: 'Thank you for your visit' },
+      },
+      receipt_snapshot: {
+        is_test_print: true,
+        transaction_type: 'WALK_IN',
+        registration_number: 'TEST-PRINT-001',
+        payment_reference: 'DEMO-REFERENCE',
+        served_by: { name: 'Printer Self-Test' },
+        room: { number: '09', type: 'Standard' },
+        package: 'Paket 2 Jam',
+        actual_check_in: 'TEST ONLY',
+        actual_check_out: 'TEST ONLY',
+        total_bill: 80000,
+        total_paid: 80000,
+        outstanding_balance: 0,
+        payment_status: 'PAID IN FULL',
+        current_payment: {
+          kind: 'FINAL_PAYMENT', amount: 80000, method: 'Cash', created_at: 'DEMO',
+        },
+        payment_history: [],
+      },
+    };
+    openReceiptPrintPreview([demo], popup);
+  } catch (error) {
+    if (!popup.closed) popup.close();
+    throw error;
+  }
+}
+
 export async function prepareReceiptPrint(paymentId: string, requestKey: string = crypto.randomUUID()) {
   if (!featureFlags.receipt58mm) throw new Error("Cetak struk 58mm belum diaktifkan.");
   const issued = await rpc("issue_payment_receipt", { _payment_id: paymentId });

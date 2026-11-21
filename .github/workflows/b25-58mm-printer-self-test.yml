@@ -1,0 +1,25 @@
+name: B25 58mm Printer Self-Test (code only)
+on:
+  push:
+    branches: [fix/receipt-58mm-printer-test-20261121]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  receipt-self-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Receipt renderer and Owner printer-test tests (no Cloud)
+        run: node --test scripts/receipt-renderer-layout.test.cjs
+      - name: Production build (generates typed routes)
+        run: bun run build
+      - name: Typecheck
+        run: bunx tsc --noEmit

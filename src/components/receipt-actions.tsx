@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { featureFlags } from '@/lib/feature-flags';
-import { openReceiptPrintWindow, printReceiptBatch, receiptPaymentIds } from '@/lib/receipt-print';
+import { openReceiptPrintWindow, printReceiptBatch, receiptPaymentIds, printReceiptSelfTest } from '@/lib/receipt-print';
 
 function ReceiptAction({ paymentIds, transactionNumber, label }: {
   paymentIds?: string[];
@@ -53,4 +53,23 @@ export function ReceiptPrintButton({ paymentId }: { paymentId: string }) {
 
 export function ReceiptHistoryButton({ transactionNumber }: { transactionNumber: string }) {
   return <ReceiptAction transactionNumber={transactionNumber} label="Cetak Riwayat" />;
+}
+
+/** Only mounted from Owner-allowed UI; does not change finance data or receipt counters. */
+export function ReceiptPrinterTestButton() {
+  const [error, setError] = useState('');
+  function testPrint() {
+    setError('');
+    try {
+      printReceiptSelfTest();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Jendela cetak uji gagal dibuka.');
+    }
+  }
+  return <span className="inline-flex flex-wrap items-center gap-2">
+    <Button type="button" variant="outline" size="sm" onClick={testPrint} title="Uji printer 58 mm. Contoh DEMO, tidak menyimpan pembayaran atau nomor salinan.">
+      <Printer className="size-4" />Tes Printer 58 mm
+    </Button>
+    {error && <span role="alert" className="text-xs text-destructive">{error}</span>}
+  </span>;
 }

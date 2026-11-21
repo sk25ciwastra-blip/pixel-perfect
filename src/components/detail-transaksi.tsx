@@ -15,7 +15,7 @@ import { AksiPdfStruk } from '@/components/konfirmasi-pembayaran';
 import { useTable } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 import { waktuWib, jejakWib, tanggalHariWib, jamWib } from '@/lib/waktu-transaksi';
-import { ReceiptTransactionButton } from '@/components/receipt-actions';
+import { ReceiptTransactionButton, ReceiptPrinterTestButton } from '@/components/receipt-actions';
 import { featureFlags } from '@/lib/feature-flags';
 
 type DetailTransaksiProps = {
@@ -279,9 +279,12 @@ export function DetailTransaksi({
               <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital<ChevronDown className="dtx-panah" /></button>
               {bukaPdf && <div className="dtx-pdf-menu"><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} ringkas /></div>}
             </div>
-            <span className="dtx-cetak">{featureFlags.receipt58mm
-              ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk" />
-              : <button type="button" disabled title="Cetak struk 58 mm belum diaktifkan"><Printer />Cetak Struk</button>}</span>
+            <span className="dtx-cetak">
+              {featureFlags.receipt58mm
+                ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk" />
+                : <button type="button" disabled title="Cetak struk pembayaran resmi belum diaktifkan. Owner dapat mencoba printer dengan tombol Tes Printer 58 mm."><Printer />Cetak Struk</button>}
+              {posisiKode === 'owner' && <ReceiptPrinterTestButton />}
+            </span>
             <button type="button" className="dtx-tutup" onClick={onClose}>Tutup</button>
           </div>
         </footer>
