@@ -5,6 +5,7 @@ import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
 import { KeuanganArus } from '@/components/keuangan-arus';
 import { useTable } from '@/lib/data-live';
+import { usePeran } from '@/lib/peran';
 import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
 import { dalamPeriode, rentangLaporan, tanggalLaporan } from '@/lib/laporan-periode';
@@ -31,6 +32,8 @@ const jamWib = (iso?: string | null) => iso ? new Date(iso).toLocaleString('id-I
 const tanggalTeks = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString('id-ID', { timeZone: 'UTC', day: '2-digit', month: 'short', year: 'numeric' });
 
 function Halaman() {
+  const { peran, posisiKode } = usePeran();
+  const canViewHousekeeping = peran === 'owner' || ['supervisor', 'housekeeping', 'inspector'].includes(posisiKode ?? '');
   const { bagian = 'operasional' } = Route.useSearch();
   const sessions = useTable('finance_cash_sessions');
   const payments = useTable('payments');
@@ -68,7 +71,7 @@ function Halaman() {
       <nav className="lp-tabs" aria-label="Bagian laporan">
         {daftarBagian.filter(b => b.kode !== 'riwayat').map((b) => (
           <span key={b.kode} className="contents">
-            {b.kode === 'harian' && <><Link to="/transaksi"><ReceiptText />Transaksi</Link><Link to="/housekeeping"><BedDouble />Kamar &amp; Housekeeping</Link></>}
+            {b.kode === 'harian' && <><Link to="/transaksi"><ReceiptText />Transaksi</Link><Link to={canViewHousekeeping ? '/housekeeping' : '/kamar'}><BedDouble />{canViewHousekeeping ? 'Kamar & Housekeeping' : 'Kamar'}</Link></>}
             <Link to="/laporan" search={{ bagian: b.kode }} aria-current={bagian === b.kode ? 'page' : undefined}><b.ikon />{b.label}</Link>
           </span>
         ))}
