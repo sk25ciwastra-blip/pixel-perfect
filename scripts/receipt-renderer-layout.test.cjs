@@ -17,7 +17,7 @@ const context = { exports: {}, require(name) {
 vm.runInNewContext(ts.transpileModule(source, { compilerOptions: {
   target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
 } }).outputText, context);
-const { receiptHtml, openReceiptPrintPreview } = context.exports;
+const { receiptHtml, openReceiptPrintPreview, printReceiptSelfTest } = context.exports;
 const format = value => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
 function fixture(type = 'WALK_IN', kind = 'FINAL_PAYMENT') {
   const deposit = kind === 'DEPOSIT';
@@ -175,3 +175,36 @@ for (const [variant, type, kind] of [['WALK-IN paid', 'WALK_IN', 'FINAL_PAYMENT'
     assert.equal((html.match(/<article class="receipt">/g) || []).length, 1);
   });
 }
+
+test('Owner self-test prints clearly DEMO-labelled 58mm receipt without any RPC or cloud data', () => {
+  let html = '', printed = 0, opened = 0;
+  context.window = {
+    open(_url, target) {
+      assert.equal(target, '_blank');
+      opened++;
+      return {
+        closed: false,
+        document: { write(value) { html += value; }, close() {} },
+        focus() {},
+        print() { printed++; },
+        close() { throw Error('Self-test unexpectedly closed the print popup'); },
+      };
+    },
+  };
+  printReceiptSelfTest();
+  assert.equal(opened, 1);
+  assert.equal(printed, 1);
+  assert.match(html, /TEST PRINT · DEMO/);
+  assert.match(html, /NOT A VALID RECEIPT/);
+  assert.match(html, /TEST-PRINT-001/);
+  assert.match(html, /Baturaden 25 Homestay/);
+  assert.match(html, /size:58mm auto/);
+  assert.doesNotMatch(html, /SALINAN 1|COPY 1/);
+});
+test('real receipt snapshots never show the self-test disclaimer', () => {
+  const actual = receiptHtml(fixture());
+  assert.doesNotMatch(actual, /TEST PRINT · DEMO|NOT A VALID RECEIPT/);
+  const demo = fixture();
+  demo.receipt_snapshot.is_test_print = true;
+  assert.match(receiptHtml(demo), /TEST PRINT · DEMO/);
+});
