@@ -9,6 +9,7 @@ import { openWhatsApp } from '@/lib/whatsapp';
 import { biayaTamuTambahan } from '@/lib/tamu-tambahan';
 import { paketTerurut, tipeKamarTerurut } from '@/lib/urutan-pilihan';
 import { featureFlags, extraGuestAktif } from '@/lib/feature-flags';
+import { choosePaymentMethods, amountAfterPaymentSwitch } from '@/lib/payment-method-choice';
 import { ReceiptTransactionButton } from '@/components/receipt-actions';
 import { CheckInBerhasil } from '@/components/check-in-berhasil';
 import {
@@ -67,16 +68,18 @@ export function FormulirPemesanan({
   const setAmount = (v: string) => setNominal(n => ({ ...n, [methods[0] ?? 'QRIS']: v }));
   const [paymentIdempotencyKeys, setPaymentIdempotencyKeys] = useState<Record<string, string>>(() => ({ QRIS: crypto.randomUUID() }));
   function toggleMethod(m: MetodePembayaran) {
-    if (!methods.includes(m) && methods.length >= 1 && !featureFlags.combinedPayment) {
-      setError('Pembayaran gabungan belum diaktifkan. Pilih satu metode pembayaran sampai backend siap.');
-      return;
-    }
-    setMethods(cur => {
-      if (cur.includes(m)) return cur.filter(x => x !== m);
-      if (cur.length >= 2) return cur;
-      setPaymentIdempotencyKeys(keys => ({ ...keys, [m]: keys[m] ?? crypto.randomUUID() }));
-      return [...cur, m];
+    const next = choosePaymentMethods(methods, m, featureFlags.combinedPayment);
+    const adding = !methods.includes(m);
+    setNominal(current => {
+      if (!featureFlags.combinedPayment) return amountAfterPaymentSwitch(current, methods, m, false);
+      if (adding) return { ...current, [m]: current[m] ?? '' };
+      const amounts = { ...current };
+      if (!next.includes(m)) delete amounts[m];
+      return amounts;
     });
+    if (adding) setPaymentIdempotencyKeys(keys => ({ ...keys, [m]: keys[m] ?? crypto.randomUUID() }));
+    setMethods(next);
+    setError('');
   }
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
