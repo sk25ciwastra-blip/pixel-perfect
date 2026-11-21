@@ -9,6 +9,7 @@ import { usePeran } from '@/lib/peran';
 import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
 import { dalamPeriode, rentangLaporan, tanggalLaporan } from '@/lib/laporan-periode';
+import { buatCsvLaporan } from '@/lib/laporan-export';
 import '@/components/laporan.css';
 
 type Bagian = 'operasional' | 'closing' | 'riwayat' | 'harian' | 'pendapatan';
@@ -64,6 +65,23 @@ function Halaman() {
   }, [payments.rows, expenses.rows, transactions.rows, periode]);
   const loading = payments.loading || expenses.loading || transactions.loading;
   const gagal = payments.error || expenses.error || transactions.error || sessions.error;
+  function exportCsv() {
+    if (loading || gagal) return;
+    const csv = buatCsvLaporan({
+      awal: periode.awal, akhir: periode.akhir,
+      penerimaan, pengeluaran: biaya, jumlahTransaksi: trxPeriode.length,
+      rekap, metode: perMetode,
+    });
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Baturaden_25_Homestay_Laporan_${periode.awal}_${periode.akhir}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
 
   return (
     <Kerangka judul="Laporan Operasional" keterangan="Analisis aktivitas, pendapatan, dan kinerja operasional homestay.">
@@ -82,7 +100,7 @@ function Halaman() {
           <label className="lp-select"><CalendarDays /><select aria-label="Periode laporan" value={pilihan} onChange={e => setPilihan(Number(e.target.value))}><option value={1}>Hari Ini</option><option value={7}>7 Hari Terakhir</option><option value={30}>30 Hari Terakhir</option></select></label>
           <div className="lp-dates"><CalendarDays />{tanggalTeks(periode.awal)} – {tanggalTeks(periode.akhir)}</div>
           <Button className="lp-afficher" onClick={() => setPeriode(rentangLaporan(pilihan))}><Search />Tampilkan Laporan</Button>
-          <Button className="lp-export" variant="outline" disabled title="Ekspor laporan belum tersedia"><Download />Ekspor</Button>
+          <Button className="lp-export" variant="outline" disabled={loading || Boolean(gagal)} onClick={exportCsv} title="Unduh rekap operasional periode ini dalam CSV"><Download />Ekspor CSV</Button>
         </div>
         {gagal && <p className="lp-error" role="alert">Sebagian laporan belum dapat dimuat. Silakan muat ulang halaman.</p>}
         <div className="lp-kpis">
