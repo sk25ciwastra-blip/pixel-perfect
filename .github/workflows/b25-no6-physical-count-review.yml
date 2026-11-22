@@ -1,0 +1,29 @@
+name: B25 No6 physical cash Closing review
+on:
+  push:
+    branches:
+      - fix/no6-physical-cash-count-contract-20261123
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  closing-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Closing source and synthetic test contract
+        run: |
+          node scripts/no6-closing-labels-source.test.cjs
+          node scripts/no6-closing-physical-count.test.cjs
+      - name: Build
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
