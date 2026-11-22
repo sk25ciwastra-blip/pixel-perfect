@@ -34,17 +34,18 @@ jobs:
             sleep 1
           done
           docker exec b25_no5_positive pg_isready -U postgres -d postgres
-      - name: Install synthetic schema plus five unmodified Cloud function definitions
+      - name: Install synthetic schema plus six unmodified Cloud function definitions
         run: |
           set -euo pipefail
           docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/fixtures/no5-positive-cloud-rpc-source.sql
-      - name: Verify all five copied production function body hashes
+      - name: Verify all six copied production function body hashes
         run: |
           set -euo pipefail
           docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
           DO $hashes$
           BEGIN
-            IF (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.record_transaction_payment(uuid,numeric,text,uuid,uuid)'::regprocedure)<>'e9e88c3e70c76450ecc89744adc78471'
+            IF (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid,integer)'::regprocedure)<>'14314995cf012335f18bd859da5b668b'
+              OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.record_transaction_payment(uuid,numeric,text,uuid,uuid)'::regprocedure)<>'e9e88c3e70c76450ecc89744adc78471'
               OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_in_booking(uuid)'::regprocedure)<>'fb29b1e4d72c71f5895ef8a1a1767387'
               OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_out_transaction(uuid)'::regprocedure)<>'2ab65aa2ebd66574f858dc3ff54e7c7f'
               OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.advance_room_cleaning(uuid,text)'::regprocedure)<>'0eb3730060a3a005bfec097f42ae3810'
@@ -53,7 +54,7 @@ jobs:
           END;
           $hashes$;
           SQL
-          echo 'B25 No5: five exact Cloud RPC body fingerprints PASS'
+          echo 'B25 No5: six exact Cloud RPC body fingerprints PASS'
       - name: Run full positive payment to checkout to HK to READY cycle
         run: |
           set -euo pipefail
