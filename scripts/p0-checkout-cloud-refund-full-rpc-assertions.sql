@@ -52,29 +52,28 @@ BEGIN
     '50000000-0000-4000-8000-000000000003',
     '20000000-0000-4000-8000-000000000007',
     10000,'CASH','OWNER_FUNDS',NULL,'Synthetic PER_ROOM partial');
+  -- FINAL-source denial on a closed TRX with remaining refundable amount.
+  -- Earlier partial PER_ROOM refund leaves enough funds to reach the actual
+  -- finance_refund_source_session_guard trigger.
+  BEGIN
+    PERFORM public.create_finance_refund(
+      '50000000-0000-4000-8000-000000000005',
+      '20000000-0000-4000-8000-000000000007',
+      1,'CASH','SHIFT_CASH',
+      '30000000-0000-4000-8000-000000000001','Synthetic FINAL invalid');
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM='Sumber dana refund harus dari sesi OPEN' THEN
+      final_rejected:=true;
+    ELSE RAISE; END IF;
+  END;
+  IF NOT final_rejected THEN RAISE EXCEPTION 'FINAL-source refund was accepted'; END IF;
+
   PERFORM public.create_finance_refund(
     '50000000-0000-4000-8000-000000000004',
     '20000000-0000-4000-8000-000000000007',
     90000,'CASH','OWNER_FUNDS',NULL,'Synthetic PER_ROOM full');
 
-  -- A FINAL session is *never* allowed as refund funding source.
-  BEGIN
-    PERFORM public.create_finance_refund(
-      '50000000-0000-4000-8000-000000000005',
-      '20000000-0000-4000-8000-000000000006',
-      1,'CASH','SHIFT_CASH',
-      '30000000-0000-4000-8000-000000000001','Synthetic FINAL invalid');
-  EXCEPTION WHEN OTHERS THEN
-    IF SQLERRM='Sumber dana refund harus berasal dari sesi kas OPEN' THEN
-      final_rejected:=true;
-    ELSIF SQLERRM='Nominal refund melebihi penerimaan yang sah' THEN
-      -- If refund amount already exhausted, cannot reach funding guard.
-      -- This is NOT adequate proof of FINAL source denial.
-      RAISE EXCEPTION 'FINAL source case masked by fully refunded TRX';
-    ELSE RAISE; END IF;
-  END;
-  -- The condition above is intentionally strict; a separate non-exhausted
-  -- closed transaction is used for the source-denial test below.
+
 END;
 $tests$;
 
