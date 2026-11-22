@@ -1,0 +1,38 @@
+name: B25 No6 refund-aware reporting (review only)
+on:
+  push:
+    branches:
+      - fix/no6-report-refund-aware-cashflow-review-20261123
+    paths:
+      - .github/workflows/b25-no6-refund-aware-report-review.yml
+      - src/lib/laporan-arus-kas.ts
+      - src/lib/laporan-export.ts
+      - src/routes/laporan.tsx
+      - scripts/no6-report-refund-awareness.test.cjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finance-report-source-checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Report refund coverage and CSV integrity, offline
+        run: node scripts/no6-report-refund-awareness.test.cjs
+      - name: Build report route
+        run: bun run build
+      - name: TypeScript validation
+        run: bunx tsc --noEmit
