@@ -75,10 +75,10 @@ export function KeuanganArus({ penerimaan, pengeluaran }: Props) {
           <Tooltip wrapperClassName="kf-chart-tooltip" cursor={{ fill: 'var(--primary-soft)', fillOpacity: 0.25 }} content={({ active, payload, label }) => active && payload?.length ? <div className="kf-chart-tip"><strong>{label}</strong>{payload.map(entry => <div key={String(entry.dataKey)} data-series={entry.dataKey}><span>{entry.name}</span><b>{rupiah(Number(entry.value))}</b></div>)}</div> : null} />
           <Bar dataKey="penerimaan" name="Penerimaan" fill={`url(#${id}-masuk)`} radius={[4, 4, 0, 0]} maxBarSize={30} isAnimationActive={animate} animationDuration={750} animationEasing="ease-out" />
           <Bar dataKey="pengeluaran" name="Pengeluaran" fill={`url(#${id}-keluar)`} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={animate} animationDuration={750} animationEasing="ease-out" />
-          <Line className="kf-chart-line" type="linear" dataKey="bersih" name="Arus Kas Bersih" stroke="var(--gold-light)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--gold-light)', stroke: 'var(--card)', strokeWidth: 2 }} activeDot={{ r: 6, fill: 'var(--gold-light)', stroke: 'var(--card)', strokeWidth: 2 }} isAnimationActive={animate} animationDuration={950} animationEasing="ease-out" />
+          <Line className="kf-chart-line" type="linear" dataKey="bersih" name="Selisih Sesi (Belum Refund)" stroke="var(--gold-light)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--gold-light)', stroke: 'var(--card)', strokeWidth: 2 }} activeDot={{ r: 6, fill: 'var(--gold-light)', stroke: 'var(--card)', strokeWidth: 2 }} isAnimationActive={animate} animationDuration={950} animationEasing="ease-out" />
         </ComposedChart>
       </ResponsiveContainer> : <p className="kf-chart-empty">Belum ada catatan arus kas pada sesi ini.</p>}
     </div>
-    {data.length > 0 && <ul className="kf-chart-legend" aria-label="Keterangan grafik"><li data-series="penerimaan"><i aria-hidden="true" />Penerimaan</li><li data-series="pengeluaran"><i aria-hidden="true" />Pengeluaran</li><li data-series="bersih"><i aria-hidden="true" />Arus Kas Bersih</li></ul>}
+    {data.length > 0 && <ul className="kf-chart-legend" aria-label="Keterangan grafik"><li data-series="penerimaan"><i aria-hidden="true" />Penerimaan</li><li data-series="pengeluaran"><i aria-hidden="true" />Pengeluaran</li><li data-series="bersih"><i aria-hidden="true" />Selisih Sesi (Belum Refund)</li></ul>}
   </>;
 }
