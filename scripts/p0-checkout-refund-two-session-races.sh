@@ -40,8 +40,8 @@ race() {
   echo "B25_RACE_$n: pg_blocking_pids confirmed real wait"
   wait "$holder_pid" || fail "$n holder error"
   wait "$waiter_pid" || fail "$n waiter error"
-  grep -Fq "B25_HOLDER_$n_OK" "$tmp/$n-holder.log" || fail "$n holder marker missing"
-  grep -Fq "B25_WAITER_$n_OK" "$tmp/$n-waiter.log" || fail "$n waiter marker missing"
+  grep -Fq "B25_HOLDER_$n""_OK" "$tmp/$n-holder.log" || fail "$n holder marker missing"
+  grep -Fq "B25_WAITER_$n""_OK" "$tmp/$n-waiter.log" || fail "$n waiter marker missing"
   echo "B25_RACE_$n: PASS"
 }
 
