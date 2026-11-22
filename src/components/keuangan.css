@@ -179,3 +179,26 @@
   .kf-halaman button { transition:none; }
   .kf-halaman button:hover { transform:none; }
 }
+
+/* No6 Komisi: warm-white table only. Keep the surrounding black/gold shell. */
+.kf-komisi-table {
+  background: var(--premium-paper);
+  color: var(--premium-ink);
+  border: 1px solid var(--premium-line);
+  box-shadow: var(--premium-panel-shadow);
+}
+.kf-komisi-table table { color: var(--premium-ink); border-collapse: collapse; }
+.kf-komisi-table thead { background: var(--premium-highlight); color: var(--premium-ink); }
+.kf-komisi-table thead th {
+  background: var(--premium-highlight);
+  color: var(--premium-ink);
+  font-weight: 700;
+  border-bottom: 1px solid var(--premium-line);
+}
+.kf-komisi-table tbody tr { border-top: 1px solid var(--premium-line); }
+.kf-komisi-table tbody tr:nth-child(even) { background: color-mix(in srgb, var(--premium-highlight) 28%, var(--premium-paper)); }
+.kf-komisi-table tbody tr:hover { background: var(--premium-highlight); }
+.kf-komisi-table tbody td { color: var(--premium-ink); }
+.kf-komisi-table tbody td:first-child { color: #8a5d13; font-weight: 600; }
+.kf-komisi-table tbody td:last-child { font-weight: 700; }
+.kf-komisi-table .text-muted-foreground { color: var(--premium-muted); }

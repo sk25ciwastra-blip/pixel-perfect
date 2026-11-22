@@ -418,7 +418,7 @@ function HalamanKeuangan() {
             <p className="mt-1 text-2xl font-semibold tabular-nums">{rupiah(Number(summary['commission'] ?? 0))}</p>
             <p className="mt-1 text-xs text-muted-foreground">{sessionPayments.length} pembayaran tercatat · {tanggalPanjang}</p>
           </div>
-          <div className="overflow-x-auto rounded-lg border border-gold/15">
+          <div className="kf-komisi-table overflow-x-auto rounded-lg">
             <table className="w-full text-left text-sm">
               <thead className="bg-secondary text-xs text-foreground"><tr>
                 <th className="px-3 py-2">Transaksi</th>
