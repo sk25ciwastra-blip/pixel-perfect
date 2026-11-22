@@ -8,40 +8,62 @@ INSERT INTO public.employees (user_id,name,active,position) VALUES
  ('00000000-0000-4000-8000-000000000002','Fixture Receptionist',true,'receptionist'),
  ('00000000-0000-4000-8000-000000000003','Fixture Housekeeping',true,'housekeeping');
 
-INSERT INTO public.rooms (id,room_number,active,status) VALUES
- ('10000000-0000-4000-8000-000000000005','05',true,'ready');
+INSERT INTO public.room_types (id,pricing_group) VALUES
+ ('11000000-0000-4000-8000-000000000005','standard');
+INSERT INTO public.rooms (id,room_number,active,room_type_id,status) VALUES
+ ('10000000-0000-4000-8000-000000000005','05',true,
+  '11000000-0000-4000-8000-000000000005','ready');
 INSERT INTO public.packages (id,name,active,time_mode,duration_minutes) VALUES
  ('20000000-0000-4000-8000-000000000001','Paket 2 Jam',true,'duration',120);
-INSERT INTO public.guests (id,full_name) VALUES
- ('30000000-0000-4000-8000-000000000001','Synthetic only — not a real guest');
+INSERT INTO public.package_room_type_prices (package_id,pricing_group,weekday_price,weekend_price)
+VALUES ('20000000-0000-4000-8000-000000000001','standard',200000,200000);
 INSERT INTO public.finance_cash_sessions (id,opened_by,opening_cash,status) VALUES
  ('40000000-0000-4000-8000-000000000001','00000000-0000-4000-8000-000000000002',0,'OPEN');
 
--- Booking creation is a synthetic seed. The SQL under test starts with the
--- actual Cloud payment RPC below; create_reservation itself is not exercised.
-INSERT INTO public.transactions (
- id,transaction_number,guest_id,room_id,package_id,status,created_by,
- price_snapshot,day_mode,scheduled_check_in,scheduled_check_out
-) VALUES (
- '50000000-0000-4000-8000-000000000001',
- 'B25-UAT-PG17-ONLY-001',
- '30000000-0000-4000-8000-000000000001',
+-- Use the production create_reservation RPC (sixth exact Cloud body) to
+-- create a DEMO Booking, guest, transaction number, and first 40% DP.
+-- All writes and sequence consumption remain in the disposable PG17 cluster.
+SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',false);
+SET ROLE authenticated;
+SELECT public.create_reservation(
+ 'booking',
  '10000000-0000-4000-8000-000000000005',
  '20000000-0000-4000-8000-000000000001',
- 'booking','00000000-0000-4000-8000-000000000002',
- 200000,'weekend',now()-interval '10 minutes',now()+interval '110 minutes'
-);
-INSERT INTO public.payments (
- id,transaction_id,amount,method,kind,recorded_by,idempotency_key,cash_session_id
-) VALUES (
- '60000000-0000-4000-8000-000000000001',
- '50000000-0000-4000-8000-000000000001',
- 80000,'Cash','dp','00000000-0000-4000-8000-000000000002',
+ 'Synthetic PG17 Only',
+ '080000000001',
+ 'No real booking, disposable only',
+ 80000,'Cash','weekend',now()-interval '10 minutes',
  '60000000-0000-4000-8000-000000000011',
- '40000000-0000-4000-8000-000000000001'
-);
-\echo 'B25 No5: booking seeded with 40 percent DP (not reservation RPC)'
-SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',false);
+ '40000000-0000-4000-8000-000000000001',2
+) AS created_booking_number \gset
+SELECT public.create_reservation(
+ 'booking',
+ '10000000-0000-4000-8000-000000000005',
+ '20000000-0000-4000-8000-000000000001',
+ 'Synthetic PG17 Only',
+ '080000000001',
+ 'No real booking, disposable only',
+ 80000,'Cash','weekend',now()-interval '10 minutes',
+ '60000000-0000-4000-8000-000000000011',
+ '40000000-0000-4000-8000-000000000001',2
+) AS duplicate_booking_number \gset
+RESET ROLE;
+DO $booking_seed_verified$
+BEGIN
+ IF (SELECT count(*) FROM public.transactions)<>1
+ OR (SELECT transaction_number FROM public.transactions)<>'B25UATPG17-000001'
+ OR (SELECT status::text FROM public.transactions)<>'booking'
+ OR (SELECT price_snapshot FROM public.transactions)<>200000
+ OR (SELECT count(*) FROM public.guests)<>1
+ OR (SELECT count(*) FROM public.payments)<>1
+ OR (SELECT sum(amount) FROM public.payments)<>80000
+ OR (SELECT count(*) FROM public.finance_reservation_idempotency)<>1
+ OR (SELECT last_value FROM public.fixture_transaction_number_seq)<>1
+ OR (SELECT status::text FROM public.rooms)<>'ready'
+ THEN RAISE EXCEPTION 'No5 FAIL: production Booking RPC, 40%% DP, or idempotency'; END IF;
+END;
+$booking_seed_verified$;
+\echo 'B25 No5: REAL create_reservation, DP 40%, same-key idempotency and room READY PASS'
 SET ROLE authenticated;
 
 DO $before_full_payment$
