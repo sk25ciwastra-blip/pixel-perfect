@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - fix/no6-closing-labels-actor-fallback-20261123
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 permissions:
   contents: read
