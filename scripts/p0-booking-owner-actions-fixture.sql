@@ -52,6 +52,8 @@ CREATE TABLE public.activity_logs (
 );
 
 GRANT SELECT ON public.transactions,public.rooms,public.payments TO authenticated;
+-- Match actual Lovable: UPDATE table grant exists, but RLS has no UPDATE policy.
+GRANT UPDATE ON public.transactions TO authenticated,anon;
 -- The real Cloud has a read-only authenticated transactions policy; fixture
 -- must reproduce it so client-role test subqueries can see synthetic rows.
 CREATE POLICY transactions_fixture_read ON public.transactions
