@@ -243,7 +243,22 @@ function HalamanKeuangan() {
   }
 
   async function submitDeposit() {
-    if (!selectedSession || !depositAmount) return;
+    if (!selectedSession) return;
+    const amount = Number(depositAmount);
+    if (!depositAmount.trim() || !Number.isSafeInteger(amount) || amount <= 0) {
+      setMessage('Nominal setoran wajib berupa rupiah bulat lebih dari nol.');
+      return;
+    }
+    if (depositMethod === 'Transfer') {
+      if (!depositBankId || !banks.rows.some((bank) => bank.active && bank.id === depositBankId)) {
+        setMessage('Metode Transfer memerlukan rekening Owner aktif yang dipilih.');
+        return;
+      }
+      if (!depositProof.trim()) {
+        setMessage('Bukti atau referensi transfer wajib diisi.');
+        return;
+      }
+    }
     await run(async () => {
       const { error } = await rpc(isTraining ? 'create_training_finance_deposit' : 'create_finance_deposit', {
         _idempotency_key: crypto.randomUUID(),
@@ -471,10 +486,11 @@ function HalamanKeuangan() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className={label}><span className="mb-1.5 block">Nominal Setoran</span><RpInput value={depositAmount} onChange={setDepositAmount} /></label>
                 <label className={label}><span className="mb-1.5 block">Metode Setoran</span><select value={depositMethod} onChange={(e) => setDepositMethod(e.target.value)} className={input}><option value="Transfer">Transfer Bank</option><option value="CASH">Cash</option></select></label>
-                {depositMethod === 'Transfer' && banks.rows.some((bank) => bank.active) && <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Rekening Tujuan</span><select value={depositBankId} onChange={(e) => setDepositBankId(e.target.value)} className={input}><option value="">Rekening Owner</option>{banks.rows.filter((bank) => bank.active).map((bank) => <option key={bank.id} value={bank.id}>{bank.bank_name} · {bank.account_number}</option>)}</select></label>}
+                {depositMethod === 'Transfer' && !banks.rows.some((bank) => bank.active) && <p role="alert" className="sm:col-span-2 text-xs text-bahaya-foreground">Belum ada rekening Owner aktif. Setoran Transfer belum dapat diajukan; aktifkan rekening melalui Pengaturan Keuangan terlebih dahulu.</p>}
+                 {depositMethod === 'Transfer' && banks.rows.some((bank) => bank.active) && <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Rekening Tujuan</span><select value={depositBankId} onChange={(e) => setDepositBankId(e.target.value)} className={input}><option value="">Rekening Owner</option>{banks.rows.filter((bank) => bank.active).map((bank) => <option key={bank.id} value={bank.id}>{bank.bank_name} · {bank.account_number}</option>)}</select></label>}
                 <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Referensi Transfer (Opsional)</span><input value={depositProof} onChange={(e) => setDepositProof(e.target.value)} className={input} placeholder="Contoh: TRF123456789" /></label>
               </div>
-              <Button className="mt-4 w-full gap-2" disabled={busy} onClick={() => void submitDeposit()}><Send size={16} aria-hidden="true" />Ajukan Setoran</Button>
+              <Button className="mt-4 w-full gap-2" disabled={busy || (depositMethod === 'Transfer' && !banks.rows.some((bank) => bank.active))} onClick={() => void submitDeposit()}><Send size={16} aria-hidden="true" />Ajukan Setoran</Button>
               {isOwner && deposits.rows.some((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER') && (
                 <div className="mt-5 border-t border-gold/15 pt-4">
                   <p className="mb-3 text-xs text-muted-foreground">Setoran menunggu konfirmasi Owner</p>
