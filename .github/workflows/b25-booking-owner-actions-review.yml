@@ -1,0 +1,79 @@
+name: B25 Booking Owner action focused review
+on:
+  push:
+    branches:
+      - feat/p0-booking-owner-actions-review-20261122
+    paths:
+      - src/routes/booking.tsx
+      - scripts/p0-booking-owner-actions-fixture.sql
+      - scripts/p0-booking-owner-actions-assertions.sql
+      - supabase/pending/20261122000003_booking_owner_cancel_reschedule_review.sql
+      - .github/workflows/b25-booking-owner-actions-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-booking-owner-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  booking-owner-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout code without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify TypeScript
+        run: npx tsc --noEmit
+      - name: Build Booking UI (no deploy)
+        run: npm run build
+
+  booking-owner-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout test-only source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Start disposable PostgreSQL 17
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name b25_booking_owner_review -e POSTGRES_PASSWORD=isolated-test-only -e POSTGRES_DB=postgres postgres:17
+          for i in {1..80}; do
+            if docker exec b25_booking_owner_review pg_isready -U postgres -d postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec b25_booking_owner_review pg_isready -U postgres -d postgres
+      - name: Apply candidate against synthetic schema, with only baseline stub hashes substituted
+        run: |
+          set -euo pipefail
+          docker exec -i b25_booking_owner_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-booking-owner-actions-fixture.sql
+          real_checkin="$(docker exec b25_booking_owner_review psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_in_booking(uuid)'::regprocedure")"
+          real_calc="$(docker exec b25_booking_owner_review psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.calculate_scheduled_booking_times(uuid,timestamp with time zone)'::regprocedure")"
+          real_reserve="$(docker exec b25_booking_owner_review psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamp with time zone,uuid,uuid,integer)'::regprocedure")"
+          for value in "$real_checkin" "$real_calc" "$real_reserve"; do test "${#value}" -eq 32; done
+          # Only in transient copy. Tracked SQL keeps actual Lovable Cloud hashes.
+          sed -e "s/fb29b1e4d72c71f5895ef8a1a1767387/$real_checkin/g" \
+              -e "s/b089ff12792ef26856ebf4b3ddc9a481/$real_calc/g" \
+              -e "s/14314995cf012335f18bd859da5b668b/$real_reserve/g" \
+            supabase/pending/20261122000003_booking_owner_cancel_reschedule_review.sql > "$RUNNER_TEMP/b25-booking-disposable.sql"
+          docker exec -i b25_booking_owner_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < "$RUNNER_TEMP/b25-booking-disposable.sql"
+      - name: Test Owner guards, scheduling, history, and payment preservation
+        run: |
+          set -euo pipefail
+          docker exec -i b25_booking_owner_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-booking-owner-actions-assertions.sql
+      - name: Always destroy fixture database
+        if: always()
+        run: docker rm -f b25_booking_owner_review || true
