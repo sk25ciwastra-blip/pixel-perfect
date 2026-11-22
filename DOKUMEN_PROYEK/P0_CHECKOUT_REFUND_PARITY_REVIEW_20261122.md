@@ -25,8 +25,9 @@ Patch sudah dibatasi `BEGIN/COMMIT`, `lock_timeout=5s`, `statement_timeout=30s`,
 ## Pengujian dan bukti yang tersedia
 
 - Source contract review statis memeriksa exact settlement, locking, tidak adanya trigger refund terlarang, status kamar, audit, SQL preflight serta ketiadaan mutasi data massal.
-- `scripts/p0-checkout-refund-parity-contract.test.cjs` disediakan untuk menjalankan pemeriksaan statis tanpa library tambahan: `node --test scripts/p0-checkout-refund-parity-contract.test.cjs`.
-- **Belum ada PASS PostgreSQL native pada patch ini.** Tool `psql`, `pg_restore`, `initdb`, `pg_ctl` tidak tersedia pada lingkungan pemeriksaan; jangan menyebut tes PostgREST, race, restore atau browser PASS.
+- `scripts/p0-checkout-refund-parity-contract.test.cjs` telah dijalankan pada GitHub Actions Node 22: **6/6 tests PASS, 0 FAIL**; [log run #44997920171](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/44997920171).
+- `scripts/p0-checkout-refund-disposable-fixture.sql` + `scripts/p0-checkout-refund-disposable-assertions.sql` diuji di **PostgreSQL 17 Docker ephemeral pada CI**; database tidak membuka port, tidak memakai secret Cloud dan dihancurkan pada akhir job.
+- **PASS PostgreSQL native PostgreSQL 17 disposable** melalui GitHub Actions [run #44997920171](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/44997920171) (22 November 2026): fixture sintetis, dua pekerjaan CI berhasil. Tes SQL memasang kandidat review ke database sementara dengan **hanya kedua fingerprint mock yang diganti dalam salinan tak terlacak** untuk mencocokkan fungsi checkout/refund tiruan; file migrasi asli tetap memakai hash tepat dari Cloud. Uji membuktikan: Checkout exact -> dirty, under/over/charge/refund-before shortfall ditolak, payment/charge setelah checkout diblokir, refund Owner dari OWNER_FUNDS/OPEN lewat mock berhasil, sumber sesi FINAL dan non-Owner ditolak, audit dan perubahan kamar diperiksa. **Bukan** PASS untuk full Cloud finance refund RPC, race dua sesi, browser, restore atau Cloud apply.
 - PASS native terdahulu untuk Finance/HK/Checkout di PR #73/#74 tetap dihormati; **hanya seam yang berubah berikut** perlu pengujian baru di database disposable.
 
 ### Skenario uji sempit untuk Codex (HARUS lulus sebelum izin Cloud)
