@@ -96,3 +96,20 @@ Berdasarkan inspeksi katalog fungsi Lovable, `public.check_out_transaction(uuid)
 Sesi kas OPEN tanggal **21 Okt 2026** yang tidak cocok dengan `public.employees` **BUKAN akun Auth hilang**: `auth.users` terkait **masih ada** dan `user_roles` menunjukkan **role Owner**. Akun memang tidak memiliki profil karyawan. Sesi itu memiliki pembayaran **Rp98.000 Cash + Rp338.000 QRIS = Rp436.000**, saldo awal `Rp0`. Perlu rekonsiliasi dan keputusan Owner sebelum closing melalui RPC yang benar; jangan menganggap akun tersebut orphan atau menulis ulang finance. Dua sesi OPEN lain adalah `QA-RCP-01` dan `B25EMP-002`, masing-masing pembayaran Rp0 pada snapshot ini.
 
 **Batas keputusan tetap:** 8 transaksi selesai yang sudah dikonfirmasi DEMO boleh dipersiapkan untuk proses arsip mendatang, bukan otomatis diarsipkan; 9 transaksi aktif belum termasuk daftar approval per-UUID dan memerlukan penyelesaian alur resmi. Semua temuan ini hanya pemetaan, **tidak mengubah data Cloud dan tidak mengubah status NO-GO**.
+
+
+## J. Gate resolusi transaksi aktif: checkout ≠ pembatalan Booking (SELECT-only, 22 Nov 2026)
+
+**Bukti kontrak Cloud + source PR #101:**
+- 6 `booking` dengan **7 pembayaran sejumlah Rp316.000** (1 booking dijadwalkan ke depan: 24 Des 2026; 1 tanpa jadwal): `BTRD25-000006`, `BTRD25-000010`, `BTRD25-000012`, `BTRD25-000014`, `BTRD25-000016`, `BTRDTRX-000021`.
+- 3 `check_in` dengan **6 pembayaran sejumlah Rp220.000**, kamar `03`, `06`, `07`: `BTRDTRX-000025`, `BTRD25-000019`, `BTRDTRX-000020`.
+- Katalog `pg_proc` pada schema `public` ditemukan `check_out_transaction(uuid)` serta wrapper Training. **Tidak ditemukan RPC resmi cancel booking.** Pencarian definisi fungsi `public` yang memuat literal `cancelled` hanya menghasilkan `record_transaction_payment(uuid,numeric,text,uuid,uuid)`, yang **melarang pembayaran bila transaksi sudah dibatalkan**, bukan menjalankan pembatalan. `src/routes/booking.tsx` dan `src/components/detail-transaksi.tsx` pada PR #101 juga tidak menyediakan aksi pembatalan Booking; teks `Batal` yang ada menutup dialog, bukan membatalkan transaksi. Enum transaksi memang mendukung `cancelled`, tetapi ketersediaan enum bukan bukti operasional.
+- Tidak ada policy `UPDATE` ke tabel `transactions` untuk role aplikasi; ini **bukan alasan** membuka akses UPDATE langsung. Jalur transaksi hanya boleh lewat RPC tervalidasi dan audit.
+
+**Keputusan gate:**
+1. Jalur Checkout 3 CHECK-IN dapat diinspeksi/diuji lewat fungsi resmi setelah verifikasi kamar nyata kosong dan persetujuan transaksi; fungsi mengubah kamar menjadi `dirty`, bukan READY. Housekeeping tetap wajib, tidak ada otomatisasi snapshot yang menghilangkan tunggakan.
+2. **6 Booking berbayar BLOCKED oleh kebutuhan alur pembatalan yang aman.** Jangan membuat check-in palsu agar bisa checkout/arsip. Prioritaskan [Issue #102 — pembatalan Booking berbayar](https://github.com/sk25ciwastra-blip/pixel-perfect/issues/102) sebagai gap fungsi operasional terpisah dari PR #101.
+3. Kebijakan refund/DP hangus belum diputuskan di issue ini. Jangan otomatis membatalkan pembayaran, menulis ulang closing FINAL, mereset saldo sesi OPEN, menganggap jadwal masa depan batal, atau mengubah komisi. Catat alasan Owner dan keputusan resmi lebih dulu.
+4. Status 9 aktif **tidak otomatis menjadi eligible untuk Arsip DEMO** meskipun seluruhnya data pengujian: arsip membutuhkan status historis sesuai guard, klasifikasi per UUID/nomor, dan izin Cloud yang terpisah.
+
+**Checkpoint:** gap fungsi `cancel booking` teridentifikasi secara spesifik; tidak ada mutasi, **NO-GO** tetap.
