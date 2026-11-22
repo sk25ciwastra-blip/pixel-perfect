@@ -1,0 +1,35 @@
+name: B25 Checkout refund parity focused source test
+on:
+  push:
+    branches:
+      - fix/p0-checkout-refund-parity-review-20261122
+    paths:
+      - .github/workflows/b25-checkout-refund-parity-review.yml
+      - scripts/p0-checkout-refund-parity-contract.test.cjs
+      - supabase/pending/20261122000002_checkout_settlement_refund_safe_review.sql
+      - supabase/migrations/20261019000001_harden_checkout_payment_settlement.sql
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-checkout-refund-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-source-checks:
+    if: github.ref == 'refs/heads/fix/p0-checkout-refund-parity-review-20261122'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: Checkout review branch without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate only targeted Checkout and refund contracts
+        run: node --test scripts/p0-checkout-refund-parity-contract.test.cjs
