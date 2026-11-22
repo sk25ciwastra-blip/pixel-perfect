@@ -74,3 +74,25 @@ Arsip metadata DEMO **tidak boleh mengubah** nominal sesi kas tersebut, closing/
 - Semua query pada checkpoint ini **SELECT-only**. Data bersifat snapshot per 22 November; hitungan status bisa berubah jika pengguna lain mengoperasikan sistem.
 - Tidak ada kredensial, HP, nama tamu, NIK, atau data sensitif lain yang disalin ke dokumen.
 - **Persentase cakupan inventaris:** 17/17 transaksi dan 3/3 sesi OPEN terpetakan; **bukan** persen kesiapan operasional. Aktivasi Cloud tetap **NO-GO**.
+
+## H. Pemetaan hambatan kamar dan fungsi backend (tambahan SELECT-only, 22 November 2026)
+
+Pemeriksaan aktual `public.transactions` JOIN `public.rooms`, tanpa membuka informasi identitas tamu, mengonfirmasi **3 kamar status `occupied`** yang tetap mengacu pada CHECK-IN lama:
+
+| Kamar | TRX CHECK-IN | Mulai aktual WIB | Batas tercatat WIB | Status kamar |
+|---|---|---|---|---|
+| 03 | `BTRDTRX-000025` | 12 Nov 2026 07.13 | 12 Nov 2026 08.58 | occupied |
+| 06 | `BTRD25-000019` | 22 Okt 2026 16.45 | 22 Okt 2026 18.45 | occupied |
+| 07 | `BTRDTRX-000020` | 22 Okt 2026 16.46 | 22 Okt 2026 18.46 | occupied |
+
+**Konsekuensi:** kamar 03, 06 dan 07 berpotensi tidak tersedia pada alur Check-in baru. Jangan paksa menjadi READY. Status hanya boleh berubah melalui penanganan tamu yang dipastikan selesai, **Check-out resmi → Housekeeping → READY** sesuai guard backend, dengan catatan audit yang benar. Tidak ada transaksi check-in baru, checkout, atau housekeeping yang dijalankan pada pemeriksaan.
+
+Enam BOOKING yang masih aktif berada di kamar: **05** (`BTRD25-000006`, tanpa jadwal), **06** (`BTRD25-000014`), **08** (`BTRD25-000010`, `BTRD25-000016`), dan **09** (`BTRD25-000012`, `BTRDTRX-000021`). Kamar 06 memiliki satu booking lama selain satu CHECK-IN aktif; ini bukan bukti jadwal overlap, tetapi perlu resolusi kedua identitas secara terpisah. **Booking 24 Desember** pada kamar 09 tidak boleh dibatalkan berdasar tanggal pembuatan lama.
+
+Berdasarkan inspeksi katalog fungsi Lovable, `public.check_out_transaction(uuid)` tersedia dan mewajibkan status `check_in` serta kamar `occupied`; prosedur mengubah transaksi menjadi `check_out` dan kamar menjadi **`dirty`**, bukan READY. Fungsi `close_finance_cash_session(uuid,jsonb,text)` tersedia dan memvalidasi otoritas operator, alokasi kas, transfer serta snapshot sebelum `FINAL`. Tidak ditemukan RPC bernama mengandung `cancel` pada katalog publik saat pemeriksaan; **ini tidak membuktikan ketiadaan jalur pembatalan lain**. Lakukan review jalur resmi Booking sebelum menetapkan cara menutup enam booking berbayar; jangan gunakan checkout palsu atau UPDATE status langsung.
+
+## I. Klarifikasi identitas sesi kas 21 Oktober (tambahan SELECT-only)
+
+Sesi kas OPEN tanggal **21 Okt 2026** yang tidak cocok dengan `public.employees` **BUKAN akun Auth hilang**: `auth.users` terkait **masih ada** dan `user_roles` menunjukkan **role Owner**. Akun memang tidak memiliki profil karyawan. Sesi itu memiliki pembayaran **Rp98.000 Cash + Rp338.000 QRIS = Rp436.000**, saldo awal `Rp0`. Perlu rekonsiliasi dan keputusan Owner sebelum closing melalui RPC yang benar; jangan menganggap akun tersebut orphan atau menulis ulang finance. Dua sesi OPEN lain adalah `QA-RCP-01` dan `B25EMP-002`, masing-masing pembayaran Rp0 pada snapshot ini.
+
+**Batas keputusan tetap:** 8 transaksi selesai yang sudah dikonfirmasi DEMO boleh dipersiapkan untuk proses arsip mendatang, bukan otomatis diarsipkan; 9 transaksi aktif belum termasuk daftar approval per-UUID dan memerlukan penyelesaian alur resmi. Semua temuan ini hanya pemetaan, **tidak mengubah data Cloud dan tidak mengubah status NO-GO**.
