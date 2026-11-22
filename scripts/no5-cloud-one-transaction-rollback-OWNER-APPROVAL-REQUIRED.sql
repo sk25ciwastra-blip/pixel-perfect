@@ -79,7 +79,7 @@ SELECT set_config('app.b25_no5_room_type',(SELECT id::text FROM public.room_type
 SELECT set_config('app.b25_no5_package',(SELECT id::text FROM public.packages WHERE name='Paket 2 Jam' AND active LIMIT 1),true);
 SELECT set_config('app.b25_no5_price',(SELECT (CASE WHEN public.get_operational_day_mode(((now()-interval '3 minutes') AT TIME ZONE 'Asia/Jakarta')::date)='weekday' THEN pr.weekday_price ELSE pr.weekend_price END)::text FROM public.package_room_type_prices pr WHERE pr.package_id=current_setting('app.b25_no5_package')::uuid AND pr.pricing_group='standard'),true);
 SELECT set_config('app.b25_no5_day',public.get_operational_day_mode(((now()-interval '3 minutes') AT TIME ZONE 'Asia/Jakarta')::date),true);
-SELECT set_config('app.b25_no5_dp',(SELECT CEIL(current_setting('app.b25_no5_price')::numeric*minimum_dp_value/100)::text FROM public.finance_settings ORDER BY created_at DESC LIMIT 1),true);
+SELECT set_config('app.b25_no5_dp',(SELECT CEIL(current_setting('app.b25_no5_price')::numeric*minimum_dp_value/100)::text FROM public.finance_settings ORDER BY updated_at DESC LIMIT 1),true);
 SELECT set_config('app.b25_no5_key_booking',gen_random_uuid()::text,true);
 SELECT set_config('app.b25_no5_key_payment',gen_random_uuid()::text,true);
 SELECT set_config('app.b25_no5_key_checklist',gen_random_uuid()::text,true);
