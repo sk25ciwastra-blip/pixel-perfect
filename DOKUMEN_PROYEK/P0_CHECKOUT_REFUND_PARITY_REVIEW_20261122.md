@@ -49,3 +49,15 @@ Patch sudah dibatasi `BEGIN/COMMIT`, `lock_timeout=5s`, `statement_timeout=30s`,
 ## Jaga pembagian pekerjaan
 
 **Codex**: review fungsi dan guard, jalankan uji PostgreSQL disposable sempit, revisi source berdasar hasil dan siapkan bukti PR. **Lovable**: tidak perlu desain ulang atau perubahan tombol untuk kasus ini. **Owner**: keputusan Cloud hanya setelah hasil konkret PASS dan backup restore. Aturan pembatalan Booking non-refundable serta perubahan jadwal maksimal 2 jam tetap ada pada Issue #102 dan tidak disentuh patch P0 ini.
+
+## Bukti baru: fungsi Refund Lovable asli di PostgreSQL 17 (22 November 2026)
+
+**PASS 3/3 pekerjaan GitHub Actions** pada [run #44998358564](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/44998358564). Definisi fungsi `public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text)` dibaca SELECT-only dari Lovable dan disimpan untuk uji di `scripts/fixtures/p0-cloud-refund-function-20261122.sql`, tanpa data tamu/karyawan, password atau kunci API.
+
+- Definisi fungsi refund benar-benar ASLI: checksum `md5(pg_proc.prosrc)=80bcdeabfc038907ee6dcea4d9d0e714` diperiksa di PostgreSQL disposable setelah fungsi dibuat. Tidak ada penyesuaian source refund untuk tes.
+- `scripts/p0-checkout-cloud-refund-fixture-extension.sql` hanya menambahkan dependensi tabel/kolom **sintetis** (RLS/hak akses dan helper `has_role` adalah simulasi). Pembayaran fixture berasal dari sesi kas FINAL dengan snapshot penutupan sintetis yang disegel.
+- `scripts/p0-checkout-cloud-refund-full-rpc-assertions.sql` PASS: Checkout lunas; refund Owner pasca-Checkout dari OWNER_FUNDS atau OPEN; retry idempotent dan payload mismatch; pembagian refund; komisi PERCENTAGE parsial/penuh dan PER_ROOM parsial/penuh; penolakan sumber FINAL; penolakan non-Owner; refund sebelum Checkout membuat netto kurang bayar dan Checkout ditolak; snapshot FINAL tidak berubah.
+- Dua pekerjaan lain juga tetap PASS: Node contract **6/6** dan basic disposable PostgreSQL 17 fixture.
+- **Batas:** Ini bukan Cloud/PostgREST/browser PASS, bukan kesetaraan skema & semua trigger Supabase nyata, dan bukan bukti backup/restore PASS. Auth role dan tabel Finance sebagian masih sintetis; belum ada uji race dua koneksi pada patch baru.
+- **Lanjut terarah:** uji race Checkout vs pembayaran/refund menggunakan dua koneksi PG17 disposable; lalu restore dari backup terbaru. Jangan ulang suite lama yang sudah PASS.
+
