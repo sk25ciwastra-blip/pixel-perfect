@@ -1,0 +1,63 @@
+name: B25 No5 disposable positive operational cycle (Cloud RPC bodies)
+on:
+  push:
+    branches:
+      - test/p0-5-positive-cycle-cloud-source-20261122
+    paths:
+      - .github/workflows/b25-no5-positive-operational-cycle-review.yml
+      - scripts/fixtures/no5-positive-cloud-rpc-source.sql
+      - scripts/no5-positive-operational-cycle-assertions.sql
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-no5-positive-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-cloud-rpc-bodies-disposable-pg17:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout reviewed source without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Start ephemeral PostgreSQL 17 (no host network port)
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name b25_no5_positive -e POSTGRES_PASSWORD=synthetic-only -e POSTGRES_DB=postgres postgres:17
+          for i in {1..70}; do
+            if docker exec b25_no5_positive pg_isready -U postgres -d postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec b25_no5_positive pg_isready -U postgres -d postgres
+      - name: Install synthetic schema plus five unmodified Cloud function definitions
+        run: |
+          set -euo pipefail
+          docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/fixtures/no5-positive-cloud-rpc-source.sql
+      - name: Verify all five copied production function body hashes
+        run: |
+          set -euo pipefail
+          docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          DO $hashes$
+          BEGIN
+            IF (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.record_transaction_payment(uuid,numeric,text,uuid,uuid)'::regprocedure)<>'e9e88c3e70c76450ecc89744adc78471'
+              OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_in_booking(uuid)'::regprocedure)<>'fb29b1e4d72c71f5895ef8a1a1767387'
+              OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_out_transaction(uuid)'::regprocedure)<>'2ab65aa2ebd66574f858dc3ff54e7c7f'
+              OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.advance_room_cleaning(uuid,text)'::regprocedure)<>'0eb3730060a3a005bfec097f42ae3810'
+              OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.complete_housekeeping_checklist(uuid,uuid,boolean,boolean,boolean,boolean,boolean,boolean,boolean,text)'::regprocedure)<>'8c9dbcabf70646f89c047291cd81c0f2'
+            THEN RAISE EXCEPTION 'No5 Cloud RPC function body mismatch in disposable PG17'; END IF;
+          END;
+          $hashes$;
+          SQL
+          echo 'B25 No5: five exact Cloud RPC body fingerprints PASS'
+      - name: Run full positive payment to checkout to HK to READY cycle
+        run: |
+          set -euo pipefail
+          docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/no5-positive-operational-cycle-assertions.sql
+      - name: Destroy test-only PostgreSQL cluster
+        if: always()
+        run: docker rm -f b25_no5_positive || true
