@@ -74,7 +74,7 @@ pass('Report owner load/error includes refund ledger to avoid misleading zero',(
 });
 pass('Report uses one corrected net in UI and CSV',()=>{
  assert.ok(report.includes('hitungArusKasBersih(penerimaan, biaya, refundTotal)'));
- assert.ok(report.includes('refund: refundTotal ?? undefined'));
+ assert.ok(report.includes('...(isOwner ? { refund: refundTotal ?? 0 } : {})'));
  assert.ok(report.includes('{labelHasil}'));
 });
 pass('No effect on physical session Closing, refund posting or payment RPC',()=>{
