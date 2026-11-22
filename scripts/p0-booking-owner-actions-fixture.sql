@@ -46,6 +46,8 @@ CREATE TABLE public.activity_logs (
  created_at timestamptz NOT NULL DEFAULT now()
 );
 
+GRANT SELECT ON public.transactions,public.rooms,public.payments TO authenticated;
+
 CREATE FUNCTION public.has_role(actor uuid,wanted public.app_role) RETURNS boolean
 LANGUAGE sql STABLE AS $$
  SELECT wanted='owner'::public.app_role
