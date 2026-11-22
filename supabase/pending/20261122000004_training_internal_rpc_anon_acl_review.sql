@@ -39,7 +39,7 @@ BEGIN
       )
       OR NOT has_function_privilege('anon',function_id,'EXECUTE')
       OR has_function_privilege('authenticated',function_id,'EXECUTE')
-      OR has_function_privilege('PUBLIC',function_id,'EXECUTE')
+      OR EXISTS (SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) acl WHERE p.oid=function_id AND acl.grantee=0 AND acl.privilege_type='EXECUTE')
       OR NOT has_function_privilege('service_role',function_id,'EXECUTE')
     THEN
       RAISE EXCEPTION 'STOP B25 backend ACL: function drift or repeat installation: %', contract.signature;
@@ -82,7 +82,7 @@ BEGIN
   IF function_id IS NULL
      OR has_function_privilege('anon',function_id,'EXECUTE')
      OR has_function_privilege('authenticated',function_id,'EXECUTE')
-     OR has_function_privilege('PUBLIC',function_id,'EXECUTE')
+     OR EXISTS (SELECT 1 FROM pg_proc p CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) acl WHERE p.oid=function_id AND acl.grantee=0 AND acl.privilege_type='EXECUTE')
      OR NOT has_function_privilege('service_role',function_id,'EXECUTE')
      OR (SELECT md5(prosrc) FROM pg_proc WHERE oid=function_id)<>contract.source_md5
   THEN RAISE EXCEPTION 'STOP B25 backend ACL postcheck failed: %',contract.signature; END IF;
