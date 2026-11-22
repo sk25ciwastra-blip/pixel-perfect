@@ -1,0 +1,76 @@
+# Baturaden 25 Homestay — Checkpoint Transisi Data DEMO → Operasional Nyata
+**Tanggal pemeriksaan:** 22 November 2026 WIB  
+**Sumber:** GitHub PR #101 (implementasi Arsip DEMO `48ae83e` sebelum checkpoint ini) dan Lovable Cloud PostgreSQL (SELECT-only).  
+**Status:** RENCANA/GATE; **NO-GO aktivasi**. Tidak ada operasi mutasi Cloud, SQL migrasi, arsip, closing, refund, merge, deploy, atau publish yang dilakukan saat membuat checkpoint ini.
+
+## A. Batas dan keputusan Owner yang sudah ada
+
+1. Owner secara eksplisit mengonfirmasi **8 transaksi `check_out`** di bagian B sebagai DEMO pada 22 November 2026. Keputusan itu **hanya klasifikasi**; belum memberi izin menerapkan migrasi Cloud, memasukkan approval ke database, atau mengarsipkan data.
+2. Transaksi aktif lainnya **belum termasuk persetujuan 8 transaksi per-nomor**. Status `booking` dan `check_in` dilindungi RPC; jangan mengarsipkan, memanipulasi status via SQL, menghapus pembayaran, atau melakukan pembatalan/refund/checkout tanpa keputusan dan prosedur operasional yang sesuai.
+3. Aturan Owner tetap berlaku: closing kas boleh minus dan tidak ada fitur/talangan pribadi; histori closing FINAL tidak boleh ditulis ulang; identitas TRX, pembayaran, komisi, struk, audit dan bukti HK harus dipertahankan.
+4. Kode fungsi/RPC dan tes tetap dikerjakan Codex, visual Lovable. Jangan mengulang suite lama yang sudah PASS. Rencana ini tidak mengubah prioritas operasional menjadi proyek tambahan yang tidak kritis.
+
+## B. Persetujuan klasifikasi: tepat 8 transaksi historis (read-only cocok ulang)
+
+| Nomor TRX | UUID Lovable (dicocokkan read-only) | Status | Pembayaran |
+|---|---|---|---:|
+| BTRD25-000002 | `5617455d-c6d4-4b73-99ca-ef30a8ee5a00` | check_out | 1 |
+| BTRD25-000004 | `e72fc83d-d18f-4064-bf03-86a50de27d90` | check_out | 1 |
+| BTRD25-000008 | `d6b35607-0a71-48e8-acd5-1b30de344c36` | check_out | 2 |
+| BTRD25-000018 | `37aecc2d-f414-46b9-839c-d3beedc3142a` | check_out | 1 |
+| BTRDTRX-000026 | `8a44b799-30e9-4a7a-bcc1-d4f9ec1fb4f3` | check_out | 1 |
+| BTRDTRX-000027 | `0ff660a1-9d61-4021-ae68-28a7a23df9c2` | check_out | 2 |
+| BTRDTRX-000028 | `bbe16673-ac9d-4672-a758-6098dcd08134` | check_out | 2 |
+| BTRDTRX-000029 | `1c8a9e0a-e2f9-4cc5-b273-449eb97e22c1` | check_out | 1 |
+
+**Snapshot terkait 8 TRX, bukan instruksi perubahan saldo:** 11 baris pembayaran = **Rp820.000**, jumlah price_snapshot = **Rp820.000**, komisi snapshot pada pembayaran = **Rp22.000**; Housekeeping: 12 history, 6 checklists, 5 jobs; refund 0; official payment receipts 0. Dua TRX (`000028`, `000029`) terhubung ke pembayaran sesi kas FINAL; dua TRX (`000026`, `000027`) ke sesi kas OPEN. Jangan menyamakan belum ada struk resmi dengan tidak adanya bukti pembayaran.
+
+## C. 9 transaksi masih aktif: inventaris, **belum diizinkan untuk arsip**
+
+| Nomor | Status saat pemeriksaan | Pembayaran | Nilai pembayaran | Catatan |
+|---|---|---:|---:|---|
+| BTRD25-000006 | booking | 2 | Rp100.000 | Jadwal check-in belum ada |
+| BTRD25-000010 | booking | 1 | Rp10.000 | Jadwal 7 Okt 2026 |
+| BTRD25-000012 | booking | 1 | Rp10.000 | Jadwal **24 Des 2026**, di masa depan saat pemeriksaan |
+| BTRD25-000014 | booking | 1 | Rp70.000 | Jadwal 12 Okt 2026 |
+| BTRD25-000016 | booking | 1 | Rp70.000 | Jadwal 12 Okt 2026 |
+| BTRDTRX-000021 | booking | 1 | Rp56.000 | Jadwal 5 Nov 2026 |
+| BTRD25-000019 | check_in | 2 | Rp70.000 | Belum checkout |
+| BTRDTRX-000020 | check_in | 2 | Rp70.000 | Belum checkout |
+| BTRDTRX-000025 | check_in | 2 | Rp80.000 | Belum checkout |
+
+Total aktif: **9 TRX, 13 pembayaran, Rp536.000**. Ini hanya inventaris. Semua transaksi bertanda aktif wajib mendapat keputusan penanganan sendiri; jangan memaksakan `check_out` atau `cancelled` lewat SQL demi masuk allowlist.
+
+**Khusus booking 24 Desember:** jangan dianggap kedaluwarsa atau dibatalkan otomatis. Lakukan verifikasi klasifikasi dan jadwal sebelum tindakan apa pun.
+
+## D. 3 sesi kas berstatus OPEN (read-only)
+
+| Tanggal operasional | Identitas yang terhubung | Pembayaran tercatat | Kondisi |
+|---|---|---:|---|
+| 21 Oktober 2026 | `opened_by` tidak cocok dengan baris `public.employees`; **belum tentu akun orphan**, perlu identifikasi role melalui prosedur terbatas | **10 pembayaran, Rp436.000** | Sebanyak **Rp160.000** dari 2 TRX di bagian B; **Rp276.000** dari transaksi lain |
+| 5 November 2026 | `QA-RCP-01` (Receptionist) | **0 pembayaran, Rp0** | Tetap OPEN meski tanpa pembayaran |
+| 21 November 2026 | **`B25EMP-002` (Receptionist)** | **0 pembayaran, Rp0** | **Jangan ditutup otomatis**; akun karyawan operasional yang dipersiapkan |
+
+Arsip metadata DEMO **tidak boleh mengubah** nominal sesi kas tersebut, closing/snapshot FINAL, atau jejak pembayaran. Sesi OPEN dengan Rp0 tidak otomatis layak ditutup: cek tanggung jawab petugas, handover, dan prosedur closing yang benar. Tidak ada `UPDATE status='FINAL'` manual.
+
+## E. Gate bertahap menuju transaksi nyata
+
+1. **Gate 0 — baseline data (SELESAI read-only):** inventaris semua 17 TRX dan semua 3 sesi OPEN; klasifikasi Owner disahkan hanya untuk 8 TRX di bagian B. Snapshot total 24 pembayaran = **Rp1.356.000** seluruh transaksi; angka ini masih mencampur aktivitas pengujian dan tidak boleh diberi label pendapatan LIVE.
+2. **Gate 1 — review deployment/migrasi (PENDING):** PR #101 harus melalui pemeriksaan kontrak Auth/RLS/trigger/Realtime aktual Lovable, backup + bukti restore, dan browser end-to-end menggunakan fixture terisolasi. Preview Lovable terakhir masih di commit `bdabf17`, sementara kode PR Arsip DEMO di `48ae83e` sebelum checkpoint ini. Tidak boleh menyebut browser PASS tanpa menjalankannya.
+3. **Gate 2 — penanganan 9 TRX aktif (PENDING):** Owner menetapkan status DEMO/LIVE per-nomor, lalu operator menangani Booking/Check-in dengan alur resmi dan audit. Booking masa depan tidak boleh otomatis dianggap tidak berlaku.
+4. **Gate 3 — rekonsiliasi 3 sesi OPEN (PENDING):** identifikasi penanggung jawab aktual, verifikasi pembayaran/serah-terima, selesaikan closing melalui fungsi resmi bila diizinkan dan layak. Sesi kas `B25EMP-002` harus dievaluasi dengan pemilik sesi yang sah. FINAL yang sudah ada tetap immutable; tidak ada talangan pribadi.
+5. **Gate 4 — pelaksanaan arsip (BELUM DIIZINKAN):** setelah approval **terpisah** untuk migrasi Cloud dan daftar izin privat, review ulang UUID+nomor+status ke-8 TRX di bagian B, baru proses masing-masing via RPC Owner dengan konfirmasi persis dan audit. **Bukan** mass-update SQL, bukan otomatis menjalankan seluruh 8.
+6. **Gate 5 — pembuktian kesiapan (PENDING):** uji nyata Login Owner/Receptionist/Supervisor sesuai role, Booking → Check-in → pembayaran → Checkout → HK → READY, pembacaan Laporan/Keuangan/struk serta saldo, tanpa duplikasi TRX atau transaksi silang. Status GO hanya setelah hasil aktual di Lovable Cloud dibuktikan.
+
+## F. Cara memahami dashboard dan laporan
+
+- Halaman operasional dapat menyembunyikan TRX yang sudah diarsipkan, tetapi **Keuangan dan Laporan historis tetap memuat pembayaran, komisi, refund, dan closing**; penanda Arsip DEMO harus terlihat.
+- Sebelum menerima data riil, **pisahkan KPI DEMO dan LIVE** untuk tujuan analisis bisnis secara jelas; jangan menghapus/merubah ledger sejarah hanya untuk membuat grafik terlihat nol.
+- Jika angka sesudah uji tidak cocok dengan snapshot atau schema Cloud tidak cocok dengan migrasi, **STOP/NO-GO** dan selesaikan gap. Jangan lakukan “reset semua” tanpa review dependensi.
+
+## G. Catatan bukti dan pembatasan
+
+- Referensi: [PR #101](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/101); [konfirmasi Owner 8 DEMO](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/101#issuecomment-7075086923); [preflight katalog](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/101#issuecomment-7075009315); [rekonsiliasi kas awal](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/101#issuecomment-7075139087).
+- Semua query pada checkpoint ini **SELECT-only**. Data bersifat snapshot per 22 November; hitungan status bisa berubah jika pengguna lain mengoperasikan sistem.
+- Tidak ada kredensial, HP, nama tamu, NIK, atau data sensitif lain yang disalin ke dokumen.
+- **Persentase cakupan inventaris:** 17/17 transaksi dan 3/3 sesi OPEN terpetakan; **bukan** persen kesiapan operasional. Aktivasi Cloud tetap **NO-GO**.
