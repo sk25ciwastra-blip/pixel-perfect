@@ -1,6 +1,6 @@
 import { rpc } from "@/lib/data-live";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import {
   Info,
   CreditCard,
@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import panorama from "@/assets/panorama-kota-malam.png.asset.json";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
 import { PopupBerhasil } from "@/components/check-in-berhasil";
+import { PopupKonfirmasiCheckOut } from "@/components/popup-konfirmasi-checkout";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { usePeran } from "@/lib/peran";
@@ -217,6 +218,18 @@ function Ringkasan() {
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
   const [detailExpenseId, setDetailExpenseId] = useState<string | null>(null);
   const [checkingOutId, setCheckingOutId] = useState<string | null>(null);
+  const [checkoutPrompt, setCheckoutPrompt] = useState<{
+    itemId: string;
+    roomNumber: string;
+    guestName: string;
+    transactionNumber: string;
+    trigger: HTMLButtonElement;
+  } | null>(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState<{
+    roomNumber: string;
+    guestName: string;
+    transactionNumber: string;
+  } | null>(null);
   const [dashboardMessage, setDashboardMessage] = useState("");
   const [overtimeNoticeTrigger, setOvertimeNoticeTrigger] = useState<HTMLButtonElement | null>(null);
   const [pencarian, setPencarian] = useState("");
@@ -343,49 +356,72 @@ function Ringkasan() {
     return "";
   }
 
-  async function checkOut(itemId: string) {
+  function requestCheckOut(itemId: string, trigger: HTMLButtonElement) {
+    if (checkingOutId !== null) return;
     const item = transactions.rows.find((transaction) => transaction.id === itemId);
     const room = kamar.find((roomItem) => roomItem.id === item?.room_id);
     const guest = guests.rows.find((guestItem) => guestItem.id === item?.guest_id);
-
     if (!item || !room || item.status !== "check_in" || room.status !== "occupied") {
+      setDashboardMessage("Check-out gagal: transaksi atau status kamar sudah berubah.");
+      void Promise.all([transactions.refresh(), rooms.refresh()]);
+      return;
+    }
+    const reason = checkoutDisabledReason(item, room);
+    if (reason) {
+      setDashboardMessage(`Check-out belum dapat dilakukan: ${reason}`);
+      return;
+    }
+    setCheckoutPrompt({
+      itemId: item.id, roomNumber: room.room_number,
+      guestName: guest?.full_name ?? "Tamu tidak tersedia",
+      transactionNumber: item.transaction_number, trigger,
+    });
+  }
+
+  async function confirmCheckOut() {
+    const prompt = checkoutPrompt;
+    if (!prompt || checkingOutId !== null) return;
+    // Recheck access, settlement, active stay and room status after confirmation.
+    const item = transactions.rows.find((transaction) => transaction.id === prompt.itemId);
+    const room = kamar.find((roomItem) => roomItem.id === item?.room_id);
+    if (!item || !room || item.status !== "check_in" || room.status !== "occupied") {
+      setCheckoutPrompt(null);
       setDashboardMessage("Check-out gagal: transaksi atau status kamar sudah berubah.");
       await Promise.all([transactions.refresh(), rooms.refresh()]);
       return;
     }
-
-    const disabledReason = checkoutDisabledReason(item, room);
-    if (disabledReason) {
-      setDashboardMessage(`Check-out belum dapat dilakukan: ${disabledReason}`);
+    const reason = checkoutDisabledReason(item, room);
+    if (reason) {
+      setCheckoutPrompt(null);
+      setDashboardMessage(`Check-out belum dapat dilakukan: ${reason}`);
       return;
     }
-
-    const confirmed = window.confirm(
-      `Konfirmasi Check-out\n\nKamar: ${room.room_number}\nTamu: ${guest?.full_name ?? "Tamu tidak tersedia"}\nNo. Transaksi: ${item.transaction_number}\n\nKamar akan masuk alur Housekeeping setelah berhasil.`,
-    );
-
-    if (!confirmed) return;
-
     setCheckingOutId(item.id);
     setDashboardMessage("");
-
     try {
       const { error } = await rpc(
-        isCheckoutTraining
-          ? "check_out_training_transaction"
-          : "check_out_transaction",
+        isCheckoutTraining ? "check_out_training_transaction" : "check_out_transaction",
         isCheckoutTraining
           ? { _transaction_id: item.id, _session_id: checkoutSessionId }
           : { _transaction_id: item.id },
       );
-
       if (error) {
+        setCheckoutPrompt(null);
         setDashboardMessage(`Check-out gagal: ${error.message}`);
         return;
       }
-
-      await Promise.all([transactions.refresh(), rooms.refresh(), payments.refresh()]);
-      setDashboardMessage(`Check-out ${item.transaction_number} berhasil. Kamar masuk alur Housekeeping.`);
+      setCheckoutPrompt(null);
+      // A successful RPC, never a mere confirmation, opens the success popup.
+      setCheckoutSuccess({ roomNumber: prompt.roomNumber, guestName: prompt.guestName, transactionNumber: item.transaction_number });
+      try {
+        await Promise.all([transactions.refresh(), rooms.refresh(), payments.refresh()]);
+        setDashboardMessage(`Check-out ${item.transaction_number} berhasil. Kamar masuk alur Housekeeping.`);
+      } catch {
+        setDashboardMessage("Check-out berhasil; tampilan belum diperbarui. Muat ulang untuk memeriksa status kamar.");
+      }
+    } catch {
+      setCheckoutPrompt(null);
+      setDashboardMessage("Hasil Check-out belum pasti. Periksa status transaksi sebelum mencoba kembali.");
     } finally {
       setCheckingOutId(null);
     }
@@ -822,7 +858,7 @@ function Ringkasan() {
                                     label={checkoutDisabled ? checkoutReason || "Check-out sedang diproses" : "Check-out"}
                                     disabled={checkoutDisabled}
                                     kelas="text-bahaya-foreground"
-                                    onClick={() => void checkOut(item.id)}
+                                    onClick={(event) => requestCheckOut(item.id, event.currentTarget)}
                                   ><LogOut className="h-4 w-4" /></IkonAksi>}
                                 </div>
                               ) : <span className="block text-center text-[11px] text-muted-foreground">—</span>}
@@ -961,7 +997,35 @@ function Ringkasan() {
           onClose={() => setOvertimeNoticeTrigger(null)}
         />
       )}
-      {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />}
+      {checkoutPrompt && (
+        <PopupKonfirmasiCheckOut
+          roomNumber={checkoutPrompt.roomNumber}
+          guestName={checkoutPrompt.guestName}
+          transactionNumber={checkoutPrompt.transactionNumber}
+          processing={checkingOutId === checkoutPrompt.itemId}
+          trigger={checkoutPrompt.trigger}
+          onCancel={() => { if (checkingOutId === null) setCheckoutPrompt(null); }}
+          onConfirm={() => void confirmCheckOut()}
+        />
+      )}
+      {checkoutSuccess && (
+        <PopupBerhasil
+          title="Check-out Berhasil!"
+          subtitle="Transaksi selesai dan kamar masuk alur Housekeeping."
+          number={checkoutSuccess.transactionNumber}
+          onClose={() => setCheckoutSuccess(null)}
+        >
+          <dl className="cib-details">
+            <div className="cib-row"><BedDouble /><dt>Kamar</dt><span>:</span><dd>{checkoutSuccess.roomNumber}</dd></div>
+            <div className="cib-row"><FileText /><dt>Tamu</dt><span>:</span><dd>{checkoutSuccess.guestName}</dd></div>
+            <div className="cib-row"><Brush /><dt>Berikutnya</dt><span>:</span><dd>Housekeeping</dd></div>
+          </dl>
+          <div className="cib-actions cib-actions-single mt-4">
+            <Button type="button" className="cib-digital" onClick={() => setCheckoutSuccess(null)}>Selesai</Button>
+          </div>
+        </PopupBerhasil>
+      )}
+      {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />
       {modal === "booking" && <FormulirPemesanan mode="booking" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {modal === "pengeluaran" && (
         <FormulirPengeluaran
@@ -1107,7 +1171,7 @@ function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; j
   );
 }
 
-function IkonAksi({ label, disabled, kelas = "text-gold-light", onClick, children }: { label: string; disabled?: boolean; kelas?: string; onClick: () => void; children: React.ReactNode }) {
+function IkonAksi({ label, disabled, kelas = "text-gold-light", onClick, children }: { label: string; disabled?: boolean; kelas?: string; onClick: (event: MouseEvent<HTMLButtonElement>) => void; children: React.ReactNode }) {
   return (
     <span title={label} className="inline-flex shrink-0">
     <Button
