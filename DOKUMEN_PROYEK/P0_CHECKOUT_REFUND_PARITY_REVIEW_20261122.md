@@ -61,3 +61,24 @@ Patch sudah dibatasi `BEGIN/COMMIT`, `lock_timeout=5s`, `statement_timeout=30s`,
 - **Batas:** Ini bukan Cloud/PostgREST/browser PASS, bukan kesetaraan skema & semua trigger Supabase nyata, dan bukan bukti backup/restore PASS. Auth role dan tabel Finance sebagian masih sintetis; belum ada uji race dua koneksi pada patch baru.
 - **Lanjut terarah:** uji race Checkout vs pembayaran/refund menggunakan dua koneksi PG17 disposable; lalu restore dari backup terbaru. Jangan ulang suite lama yang sudah PASS.
 
+
+## Bukti uji empat race dua koneksi — 22 November 2026 WIB
+
+**PASS 4/4 pada PostgreSQL 17 disposable dengan penguncian nyata**, bukti [GitHub Actions #45008572305](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/45008572305), commit pengujian `2640880d39245b13e0d14cb402897ff0b9c4db77`. Ini adalah **workflow baru khusus race**, bukan pengulangan suite Node/Finance/HK yang telah PASS.
+
+Fixture `scripts/p0-checkout-refund-race-fixture.sql` menciptakan 4 transaksi/kamar sintetis. `scripts/p0-checkout-refund-two-session-races.sh` menjalankan **dua koneksi psql paralel** pada masing-masing kasus, memverifikasi sesi waiter terblokir pada transaksi dengan `pg_blocking_pids(pid)` sebelum melepaskan holder, lalu menghitung hasil finansial, status kamar/transaksi, jumlah audit dan immutable `closing_snapshot` sesi FINAL. Semua kondisi PASS:
+
+| Kasus | Urutan lock yang dibuktikan | Hasil committed |
+|---|---|---|
+| 09 | Checkout memegang kunci, INSERT pembayaran menunggu | Checkout `check_out`, kamar `dirty`; pembayaran yang tiba setelah checkout **ditolak**, nominal pembayaran tidak berubah |
+| 10 | Refund Owner lewat **fungsi Lovable asli** memegang kunci, Checkout menunggu | Refund Rp15.000 tercatat; Checkout menghitung ulang netto dan **menolak kekurangan Rp15.000**; kamar tetap `occupied` |
+| 11 | INSERT pembayaran Rp30.000 memegang kunci, Checkout menunggu | Pembayaran 70.000+30.000 menjadi 100.000; Checkout tepat lunas **berhasil**, kamar `dirty` |
+| 12 | Checkout memegang kunci, refund Owner lewat **fungsi Lovable asli** menunggu | Checkout selesai; refund Owner pasca-Checkout Rp5.000 **berhasil** tanpa menulis ulang closing FINAL |
+
+**Log CI menyatakan** `B25 TWO-CONNECTION RACES: 4/4 PASS, FINAL IMMUTABLE`; 4 kejadian `pg_blocking_pids confirmed real wait`. Cleanup Docker PostgreSQL 17 **SUCCESS**. Tidak ada perubahan Lovable Cloud atau data DEMO.
+
+**Jejak perbaikan tes:** attempt pertama [run #45008519230](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/45008519230) FAIL karena kesalahan interpolasi penanda pada skrip Bash (`$n_OK` dibaca sebagai variabel lain), **bukan SQL**. Marker diperbaiki saja pada commit `2640880`; rerun hanya workflow race PASS. FAIL awal dipertahankan untuk audit transparan.
+
+**Batas:** skema Auth/Finance pendukung masih sintetis; fungsi refund Cloud terverifikasi identik MD5 tetapi dieksekusi di PG17 disposable, bukan Lovable LIVE atau PostgREST. Ini belum membuktikan restore backup terbaru, privilege parity lengkap, serialisasi semua jalur uang, UAT Receptionist browser, atau GO operasional. **NO-GO Cloud tetap**.
+
+**Tindakan berikutnya:** jangan mengulang empat race PASS. Beralih ke pemulihan backup Lovable **terbaru** dengan bukti isolated restore beserta Auth/RLS/ACL/Storage; baru kemudian preflight Cloud ulang dan izin Owner terpisah untuk migrasi.
