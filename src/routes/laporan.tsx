@@ -10,6 +10,7 @@ import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
 import { dalamPeriode, rentangLaporan, tanggalLaporan } from '@/lib/laporan-periode';
 import { buatCsvLaporan } from '@/lib/laporan-export';
+import { hitungArusKasBersih, labelHasilArusKas } from '@/lib/laporan-arus-kas';
 import { transaksiBelumDiarsipkan } from '@/lib/demo-archive';
 import '@/components/laporan.css';
 
@@ -35,12 +36,16 @@ const tanggalTeks = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDate
 
 function Halaman() {
   const { peran, posisiKode } = usePeran();
+  const isOwner = peran === 'owner';
   const canViewHousekeeping = peran === 'owner' || ['supervisor', 'housekeeping', 'inspector'].includes(posisiKode ?? '');
   const { bagian = 'operasional' } = Route.useSearch();
   const sessions = useTable('finance_cash_sessions');
   const payments = useTable('payments');
   const transactions = useTable('transactions');
   const expenses = useTable('finance_expenses');
+  // Cloud RLS only permits Owner to see all refund records; never pretend that
+  // staff's partial refund visibility is a complete net cash-flow ledger.
+  const refunds = useTable('finance_refunds', isOwner);
   const guests = useTable('guests');
   const [pilihan, setPilihan] = useState(1);
   const [periode, setPeriode] = useState(() => rentangLaporan(1));
@@ -51,29 +56,35 @@ function Halaman() {
 
   const bayarPeriode = payments.rows.filter(p => dalamPeriode(p.created_at, periode));
   const biayaPeriode = expenses.rows.filter(p => dalamPeriode(p.created_at, periode));
+  const refundPeriode = isOwner ? refunds.rows.filter(r => dalamPeriode(r.created_at, periode)) : [];
   const trxPeriode = transactions.rows.filter(t => dalamPeriode(t.created_at, periode));
   const jumlahArsip = trxPeriode.filter(t => !transaksiBelumDiarsipkan(t)).length;
   const penerimaan = bayarPeriode.reduce((sum, p) => sum + Number(p.amount), 0);
   const biaya = biayaPeriode.reduce((sum, p) => sum + Number(p.amount), 0);
+  const refundTotal = isOwner ? refundPeriode.reduce((sum, r) => sum + Number(r.amount), 0) : null;
+  const arusKasBersih = hitungArusKasBersih(penerimaan, biaya, refundTotal);
+  const hasilTercatat = arusKasBersih ?? penerimaan - biaya;
+  const labelHasil = labelHasilArusKas(isOwner);
   const perMetode = bayarPeriode.reduce<Record<string, number>>((acc, p) => { acc[p.method] = (acc[p.method] ?? 0) + Number(p.amount); return acc; }, {});
   const rekap = useMemo(() => {
-    const tanggal = new Set([...payments.rows, ...expenses.rows, ...transactions.rows].filter(p => dalamPeriode(p.created_at, periode)).map(p => tanggalLaporan(p.created_at)));
+    const tanggal = new Set([...payments.rows, ...expenses.rows, ...transactions.rows, ...(isOwner ? refunds.rows : [])].filter(p => dalamPeriode(p.created_at, periode)).map(p => tanggalLaporan(p.created_at)));
     return [...tanggal].sort().reverse().map(tgl => {
       const trx = transactions.rows.filter(t => tanggalLaporan(t.created_at) === tgl);
       return {
         tgl, transaksi: trx.length, arsipDemo: trx.filter(t => !transaksiBelumDiarsipkan(t)).length,
         masuk: payments.rows.filter(p => tanggalLaporan(p.created_at) === tgl).reduce((sum, p) => sum + Number(p.amount), 0),
         keluar: expenses.rows.filter(p => tanggalLaporan(p.created_at) === tgl).reduce((sum, p) => sum + Number(p.amount), 0),
+        refund: isOwner ? refunds.rows.filter(r => tanggalLaporan(r.created_at) === tgl).reduce((sum, r) => sum + Number(r.amount), 0) : undefined,
       };
     });
-  }, [payments.rows, expenses.rows, transactions.rows, periode]);
-  const loading = payments.loading || expenses.loading || transactions.loading;
-  const gagal = payments.error || expenses.error || transactions.error || sessions.error;
+  }, [payments.rows, expenses.rows, transactions.rows, refunds.rows, isOwner, periode]);
+  const loading = payments.loading || expenses.loading || transactions.loading || (isOwner && refunds.loading);
+  const gagal = payments.error || expenses.error || transactions.error || sessions.error || (isOwner ? refunds.error : '');
   function exportCsv() {
     if (loading || gagal) return;
     const csv = buatCsvLaporan({
       awal: periode.awal, akhir: periode.akhir,
-      penerimaan, pengeluaran: biaya, jumlahTransaksi: trxPeriode.length, jumlahArsipDemo: jumlahArsip,
+      penerimaan, pengeluaran: biaya, refund: refundTotal ?? undefined, jumlahTransaksi: trxPeriode.length, jumlahArsipDemo: jumlahArsip,
       rekap, metode: perMetode,
     });
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
@@ -109,7 +120,7 @@ function Halaman() {
         {gagal && <p className="lp-error" role="alert">Sebagian laporan belum dapat dimuat. Silakan muat ulang halaman.</p>}
         {bagian !== 'closing' && bagian !== 'riwayat' && <p className="mb-2 text-xs text-muted-foreground">Total historis mencakup transaksi Arsip DEMO dan pembayaran yang tercatat pada periode laporan.</p>}
         <div className="lp-kpis">
-          {[{ label: 'Total Penerimaan', nilai: loading || payments.error ? '—' : rupiah(penerimaan), ikon: Coins },
+          {[{ label: 'Penerimaan Bruto', nilai: loading || payments.error ? '—' : rupiah(penerimaan), ikon: Coins },
             { label: 'Total Transaksi Baru', nilai: loading || transactions.error ? '—' : `${trxPeriode.length} Transaksi${jumlahArsip ? ` · ${jumlahArsip} Arsip DEMO` : ''}`, ikon: BedDouble },
             { label: 'Total Tamu Baru', nilai: guests.loading || guests.error ? '—' : `${guests.rows.filter(g => dalamPeriode(g.created_at, periode)).length} Tamu`, ikon: Users },
             { label: 'Total Tamu Lama', nilai: '—', ikon: UserRound }].map(k => <article className="lp-kpi" key={k.label}><span className="lp-kpi-icon"><k.ikon /></span><div><p>{k.label}</p><strong>{k.nilai}</strong></div></article>)}
@@ -117,17 +128,19 @@ function Halaman() {
         {(bagian === 'operasional' || bagian === 'pendapatan') && <div className="lp-grid">
           <section className="lp-panel lp-chart"><div className="lp-panel-head"><div className="lp-heading"><BarChart3 /><div><h2>Kinerja Operasional</h2><p>Perbandingan penerimaan dan pengeluaran operasional.</p></div></div></div>
             {loading ? <div className="kf-chart-empty">Memuat laporan…</div> : gagal ? <div className="kf-chart-empty">Grafik belum dapat dimuat.</div> : <KeuanganArus penerimaan={bayarPeriode} pengeluaran={biayaPeriode} />}
+            <p className="mt-2 text-xs text-muted-foreground">Grafik menunjukkan penerimaan bruto dan pengeluaran tercatat, belum mengurangi Refund.</p>
           </section>
           <section className="lp-panel lp-summary"><div className="lp-heading"><Layers /><div><h2>Ringkasan Usaha</h2><p>Rangkuman penerimaan dan biaya operasional.</p></div></div><dl>
             <div><dt><BedDouble />Pendapatan Kamar</dt><dd>—</dd></div>
             <div><dt><UserRoundPlus />Tamu Tambahan</dt><dd>—</dd></div>
             <div><dt><Settings />Biaya Operasional</dt><dd className="lp-negative">{loading || expenses.error ? '—' : rupiah(biaya)}</dd></div>
-          </dl><div className="lp-result"><span><TrendingUp />Arus Kas Bersih</span><strong>{loading || gagal ? '—' : rupiah(penerimaan - biaya)}</strong></div></section>
+            {isOwner && <div><dt><ReceiptText />Refund Tamu</dt><dd className="lp-negative">{loading || refunds.error ? '—' : rupiah(refundTotal ?? 0)}</dd></div>}
+          </dl><div className="lp-result"><span><TrendingUp />{labelHasil}</span><strong>{loading || gagal ? '—' : rupiah(hasilTercatat)}</strong></div></section>
         </div>}
         {(bagian === 'operasional' || bagian === 'harian' || bagian === 'pendapatan') && <section className="lp-panel">
           <div className="lp-panel-head"><div className="lp-heading"><CalendarDays /><div><h2>Rekap Harian</h2><p>Ringkasan kinerja operasional per hari.</p></div></div><div className="lp-panel-actions"><Button variant="outline" asChild><Link to="/laporan" search={{ bagian: 'riwayat' }}><History />Riwayat Closing</Link></Button><Button className="lp-closing" asChild><Link to="/laporan" search={{ bagian: 'closing' }}><ClipboardCheck />Closing Shift</Link></Button></div></div>
-          <div className="lp-table-scroll"><table className="lp-table"><thead><tr><th>Tanggal</th><th>Transaksi Baru</th><th>Penerimaan</th><th>Pengeluaran Operasional</th><th>Arus Kas Bersih</th><th>Aksi</th></tr></thead><tbody>
-            {rekap.map(r => <tr key={r.tgl}><td>{tanggalTeks(r.tgl)}</td><td>{r.transaksi} Transaksi{r.arsipDemo > 0 && <> · {r.arsipDemo} Arsip DEMO</>}</td><td>{rupiah(r.masuk)}</td><td>{rupiah(r.keluar)}</td><td className={r.masuk - r.keluar < 0 ? 'lp-negative' : 'lp-positive'}>{rupiah(r.masuk - r.keluar)}</td><td><Button variant="outline" asChild><Link to="/transaksi"><Eye />Daftar operasional</Link></Button></td></tr>)}
+          <div className="lp-table-scroll"><table className="lp-table"><thead><tr><th>Tanggal</th><th>Transaksi Baru</th><th>Penerimaan</th><th>Pengeluaran Operasional</th>{isOwner && <th>Refund</th>}<th>{labelHasil}</th><th>Aksi</th></tr></thead><tbody>
+            {rekap.map(r => <tr key={r.tgl}><td>{tanggalTeks(r.tgl)}</td><td>{r.transaksi} Transaksi{r.arsipDemo > 0 && <> · {r.arsipDemo} Arsip DEMO</>}</td><td>{rupiah(r.masuk)}</td><td>{rupiah(r.keluar)}</td>{isOwner && <td className="lp-negative">{rupiah(r.refund ?? 0)}</td>}<td className={(r.masuk - r.keluar - (r.refund ?? 0)) < 0 ? 'lp-negative' : 'lp-positive'}>{rupiah(r.masuk - r.keluar - (r.refund ?? 0))}</td><td><Button variant="outline" asChild><Link to="/transaksi"><Eye />Daftar operasional</Link></Button></td></tr>)}
           </tbody></table></div>
           {!rekap.length && <p className="lp-empty">{loading ? 'Memuat rekap…' : gagal ? 'Rekap belum dapat dimuat.' : 'Belum ada catatan pada periode ini.'}</p>}
         </section>}
