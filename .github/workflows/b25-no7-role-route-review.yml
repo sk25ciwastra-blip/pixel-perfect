@@ -1,0 +1,27 @@
+name: B25 No7 role-route source contracts
+on:
+  push:
+    branches:
+      - test/no7-role-route-regression-20261123
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  role-routes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: node scripts/no7-role-route-regression.test.cjs
+      - run: bun run build
+      - run: bunx tsc --noEmit
