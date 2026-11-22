@@ -1,0 +1,27 @@
+name: B25 No6 Komisi navigation review
+on:
+  push:
+    branches:
+      - fix/no6-commission-tab-dedicated-20261123
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  commission-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: node scripts/no6-commission-tab.test.cjs
+      - run: bun run build
+      - run: bunx tsc --noEmit
