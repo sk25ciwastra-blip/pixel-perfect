@@ -94,11 +94,11 @@ CREATE FUNCTION public.create_reservation(
 CREATE FUNCTION public.create_finance_refund(
  idempotency_key uuid,transaction_id uuid,amount numeric,refund_method text,
  source_type text,source_session_id uuid,reason text
-) RETURNS uuid LANGUAGE sql SECURITY DEFINER AS $
+) RETURNS uuid LANGUAGE sql SECURITY DEFINER AS $refund_fixture$
  SELECT gen_random_uuid()
-$;
+$refund_fixture$;
 CREATE FUNCTION public.check_out_transaction(transaction_id uuid)
-RETURNS text LANGUAGE sql SECURITY DEFINER AS $ SELECT 'synthetic Checkout'::text $;
+RETURNS text LANGUAGE sql SECURITY DEFINER AS $checkout_fixture$ SELECT 'synthetic Checkout'::text $checkout_fixture$;
 
 INSERT INTO public.rooms(id,active)
 SELECT ('10000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid, true
