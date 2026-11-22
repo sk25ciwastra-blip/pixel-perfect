@@ -59,6 +59,13 @@ check('SQL requires physical count and audits difference in snapshot',()=>{
   assert.ok(sql.includes("'cash_difference', cash_difference"));
   assert.ok(sql.includes('physical_cash_count <> total_allocated'));
 });
+check('audit immutable and actual operator preserved in Closing snapshot',()=>{
+  assert.ok(sql.includes('CREATE TABLE IF NOT EXISTS public.finance_closing_count_audit'));
+  assert.ok(sql.includes('finance_closing_count_audit_immutable_trigger'));
+  assert.ok(sql.includes("REVOKE ALL ON TABLE public.finance_closing_count_audit FROM anon, authenticated"));
+  assert.ok(sql.includes('INSERT INTO public.finance_closing_count_audit'));
+  assert.ok(sql.includes('(_session_id, auth.uid(), expected_cash, physical_cash_count, cash_difference'));
+});
 check('negative Closing keeps expected_cash and zero allocations',()=>{
   assert.ok(sql.includes("IF expected_cash < 0 THEN"));
   assert.ok(sql.includes('IF physical_cash_count <> 0 THEN'));
