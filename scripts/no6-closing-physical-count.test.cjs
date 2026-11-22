@@ -40,6 +40,13 @@ check('reject missing or malformed counts, unsafe or negative amounts',()=>{
 check('allocation cannot exceed physical amount',()=>{
   assert.equal(review(97000,'95000',97000,'Selisih').ok,false);
 });
+check('UI fails closed until counted-cash backend contract is present',()=>{
+  assert.ok(route.includes("rpc('finance_closing_count_contract_version')"));
+  assert.ok(route.includes('setCountedClosingReady(false)'));
+  assert.ok(route.includes('!countedClosingReady'));
+  assert.ok(sql.includes('finance_closing_count_contract_version()'));
+  assert.ok(sql.includes('GRANT EXECUTE ON FUNCTION public.finance_closing_count_contract_version() TO authenticated'));
+});
 check('UI passes count to server, does not finalize without confirmation',()=>{
   assert.ok(route.includes('reviewClosingCash(expectedCash, physicalCashCount, allocationCash, closingReason)'));
   assert.ok(route.includes('physical_cash_count: counted'));
