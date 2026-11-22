@@ -109,7 +109,21 @@ Sesi kas OPEN tanggal **21 Okt 2026** yang tidak cocok dengan `public.employees`
 **Keputusan gate:**
 1. Jalur Checkout 3 CHECK-IN dapat diinspeksi/diuji lewat fungsi resmi setelah verifikasi kamar nyata kosong dan persetujuan transaksi; fungsi mengubah kamar menjadi `dirty`, bukan READY. Housekeeping tetap wajib, tidak ada otomatisasi snapshot yang menghilangkan tunggakan.
 2. **6 Booking berbayar BLOCKED oleh kebutuhan alur pembatalan yang aman.** Jangan membuat check-in palsu agar bisa checkout/arsip. Prioritaskan [Issue #102 — pembatalan Booking berbayar](https://github.com/sk25ciwastra-blip/pixel-perfect/issues/102) sebagai gap fungsi operasional terpisah dari PR #101.
-3. Kebijakan refund/DP hangus belum diputuskan di issue ini. Jangan otomatis membatalkan pembayaran, menulis ulang closing FINAL, mereset saldo sesi OPEN, menganggap jadwal masa depan batal, atau mengubah komisi. Catat alasan Owner dan keputusan resmi lebih dulu.
+3. **Kebijakan Owner yang telah disahkan 14 Nov 2026:** pembayaran Booking yang sudah diterima tidak dapat dibatalkan atau dikembalikan dengan alasan apa pun. Karena itu, pembatalan administratif tidak boleh memanggil refund atau membatalkan pembayaran. Penyesuaian jadwal memerlukan konfirmasi maksimal 3 jam sebelum check-in; bukan pembatalan otomatis. Jangan menulis ulang closing FINAL, mereset saldo sesi OPEN, menganggap jadwal masa depan batal, atau mengubah komisi. Kebijakan ini tercatat kembali sebagai `AB-BOOK-006/007` dan pada Issue #102.
 4. Status 9 aktif **tidak otomatis menjadi eligible untuk Arsip DEMO** meskipun seluruhnya data pengujian: arsip membutuhkan status historis sesuai guard, klasifikasi per UUID/nomor, dan izin Cloud yang terpisah.
 
 **Checkpoint:** gap fungsi `cancel booking` teridentifikasi secara spesifik; tidak ada mutasi, **NO-GO** tetap.
+
+
+## K. Sinkronisasi keputusan Owner tentang pembatalan Booking — 22 Nov 2026
+
+Dalam penelusuran keputusan Owner, ditemukan aturan yang sudah disetujui pada **14 Nov 2026** dalam konteks Booking WhatsApp: **pembayaran Booking yang sudah diterima tidak dapat dibatalkan maupun dikembalikan dengan alasan apa pun**; perubahan jadwal memerlukan konfirmasi maksimal **3 jam sebelum check-in**. Keputusan tersebut baru disinkronkan ke `02_ATURAN_BISNIS.md` sebagai **AB-BOOK-006** dan **AB-BOOK-007**, dan ke [Issue #102](https://github.com/sk25ciwastra-blip/pixel-perfect/issues/102). Tidak meminta keputusan ulang.
+
+**Dampak pada implementasi Issue #102:**
+- `Batalkan Booking` yang dibutuhkan untuk mengakhiri reservasi administrasi adalah aksi status/audit, **bukan** tindakan pengembalian uang dan **bukan** pembatalan baris pembayaran.
+- Tidak otomatis refund DP/pelunasan, tidak mengubah pembayaran, komisi, closing, sesi kas, struk, identitas nomor TRX, atau jadwal transaksi lain. Jangan menganggap angka penerimaan DEMO sebagai pendapatan LIVE hanya karena status Booking dibatalkan.
+- **Reschedule** adalah jalur terpisah; jangan menambahkan reschedule otomatis pada issue pembatalan ini.
+- Enam Booking lama tetap belum diklasifikasikan/diizinkan Owner satu per satu untuk perubahan status; salah satunya berjadwal 24 Des 2026. Persetujuan delapan transaksi `check_out` **tidak** mencakup enam Booking atau tiga Check-in.
+- Tindakan Cloud, approval daftar izin, mutasi status, dan penutupan sesi kas tetap memerlukan persetujuan terpisah. **NO-GO** tidak berubah.
+
+Bukti: aturan berasal dari keputusan Owner dalam percakapan Booking 14 November, bukan dari penafsiran fungsi refund yang sudah ada. Sinkronisasi dokumen/issue adalah perubahan perencanaan, **bukan** penerapan backend.
