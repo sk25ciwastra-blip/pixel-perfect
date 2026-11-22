@@ -96,6 +96,44 @@ check('Auth reauthentication error returns user guidance', async () => {
   assert.equal(r.ok, false);
   assert.ok(r.message.includes('verifikasi tambahan'));
 });
+check('Weak password Auth response has actionable safe guidance', async () => {
+  const m = mockedAuth({ updateError: { code: 'weak_password', message: 'Password refused' } });
+  const r = await changeOwnPassword(m.auth, valid);
+  assert.equal(r.ok, false);
+  assert.ok(r.message.includes('kebijakan keamanan'));
+});
+check('Same password gets a distinct message', async () => {
+  const m = mockedAuth({ updateError: { code: 'same_password', message: 'Same password' } });
+  const r = await changeOwnPassword(m.auth, valid);
+  assert.equal(r.ok, false);
+  assert.ok(r.message.includes('sebelumnya'));
+});
+check('Rate-limit guidance does not reveal Auth raw error details', async () => {
+  const m = mockedAuth({ updateError: { code: 'over_request_rate_limit', message: 'secret in auth error' } });
+  const r = await changeOwnPassword(m.auth, valid);
+  assert.equal(r.ok, false);
+  assert.ok(r.message.includes('Terlalu banyak percobaan'));
+  assert.ok(!r.message.includes('secret'));
+});
+check('Unknown Auth code shown in sanitized form without raw error message', async () => {
+  const m = mockedAuth({ updateError: { code: 'custom_policy_error', message: 'hidden server contents' } });
+  const r = await changeOwnPassword(m.auth, valid);
+  assert.equal(r.ok, false);
+  assert.ok(r.message.includes('custom_policy_error'));
+  assert.ok(!r.message.includes('hidden server contents'));
+});
+check('Malformed Auth code and provider message are not reflected to users', async () => {
+  const m = mockedAuth({ updateError: { code: '<unsafe html>', message: 'new password leaked' } });
+  const r = await changeOwnPassword(m.auth, valid);
+  assert.equal(r.ok, false);
+  assert.ok(!r.message.includes('unsafe') && !r.message.includes('leaked'));
+});
+check('Session expiry suggests login again rather than changing another account', async () => {
+  const m = mockedAuth({ updateError: { code: 'session_expired', message: 'session expired' } });
+  const r = await changeOwnPassword(m.auth, valid);
+  assert.equal(r.ok, false);
+  assert.ok(r.message.includes('login kembali'));
+});
 check('Network failure returns safe error and no password leakage', async () => {
   const m = mockedAuth({ throwOnUpdate: true });
   const r = await changeOwnPassword(m.auth, valid);
