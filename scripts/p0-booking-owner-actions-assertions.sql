@@ -157,7 +157,34 @@ $verify$;
 RESET ROLE;
 
 DO $summary$
+DECLARE denied_booking boolean:=false; denied_cancelled boolean:=false;
 BEGIN
+ -- Nonrefundable Booking policy is enforced at DB trigger layer, even
+ -- if an Owner attempts to use the general Finance refund path.
+ BEGIN
+   INSERT INTO public.finance_refunds(transaction_id,amount)
+   VALUES('20000000-0000-4000-8000-000000000003',1);
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='DP dan pelunasan Booking tidak dapat dikembalikan' THEN denied_booking:=true;
+   ELSE RAISE; END IF;
+ END;
+ BEGIN
+   INSERT INTO public.finance_refunds(transaction_id,amount)
+   VALUES('20000000-0000-4000-8000-000000000001',1);
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='DP dan pelunasan Booking tidak dapat dikembalikan' THEN denied_cancelled:=true;
+   ELSE RAISE; END IF;
+ END;
+ IF NOT denied_booking OR NOT denied_cancelled THEN
+   RAISE EXCEPTION 'Booking nonrefundable guard failed: active % cancelled %',
+    denied_booking,denied_cancelled;
+ END IF;
+ -- Refunds of checked-in/finished transactions remain possible.
+ INSERT INTO public.finance_refunds(transaction_id,amount)
+ VALUES('20000000-0000-4000-8000-000000000005',1);
+ IF (SELECT COUNT(*) FROM public.finance_refunds)<>1 THEN
+   RAISE EXCEPTION 'Non-booking refund was wrongly blocked';
+ END IF;
  IF (SELECT COUNT(*) FROM public.booking_owner_events WHERE action='cancel')<>2
     OR (SELECT COUNT(*) FROM public.booking_owner_events WHERE action='reschedule')<>1
     OR (SELECT COUNT(*) FROM public.activity_logs WHERE action='booking_cancelled')<>2
