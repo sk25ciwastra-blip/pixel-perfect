@@ -1,0 +1,13 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const route = fs.readFileSync('src/routes/keuangan.tsx','utf8');
+const css = fs.readFileSync('src/components/keuangan.css','utf8');
+assert.ok(route.includes('className="kf-komisi-table overflow-x-auto rounded-lg"'));
+assert.ok(route.includes("summary['commission']"));
+assert.ok(css.includes('.kf-komisi-table {'));
+assert.ok(css.includes('background: var(--premium-paper)'));
+assert.ok(css.includes('.kf-komisi-table thead th'));
+assert.ok(css.includes('.kf-komisi-table tbody td:first-child'));
+assert.ok(css.includes('.kf-komisi-table tbody tr:nth-child(even)'));
+assert.ok(!css.includes('.kf-halaman { background: var(--premium-paper)'));
+console.log('No6 Komisi warm white scope: 8/8 PASS');
