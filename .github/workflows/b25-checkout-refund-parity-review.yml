@@ -8,6 +8,9 @@ on:
       - scripts/p0-checkout-refund-parity-contract.test.cjs
       - supabase/pending/20261122000002_checkout_settlement_refund_safe_review.sql
       - supabase/migrations/20261019000001_harden_checkout_payment_settlement.sql
+      - scripts/p0-checkout-cloud-refund-fixture-extension.sql
+      - scripts/p0-checkout-cloud-refund-full-rpc-assertions.sql
+      - scripts/fixtures/p0-cloud-refund-function-20261122.sql
   workflow_dispatch:
 
 permissions:
@@ -69,3 +72,45 @@ jobs:
       - name: Destroy test database
         if: always()
         run: docker rm -f b25_checkout_native || true
+
+  actual-cloud-refund-seam:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout test-only source (no persisted credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Start disposable PostgreSQL 17
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name b25_cloud_refund_native -e POSTGRES_PASSWORD=isolated-test-only -e POSTGRES_DB=postgres postgres:17
+          for i in {1..80}; do
+            if docker exec b25_cloud_refund_native pg_isready -U postgres -d postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec b25_cloud_refund_native pg_isready -U postgres -d postgres
+      - name: Compile actual Lovable refund function against synthetic schema
+        run: |
+          set -euo pipefail
+          docker exec -i b25_cloud_refund_native psql -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-checkout-refund-disposable-fixture.sql
+          docker exec -i b25_cloud_refund_native psql -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-checkout-cloud-refund-fixture-extension.sql
+          docker exec -i b25_cloud_refund_native psql -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/fixtures/p0-cloud-refund-function-20261122.sql
+          refund_md5="$(docker exec b25_cloud_refund_native psql -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text)'::regprocedure")"
+          test "$refund_md5" = "80bcdeabfc038907ee6dcea4d9d0e714"
+      - name: Apply reviewed Checkout candidate without rewriting actual refund definition
+        run: |
+          set -euo pipefail
+          checkout_md5="$(docker exec b25_cloud_refund_native psql -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_out_transaction(uuid)'::regprocedure")"
+          test "${#checkout_md5}" -eq 32
+          # Only Checkout hash differs in synthetic baseline: refund MD5 is exact.
+          sed "s/eaa0b3e3cf13478999dee8daaa9b2e92/${checkout_md5}/g" \
+            supabase/pending/20261122000002_checkout_settlement_refund_safe_review.sql > "$RUNNER_TEMP/cloud-refund-seam-candidate.sql"
+          docker exec -i b25_cloud_refund_native psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$RUNNER_TEMP/cloud-refund-seam-candidate.sql"
+      - name: Test true Cloud refund body, commissions and FINAL invariants
+        run: |
+          set -euo pipefail
+          docker exec -i b25_cloud_refund_native psql -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-checkout-cloud-refund-full-rpc-assertions.sql
+      - name: Destroy disposable PostgreSQL test instance
+        if: always()
+        run: docker rm -f b25_cloud_refund_native || true
