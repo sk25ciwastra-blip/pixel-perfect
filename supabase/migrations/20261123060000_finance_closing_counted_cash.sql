@@ -13,6 +13,32 @@ BEGIN
   END IF;
 END;
 $guard$;
+-- An append-only event for each newly finalized session. Historical FINAL
+-- sessions are deliberately not backfilled.
+CREATE TABLE IF NOT EXISTS public.finance_closing_count_audit (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id uuid NOT NULL UNIQUE REFERENCES public.finance_cash_sessions(id) ON DELETE RESTRICT,
+  actor_id uuid NOT NULL,
+  expected_cash numeric NOT NULL,
+  physical_cash_count numeric NOT NULL CHECK (physical_cash_count >= 0),
+  cash_difference numeric NOT NULL,
+  reason text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.finance_closing_count_audit ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.finance_closing_count_audit FROM anon, authenticated;
+CREATE OR REPLACE FUNCTION public.finance_closing_count_audit_immutable()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET search_path TO public AS $immutable$
+BEGIN
+  RAISE EXCEPTION 'Audit Closing bersifat append-only';
+END;
+$immutable$;
+DROP TRIGGER IF EXISTS finance_closing_count_audit_immutable_trigger
+  ON public.finance_closing_count_audit;
+CREATE TRIGGER finance_closing_count_audit_immutable_trigger
+  BEFORE UPDATE OR DELETE ON public.finance_closing_count_audit
+  FOR EACH ROW EXECUTE FUNCTION public.finance_closing_count_audit_immutable();
 CREATE OR REPLACE FUNCTION public.close_finance_cash_session(_session_id uuid, _allocation jsonb, _reason text DEFAULT ''::text)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -183,6 +209,12 @@ BEGIN
       closing_reason = trim(coalesce(_reason, '')),
       closing_snapshot = snapshot
   WHERE id = _session_id;
+
+  INSERT INTO public.finance_closing_count_audit
+    (session_id, actor_id, expected_cash, physical_cash_count, cash_difference, reason)
+  VALUES
+    (_session_id, auth.uid(), expected_cash, physical_cash_count, cash_difference,
+     trim(coalesce(_reason, '')));
 
   RETURN snapshot;
 END;
