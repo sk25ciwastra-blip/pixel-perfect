@@ -21,7 +21,7 @@ const cases = [
     assert.ok(finance.includes('readOnly'));
   }],
   ['actor fallback distinguishes absent audit id from unresolved employee', () => {
-    assert.ok(finance.includes("'Petugas tidak tercatat (historis)'"));
+    assert.ok(finance.includes("'Identitas petugas tidak tercatat'"));
     assert.ok(finance.includes("'Profil petugas tidak tersedia'"));
     assert.ok(finance.includes('payment.recorded_by'));
   }],
