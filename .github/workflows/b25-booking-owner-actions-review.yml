@@ -62,11 +62,15 @@ jobs:
           real_checkin="$(docker exec b25_booking_owner_review psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_in_booking(uuid)'::regprocedure")"
           real_calc="$(docker exec b25_booking_owner_review psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.calculate_scheduled_booking_times(uuid,timestamp with time zone)'::regprocedure")"
           real_reserve="$(docker exec b25_booking_owner_review psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamp with time zone,uuid,uuid,integer)'::regprocedure")"
-          for value in "$real_checkin" "$real_calc" "$real_reserve"; do test "${#value}" -eq 32; done
+          real_refund="$(docker exec b25_booking_owner_review psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text)'::regprocedure")"
+          real_checkout="$(docker exec b25_booking_owner_review psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_out_transaction(uuid)'::regprocedure")"
+          for value in "$real_checkin" "$real_calc" "$real_reserve" "$real_refund" "$real_checkout"; do test "${#value}" -eq 32; done
           # Only in transient copy. Tracked SQL keeps actual Lovable Cloud hashes.
           sed -e "s/fb29b1e4d72c71f5895ef8a1a1767387/$real_checkin/g" \
               -e "s/b089ff12792ef26856ebf4b3ddc9a481/$real_calc/g" \
               -e "s/14314995cf012335f18bd859da5b668b/$real_reserve/g" \
+              -e "s/80bcdeabfc038907ee6dcea4d9d0e714/$real_refund/g" \
+              -e "s/2ab65aa2ebd66574f858dc3ff54e7c7f/$real_checkout/g" \
             supabase/pending/20261122000003_booking_owner_cancel_reschedule_review.sql > "$RUNNER_TEMP/b25-booking-disposable.sql"
           docker exec -i b25_booking_owner_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < "$RUNNER_TEMP/b25-booking-disposable.sql"
       - name: Test Owner guards, scheduling, history, and payment preservation
