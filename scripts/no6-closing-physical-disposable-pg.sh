@@ -8,6 +8,8 @@ export PGDATABASE="${PGDATABASE:-postgres}"
 psql -v ON_ERROR_STOP=1 <<'SQL'
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE SCHEMA IF NOT EXISTS auth;
+CREATE ROLE anon NOLOGIN;
+CREATE ROLE authenticated NOLOGIN;
 CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
 SELECT NULLIF(current_setting('request.jwt.claim.sub', true),'')::uuid
 $$;
@@ -45,7 +47,7 @@ $$;
 SQL
 # The fingerprint preflight is a Cloud drift gate, not applicable to this fresh
 # disposable database. Extract the exact reviewed RPC body from the migration.
-awk '/^CREATE OR REPLACE FUNCTION public.close_finance_cash_session/{start=1} /^COMMIT;$/{start=0} start {print}'  supabase/migrations/20261123060000_finance_closing_counted_cash.sql  | psql -v ON_ERROR_STOP=1
+awk '/^CREATE TABLE IF NOT EXISTS public.finance_closing_count_audit/{start=1} /^COMMIT;$/{start=0} start {print}'  supabase/migrations/20261123060000_finance_closing_counted_cash.sql  | psql -v ON_ERROR_STOP=1
 
 psql -v ON_ERROR_STOP=1 <<'SQL'
 INSERT INTO public.finance_cash_sessions(id,opened_by,opening_cash,status) VALUES
@@ -106,6 +108,10 @@ DO $t$
 DECLARE s public.finance_cash_sessions;
 BEGIN
  SELECT * INTO s FROM public.finance_cash_sessions WHERE id='11111111-1111-4111-8111-111111111111';
+ IF (SELECT count(*) FROM public.finance_closing_count_audit WHERE session_id=s.id
+      AND actor_id='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa'
+      AND physical_cash_count=95000 AND cash_difference=-2000)<>1
+ THEN RAISE EXCEPTION 'Missing append-only closing audit'; END IF;
  IF s.status<>'FINAL' OR (s.closing_snapshot->>'expected_cash')::numeric<>97000
  OR (s.closing_snapshot->>'physical_cash_count')::numeric<>95000
  OR (s.closing_snapshot->>'cash_difference')::numeric<>-2000
@@ -113,6 +119,17 @@ BEGIN
  THEN RAISE EXCEPTION 'Wrong Closing snapshot for shortage'; END IF;
 END $t$;
 
+-- Audit must be immutable once written.
+DO $t$
+BEGIN
+  BEGIN
+    UPDATE public.finance_closing_count_audit SET reason='changed'
+      WHERE session_id='11111111-1111-4111-8111-111111111111';
+    RAISE EXCEPTION 'expected append-only audit rejection';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%append-only%' THEN RAISE; END IF;
+  END;
+END $t$;
 -- Replay on FINAL fails without new allocations
 DO $t$
 BEGIN
