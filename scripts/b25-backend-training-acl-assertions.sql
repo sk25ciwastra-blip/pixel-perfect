@@ -13,7 +13,7 @@ BEGIN
   AND p.prosecdef
   AND NOT has_function_privilege('anon',p.oid,'EXECUTE')
   AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE')
-  AND NOT has_function_privilege('PUBLIC',p.oid,'EXECUTE')
+  AND NOT EXISTS (SELECT 1 FROM aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) acl WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE')
   AND has_function_privilege('service_role',p.oid,'EXECUTE');
  IF n<>5 THEN RAISE EXCEPTION 'Helper privileges not reduced exactly as approved: %',n;END IF;
  IF NOT has_function_privilege('authenticated','public.get_finance_training_context()','EXECUTE')
