@@ -15,6 +15,7 @@ import { DetailTransaksi } from '@/components/detail-transaksi';
 import { supabase } from '@/integrations/supabase/client';
 import { nomorDenganArsip } from '@/lib/demo-archive';
 import { canRefundTransactionStatus, canSourceRefundFromSession } from '@/lib/finance-refund-eligibility';
+import { reviewClosingCash } from '@/lib/finance-closing-count';
 import '@/components/keuangan.css';
 
 const POLA_NOMOR = /(BTRD[A-Z]*-\d+)/;
@@ -192,30 +193,13 @@ function HalamanKeuangan() {
 
   async function closeSession() {
     if (!selectedSession) return;
-    if (expectedCash === null) {
-      setMessage('Saldo kas belum tersedia. Muat ulang ringkasan sebelum closing.');
+    const allocationCash = cashDeficit ? 0 : angka(setorCash) + angka(diLaci) + angka(dibawa);
+    const review = reviewClosingCash(expectedCash, physicalCashCount, allocationCash, closingReason);
+    if (!review.ok) {
+      setMessage(review.error);
       return;
     }
-    const rawCount = physicalCashCount.trim();
-    const counted = Number(rawCount);
-    if (!/^\d+$/.test(rawCount) || !Number.isSafeInteger(counted) || counted < 0) {
-      setMessage('Masukkan hasil hitung uang fisik dalam nominal rupiah bulat sebelum Closing.');
-      return;
-    }
-    const difference = counted - expectedCash;
-    if (cashDeficit && counted !== 0) {
-      setMessage('Saldo sesi minus: perhitungan kas fisik harus nol untuk Closing ini.');
-      return;
-    }
-    const allocations = (cashDeficit ? 0 : angka(setorCash) + angka(diLaci) + angka(dibawa));
-    if (allocations !== counted) {
-      setMessage('Total alokasi Cash harus sama dengan uang fisik yang dihitung.');
-      return;
-    }
-    if (difference !== 0 && !closingReason.trim()) {
-      setMessage('Tuliskan alasan selisih kas sebelum Closing.');
-      return;
-    }
+    const { counted, difference } = review;
     if (!window.confirm(`Finalkan sesi kas? Hitung fisik: ${rupiah(counted)}; saldo diharapkan: ${rupiah(expectedCash)}; selisih: ${rupiah(difference)}. Sesi FINAL tidak bisa diubah.`)) return;
     await run(async () => {
       const { error } = await rpc('close_finance_cash_session', {
