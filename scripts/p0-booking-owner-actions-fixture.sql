@@ -36,6 +36,11 @@ CREATE TABLE public.payments (
  amount numeric NOT NULL,
  method text NOT NULL
 );
+CREATE TABLE public.finance_refunds (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ transaction_id uuid NOT NULL REFERENCES public.transactions(id),
+ amount numeric NOT NULL
+);
 CREATE TABLE public.activity_logs (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  user_id uuid,
@@ -85,6 +90,15 @@ CREATE FUNCTION public.create_reservation(
  amount numeric,method text,day_mode text,scheduled_check_in timestamptz,
  idempotency_key uuid,session_id uuid,guest_count integer
 ) RETURNS text LANGUAGE sql AS $$ SELECT 'synthetic only'::text $$;
+
+CREATE FUNCTION public.create_finance_refund(
+ idempotency_key uuid,transaction_id uuid,amount numeric,refund_method text,
+ source_type text,source_session_id uuid,reason text
+) RETURNS uuid LANGUAGE sql SECURITY DEFINER AS $
+ SELECT gen_random_uuid()
+$;
+CREATE FUNCTION public.check_out_transaction(transaction_id uuid)
+RETURNS text LANGUAGE sql SECURITY DEFINER AS $ SELECT 'synthetic Checkout'::text $;
 
 INSERT INTO public.rooms(id,active)
 SELECT ('10000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid, true
