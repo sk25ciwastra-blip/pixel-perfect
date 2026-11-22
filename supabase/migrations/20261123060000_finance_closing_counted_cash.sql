@@ -186,6 +186,6 @@ BEGIN
 
   RETURN snapshot;
 END;
-$function$
+$function$;
 
 COMMIT;
