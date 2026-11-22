@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - fix/no6-physical-cash-count-contract-20261123
+  pull_request:
+    branches:
+      - fix/no6-closing-labels-actor-fallback-20261123
+      - main
   workflow_dispatch:
 permissions:
   contents: read
