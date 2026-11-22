@@ -6,11 +6,6 @@ on:
       - src/**
       - supabase/pending/20261122000000_owner_delete.sql
       - supabase/pending/20261122000001_owner_demo_transaction_archive.sql
-  push:
-    branches:
-      - feat/issue-99-owner-hapus-current
-    paths:
-      - .github/workflows/b25-issue99-merge-parity-review.yml
   workflow_dispatch:
 
 permissions:
