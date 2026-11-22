@@ -1,0 +1,36 @@
+name: B25 No6 Owner refund screen eligibility (review only)
+on:
+  push:
+    branches:
+      - fix/no6-finance-refund-ui-source-guard-20261123
+    paths:
+      - .github/workflows/b25-no6-finance-refund-ui-review.yml
+      - src/lib/finance-refund-eligibility.ts
+      - src/routes/keuangan.tsx
+      - scripts/no6-finance-refund-screen.test.cjs
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  isolated-finance-refund-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Focused financial rules with no Cloud credentials
+        run: node scripts/no6-finance-refund-screen.test.cjs
+      - name: Build Finance route
+        run: bun run build
+      - name: TypeScript validation
+        run: bunx tsc --noEmit
