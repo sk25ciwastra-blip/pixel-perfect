@@ -1,0 +1,39 @@
+name: B25 two-method payment activation (review only)
+on:
+  push:
+    branches:
+      - fix/combined-payment-two-methods-activation-review-20261122
+    paths:
+      - .env
+      - .github/workflows/b25-combined-payment-activation-review.yml
+      - scripts/combined-payment-activation-review.test.cjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  feature-gate-and-app-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout review branch without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install frozen dependencies, do not contact Cloud
+        run: bun install --frozen-lockfile
+      - name: Test reviewed activation without exposing environment values
+        run: node scripts/combined-payment-activation-review.test.cjs
+      - name: Build application with staged two-method gates
+        run: bun run build
+      - name: TypeScript source check
+        run: bunx tsc --noEmit
