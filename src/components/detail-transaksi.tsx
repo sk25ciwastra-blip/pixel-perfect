@@ -5,6 +5,7 @@ import {
   Info, Car, CalendarPlus, Stamp, MapPin, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
+import { TombolHapusDemo } from '@/components/hapus-data-demo';
 import { LambangTeratai } from '@/components/kerangka';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
@@ -20,6 +21,7 @@ import { ReceiptPrintButton, ReceiptHistoryButton } from '@/components/receipt-a
 type DetailTransaksiProps = {
   transactionId: string;
   onClose: () => void;
+  onDeleted?: () => void;
   mode?: 'full' | 'housekeeping';
 };
 
@@ -111,6 +113,7 @@ function Kepala({ nomor, statusLabel, statusDot }: { nomor: string; statusLabel:
 export function DetailTransaksi({
   transactionId,
   onClose,
+  onDeleted,
   mode = 'full',
 }: DetailTransaksiProps) {
   const transactions = useTable('transactions', true, { column: 'id', value: transactionId });
@@ -378,6 +381,11 @@ export function DetailTransaksi({
 
               <ReceiptHistoryButton transactionNumber={transaction.transaction_number} />
               <AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} />
+              {onDeleted && posisiKode === 'owner' && <div className="flex justify-end">
+                <TombolHapusDemo kind="transaction" id={transaction.id} code={transaction.transaction_number}
+                  name={guest?.full_name ?? 'Tamu'} amount={transaction.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(total)}
+                  onDeleted={onDeleted} />
+              </div>}
               <button
                 type="button"
                 onClick={onClose}
