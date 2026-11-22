@@ -1,0 +1,73 @@
+name: B25 backend synchronization - Training helper ACL (review only)
+on:
+  push:
+    branches: [fix/p0-backend-sync-training-anon-acl-20261122]
+    paths:
+      - .github/workflows/b25-backend-training-acl-review.yml
+      - supabase/pending/20261122000004_training_internal_rpc_anon_acl_review.sql
+      - scripts/fixtures/b25-backend-training-acl-disposable.sql
+      - scripts/b25-backend-training-acl-assertions.sql
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-pg17-acl:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - name: Checkout review-only branch without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Start disposable PostgreSQL 17 (no exposed ports)
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name b25_training_acl_review -e POSTGRES_PASSWORD=synthetic-only -e POSTGRES_DB=postgres postgres:17
+          for i in {1..80}; do
+            if docker exec b25_training_acl_review pg_isready -U postgres -d postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec b25_training_acl_review pg_isready -U postgres -d postgres
+      - name: Install synthetic PostgreSQL function ACL fixture
+        run: |
+          set -euo pipefail
+          docker exec -i b25_training_acl_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/fixtures/b25-backend-training-acl-disposable.sql
+      - name: Match disposable function hashes in untracked migration copy only
+        run: |
+          set -euo pipefail
+          get_hash() {
+            docker exec b25_training_acl_review psql -X -U postgres -d postgres -At -v ON_ERROR_STOP=1 -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='$1'::regprocedure"
+          }
+          a="$(get_hash 'public.finance_training_assignment_for(uuid)')"
+          b="$(get_hash 'public.finance_training_context_assignment(uuid,uuid)')"
+          c="$(get_hash 'public.finance_training_context_matches_session(uuid,uuid)')"
+          d="$(get_hash 'public.finance_training_context_valid(uuid)')"
+          e="$(get_hash 'public.finance_training_session_is_valid(uuid,uuid)')"
+          for h in "$a" "$b" "$c" "$d" "$e"; do
+            test "$(printf '%s' "$h" | wc -c)" -eq 32
+          done
+          sed -e "s/40104554cbb07c88e6b98104e0dfd6e8/$a/g" \
+              -e "s/5faa4ea003a9b4d86328cc018a61736a/$b/g" \
+              -e "s/19a63b511a9a6e7ab2c7ef12cf2542db/$c/g" \
+              -e "s/e26c657380a82573e251de79f7b2ea9e/$d/g" \
+              -e "s/2b00047c0f04ec36450bc76374832604/$e/g" \
+            supabase/pending/20261122000004_training_internal_rpc_anon_acl_review.sql > "$RUNNER_TEMP/backend-training-acl-disposable.sql"
+          docker exec -i b25_training_acl_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < "$RUNNER_TEMP/backend-training-acl-disposable.sql"
+      - name: Anon denied while authenticated Training wrapper still works
+        run: |
+          set -euo pipefail
+          docker exec -i b25_training_acl_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/b25-backend-training-acl-assertions.sql
+      - name: Replay denied without changing permissions
+        run: |
+          set -euo pipefail
+          if docker exec -i b25_training_acl_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < "$RUNNER_TEMP/backend-training-acl-disposable.sql" > "$RUNNER_TEMP/retry.log" 2>&1; then
+            echo 'FAIL: duplicate migration replay unexpectedly accepted'
+            exit 1
+          fi
+          grep -q 'STOP B25 backend ACL: function drift or repeat installation' "$RUNNER_TEMP/retry.log"
+          echo 'B25 BACKEND TRAINING ACL REPLAY DENIED: PASS'
+      - name: Always destroy disposable database
+        if: always()
+        run: docker rm -f b25_training_acl_review || true
