@@ -43,3 +43,45 @@ Skrip yang sama telah dijalankan terhadap database **disposable** dengan synthet
 - Tidak perlu ulang backup, PR #101–#107, migrasi ataupun tes PASS. Tidak perlu Lovable AI credit untuk menjalankan query Cloud; tidak memublikasikan ulang UI untuk tes ini.
 
 **Status:** Nomor 5 **95%**, bukan GO/100% sebelum gate Cloud dan browser terpenuhi.
+## ADDENDUM FINAL PENERAPAN CLOUD (22 Nov 2026, ±21:40 WIB)
+
+**Persetujuan Owner diterima:** `setuju` khusus menjalankan uji Lovable Cloud pada kamar sintetis 99 dengan menerima risiko generator nomor TRX/HK tidak di-rollback.
+
+### Uji Cloud LIVE — PASS, TELAH DIJALANKAN TEPAT SATU KALI
+
+- Target hanya Lovable Cloud project `017f6e78-15f2-4d07-a38c-87cb185279bf`.
+- File SQL yang benar-benar dijalankan: `scripts/no5-cloud-one-transaction-rollback-OWNER-APPROVAL-REQUIRED.sql`, **Git blob `9c15bcfe24532433432fc126b41791e04aef1780`**.
+- Sebelum menjalankan, cek DRAFT PR #108 branch SHA `f7e85c728c09bfd6ead7f863d919f73ae21849a9`, hasil CI #45033342756 **SUCCESS**, database role postgres, enam `md5(prosrc)` Cloud identik, petugas Receptionist B25EMP-002 memiliki satu OPEN cash session, empat HK berizin aktif, DP 40%, Paket 2 Jam dan harga Standard valid, kamar 99 dan nomor telepon sintetis belum terdaftar. Tidak ditemukan fungsi publik dengan pola eksternal `http_post` / `net.http_` / `pg_notify`.
+- Hanya satu eksekusi `query_database` untuk SQL tersebut, sukses dengan hasil eksplisit:
+  `NO5 CLOUD POSITIVE RPC UAT PASSED; ROW WRITES ROLLED BACK; TRX/HK SEQUENCE VALUES MAY HAVE ADVANCED`
+- **Jangan ulangi** uji ini untuk memperoleh output berbeda, melanjutkan tes, atau mengejar nomor urut. SQL test ini sudah membuktikan satu siklus backend berhasil pada skema/triggers Cloud yang nyata.
+- Skenario: room 99 sintetik belum pernah commit; `create_reservation` Booking baru + DP Cash 40%; `record_transaction_payment` pelunasan QRIS; `check_in_booking`; `check_out_transaction` → DIRTY; `advance_room_cleaning` → CLEANING; `complete_housekeeping_checklist` semua item PASSED → READY. Invariant dua payment satu OPEN cash session, satu TRX/Housekeeping job/riwayat/checklist dikonfirmasi di SQL sebelum ROLLBACK. Ini SQL UAT, **bukan bukti klik aplikasi oleh manusia**.
+
+### Pengamanan setelah uji — PASS
+
+Perbandingan `SELECT` terpisah sebelum/sesudah uji Cloud pada 22 Nov 2026 14:39–14:40 UTC:
+
+| Metrik | Sebelum | Sesudah |
+|---|---:|---:|
+| Kamar | 12 | 12 |
+| Tamu | 19 | 19 |
+| Transaksi | 17 | 17 |
+| BOOKING / CHECK-IN / CHECK-OUT | 6 / 3 / 8 | 6 / 3 / 8 |
+| Pembayaran | 24 | 24 |
+| Total pembayaran | Rp1.356.000 | Rp1.356.000 |
+| Komisi pembayaran | Rp42.000 | Rp42.000 |
+| Sesi kas (OPEN / total) | 3 / 6 | 3 / 6 |
+| Refund / charge | 0 / 0 | 0 / 0 |
+| Idempotency Booking | 8 | 8 |
+| HK job / history / checklist | 5 / 12 / 6 | 5 / 12 / 6 |
+| Activity logs | 288 | 288 |
+
+Tambahan: kamar 99, telepon tamu sintetis, nama tamu sintetis, dan catatan kamar sintetis semuanya **0 baris** sesudah tes; sesi kas B25EMP-002 masih satu OPEN; tidak ada event Owner archive/Booking owner baru. **Generator nomor TRX/HK berpotensi berubah secara permanen**, sengaja disetujui Owner, dan tidak termasuk dalam row integrity comparison.
+
+### Status & sisa gate
+
+**Backend Cloud positive lifecycle: 100% PASS untuk ruang lingkup uji SQL No.5.**
+
+**Nomor 5 keseluruhan: 98% / 100%**, karena bukti tombol/form browser Receptionist/Housekeeping pada versi terpublikasi untuk Booking/Check-in/Checkout/HK belum semuanya diperlihatkan dan dapat dinilai. Bukti sebelumnya: Receptionist Keuangan OPEN (screenshot Owner), Password sendiri berhasil. Sisa hanya smoke browser non-destruktif pada form dan tombol; tidak perlu membuat transaksi lagi. Pertahankan PR #108 **DRAFT test-only**, tanpa merge/publish/migrasi baru kecuali ada persetujuan Owner terpisah.
+
+Tidak perlu backup, reset nomor, re-run SQL, ataupun mengulang PASS Nomor 1–4.
