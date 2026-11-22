@@ -90,6 +90,7 @@ function HalamanKeuangan() {
   const [dibawa, setDibawa] = useState('0');
   const [recipientUserId, setRecipientUserId] = useState('');
   const [closingReason, setClosingReason] = useState('');
+  const [physicalCashCount, setPhysicalCashCount] = useState('');
   const [expenseSearch, setExpenseSearch] = useState('');
   const [filterBuka, setFilterBuka] = useState(false);
   const [filterJenis, setFilterJenis] = useState<'' | 'Penerimaan' | 'Setoran' | 'Pengeluaran' | 'Refund'>('');
@@ -138,6 +139,7 @@ function HalamanKeuangan() {
     setDibawa('0');
     setRecipientUserId('');
     setClosingReason('');
+    setPhysicalCashCount('');
     if (selectedSession) {
       const sessionId = selectedSession.id;
       void rpc(isTraining ? 'get_training_finance_session_summary' : 'get_finance_session_summary', { _session_id: sessionId }).then(({ data, error }) => {
@@ -194,10 +196,32 @@ function HalamanKeuangan() {
       setMessage('Saldo kas belum tersedia. Muat ulang ringkasan sebelum closing.');
       return;
     }
+    const rawCount = physicalCashCount.trim();
+    const counted = Number(rawCount);
+    if (!/^\\d+$/.test(rawCount) || !Number.isSafeInteger(counted) || counted < 0) {
+      setMessage('Masukkan hasil hitung uang fisik dalam nominal rupiah bulat sebelum Closing.');
+      return;
+    }
+    const difference = counted - expectedCash;
+    if (cashDeficit && counted !== 0) {
+      setMessage('Saldo sesi minus: perhitungan kas fisik harus nol untuk Closing ini.');
+      return;
+    }
+    const allocations = (cashDeficit ? 0 : angka(setorCash) + angka(diLaci) + angka(dibawa));
+    if (allocations !== counted) {
+      setMessage('Total alokasi Cash harus sama dengan uang fisik yang dihitung.');
+      return;
+    }
+    if (difference !== 0 && !closingReason.trim()) {
+      setMessage('Tuliskan alasan selisih kas sebelum Closing.');
+      return;
+    }
+    if (!window.confirm(`Finalkan sesi kas? Hitung fisik: ${rupiah(counted)}; saldo diharapkan: ${rupiah(expectedCash)}; selisih: ${rupiah(difference)}. Sesi FINAL tidak bisa diubah.`)) return;
     await run(async () => {
       const { error } = await rpc('close_finance_cash_session', {
         _session_id: selectedSession.id,
         _allocation: {
+          physical_cash_count: counted,
           setor_cash: cashDeficit ? 0 : angka(setorCash),
           setor_transfer: angka(setorTransfer),
           di_laci: cashDeficit ? 0 : angka(diLaci),
@@ -445,7 +469,12 @@ function HalamanKeuangan() {
                 <label className={label}><span className="mb-1.5 block">Total Transfer</span><RpInput value={String(totalTransfer)} readOnly /></label>
                 <label className={label}><span className="mb-1.5 block">Selisih / Catatan</span><input value={closingReason} onChange={(e) => setClosingReason(e.target.value)} className={input} placeholder="Contoh: Sesuai, tidak ada selisih" /></label>
               </div>
-              {cashDeficit && <p className="mt-3 text-xs text-bahaya-foreground">Saldo minus dicatat dalam closing sesi. Alokasi CASH otomatis nol; SETOR TRANSFER tetap wajib sesuai penerimaan transfer.</p>}
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <label className={label}><span className="mb-1.5 block">Saldo Cash Diharapkan</span><RpInput value={hasExpectedCash ? String(expectedCash) : ''} readOnly /></label>
+                <label className={label}><span className="mb-1.5 block">Uang Fisik Dihitung Petugas (wajib)</span><RpInput value={physicalCashCount} onChange={setPhysicalCashCount} /></label>
+                <div className="text-xs text-muted-foreground"><span className="mb-1.5 block">Selisih Hitung Fisik</span><strong className="block pt-2 text-sm">{hasExpectedCash && /^\\d+$/.test(physicalCashCount.trim()) ? rupiah(Number(physicalCashCount) - expectedCash) : 'Belum dihitung'}</strong></div>
+              </div>
+              {cashDeficit && <p className="mt-3 text-xs text-bahaya-foreground">Saldo minus tetap dicatat sesuai nilai aslinya. Uang fisik dan alokasi Cash wajib nol, tanpa talangan pribadi; SETOR TRANSFER tetap mengikuti penerimaan transfer.</p>}
               <details className="mt-3 rounded-md border border-gold/10 px-3 py-2 text-xs text-muted-foreground">
                 <summary className="cursor-pointer select-none">Alokasi closing (Setor Cash, Setor Transfer, Di laci, Dibawa)</summary>
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -459,7 +488,7 @@ function HalamanKeuangan() {
               <div className="mt-4 grid gap-4 md:grid-cols-[1.3fr_1fr] md:items-stretch">
                 <div className="rounded-lg border border-gold/15 bg-background/40 p-4"><p className="text-sm text-muted-foreground">Total Penerimaan</p><p className="mt-1 text-2xl font-semibold tabular-nums">{rupiah(Number(summary['payments_total'] ?? 0))}</p></div>
                 <div className="md:border-l md:border-gold/15 md:pl-4">
-                  <p className="text-xs text-muted-foreground">Penerimaan Cash adalah pembayaran bruto, bukan hasil hitung uang fisik. Saldo Cash yang diharapkan: {hasExpectedCash ? rupiah(expectedCash) : 'belum tersedia'}. Pastikan alokasi kas dan hitungan fisik cocok sebelum finalisasi; Closing FINAL tidak dapat diubah.</p>
+                  <p className="text-xs text-muted-foreground">Penerimaan Cash adalah pembayaran bruto, bukan hasil hitung uang fisik. Saldo Cash yang diharapkan: {hasExpectedCash ? rupiah(expectedCash) : 'belum tersedia'}. Petugas wajib menghitung uang fisik dan mengisi alokasi dengan jumlah yang sama. Selisih memerlukan alasan; Closing FINAL tidak dapat diubah.</p>
                   {!isTraining && <Button className="mt-3 w-full gap-2" disabled={busy || !hasExpectedCash} onClick={() => void closeSession()}><Check size={16} aria-hidden="true" />Finalkan Closing</Button>}
                 </div>
               </div>
