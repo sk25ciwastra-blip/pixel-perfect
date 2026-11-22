@@ -1,0 +1,23 @@
+name: B25 Booking live publication evidence (read only)
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/b25-booking-publication-evidence.yml
+      - scripts/b25-booking-public-live-check.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  published-client-bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout public source, without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify public Lovable app serves PR104 Booking client bundle
+        run: python3 scripts/b25-booking-public-live-check.py
