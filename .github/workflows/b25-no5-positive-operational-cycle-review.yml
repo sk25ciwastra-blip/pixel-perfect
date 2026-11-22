@@ -7,6 +7,8 @@ on:
       - .github/workflows/b25-no5-positive-operational-cycle-review.yml
       - scripts/fixtures/no5-positive-cloud-rpc-source.sql
       - scripts/no5-positive-operational-cycle-assertions.sql
+      - scripts/fixtures/no5-cloud-rollback-review-seed.sql
+      - scripts/no5-cloud-one-transaction-rollback-OWNER-APPROVAL-REQUIRED.sql
   workflow_dispatch:
 
 permissions:
@@ -59,6 +61,38 @@ jobs:
         run: |
           set -euo pipefail
           docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/no5-positive-operational-cycle-assertions.sql
+      - name: Seed separate synthetic operators for the future Cloud ROLLBACK script
+        run: |
+          set -euo pipefail
+          docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/fixtures/no5-cloud-rollback-review-seed.sql
+      - name: Validate exact future Cloud test script ONLY in disposable PostgreSQL 17
+        run: |
+          set -euo pipefail
+          test "$(grep -c '^ROLLBACK;' scripts/no5-cloud-one-transaction-rollback-OWNER-APPROVAL-REQUIRED.sql)" -eq 1
+          if grep -q '^COMMIT;' scripts/no5-cloud-one-transaction-rollback-OWNER-APPROVAL-REQUIRED.sql; then
+            echo 'FAIL: future Cloud review script must never COMMIT'
+            exit 1
+          fi
+          docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/no5-cloud-one-transaction-rollback-OWNER-APPROVAL-REQUIRED.sql
+          docker exec -i b25_no5_positive psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          DO $verify$
+          BEGIN
+            IF EXISTS (SELECT 1 FROM public.rooms)
+               OR EXISTS(SELECT 1 FROM public.guests)
+               OR EXISTS(SELECT 1 FROM public.transactions)
+               OR EXISTS(SELECT 1 FROM public.payments)
+               OR EXISTS(SELECT 1 FROM public.finance_reservation_idempotency)
+               OR EXISTS(SELECT 1 FROM public.housekeeping_jobs)
+               OR EXISTS(SELECT 1 FROM public.housekeeping_history)
+               OR EXISTS(SELECT 1 FROM public.housekeeping_checklists)
+               OR EXISTS(SELECT 1 FROM public.activity_logs)
+               OR (SELECT count(*) FROM public.finance_cash_sessions)<>1
+               OR (SELECT count(*) FROM public.employees)<>2
+            THEN RAISE EXCEPTION 'FAIL: SQL ROLLBACK left permanent fixture rows'; END IF;
+          END;
+          $verify$;
+          SQL
+          echo 'B25 No5 future Cloud rollback script dry run: PASS, zero leftover rows'
       - name: Destroy test-only PostgreSQL cluster
         if: always()
         run: docker rm -f b25_no5_positive || true
