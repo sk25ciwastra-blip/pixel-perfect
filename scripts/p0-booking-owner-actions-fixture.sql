@@ -47,6 +47,10 @@ CREATE TABLE public.activity_logs (
 );
 
 GRANT SELECT ON public.transactions,public.rooms,public.payments TO authenticated;
+-- The real Cloud has a read-only authenticated transactions policy; fixture
+-- must reproduce it so client-role test subqueries can see synthetic rows.
+CREATE POLICY transactions_fixture_read ON public.transactions
+FOR SELECT TO authenticated USING (true);
 
 CREATE FUNCTION public.has_role(actor uuid,wanted public.app_role) RETURNS boolean
 LANGUAGE sql STABLE AS $$
