@@ -22,7 +22,10 @@ BEGIN
  ) THEN RAISE EXCEPTION 'STOP Booking P0: cancelled status missing'; END IF;
  IF to_regprocedure('public.cancel_booking_owner(uuid,text,text,boolean)') IS NOT NULL
     OR to_regprocedure('public.reschedule_booking_owner(uuid,text,timestamp with time zone,text)') IS NOT NULL
-    OR to_regclass('public.booking_owner_events') IS NOT NULL THEN
+    OR to_regclass('public.booking_owner_events') IS NOT NULL
+    OR to_regprocedure('public.guard_booking_refund_nonrefundable()') IS NOT NULL
+    OR EXISTS (SELECT 1 FROM pg_trigger WHERE NOT tgisinternal
+      AND tgname='booking_refunds_nonrefundable_guard_trigger') THEN
    RAISE EXCEPTION 'STOP Booking P0: partial install or existing Booking RPC; no replay';
  END IF;
  IF (SELECT md5(prosrc) FROM pg_proc
@@ -35,6 +38,14 @@ BEGIN
      WHERE oid='public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamp with time zone,uuid,uuid,integer)'::regprocedure)
       IS DISTINCT FROM '14314995cf012335f18bd859da5b668b' THEN
     RAISE EXCEPTION 'STOP Booking P0: room/Booking RPC drift — review first';
+ END IF;
+ IF (SELECT md5(prosrc) FROM pg_proc
+     WHERE oid='public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text)'::regprocedure)
+      IS DISTINCT FROM '80bcdeabfc038907ee6dcea4d9d0e714'
+    OR (SELECT md5(prosrc) FROM pg_proc
+     WHERE oid='public.check_out_transaction(uuid)'::regprocedure)
+      IS DISTINCT FROM '2ab65aa2ebd66574f858dc3ff54e7c7f' THEN
+   RAISE EXCEPTION 'STOP Booking P0: Refund/Checkout baseline drift';
  END IF;
  IF to_regprocedure('public.get_operational_day_mode(date)') IS NULL
     OR to_regprocedure('public.has_role(uuid,app_role)') IS NULL THEN
@@ -70,6 +81,29 @@ BEGIN
  END IF;
 END;
 $preflight$;
+
+-- AB-BOOK-006 is enforced even against the generic Owner refund RPC.
+-- Its original Cloud body is unchanged, preserving valid post-checkout refunds.
+CREATE FUNCTION public.guard_booking_refund_nonrefundable()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=''
+AS $guard$
+DECLARE booking_status public.transaction_status;
+BEGIN
+ SELECT t.status INTO booking_status
+ FROM public.transactions t WHERE t.id=NEW.transaction_id FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Transaksi refund tidak ditemukan'; END IF;
+ IF booking_status IN ('booking','cancelled') THEN
+   RAISE EXCEPTION 'DP dan pelunasan Booking tidak dapat dikembalikan';
+ END IF;
+ RETURN NEW;
+END;
+$guard$;
+
+CREATE TRIGGER booking_refunds_nonrefundable_guard_trigger
+BEFORE INSERT ON public.finance_refunds
+FOR EACH ROW EXECUTE FUNCTION public.guard_booking_refund_nonrefundable();
+REVOKE ALL ON FUNCTION public.guard_booking_refund_nonrefundable()
+FROM PUBLIC,anon,authenticated;
 
 -- Separate evidence. No direct role grant, RLS on, and each cancellation has
 -- at most one audit record. No payment, refund, commission or cash ledger changes.
