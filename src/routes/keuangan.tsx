@@ -192,7 +192,7 @@ function HalamanKeuangan() {
 
   async function closeSession() {
     if (!selectedSession) return;
-    if (!hasExpectedCash) {
+    if (expectedCash === null) {
       setMessage('Saldo kas belum tersedia. Muat ulang ringkasan sebelum closing.');
       return;
     }
@@ -472,7 +472,7 @@ function HalamanKeuangan() {
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 <label className={label}><span className="mb-1.5 block">Saldo Cash Diharapkan</span><RpInput value={hasExpectedCash ? String(expectedCash) : ''} readOnly /></label>
                 <label className={label}><span className="mb-1.5 block">Uang Fisik Dihitung Petugas (wajib)</span><RpInput value={physicalCashCount} onChange={setPhysicalCashCount} /></label>
-                <div className="text-xs text-muted-foreground"><span className="mb-1.5 block">Selisih Hitung Fisik</span><strong className="block pt-2 text-sm">{hasExpectedCash && /^\d+$/.test(physicalCashCount.trim()) ? rupiah(Number(physicalCashCount) - expectedCash) : 'Belum dihitung'}</strong></div>
+                <div className="text-xs text-muted-foreground"><span className="mb-1.5 block">Selisih Hitung Fisik</span><strong className="block pt-2 text-sm">{expectedCash !== null && /^\d+$/.test(physicalCashCount.trim()) ? rupiah(Number(physicalCashCount) - expectedCash) : 'Belum dihitung'}</strong></div>
               </div>
               {cashDeficit && <p className="mt-3 text-xs text-bahaya-foreground">Saldo minus tetap dicatat sesuai nilai aslinya. Uang fisik dan alokasi Cash wajib nol, tanpa talangan pribadi; SETOR TRANSFER tetap mengikuti penerimaan transfer.</p>}
               <details className="mt-3 rounded-md border border-gold/10 px-3 py-2 text-xs text-muted-foreground">
