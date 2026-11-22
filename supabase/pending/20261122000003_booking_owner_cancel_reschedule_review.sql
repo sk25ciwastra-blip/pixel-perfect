@@ -51,11 +51,20 @@ BEGIN
     OR to_regprocedure('public.has_role(uuid,app_role)') IS NULL THEN
     RAISE EXCEPTION 'STOP Booking P0: role or day-mode helper not available';
  END IF;
+ -- Cloud grants UPDATE at the table level, but has only SELECT RLS
+ -- policies. Authorize only if Row Level Security actually blocks DML.
  IF NOT EXISTS(SELECT 1 FROM pg_class c
      WHERE c.oid='public.transactions'::regclass AND c.relrowsecurity)
-    OR has_table_privilege('authenticated','public.transactions','UPDATE')
-    OR has_table_privilege('anon','public.transactions','UPDATE') THEN
-    RAISE EXCEPTION 'STOP Booking P0: transactions update ACL/RLS drift';
+    OR EXISTS (
+      SELECT 1 FROM pg_policies
+      WHERE schemaname='public' AND tablename='transactions'
+        AND cmd IN ('UPDATE','DELETE','ALL')
+    )
+    OR EXISTS (
+      SELECT 1 FROM pg_roles
+      WHERE rolname IN ('anon','authenticated') AND rolbypassrls
+    ) THEN
+    RAISE EXCEPTION 'STOP Booking P0: transactions RLS update/delete policy drift';
  END IF;
  IF EXISTS (
    SELECT 1 FROM (VALUES
