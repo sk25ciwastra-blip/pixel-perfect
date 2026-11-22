@@ -29,10 +29,10 @@ run_race() {
  local id="$1" holder waiter
  timeout 25s docker exec -i "$db" psql -X -q -U postgres -d postgres -v ON_ERROR_STOP=1 < "$tmp/$id-holder.sql" > "$tmp/$id-holder.log" 2>&1 &
  holder=$!
- await_state "b25_book_1_hold" hold
+ await_state "b25_book_$id""_hold" hold
  timeout 25s docker exec -i "$db" psql -X -q -U postgres -d postgres -v ON_ERROR_STOP=1 < "$tmp/$id-waiter.sql" > "$tmp/$id-waiter.log" 2>&1 &
  waiter=$!
- await_state "b25_book_1_wait" wait
+ await_state "b25_book_$id""_wait" wait
  echo "B25_BOOKING_RACE_$id: pg_blocking_pids confirms actual wait"
  wait "$holder" || fail "$id holder error"
  wait "$waiter" || fail "$id waiter error"
