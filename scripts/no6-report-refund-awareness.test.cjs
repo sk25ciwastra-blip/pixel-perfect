@@ -35,7 +35,7 @@ pass('Refund zero preserves old gross-minus-expense figure',()=>{
 });
 pass('Missing refund coverage cannot be mistaken for net cashflow',()=>{
   assert.equal(helper.hitungArusKasBersih(200000,50000,null),null);
-  assert.equal(helper.labelHasilArusKas(false),'Selisih Penerimaan - Biaya (belum termasuk Refund)');
+  assert.equal(helper.labelHasilArusKas(false),'Selisih Data yang Terlihat (bukan Arus Kas Bersih)');
   assert.ok(helper.labelHasilArusKas(true).includes('setelah Refund'));
 });
 pass('Unexpected NaN input does not produce valid net',()=>{
@@ -55,7 +55,7 @@ pass('Owner CSV explicitly reports gross, refund and true net',()=>{
 pass('Staff CSV must not call partial cashflow net',()=>{
  const csv=exportCsv.buatCsvLaporan({...base,refund:undefined});
  assert.ok(csv.includes('"Total Refund","Tidak tersedia untuk peran ini"'));
- assert.ok(csv.includes('"Selisih Penerimaan - Biaya (belum termasuk Refund)","150000"'));
+ assert.ok(csv.includes('"Selisih Data yang Terlihat (bukan Arus Kas Bersih)","150000"'));
  assert.ok(csv.includes('"2026-11-23","1","200000","50000","Tidak tersedia","150000"'));
  assert.ok(!csv.includes('"Arus Kas Bersih (setelah Refund)"'));
 });
