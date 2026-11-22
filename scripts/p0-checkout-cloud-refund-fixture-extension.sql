@@ -20,7 +20,8 @@ ALTER TABLE public.payments
   ADD COLUMN commission_amount numeric DEFAULT 0;
 
 ALTER TABLE public.finance_cash_sessions
-  ADD COLUMN opening_cash numeric NOT NULL DEFAULT 0;
+  ADD COLUMN opening_cash numeric NOT NULL DEFAULT 0,
+  ADD COLUMN closing_snapshot jsonb;
 
 ALTER TABLE public.finance_refunds
   ADD COLUMN idempotency_key uuid UNIQUE,
@@ -58,6 +59,10 @@ UPDATE public.finance_cash_sessions
 SET opening_cash=200000
 WHERE id='30000000-0000-4000-8000-000000000002';
 
+UPDATE public.finance_cash_sessions
+SET opening_cash=200000, closing_snapshot='{"cash":"sealed-final","amount":1234}'::jsonb
+WHERE id='30000000-0000-4000-8000-000000000001';
+
 -- An explicit PERCENTAGE snapshot and an explicit PER_ROOM snapshot, with
 -- payments, separate physical rooms and no real customer identity.
 INSERT INTO public.rooms(id,status) VALUES
@@ -81,5 +86,12 @@ VALUES
 ('20000000-0000-4000-8000-000000000006',100000,'PERCENTAGE',10,10000),
 ('20000000-0000-4000-8000-000000000007',100000,'PER_ROOM',5000,5000),
 ('20000000-0000-4000-8000-000000000008',100000,'PERCENTAGE',10,10000);
+
+UPDATE public.payments SET cash_session_id='30000000-0000-4000-8000-000000000001'
+WHERE transaction_id IN (
+  '20000000-0000-4000-8000-000000000006',
+  '20000000-0000-4000-8000-000000000007',
+  '20000000-0000-4000-8000-000000000008'
+);
 
 -- Note: UPDATEs here are confined to ephemeral fixture, never Cloud.
