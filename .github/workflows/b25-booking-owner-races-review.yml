@@ -1,0 +1,59 @@
+name: B25 Booking Owner two-session races
+on:
+  push:
+    branches:
+      - feat/p0-booking-owner-actions-review-20261122
+    paths:
+      - .github/workflows/b25-booking-owner-races-review.yml
+      - scripts/p0-booking-owner-two-session-races.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-booking-owner-races-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  booking-concurrency:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout source without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate Bash syntax
+        run: bash -n scripts/p0-booking-owner-two-session-races.sh
+      - name: Start disposable PostgreSQL 17 without external connections
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name b25_booking_races -e POSTGRES_PASSWORD=isolated-test-only -e POSTGRES_DB=postgres postgres:17
+          for i in {1..80}; do
+            if docker exec b25_booking_races pg_isready -U postgres -d postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec b25_booking_races pg_isready -U postgres -d postgres
+      - name: Install fixture and Booking candidate with review-only hashes
+        run: |
+          set -euo pipefail
+          docker exec -i b25_booking_races psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-booking-owner-actions-fixture.sql
+          actual_checkin="$(docker exec b25_booking_races psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_in_booking(uuid)'::regprocedure")"
+          actual_calc="$(docker exec b25_booking_races psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.calculate_scheduled_booking_times(uuid,timestamp with time zone)'::regprocedure")"
+          actual_reservation="$(docker exec b25_booking_races psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamp with time zone,uuid,uuid,integer)'::regprocedure")"
+          actual_refund="$(docker exec b25_booking_races psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text)'::regprocedure")"
+          actual_checkout="$(docker exec b25_booking_races psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_out_transaction(uuid)'::regprocedure")"
+          for value in "$actual_checkin" "$actual_calc" "$actual_reservation" "$actual_refund" "$actual_checkout"; do test "${#value}" -eq 32; done
+          sed -e "s/fb29b1e4d72c71f5895ef8a1a1767387/$actual_checkin/g" \
+              -e "s/b089ff12792ef26856ebf4b3ddc9a481/$actual_calc/g" \
+              -e "s/14314995cf012335f18bd859da5b668b/$actual_reservation/g" \
+              -e "s/80bcdeabfc038907ee6dcea4d9d0e714/$actual_refund/g" \
+              -e "s/2ab65aa2ebd66574f858dc3ff54e7c7f/$actual_checkout/g" \
+            supabase/pending/20261122000003_booking_owner_cancel_reschedule_review.sql > "$RUNNER_TEMP/booking-owner-race-only.sql"
+          docker exec -i b25_booking_races psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < "$RUNNER_TEMP/booking-owner-race-only.sql"
+      - name: Verify real lock waits and immutable state across concurrent Booking actions
+        run: bash scripts/p0-booking-owner-two-session-races.sh
+      - name: Always remove ephemeral database
+        if: always()
+        run: docker rm -f b25_booking_races || true
