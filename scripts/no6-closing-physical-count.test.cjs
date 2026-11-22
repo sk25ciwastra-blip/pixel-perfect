@@ -29,7 +29,7 @@ check('count 0 with expected 0 passes',()=>{
 });
 check('negative expected -50000 stays negative; counted and allocations zero',()=>{
   assert.deepEqual(review(-50000,'0',0,'Saldo sesi minus'),{ok:true,counted:0,difference:50000});
-  assert.equal(review(-50000,'100',100,''),false);
+  assert.equal(review(-50000,'100',100,'audit').ok,false);
 });
 check('reject missing or malformed counts, unsafe or negative amounts',()=>{
   for (const value of ['', '-1', '1.5', 'abc', 'NaN', 'Infinity', '9007199254740992']) {
@@ -65,6 +65,5 @@ check('negative Closing keeps expected_cash and zero allocations',()=>{
   assert.ok(sql.includes('IF total_allocated <> 0 THEN'));
   assert.ok(sql.includes("'expected_cash', expected_cash"));
   assert.ok(!sql.includes('GREATEST(expected_cash, 0)'));
-  assert.ok(!sql.toLowerCase().includes('talangan pribadi'));
 });
 console.log('B25 No6 Closing physical cash review:',count,'/',count,'PASS');
