@@ -5,7 +5,7 @@ export type PasswordFields = {
   confirmPassword: string;
 };
 
-type AuthErrorLike = { message: string; code?: string | undefined } | null;
+type AuthErrorLike = { message: string; code?: string | undefined; status?: number | undefined } | null;
 type AuthUserLike = { id: string; email?: string | null } | null;
 
 export type OwnPasswordAuth = {
@@ -35,6 +35,43 @@ export function validatePasswordFields(values: PasswordFields): string | null {
     return 'Password baru harus berbeda dari password saat ini.';
   }
   return null;
+}
+
+/**
+ * Never render arbitrary Auth messages: they can contain identifiers or server
+ * details. Only expose Supabase's documented, non-sensitive error categories.
+ * Unknown codes are normalized so staff can report the code without sharing
+ * their password (or a screenshot of DevTools request payload).
+ */
+export function safePasswordUpdateError(error: Exclude<AuthErrorLike, null>): string {
+  switch (error.code) {
+    case 'weak_password':
+      return 'Password baru belum memenuhi kebijakan keamanan. Gunakan password unik yang panjang, kombinasi huruf besar, kecil, angka, dan simbol.';
+    case 'same_password':
+      return 'Password baru sama dengan password yang digunakan sebelumnya. Pilih password yang berbeda.';
+    case 'reauthentication_needed':
+    case 'reauthentication_not_valid':
+      return 'Diperlukan verifikasi tambahan untuk perubahan password. Gunakan fitur Lupa password di halaman login.';
+    case 'invalid_credentials':
+    case 'invalid_password':
+      return 'Password saat ini tidak sesuai atau verifikasi akun gagal. Masuk kembali dan coba lagi.';
+    case 'over_request_rate_limit':
+    case 'over_email_send_rate_limit':
+      return 'Terlalu banyak percobaan. Coba kembali nanti, tanpa mengulangi permintaan berkali-kali.';
+    case 'session_expired':
+    case 'session_not_found':
+    case 'bad_jwt':
+      return 'Sesi akun sudah tidak berlaku. Keluar, login kembali, lalu coba ubah password.';
+    case 'validation_failed':
+      return 'Server menolak format password baru. Gunakan password unik dengan kombinasi huruf besar, kecil, angka, dan simbol.';
+    default: {
+      const safeCode = typeof error.code === 'string' && /^[a-z_]{3,64}$/.test(error.code)
+        ? error.code
+        : null;
+      const codeText = safeCode ? ` (kode: ${safeCode})` : '';
+      return `Password belum berubah karena ditolak layanan akun${codeText}. Hubungi Owner dengan menyebutkan kode ini saja, bukan password.`;
+    }
+  }
 }
 
 /**
@@ -72,12 +109,8 @@ export async function changeOwnPassword(
       current_password: values.currentPassword,
       password: values.newPassword,
     });
-    if (changed.error?.code === 'reauthentication_needed' ||
-        changed.error?.code === 'reauthentication_not_valid') {
-      return { ok: false, message: 'Diperlukan verifikasi tambahan. Gunakan fitur Lupa password di halaman login.' };
-    }
     if (changed.error) {
-      return { ok: false, message: 'Password belum berubah. Periksa persyaratan password dan coba kembali.' };
+      return { ok: false, message: safePasswordUpdateError(changed.error) };
     }
     return { ok: true, message: 'Password berhasil diubah untuk akun Anda sendiri.' };
   } catch {
