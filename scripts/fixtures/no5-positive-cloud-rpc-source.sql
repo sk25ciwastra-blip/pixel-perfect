@@ -19,6 +19,7 @@ CREATE TABLE public.employees (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  user_id uuid UNIQUE NOT NULL,
  name text NOT NULL,
+ employee_id text UNIQUE,
  active boolean NOT NULL DEFAULT true,
  position public.employee_position NOT NULL
 );
@@ -26,6 +27,8 @@ CREATE TABLE public.room_types (id uuid PRIMARY KEY, pricing_group text NOT NULL
 CREATE TABLE public.rooms (
  id uuid PRIMARY KEY, room_number text NOT NULL, active boolean NOT NULL,
  room_type_id uuid NOT NULL REFERENCES public.room_types(id),
+ base_price numeric NOT NULL DEFAULT 0,
+ notes text NOT NULL DEFAULT '',
  status public.room_status NOT NULL
 );
 CREATE TABLE public.packages (
@@ -52,7 +55,8 @@ RETURNS text LANGUAGE sql VOLATILE AS $fixture_num$
 $fixture_num$;
 CREATE TABLE public.finance_cash_sessions (
  id uuid PRIMARY KEY, opened_by uuid NOT NULL, opening_cash numeric NOT NULL,
- status text NOT NULL CHECK(status IN('OPEN','FINAL'))
+ status text NOT NULL CHECK(status IN('OPEN','FINAL')),
+ opened_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE public.transactions (
  id uuid PRIMARY KEY DEFAULT '50000000-0000-4000-8000-000000000001'::uuid,
@@ -81,6 +85,11 @@ CREATE TABLE public.payments (
  idempotency_key uuid UNIQUE,
  cash_session_id uuid NOT NULL REFERENCES public.finance_cash_sessions(id),
  commission_amount numeric NOT NULL DEFAULT 0
+);
+CREATE TABLE public.finance_settings (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ minimum_dp_mode text NOT NULL, minimum_dp_value numeric NOT NULL,
+ updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE public.finance_reservation_idempotency (
  idempotency_key uuid PRIMARY KEY,
