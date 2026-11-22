@@ -1,0 +1,58 @@
+name: B25 Checkout refund real two-session races
+on:
+  push:
+    branches:
+      - fix/p0-checkout-refund-parity-review-20261122
+    paths:
+      - .github/workflows/b25-checkout-refund-race-review.yml
+      - scripts/p0-checkout-refund-race-fixture.sql
+      - scripts/p0-checkout-refund-two-session-races.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: b25-checkout-refund-race-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  four-real-lock-races:
+    if: github.ref == 'refs/heads/fix/p0-checkout-refund-parity-review-20261122'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - name: Checkout review-only branch without saved credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate Bash syntax before starting database
+        run: bash -n scripts/p0-checkout-refund-two-session-races.sh
+      - name: Start PostgreSQL 17 without port exposure
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name b25_checkout_race_native -e POSTGRES_PASSWORD=isolated-test-only -e POSTGRES_DB=postgres postgres:17
+          for i in {1..80}; do
+            if docker exec b25_checkout_race_native pg_isready -U postgres -d postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec b25_checkout_race_native pg_isready -U postgres -d postgres
+      - name: Install only synthetic fixture, actual Lovable refund source and candidate
+        run: |
+          set -euo pipefail
+          docker exec -i b25_checkout_race_native psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-checkout-refund-disposable-fixture.sql
+          docker exec -i b25_checkout_race_native psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-checkout-cloud-refund-fixture-extension.sql
+          docker exec -i b25_checkout_race_native psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/fixtures/p0-cloud-refund-function-20261122.sql
+          refund_md5="$(docker exec b25_checkout_race_native psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_finance_refund(uuid,uuid,numeric,text,text,uuid,text)'::regprocedure")"
+          test "$refund_md5" = "80bcdeabfc038907ee6dcea4d9d0e714"
+          checkout_md5="$(docker exec b25_checkout_race_native psql -X -U postgres -d postgres -At -c "SELECT md5(prosrc) FROM pg_proc WHERE oid='public.check_out_transaction(uuid)'::regprocedure")"
+          test "${#checkout_md5}" -eq 32
+          # Replace only mock Checkout checksum in an UNTRACKED, disposable copy.
+          sed "s/eaa0b3e3cf13478999dee8daaa9b2e92/${checkout_md5}/g" supabase/pending/20261122000002_checkout_settlement_refund_safe_review.sql > "$RUNNER_TEMP/b25-race-only.sql"
+          docker exec -i b25_checkout_race_native psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < "$RUNNER_TEMP/b25-race-only.sql"
+          docker exec -i b25_checkout_race_native psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/p0-checkout-refund-race-fixture.sql
+      - name: Check four actual two-session lock waits and final state
+        run: B25_PG_CONTAINER=b25_checkout_race_native bash scripts/p0-checkout-refund-two-session-races.sh
+      - name: Always destroy synthetic PostgreSQL cluster
+        if: always()
+        run: docker rm -f b25_checkout_race_native || true
