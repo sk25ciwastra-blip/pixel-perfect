@@ -14,6 +14,7 @@ import { KeuanganArus } from '@/components/keuangan-arus';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import { supabase } from '@/integrations/supabase/client';
 import { nomorDenganArsip } from '@/lib/demo-archive';
+import { canRefundTransactionStatus, canSourceRefundFromSession } from '@/lib/finance-refund-eligibility';
 import '@/components/keuangan.css';
 
 const POLA_NOMOR = /(BTRD[A-Z]*-\d+)/;
@@ -226,6 +227,17 @@ function HalamanKeuangan() {
 
   async function refund() {
     if (!refundTransactionId || !refundAmount || !refundReason) return;
+    const target = transactions.rows.find((item) => item.id === refundTransactionId);
+    if (!target || !canRefundTransactionStatus(target.status)) {
+      setMessage('Pembayaran Booking tidak dapat direfund. Pilih transaksi Check-in atau Selesai yang memenuhi ketentuan.');
+      return;
+    }
+    if (refundSourceType !== 'OWNER_FUNDS' &&
+      !sessions.rows.some((session) => session.id === refundSourceSessionId &&
+        canSourceRefundFromSession(session.status))) {
+      setMessage('Sumber dana refund wajib berasal dari sesi kas OPEN atau Dana Owner. Sesi FINAL tidak boleh dipilih.');
+      return;
+    }
     await run(async () => {
       const { error } = await rpc('create_finance_refund', { _idempotency_key: crypto.randomUUID(), _transaction_id: refundTransactionId, _amount: angka(refundAmount), _refund_method: refundMethod, _source_type: refundSourceType, _source_session_id: refundSourceType === 'OWNER_FUNDS' ? null : refundSourceSessionId || null, _reason: refundReason });
       return { error };
@@ -401,12 +413,12 @@ function HalamanKeuangan() {
           {isOwner && (
             <Panel judul="Refund Tamu" sub="Catat pengembalian dana kepada tamu (atas persetujuan owner).">
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className={label}><span className="mb-1.5 block">Pilih Transaksi / Booking</span><select value={refundTransactionId} onChange={(e) => setRefundTransactionId(e.target.value)} className={input}><option value="">Pilih transaksi</option>{transactions.rows.filter((transaction) => transaction.status !== 'cancelled').map((transaction) => <option key={transaction.id} value={transaction.id}>{nomorDenganArsip(transaction)}</option>)}</select></label>
+                <label className={label}><span className="mb-1.5 block">Pilih Transaksi Check-in / Selesai</span><select value={refundTransactionId} onChange={(e) => setRefundTransactionId(e.target.value)} className={input}><option value="">Pilih transaksi</option>{transactions.rows.filter((transaction) => canRefundTransactionStatus(transaction.status)).map((transaction) => <option key={transaction.id} value={transaction.id}>{nomorDenganArsip(transaction)}</option>)}</select></label>
                 <label className={label}><span className="mb-1.5 block">Nominal Refund</span><RpInput value={refundAmount} onChange={setRefundAmount} /></label>
                 <label className={label}><span className="mb-1.5 block">Sumber Dana</span><select value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)} className={input}><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select></label>
-                <label className={label}><span className="mb-1.5 block">Alasan Refund</span><input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} className={input} placeholder="Contoh: Pembatalan oleh tamu" /></label>
+                <label className={label}><span className="mb-1.5 block">Alasan Refund</span><input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} className={input} placeholder="Contoh: Koreksi transaksi setelah Check-in" /></label>
                 <details className="sm:col-span-2"><summary>Asal Dana &amp; Sesi Sumber</summary><div className="grid gap-3 sm:grid-cols-2"><label className={label}><span className="mb-1.5 block">Asal Dana</span><select value={refundSourceType} onChange={(e) => setRefundSourceType(e.target.value)} className={input}><option value="OWNER_FUNDS">Dana Owner</option><option value="SHIFT_CASH">Kas sesi</option><option value="DRAWER">Laci</option></select></label>
-                {refundSourceType !== 'OWNER_FUNDS' && <label className={label}><span className="mb-1.5 block">Sesi Sumber</span><select value={refundSourceSessionId} onChange={(e) => setRefundSourceSessionId(e.target.value)} className={input}><option value="">Pilih sesi sumber</option>{sessions.rows.filter((session) => session.status === 'OPEN' || session.status === 'FINAL').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select></label>}
+                {refundSourceType !== 'OWNER_FUNDS' && <label className={label}><span className="mb-1.5 block">Sesi Sumber</span><select value={refundSourceSessionId} onChange={(e) => setRefundSourceSessionId(e.target.value)} className={input}><option value="">Pilih sesi sumber</option>{sessions.rows.filter((session) => canSourceRefundFromSession(session.status)).map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select></label>}
 </div></details>
               </div>
               <Button className="mt-4 w-full gap-2" disabled={!isOwner || busy} onClick={() => void refund()}><RotateCcw size={16} aria-hidden="true" />Catat Refund</Button>
