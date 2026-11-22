@@ -1,0 +1,74 @@
+name: B25 Issue99 merge parity with Booking P0
+on:
+  pull_request:
+    paths:
+      - .github/workflows/b25-issue99-merge-parity-review.yml
+      - src/**
+      - supabase/pending/20261122000000_owner_delete.sql
+      - supabase/pending/20261122000001_owner_demo_transaction_archive.sql
+  push:
+    branches:
+      - feat/issue-99-owner-hapus-current
+    paths:
+      - .github/workflows/b25-issue99-merge-parity-review.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  post-booking-main-integration:
+    if: github.event_name != 'pull_request' || github.event.pull_request.number == 101
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout PR merge preview, or branch on push
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate Booking P0 and Owner Archive composition (source only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+          const read = file => fs.readFileSync(file,'utf8');
+          const booking=read('src/routes/booking.tsx');
+          const checkout=read('src/routes/index.tsx');
+          const people=read('src/routes/karyawan.tsx');
+          const trans=read('src/routes/transaksi.tsx');
+          const finance=read('src/routes/keuangan.tsx');
+          const owner=read('src/lib/owner-delete.functions.ts');
+          const a=read('supabase/pending/20261122000000_owner_delete.sql');
+          const b=read('supabase/pending/20261122000001_owner_demo_transaction_archive.sql');
+          const checks={
+            bookingOwnerCancel:booking.includes('cancel_booking_owner'),
+            bookingOwnerReschedule:booking.includes('reschedule_booking_owner'),
+            bookingOwnerManagement:booking.includes('Kelola Booking'),
+            bookingArchiveFilter:booking.includes('useTransaksiOperasional()'),
+            dashboardArchiveFilter:checkout.includes('useTransaksiOperasional()'),
+            employeeOwnerDelete:people.includes('TombolHapusDemo'),
+            transactionOwnerDelete:trans.includes('TombolHapusDemo'),
+            historicalFinanceVisible:finance.includes('nomorDenganArsip'),
+            ownerPostAuth:owner.includes('requireSupabaseAuth'),
+            ownerRpc:owner.includes('owner_delete_demo'),
+            archiveRpc:owner.includes('owner_archive_demo'),
+            bothSqlAtomic:a.trimEnd().endsWith('COMMIT;')&&b.trimEnd().endsWith('COMMIT;'),
+            employeeAuthGuard:a.includes('auth.sessions')&&a.includes('auth.refresh_tokens'),
+            auditAppendOnly:a.includes('owner_delete_immutable_event'),
+            archiveNotDeletingMoney:b.includes('demo_archived_at')&&!/DELETE FROM public\.payments/.test(b)
+          };
+          console.log(checks);
+          if(Object.values(checks).some(v=>!v))throw Error('Booking P0/Owner DEMO archival integration contract failed');
+          console.log('B25 ISSUE99 + BOOKING MERGE SOURCE CONTRACT: PASS');
+          NODE
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies transiently (no lockfile in repo)
+        run: npm install --ignore-scripts --no-save --no-package-lock --no-audit --no-fund
+      - name: Build latest Booking and Owner-delete combined UI without deploying
+        run: npm run build
+      - name: TypeScript after generated routes refresh
+        run: npx tsc --noEmit
