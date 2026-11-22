@@ -39,6 +39,15 @@ DROP TRIGGER IF EXISTS finance_closing_count_audit_immutable_trigger
 CREATE TRIGGER finance_closing_count_audit_immutable_trigger
   BEFORE UPDATE OR DELETE ON public.finance_closing_count_audit
   FOR EACH ROW EXECUTE FUNCTION public.finance_closing_count_audit_immutable();
+-- Contract probe lets the new UI fail closed before this migration exists.
+-- It is read-only, exposes only a version number and no financial records.
+CREATE OR REPLACE FUNCTION public.finance_closing_count_contract_version()
+RETURNS integer LANGUAGE sql STABLE SECURITY INVOKER
+SET search_path TO public AS $probe$
+  SELECT 1
+$probe$;
+REVOKE ALL ON FUNCTION public.finance_closing_count_contract_version() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.finance_closing_count_contract_version() TO authenticated;
 CREATE OR REPLACE FUNCTION public.close_finance_cash_session(_session_id uuid, _allocation jsonb, _reason text DEFAULT ''::text)
  RETURNS jsonb
  LANGUAGE plpgsql
