@@ -362,7 +362,7 @@ function HalamanKeuangan() {
       <nav className="kf-tabs" aria-label="Bagian Keuangan">
         {([
           ['Ringkasan', ChartNoAxesCombined, ''], ['Sesi Kas', Wallet, 'sesi'], ['Setoran', Upload, 'setoran'],
-          ['Refund', RotateCcw, 'refund'], ['Komisi', Percent, 'ringkasan'], ['Arus Kas', ChartNoAxesCombined, 'arus'], ['Riwayat', ReceiptText, 'aktivitas'],
+          ['Refund', RotateCcw, 'refund'], ['Komisi', Percent, 'komisi'], ['Arus Kas', ChartNoAxesCombined, 'arus'], ['Riwayat', ReceiptText, 'aktivitas'],
         ] as const).filter(([label]) => label !== 'Refund' || isOwner).map(([label, Icon, target]) => <Button key={label} variant="outline" aria-pressed={tab === label} onClick={() => {
           setTab(label);
           if (target) requestAnimationFrame(() => document.getElementById(`keuangan-${target}`)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' }));
@@ -401,6 +401,46 @@ function HalamanKeuangan() {
             </div>
           ))}
         </div>
+      )}
+      {selectedSession && tab === 'Komisi' && (
+        <section id="keuangan-komisi" className="kf-panel" data-panel="komisi" aria-label="Rincian Komisi Sesi Kas">
+          <div className="kf-panel-head">
+            <div className="kf-panel-heading">
+              <span className="ikon-bulat shrink-0 text-gold"><Percent size={22} aria-hidden="true" /></span>
+              <div>
+                <h2 className="font-serif">Rincian Komisi Sesi Kas</h2>
+                <p className="text-muted-foreground">Berdasarkan pembayaran pada sesi terpilih. Koreksi komisi refund mengikuti ringkasan backend.</p>
+              </div>
+            </div>
+          </div>
+          <div className="mb-3 rounded-lg border border-gold/15 bg-background/40 p-4">
+            <p className="text-sm text-muted-foreground">Total Komisi Sesi (termasuk koreksi refund)</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums">{rupiah(Number(summary['commission'] ?? 0))}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{sessionPayments.length} pembayaran tercatat · {tanggalPanjang}</p>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-gold/15">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-secondary text-xs text-foreground"><tr>
+                <th className="px-3 py-2">Transaksi</th>
+                <th className="px-3 py-2">Metode</th>
+                <th className="px-3 py-2 text-right">Pembayaran</th>
+                <th className="px-3 py-2 text-right">Komisi Awal</th>
+              </tr></thead>
+              <tbody>
+                {sessionPayments.map(payment => (
+                  <tr key={payment.id} className="border-t border-gold/10">
+                    <td className="px-3 py-2 font-mono text-gold">{nomorTrx(payment.transaction_id)}</td>
+                    <td className="px-3 py-2">{payment.method}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{rupiah(Number(payment.amount))}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{rupiah(Number(payment.commission_amount ?? 0))}</td>
+                  </tr>
+                ))}
+                {sessionPayments.length === 0 && <tr><td colSpan={4} className="px-3 py-5 text-center text-muted-foreground">Belum ada pembayaran pada sesi ini.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">Komisi Awal adalah nilai dari masing-masing pembayaran. Total Komisi Sesi mengikuti perhitungan backend yang juga memperhitungkan koreksi refund, sehingga jumlah kolom ini dapat berbeda dari total.</p>
+        </section>
       )}
       <div className="kf-grille">
         <div className="kf-colonne">
@@ -534,7 +574,7 @@ function HalamanKeuangan() {
               </div>
             </Panel>
           )}
-          {selectedSession && (tab === 'Komisi' || tab === 'Sesi Kas') && (
+          {selectedSession && tab === 'Sesi Kas' && (
             <Panel judul="Ringkasan Hari Ini" kanan={<span className="text-sm text-muted-foreground">{tanggalPanjang}</span>}>
               <ul className="divide-y divide-gold/10 rounded-lg border border-gold/15 bg-background/40 text-sm">
                 {([
