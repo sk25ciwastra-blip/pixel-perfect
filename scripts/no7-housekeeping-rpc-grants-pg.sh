@@ -46,3 +46,20 @@ BEGIN
 END $assert$;
 SELECT 'No7 Housekeeping anon grants disposable PG PASS' AS result;
 SQL
+
+# Verify exact rollback grant restoration in the same disposable fixture.
+psql -v ON_ERROR_STOP=1 -f supabase/rollback/20261123_no7_housekeeping_rpc_grants.sql
+psql -v ON_ERROR_STOP=1 <<'SQL'
+DO $assert$
+BEGIN
+  IF NOT has_function_privilege('anon','public.advance_room_cleaning(uuid,text)','EXECUTE') OR
+     NOT has_function_privilege('anon','public.override_room_ready(uuid,text)','EXECUTE') THEN
+    RAISE EXCEPTION 'No7 rollback test did not restore baseline privileges';
+  END IF;
+  IF NOT has_function_privilege('authenticated','public.advance_room_cleaning(uuid,text)','EXECUTE') OR
+     NOT has_function_privilege('authenticated','public.override_room_ready(uuid,text)','EXECUTE') THEN
+    RAISE EXCEPTION 'No7 rollback changed staff privileges';
+  END IF;
+END $assert$;
+SELECT 'No7 Housekeeping rollback fixture PASS' AS result;
+SQL
