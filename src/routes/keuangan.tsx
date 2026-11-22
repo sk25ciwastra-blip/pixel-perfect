@@ -271,7 +271,7 @@ function HalamanKeuangan() {
   const byMethod = (method: string) => sessionPayments.filter((payment) => payment.method.toUpperCase() === method.toUpperCase());
   const total = (rows: { amount: number }[]) => rows.reduce((sum, row) => sum + Number(row.amount), 0);
   const nama = (id?: string | null) => !id
-    ? 'Petugas tidak tercatat (historis)'
+    ? 'Identitas petugas tidak tercatat'
     : employees.rows.find((employee) => employee.user_id === id)?.name ?? 'Profil petugas tidak tersedia';
   const missingIds = [...new Set([...sessionPayments, ...sessionRefunds].map(row => row.transaction_id))]
     .filter(id => !transactions.rows.some(row => row.id === id)).sort();
