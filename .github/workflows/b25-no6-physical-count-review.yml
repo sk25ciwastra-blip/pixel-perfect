@@ -1,0 +1,65 @@
+name: B25 No6 physical cash Closing review
+on:
+  push:
+    branches:
+      - fix/no6-physical-cash-count-contract-20261123
+  pull_request:
+    branches:
+      - fix/no6-closing-labels-actor-fallback-20261123
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  closing-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Closing source and synthetic test contract
+        run: |
+          node scripts/no6-closing-labels-source.test.cjs
+          node scripts/no6-closing-physical-count.test.cjs
+      - name: Build
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
+
+  disposable-postgres17:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+      - name: Apply reviewed function on synthetic disposable fixtures only
+        run: bash scripts/no6-closing-physical-disposable-pg.sh
