@@ -1,5 +1,49 @@
 BEGIN;
 
+-- Fail closed: no attempt to install over a partial, drifted or foreign
+-- database. Exact data inventory is checked separately through SELECT only.
+DO $owner_preflight$
+BEGIN
+ IF current_user <> 'postgres'
+    OR to_regnamespace('owner_delete_private') IS NOT NULL
+    OR to_regprocedure('public.owner_delete_demo(text,uuid,text,boolean)') IS NOT NULL
+    OR EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public'
+      AND ((table_name='employees' AND column_name='deleted_at')
+       OR (table_name='transactions' AND column_name IN('demo_archived_at','demo_archived_by'))))
+ THEN
+   RAISE EXCEPTION 'STOP Owner/Delete Cloud preflight: wrong role or existing installation';
+ END IF;
+ IF to_regprocedure('public.has_role(uuid,app_role)') IS NULL
+   OR to_regprocedure('auth.jwt()') IS NULL
+   OR to_regprocedure('auth.uid()') IS NULL
+   OR to_regrole('service_role') IS NULL
+   OR to_regrole('authenticated') IS NULL OR to_regrole('anon') IS NULL
+ THEN
+   RAISE EXCEPTION 'STOP Owner/Delete Cloud preflight: Auth/role contract missing';
+ END IF;
+ IF EXISTS(SELECT 1 FROM (VALUES
+ ('auth','users','id'),('auth','users','banned_until'),
+ ('auth','sessions','id'),('auth','sessions','user_id'),('auth','sessions','not_after'),
+ ('auth','refresh_tokens','user_id'),('auth','refresh_tokens','session_id'),('auth','refresh_tokens','revoked'),
+ ('public','employees','id'),('public','employees','user_id'),
+ ('public','employees','active'),('public','employees','employee_id'),
+ ('public','transactions','id'),('public','transactions','transaction_number'),
+ ('public','transactions','status'),('public','transactions','updated_at'),
+ ('public','finance_cash_sessions','opened_by'),('public','finance_cash_sessions','status'),
+ ('public','finance_training_assignments','trainee_user_id'),
+ ('public','finance_training_assignments','supervisor_user_id'),
+ ('public','finance_training_assignments','status'),
+ ('public','finance_payment_batch_idempotency','transaction_number'),
+ ('public','finance_reservation_idempotency','transaction_number')
+ ) AS expected(schema_name,table_name,column_name)
+ WHERE NOT EXISTS(SELECT 1 FROM information_schema.columns actual
+   WHERE actual.table_schema=expected.schema_name AND actual.table_name=expected.table_name
+     AND actual.column_name=expected.column_name)) THEN
+  RAISE EXCEPTION 'STOP Owner/Delete Cloud preflight: required column contract drifted';
+ END IF;
+END;
+$owner_preflight$;
+
 CREATE SCHEMA IF NOT EXISTS owner_delete_private;
 REVOKE ALL ON SCHEMA owner_delete_private FROM PUBLIC, anon, authenticated;
 
