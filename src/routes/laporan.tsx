@@ -74,7 +74,7 @@ function Halaman() {
         tgl, transaksi: trx.length, arsipDemo: trx.filter(t => !transaksiBelumDiarsipkan(t)).length,
         masuk: payments.rows.filter(p => tanggalLaporan(p.created_at) === tgl).reduce((sum, p) => sum + Number(p.amount), 0),
         keluar: expenses.rows.filter(p => tanggalLaporan(p.created_at) === tgl).reduce((sum, p) => sum + Number(p.amount), 0),
-        refund: isOwner ? refunds.rows.filter(r => tanggalLaporan(r.created_at) === tgl).reduce((sum, r) => sum + Number(r.amount), 0) : undefined,
+        ...(isOwner ? { refund: refunds.rows.filter(r => tanggalLaporan(r.created_at) === tgl).reduce((sum, r) => sum + Number(r.amount), 0) } : {}),
       };
     });
   }, [payments.rows, expenses.rows, transactions.rows, refunds.rows, isOwner, periode]);
@@ -84,7 +84,7 @@ function Halaman() {
     if (loading || gagal) return;
     const csv = buatCsvLaporan({
       awal: periode.awal, akhir: periode.akhir,
-      penerimaan, pengeluaran: biaya, refund: refundTotal ?? undefined, jumlahTransaksi: trxPeriode.length, jumlahArsipDemo: jumlahArsip,
+      penerimaan, pengeluaran: biaya, ...(isOwner ? { refund: refundTotal ?? 0 } : {}), jumlahTransaksi: trxPeriode.length, jumlahArsipDemo: jumlahArsip,
       rekap, metode: perMetode,
     });
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
