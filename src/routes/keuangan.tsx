@@ -200,7 +200,7 @@ function HalamanKeuangan() {
       return;
     }
     const { counted, difference } = review;
-    if (!window.confirm(`Finalkan sesi kas? Hitung fisik: ${rupiah(counted)}; saldo diharapkan: ${rupiah(expectedCash)}; selisih: ${rupiah(difference)}. Sesi FINAL tidak bisa diubah.`)) return;
+    if (!window.confirm(`Finalkan sesi kas? Hitung fisik: ${rupiah(counted)}; saldo diharapkan: ${expectedCash === null ? 'tidak tersedia' : rupiah(expectedCash)}; selisih: ${rupiah(difference)}. Sesi FINAL tidak bisa diubah.`)) return;
     await run(async () => {
       const { error } = await rpc('close_finance_cash_session', {
         _session_id: selectedSession.id,
