@@ -3,6 +3,16 @@
 -- production until isolated PG tests, permissions and rollback are reviewed.
 -- No data backfills; historical FINAL closing_snapshot unchanged.
 BEGIN;
+-- Refuse to replace a different Cloud runtime function. Snapshot hash was
+-- captured SELECT-only from Lovable Cloud on 23 Nov 2026.
+DO $guard$
+BEGIN
+  IF md5(pg_get_functiondef('public.close_finance_cash_session(uuid,jsonb,text)'::regprocedure))
+       <> '3371f1c4852304c0e507fea062f14faf' THEN
+    RAISE EXCEPTION 'Closing runtime drift: manual re-review required before migration';
+  END IF;
+END;
+$guard$;
 CREATE OR REPLACE FUNCTION public.close_finance_cash_session(_session_id uuid, _allocation jsonb, _reason text DEFAULT ''::text)
  RETURNS jsonb
  LANGUAGE plpgsql
