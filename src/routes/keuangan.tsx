@@ -270,7 +270,9 @@ function HalamanKeuangan() {
   const sessionRefunds = refunds.rows.filter((item) => item.source_session_id === sid);
   const byMethod = (method: string) => sessionPayments.filter((payment) => payment.method.toUpperCase() === method.toUpperCase());
   const total = (rows: { amount: number }[]) => rows.reduce((sum, row) => sum + Number(row.amount), 0);
-  const nama = (id?: string | null) => employees.rows.find((employee) => employee.user_id === id)?.name ?? 'Tidak diketahui';
+  const nama = (id?: string | null) => !id
+    ? 'Identitas petugas tidak tercatat'
+    : employees.rows.find((employee) => employee.user_id === id)?.name ?? 'Profil petugas tidak tersedia';
   const missingIds = [...new Set([...sessionPayments, ...sessionRefunds].map(row => row.transaction_id))]
     .filter(id => !transactions.rows.some(row => row.id === id)).sort();
   const jejakTrx = useQuery({
@@ -429,7 +431,7 @@ function HalamanKeuangan() {
             <section className="kf-panel" data-panel="closing" id="keuangan-closing">
               <div className="kf-closing-summary">
                 <div className="kf-panel-heading"><span className="ikon-bulat shrink-0 text-gold"><Layers size={23} /></span><div><h2 className="font-serif">Closing Sesi Kas</h2><p className="mt-1">Input hasil perhitungan kas di akhir sesi.</p></div></div>
-                <div><p>Total Cash (Fisik)</p><strong className="tabular-nums">{rupiah(totalCash)}</strong></div>
+                <div><p>Penerimaan Cash (Tercatat)</p><strong className="tabular-nums">{rupiah(totalCash)}</strong></div>
                 <div><p>Total QRIS</p><strong className="tabular-nums">{rupiah(totalQris)}</strong></div>
                 <div><p>Total Transfer</p><strong className="tabular-nums">{rupiah(totalTransfer)}</strong></div>
                 <div><p>Selisih / Catatan</p><p className="mt-1 break-words">{closingReason || '—'}</p></div>
@@ -438,7 +440,7 @@ function HalamanKeuangan() {
               <div className={`kf-closing-form ${closingBuka ? '' : 'kf-hidden'}`}>
               {canCloseOthers && <select aria-label="Sesi kas yang ditangani" value={selectedSession.id} onChange={(e) => selectAssistedSession(e.target.value)} className={`${input} mb-4`}>{sessions.rows.filter((session) => session.status === 'OPEN').map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select>}
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.5fr]">
-                <label className={label}><span className="mb-1.5 block">Total Cash (Fisik)</span><RpInput value={String(totalCash)} readOnly /></label>
+                <label className={label}><span className="mb-1.5 block">Penerimaan Cash (Tercatat)</span><RpInput value={String(totalCash)} readOnly /></label>
                 <label className={label}><span className="mb-1.5 block">Total QRIS</span><RpInput value={String(totalQris)} readOnly /></label>
                 <label className={label}><span className="mb-1.5 block">Total Transfer</span><RpInput value={String(totalTransfer)} readOnly /></label>
                 <label className={label}><span className="mb-1.5 block">Selisih / Catatan</span><input value={closingReason} onChange={(e) => setClosingReason(e.target.value)} className={input} placeholder="Contoh: Sesuai, tidak ada selisih" /></label>
@@ -457,7 +459,7 @@ function HalamanKeuangan() {
               <div className="mt-4 grid gap-4 md:grid-cols-[1.3fr_1fr] md:items-stretch">
                 <div className="rounded-lg border border-gold/15 bg-background/40 p-4"><p className="text-sm text-muted-foreground">Total Penerimaan</p><p className="mt-1 text-2xl font-semibold tabular-nums">{rupiah(Number(summary['payments_total'] ?? 0))}</p></div>
                 <div className="md:border-l md:border-gold/15 md:pl-4">
-                  <p className="text-xs text-muted-foreground">Pastikan semua transaksi telah dicatat dengan benar sebelum memfinalkan closing.</p>
+                  <p className="text-xs text-muted-foreground">Penerimaan Cash adalah pembayaran bruto, bukan hasil hitung uang fisik. Saldo Cash yang diharapkan: {hasExpectedCash ? rupiah(expectedCash) : 'belum tersedia'}. Pastikan alokasi kas dan hitungan fisik cocok sebelum finalisasi; Closing FINAL tidak dapat diubah.</p>
                   {!isTraining && <Button className="mt-3 w-full gap-2" disabled={busy || !hasExpectedCash} onClick={() => void closeSession()}><Check size={16} aria-hidden="true" />Finalkan Closing</Button>}
                 </div>
               </div>
