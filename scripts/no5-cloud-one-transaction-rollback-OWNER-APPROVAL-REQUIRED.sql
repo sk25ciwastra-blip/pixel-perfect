@@ -25,6 +25,8 @@ BEGIN
   THEN RAISE EXCEPTION 'NO5 STOP: unexpected execution role'; END IF;
  IF EXISTS (SELECT 1 FROM public.rooms WHERE room_number='99')
    THEN RAISE EXCEPTION 'NO5 STOP: test room number already exists'; END IF;
+ IF EXISTS (SELECT 1 FROM public.guests WHERE phone='0800000000000099')
+   THEN RAISE EXCEPTION 'NO5 STOP: synthetic test phone already belongs to a guest'; END IF;
  SELECT e.user_id INTO reception_id FROM public.employees e
  WHERE e.employee_id='B25EMP-002' AND e.active AND e.position='receptionist';
  IF reception_id IS NULL OR NOT public.can_frontdesk(reception_id)
