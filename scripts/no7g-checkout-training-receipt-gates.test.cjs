@@ -30,7 +30,7 @@ check('Checkout requires explicit confirmation and sends training session id',()
 });
 check('Trainee cash context is assigned OPEN session, never own',()=>{
  assert.ok(sessions.includes("session.status === 'OPEN'"));
- assert.ok(sessions.includes('training.is_training ? undefined'));
+ assert.ok(/const ownSession\s*=\s*training\.is_training\s*\?\s*undefined/.test(sessions));
  assert.ok(sessions.includes('canOpenSession: !training.is_training'));
  assert.ok(sessions.includes('training.session_id'));
 });
