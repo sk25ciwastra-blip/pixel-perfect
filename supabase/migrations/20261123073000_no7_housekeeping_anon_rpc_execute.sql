@@ -18,6 +18,8 @@ END $preflight$;
 -- Effective anon privilege can be inherited from PUBLIC, so revoke both.
 REVOKE EXECUTE ON FUNCTION public.advance_room_cleaning(uuid,text) FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.override_room_ready(uuid,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.advance_room_cleaning(uuid,text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.override_room_ready(uuid,text) TO authenticated;
 
 DO $postcheck$
 BEGIN
