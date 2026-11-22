@@ -1,0 +1,25 @@
+name: B25 No6 Komisi warm white review
+on:
+  push:
+    branches:
+      - style/no6-komisi-warm-white-20261123
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  warm-white:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: node scripts/no6-komisi-warm-white.test.cjs
+      - run: bun run build
+      - run: bunx tsc --noEmit
