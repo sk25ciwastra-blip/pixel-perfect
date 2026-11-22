@@ -1,5 +1,6 @@
 import { rpc } from "@/lib/data-live";
 import { createFileRoute } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Wallet, Banknote, QrCode, Landmark, Percent, RotateCcw, ArrowUpRight, ArrowDownLeft, ClipboardCheck, CalendarDays, ReceiptText, Coins, Check, Search, SlidersHorizontal, Send, BadgeCheck, Clock, Upload, Info, ChartNoAxesCombined, ChevronRight, Layers, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,9 @@ import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
 import { useSesiKasKonteks } from '@/lib/sesi-kas';
 import { KeuanganArus } from '@/components/keuangan-arus';
+import { DetailTransaksi } from '@/components/detail-transaksi';
+import { supabase } from '@/integrations/supabase/client';
+import { nomorDenganArsip } from '@/lib/demo-archive';
 import '@/components/keuangan.css';
 
 const POLA_NOMOR = /(BTRD[A-Z]*-\d+)/;
@@ -108,6 +112,7 @@ function HalamanKeuangan() {
   const handoffs = useTable('finance_drawer_handoffs');
   const expenses = useTable('finance_expenses');
   const transactions = useTable('transactions');
+  const [detailTrx, setDetailTrx] = useState<string | null>(null);
   const payments = useTable('payments');
   const refunds = useTable('finance_refunds', isOwner);
 
@@ -254,7 +259,25 @@ function HalamanKeuangan() {
   const byMethod = (method: string) => sessionPayments.filter((payment) => payment.method.toUpperCase() === method.toUpperCase());
   const total = (rows: { amount: number }[]) => rows.reduce((sum, row) => sum + Number(row.amount), 0);
   const nama = (id?: string | null) => employees.rows.find((employee) => employee.user_id === id)?.name ?? 'Tidak diketahui';
-  const nomorTrx = (id: string) => transactions.rows.find((transaction) => transaction.id === id)?.transaction_number ?? 'Transaksi';
+  const missingIds = [...new Set([...sessionPayments, ...sessionRefunds].map(row => row.transaction_id))]
+    .filter(id => !transactions.rows.some(row => row.id === id)).sort();
+  const jejakTrx = useQuery({
+    queryKey: ['keuangan-jejak-trx', missingIds],
+    enabled: missingIds.length > 0,
+    queryFn: async () => {
+      const rows = [];
+      for (let i = 0; i < missingIds.length; i += 100) {
+        const { data, error } = await supabase.from('transactions').select('*').in('id', missingIds.slice(i, i + 100));
+        if (error) throw error;
+        rows.push(...data);
+      }
+      return rows;
+    },
+  });
+  const nomorTrx = (id: string) => {
+    const trx = transactions.rows.find(row => row.id === id) ?? jejakTrx.data?.find(row => row.id === id);
+    return trx ? nomorDenganArsip(trx) : 'Transaksi';
+  };
   const tanggalPanjang = selectedSession
     ? new Date(`${selectedSession.operational_date}T00:00:00+07:00`).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' })
     : '';
@@ -264,12 +287,12 @@ function HalamanKeuangan() {
   const confirmedDeposits = sessionDeposits.filter((deposit) => deposit.status === 'DITERIMA');
   const waitingDeposits = sessionDeposits.filter((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER');
 
-  type Aktivitas = { id: string; waktu: string; jenis: 'Penerimaan' | 'Setoran' | 'Pengeluaran' | 'Refund'; ket: string; metode: string; nominal: number; petugas: string };
+  type Aktivitas = { id: string; transactionId?: string; waktu: string; jenis: 'Penerimaan' | 'Setoran' | 'Pengeluaran' | 'Refund'; ket: string; metode: string; nominal: number; petugas: string };
   const aktivitas: Aktivitas[] = [
-    ...sessionPayments.map((payment) => ({ id: `p-${payment.id}`, waktu: payment.created_at, jenis: 'Penerimaan' as const, ket: `Pembayaran ${nomorTrx(payment.transaction_id)}`, metode: payment.method, nominal: Number(payment.amount), petugas: nama(payment.recorded_by) })),
+    ...sessionPayments.map((payment) => ({ id: `p-${payment.id}`, transactionId: payment.transaction_id, waktu: payment.created_at, jenis: 'Penerimaan' as const, ket: `Pembayaran ${nomorTrx(payment.transaction_id)}`, metode: payment.method, nominal: Number(payment.amount), petugas: nama(payment.recorded_by) })),
     ...sessionDeposits.map((deposit) => ({ id: `d-${deposit.id}`, waktu: deposit.created_at, jenis: 'Setoran' as const, ket: 'Setoran ke rekening owner', metode: deposit.method, nominal: Number(deposit.amount), petugas: nama(deposit.submitted_by) })),
     ...sessionExpenses.map((expense) => ({ id: `e-${expense.id}`, waktu: expense.created_at, jenis: 'Pengeluaran' as const, ket: [expense.expense_number, expense.category, expense.note].filter(Boolean).join(' · '), metode: expense.method, nominal: Number(expense.amount), petugas: nama(expense.recorded_by) })),
-    ...sessionRefunds.map((item) => ({ id: `r-${item.id}`, waktu: item.created_at, jenis: 'Refund' as const, ket: `Refund ${nomorTrx(item.transaction_id)} - ${item.reason}`, metode: item.refund_method, nominal: Number(item.amount), petugas: nama(item.created_by) })),
+    ...sessionRefunds.map((item) => ({ id: `r-${item.id}`, transactionId: item.transaction_id, waktu: item.created_at, jenis: 'Refund' as const, ket: `Refund ${nomorTrx(item.transaction_id)} - ${item.reason}`, metode: item.refund_method, nominal: Number(item.amount), petugas: nama(item.created_by) })),
   ]
     .filter((row) => !filterJenis || row.jenis === filterJenis)
     .filter((row) => {
@@ -378,7 +401,7 @@ function HalamanKeuangan() {
           {isOwner && (
             <Panel judul="Refund Tamu" sub="Catat pengembalian dana kepada tamu (atas persetujuan owner).">
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className={label}><span className="mb-1.5 block">Pilih Transaksi / Booking</span><select value={refundTransactionId} onChange={(e) => setRefundTransactionId(e.target.value)} className={input}><option value="">Pilih transaksi</option>{transactions.rows.filter((transaction) => transaction.status !== 'cancelled').map((transaction) => <option key={transaction.id} value={transaction.id}>{transaction.transaction_number}</option>)}</select></label>
+                <label className={label}><span className="mb-1.5 block">Pilih Transaksi / Booking</span><select value={refundTransactionId} onChange={(e) => setRefundTransactionId(e.target.value)} className={input}><option value="">Pilih transaksi</option>{transactions.rows.filter((transaction) => transaction.status !== 'cancelled').map((transaction) => <option key={transaction.id} value={transaction.id}>{nomorDenganArsip(transaction)}</option>)}</select></label>
                 <label className={label}><span className="mb-1.5 block">Nominal Refund</span><RpInput value={refundAmount} onChange={setRefundAmount} /></label>
                 <label className={label}><span className="mb-1.5 block">Sumber Dana</span><select value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)} className={input}><option value="CASH">Cash</option><option value="QRIS">QRIS</option><option value="Transfer">Transfer</option></select></label>
                 <label className={label}><span className="mb-1.5 block">Alasan Refund</span><input value={refundReason} onChange={(e) => setRefundReason(e.target.value)} className={input} placeholder="Contoh: Pembatalan oleh tamu" /></label>
@@ -445,7 +468,9 @@ function HalamanKeuangan() {
                       <tr key={row.id} className="border-t border-gold/10">
                         <td className="whitespace-nowrap px-3 py-2.5 text-xs">{new Date(row.waktu).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                         <td className="px-3 py-2.5"><span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${warnaJenis[row.jenis]}`}>{row.jenis}</span></td>
-                        <td className="max-w-64 px-3 py-2.5 text-xs"><span className="line-clamp-2 break-words"><NomorTeks teks={row.ket} /></span></td>
+                        <td className="max-w-64 px-3 py-2.5 text-xs">{row.transactionId
+                          ? <button type="button" className="line-clamp-2 break-words text-left underline-offset-2 hover:underline" onClick={() => setDetailTrx(row.transactionId ?? null)}><NomorTeks teks={row.ket} /></button>
+                          : <span className="line-clamp-2 break-words"><NomorTeks teks={row.ket} /></span>}</td>
                         <td className="px-3 py-2.5 text-xs">{row.metode}</td>
                         <td className={`whitespace-nowrap px-3 py-2.5 text-xs font-semibold tabular-nums ${row.jenis === 'Penerimaan' ? 'text-siap-foreground' : row.jenis === 'Setoran' ? 'text-foreground' : 'text-bahaya-foreground'}`}>{rupiah(row.nominal)}</td>
                         <td className="px-3 py-2.5 text-xs">{row.petugas}</td>
@@ -479,6 +504,7 @@ function HalamanKeuangan() {
           )}
       </div>
       </div>
+      {detailTrx && <DetailTransaksi key={detailTrx} transactionId={detailTrx} onClose={() => setDetailTrx(null)} />}
     </Kerangka>
   );
 }

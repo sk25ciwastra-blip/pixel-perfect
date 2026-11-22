@@ -4,7 +4,7 @@ import { Eye, Search, Plus, ArrowDownUp, UserRound, NotebookPen, CalendarDays, U
 import * as Dialog from '@radix-ui/react-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
-import { useTable, type Guest } from '@/lib/data-live';
+import { useTable, useTransaksiOperasional, type Guest } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
@@ -61,7 +61,7 @@ function HalamanTamu() {
   const { posisiKode } = usePeran();
   const readOnly = posisiKode === 'inspector';
   const { rows, loading, error, refresh } = useTable('guests');
-  const transactions = useTable('transactions');
+  const transactions = useTransaksiOperasional();
   const notes = useTable('guest_notes');
   const rooms = useTable('rooms');
   const roomTypes = useTable('room_types');

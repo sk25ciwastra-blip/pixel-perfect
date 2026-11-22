@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, ChevronRight, Lock, Plus } from 'lucide-react';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
-import { useTable, type Room, type RoomType } from '@/lib/data-live';
+import { useTable, useTransaksiOperasional, type Room, type RoomType } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
  import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
@@ -30,7 +30,7 @@ function teksLantai(r:Room):string{const v=lantaiAsli(r);return v===null?'—':S
 
 function Halaman(){
  const {peran}=usePeran();const owner=peran==='owner';
- const tipe=useTable('room_types');const kamar=useTable('rooms');const trx=useTable('transactions');
+ const tipe=useTable('room_types');const kamar=useTable('rooms');const trx=useTransaksiOperasional();
  const [pilih,setPilih]=useState<string|null>(null);
  const [item,setItem]=useState<Room|null>(null);const [open,setOpen]=useState(false);
  const [nomor,setNomor]=useState('');const [lantai,setLantai]=useState('');const [pesan,setPesan]=useState('');const [sibuk,setSibuk]=useState<string|null>(null);const [info,setInfo]=useState('');

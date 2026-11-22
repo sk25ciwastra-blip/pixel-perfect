@@ -35,3 +35,27 @@ git diff --check
 SQL disimpan di `supabase/pending/20261122000000_owner_delete.sql`. Setelah ada persetujuan terpisah, operator perlu mencocokkan definisi dan hak akses `auth.users`, `auth.sessions`, `auth.refresh_tokens`, FK transaksi, serta relasi Finance dan Housekeeping pada schema Lovable yang akan diaktifkan. Verifikasi role pemilik RPC dapat memperbarui ban, mencabut sesi/token target, dan menjalankan guard walaupun RLS aktif. Uji login dan refresh di browser pada lingkungan terisolasi dengan akun fixture. JWT yang sudah terbit tetap mengikuti masa berlakunya pada endpoint lama yang tidak memeriksa sesi. RPC Hapus memeriksa sesi dan role untuk setiap tindakan.
 
 Semua mutasi pengujian dilakukan pada fixture lokal. Cloud SQL, data DEMO/LIVE, merge, deploy, dan publish berada di luar pelaksanaan PR ini.
+
+## Tindak lanjut PR #101 · Arsip DEMO berbayar
+
+Review menemukan seluruh 17 transaksi lama memiliki pembayaran, sehingga jalur hapus permanen tidak memenuhi kebutuhan arsip. PR yang sama sekarang menyediakan **Arsip DEMO** untuk transaksi berbayar dengan status historis `check_out` atau `cancelled`. Booking dan check-in aktif harus diselesaikan lewat prosedur operasional yang sesuai. [Komentar review 7074822498](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/101#issuecomment-7074822498)
+
+- Migrasi pending `20261122000001_owner_demo_transaction_archive.sql` mengikuti migrasi Hapus. Arsip menulis timestamp dan UID saja pada transaksi dan menambah audit append-only. Pemeriksaan Owner, sesi Auth, nomor eksak, status, pembayaran, dan klasifikasi terjadi di RPC. Row lock menserialkan retry. Guard hapus permanen tetap berlaku.
+- Daftar izin DEMO privat kosong saat migrasi dipasang. Setelah Owner menyetujui rekonsiliasi terpisah, operator berwenang harus memeriksa UUID serta nomor tiap target dan mendaftarkan pasangan itu melalui `owner_delete_private.approve_demo_transaction(uuid,text,text)` dengan referensi persetujuan non-PII. Waktu dan identitas sesi database dicatat. Role aplikasi, termasuk Owner melalui Data API, tidak memiliki hak klasifikasi. Konfirmasi dialog hanya mencocokkan target.
+- Daftar Transaksi, pencarian, hitungan, rentang tahun, Booking, dan daftar operasional Dashboard menyembunyikan arsip. Grafik dan angka kas Dashboard tetap historis. Keuangan mempertahankan jejak TRX dan memberi label Arsip DEMO, termasuk tautan dari aktivitas ke detail berizin. Laporan dan CSV menjaga hitungan transaksi historis serta seluruh penerimaan, dengan jumlah arsip ditampilkan terpisah sebagai bagian dari total historis. Housekeeping dan cetak struk tetap memakai referensi historis.
+
+| Hasil | Bukti baru |
+| --- | --- |
+| PASS | PostgreSQL fixture dengan pembayaran, refund, komisi, sesi FINAL dan snapshot closing, struk, jobs/history/checklists HK. Selain metadata arsip dan audit, snapshot sama. Retry paralel hanya menghasilkan satu audit sukses. Permanen tetap menolak pembayaran. |
+| PASS | Persetujuan privat dan akses RPC, identitas eksak, penolakan booking/check-in, belum terklasifikasi, tidak berbayar, karyawan/anonim, serta penolakan mutasi metadata langsung. |
+| PASS | GoTrue v2.197.0 lokal dengan schema Auth asli. Owner fixture bisa menjalankan pencabutan, sesi target hilang, login/refresh target gagal, dan refresh akun lain berhasil. |
+| PASS | Tes dialog dan pemanggilan RPC Arsip saja, Batal dan nomor salah tanpa request, fallback pagination setelah baris terakhir diarsipkan, jalur baca, penanda Finance dan total CSV. Build, TypeScript, dan pemeriksaan diff. |
+| BELUM DIUJI | Browser end-to-end dan kesetaraan skema, izin, dan Realtime di Lovable Cloud. |
+
+```text
+node scripts/owner-delete-ui-tests.cjs --archive
+node scripts/owner-demo-archive-reads.test.cjs
+node scripts/owner-delete-runtime-tests.cjs <direktori-bin-postgresql> --archive <executable-gotrue>
+```
+
+Status **NO-GO untuk aktivasi** sampai operator memverifikasi katalog dan izin Auth/Realtime Lovable terhadap kontrak yang diuji lokal, serta memperoleh persetujuan Owner untuk rekonsiliasi dan daftar izin per transaksi. Saldo dan laporan historis tetap mencakup pembayaran arsip.

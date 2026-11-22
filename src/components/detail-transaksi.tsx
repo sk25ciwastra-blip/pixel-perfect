@@ -288,7 +288,11 @@ export function DetailTransaksi({
                 : <button type="button" disabled title="Cetak struk pembayaran resmi belum diaktifkan. Owner dapat mencoba printer dengan tombol Tes Printer 58 mm."><Printer />Cetak Struk</button>}
               {posisiKode === 'owner' && <ReceiptPrinterTestButton />}
             </span>
-            {onDeleted && <TombolHapusDemo kind="transaction" id={transaction.id} code={transaction.transaction_number}
+            {transaction.demo_archived_at && <span className="text-xs font-semibold">Arsip DEMO</span>}
+            {onDeleted && !transaction.demo_archived_at && <TombolHapusDemo kind="transaction" id={transaction.id} code={transaction.transaction_number}
+              name={guest?.full_name ?? 'Tamu'} amount={transaction.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(total)}
+              onDeleted={onDeleted} />}
+            {onDeleted && !transaction.demo_archived_at && <TombolHapusDemo kind="archive" id={transaction.id} code={transaction.transaction_number}
               name={guest?.full_name ?? 'Tamu'} amount={transaction.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(total)}
               onDeleted={onDeleted} />}
             <button type="button" className="dtx-tutup" onClick={onClose}>Tutup</button>

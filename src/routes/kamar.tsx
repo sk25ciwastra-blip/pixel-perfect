@@ -17,7 +17,7 @@ import { aksiKartuKamar } from "@/lib/aksi-kartu-kamar";
 import { PopupKamarTerisi } from "@/components/popup-kamar-terisi";
 import { PopupPerluTindakan, type KamarPerluTindakan } from "@/components/popup-perlu-tindakan";
 import { labelStatusKamar, type StatusKamar } from "@/lib/data-contoh";
-import { useTable, type Room } from "@/lib/data-live";
+import { useTable, useTransaksiOperasional, type Room } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
 import { usePeran } from "@/lib/peran";
 
@@ -82,7 +82,7 @@ function HalamanKamar() {
   }, []);
   const rooms = useTable("rooms");
   const types = useTable("room_types");
-  const transactions = useTable("transactions");
+  const transactions = useTransaksiOperasional();
   const history = useTable("housekeeping_history");
   const checklists = useTable("housekeeping_checklists");
   const historyRows = history.rows;

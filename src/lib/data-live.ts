@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { bacaTransaksiOperasional } from './demo-archive';
 export type Room = Database['public']['Tables']['rooms']['Row'];
 export type Package = Database['public']['Tables']['packages']['Row'];
 export type PackageRoomTypePrice = Database['public']['Tables']['package_room_type_prices']['Row'];
@@ -24,10 +25,15 @@ export const rpc = ((fn: string, args?: Record<string, unknown>) =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => Promise<{ data: any; error: { message: string } | null }>;
 
+export function useTransaksiOperasional() {
+  return useTable('transactions', true, undefined, true);
+}
+
 export function useTable<T extends string>(
   table: T,
   enabled = true,
   scope?: { column: string; value: string },
+  transaksiOperasional = false,
 ) {
   const scopeColumn = scope?.column;
   const scopeValue = scope?.value;
@@ -45,15 +51,14 @@ export function useTable<T extends string>(
       return;
     }
 
-    let query = supabase
-      .from(table as keyof Tabel)
-      .select('*');
-    // finance_settings has no created_at column.
-    if (table !== 'finance_settings') {
-      query = query.order('created_at', { ascending: true });
-    }
-    if (scopeColumn && scopeValue) query = query.eq(scopeColumn, scopeValue);
-    const { data, error: failure } = await query;
+    const baca = (filterArsip: boolean) => {
+      let query = supabase.from(table as keyof Tabel).select('*');
+      if (table !== 'finance_settings') query = query.order('created_at', { ascending: true });
+      if (scopeColumn && scopeValue) query = query.eq(scopeColumn, scopeValue);
+      if (filterArsip) query = query.is('demo_archived_at', null);
+      return query;
+    };
+    const { data, error: failure } = await (transaksiOperasional ? bacaTransaksiOperasional(baca) : baca(false));
 
     setRows(
       (data ?? []) as unknown as Baris<T>[],
@@ -61,7 +66,7 @@ export function useTable<T extends string>(
     setError(failure?.message ?? '');
     setLoading(false);
     if (failure && options?.throwOnError) throw new Error(failure.message);
-  }, [table, enabled, scopeColumn, scopeValue]);
+  }, [table, enabled, scopeColumn, scopeValue, transaksiOperasional]);
 
   useEffect(() => {
     if (!enabled) {

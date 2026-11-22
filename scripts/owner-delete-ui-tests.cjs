@@ -43,6 +43,7 @@ async function main() {
   });
   const id = '00000000-0000-4000-8000-000000000020';
   const data = { kind: 'transaction', id, confirmation: 'BTRDTRX-20', demoConfirmed: true };
+  const archiveOnly = process.argv.includes('--archive');
   const calls = [];
   const context = owner => ({
     userId: 'fixture',
@@ -51,13 +52,21 @@ async function main() {
       return { data: name === 'has_role' ? owner : 'done' };
     } },
   });
-  assert.equal(await hapusDataDemo(data, context(false)), 'denied');
-  assert.deepEqual(calls.map(([name]) => name), ['has_role']);
-  assert.throws(() => hapusDataDemo({ ...data, role: 'owner' }, context(true)));
-  assert.throws(() => hapusDataDemo({ ...data, demoConfirmed: false }, context(true)));
-  assert.equal(await hapusDataDemo(data, context(true)), 'done');
-  assert.deepEqual(calls.map(([name]) => name), ['has_role', 'has_role', 'owner_delete_demo']);
-  assert.equal(calls.at(-1)[1]._id, id);
+  if (archiveOnly) {
+    const archiveRequest = { kind: 'archive', id, confirmation: data.confirmation };
+    assert.equal(await hapusDataDemo(archiveRequest, context(false)), 'denied');
+    assert.equal(await hapusDataDemo(archiveRequest, context(true)), 'done');
+    assert.deepEqual(calls.map(([name]) => name), ['has_role', 'has_role', 'owner_archive_demo']);
+    assert.equal(Object.hasOwn(calls.at(-1)[1], '_demo_confirmed'), false);
+  } else {
+    assert.equal(await hapusDataDemo(data, context(false)), 'denied');
+    assert.deepEqual(calls.map(([name]) => name), ['has_role']);
+    assert.throws(() => hapusDataDemo({ ...data, role: 'owner' }, context(true)));
+    assert.throws(() => hapusDataDemo({ ...data, demoConfirmed: false }, context(true)));
+    assert.equal(await hapusDataDemo(data, context(true)), 'done');
+    assert.deepEqual(calls.map(([name]) => name), ['has_role', 'has_role', 'owner_delete_demo']);
+    assert.equal(calls.at(-1)[1]._id, id);
+  }
   console.log('PASS server POST wiring, required auth middleware, authoritative role check and payload validation');
 
   let actor, cursor, state, requested, refreshed, response;
@@ -70,7 +79,7 @@ async function main() {
     } },
     'react/jsx-runtime': { jsx: element, jsxs: element },
     '@tanstack/react-start': { useServerFn: () => async ({ data: submitted }) => { requested.push(submitted); return response; } },
-    'lucide-react': { Trash2: 'Trash2' },
+    'lucide-react': { Trash2: 'Trash2', Archive: 'Archive' },
     '@/components/ui/button': { Button: 'Button' },
     '@/components/ui/dialog': Object.fromEntries(['Dialog', 'DialogContent', 'DialogDescription', 'DialogTitle', 'DialogTrigger'].map(name => [name, name])),
     '@/lib/peran': { usePeran: () => ({ posisiKode: actor }) },
@@ -81,7 +90,7 @@ async function main() {
     if (predicate(element)) return element;
     return [element.props.children].flat().map(child => search(child, predicate)).find(Boolean);
   };
-  for (const kind of ['employee', 'transaction']) {
+  for (const kind of archiveOnly ? ['archive'] : ['employee', 'transaction']) {
     state = [];
     requested = [];
     refreshed = 0;
@@ -94,7 +103,8 @@ async function main() {
       assert.equal(render(), null);
     }
     actor = 'owner';
-    assert.ok(search(render(), el => el.props['aria-label'] === `Hapus ${code}`));
+    const label = kind === 'archive' ? 'Arsip DEMO' : kind === 'employee' ? 'Hapus' : 'Hapus permanen';
+    assert.ok(search(render(), el => el.props['aria-label'] === `${label} ${code}`));
     render().props.onOpenChange(true);
     assert.equal(render().props.open, true);
     const cancel = search(render(), el => el.type === 'Button' && el.props.children === 'Batal');
@@ -103,13 +113,15 @@ async function main() {
     assert.equal(requested.length, 0);
     render().props.onOpenChange(true);
     const setCode = value => search(render(), el => el.type === 'input' && el.props.type !== 'checkbox').props.onChange({ target: { value } });
-    search(render(), el => el.type === 'input' && el.props.type === 'checkbox').props.onChange({ target: { checked: true } });
+    const checkbox = search(render(), el => el.type === 'input' && el.props.type === 'checkbox');
+    if (archiveOnly) assert.equal(checkbox, undefined);
+    else checkbox.props.onChange({ target: { checked: true } });
     setCode(code + ' ');
     const submit = () => search(render(), el => el.type === 'form').props.onSubmit({ preventDefault() {} });
     await submit();
     assert.equal(requested.length, 0);
     setCode(code);
-    response = 'transaction_reference';
+    response = archiveOnly ? 'demo_unclassified' : 'transaction_reference';
     await submit();
     assert.equal(render().props.open, true);
     assert.ok(search(render(), el => el.props.role === 'alert'));

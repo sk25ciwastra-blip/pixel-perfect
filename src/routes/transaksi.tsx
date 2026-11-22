@@ -66,6 +66,7 @@ function Halaman() {
     setDetail(current => current === id ? null : current);
     void queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] });
     void queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] });
+    void queryClient.invalidateQueries({ queryKey: ['keuangan-jejak-trx'] });
   }
   useEffect(() => setCari(search.cari ?? ''), [search.cari]);
   useEffect(() => {
@@ -116,6 +117,9 @@ function Halaman() {
               openWhatsApp(tr.guests.phone);
             }}><IkonWhatsApp /></Button>
             <TombolHapusDemo kind="transaction" id={tr.id} code={tr.transaction_number}
+              name={tr.guests?.full_name ?? 'Tamu'} amount={tr.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(tr.price_snapshot)}
+              onDeleted={() => refreshSetelahHapus(tr.id)} />
+            <TombolHapusDemo kind="archive" id={tr.id} code={tr.transaction_number}
               name={tr.guests?.full_name ?? 'Tamu'} amount={tr.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(tr.price_snapshot)}
               onDeleted={() => refreshSetelahHapus(tr.id)} />
           </div>

@@ -11,7 +11,8 @@ const postgres = require('postgres');
 
 const pgBin = process.argv[2];
 if (!pgBin) throw new Error('Supply a local PostgreSQL bin directory.');
-const postgrest = process.argv[3];
+const archiveOnly = process.argv[3] === '--archive';
+const postgrest = archiveOnly ? undefined : process.argv[3];
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'issue-99-fixtures-'));
 const cluster = path.join(root, 'cluster');
 const loopback = '127.0.0.1';
@@ -82,6 +83,13 @@ async function main() {
     };
     const owner = (...args) => as(1, tx => invoke(tx, ...args));
     const denied = { code: '42501' };
+
+    if (archiveOnly) {
+      await require('./owner-demo-archive-runtime.cjs')({
+        sql, as, id, connection, postgres, root, freePort, sleep, jwt, gotrue: process.argv[4],
+      });
+      return;
+    }
 
     await assert.rejects(as(3, tx => invoke(tx, 'employee', 11)), denied);
     await assert.rejects(as(3, tx => invoke(tx, 'transaction', 20)), denied);
