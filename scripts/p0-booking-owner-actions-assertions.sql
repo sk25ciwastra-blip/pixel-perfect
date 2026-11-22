@@ -129,6 +129,7 @@ $verify$;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',false);
 DO $verify$
 DECLARE denied_cancel boolean:=false;denied_change boolean:=false;denied_direct boolean:=false;
+ direct_update_rows integer:=-1;
 BEGIN
  BEGIN
   PERFORM public.cancel_booking_owner(
@@ -149,6 +150,13 @@ BEGIN
   VALUES('20000000-0000-4000-8000-000000000003','cancel','00000000-0000-4000-8000-000000000002',
   'FIXBOOK-3','Synthetic illegal direct audit insert','booking',1);
  EXCEPTION WHEN insufficient_privilege THEN denied_direct:=true; END;
+ -- UPDATE is granted in real Cloud but must affect zero rows under RLS.
+ UPDATE public.transactions SET status='cancelled'
+ WHERE id='20000000-0000-4000-8000-000000000003';
+ GET DIAGNOSTICS direct_update_rows = ROW_COUNT;
+ IF direct_update_rows<>0 THEN
+   RAISE EXCEPTION 'RLS permitted direct transactions mutation';
+ END IF;
  IF NOT denied_cancel OR NOT denied_change OR NOT denied_direct THEN
    RAISE EXCEPTION 'Owner privilege guard failed: cancel % change % direct %',denied_cancel,denied_change,denied_direct;
  END IF;
