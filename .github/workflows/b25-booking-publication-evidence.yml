@@ -1,10 +1,8 @@
 name: B25 Booking live publication evidence (read only)
+# Lovable publishes to a CUSTOM audience (authorized user only).
+# Anonymous HTTP 401 is expected; don't auto-fail main on every source commit.
+# Run manually only if the Owner explicitly changes release visibility.
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/b25-booking-publication-evidence.yml
-      - scripts/b25-booking-public-live-check.py
   workflow_dispatch:
 
 permissions:
