@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { CalendarDays, ChevronLeft, ChevronRight, ReceiptText, Search } from 'lucide-react';
 import { DetailTransaksi } from '@/components/detail-transaksi';
+import { TombolHapusDemo } from '@/components/hapus-data-demo';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
 import { bolehHubungiTamu } from '@/lib/aksi-operasional';
 import { openWhatsApp } from '@/lib/whatsapp';
@@ -61,6 +62,11 @@ function Halaman() {
   const { posisiKode } = usePeran();
   const [cari, setCari] = useState(search.cari ?? '');
   const [detail, setDetail] = useState<string | null>(null);
+  function refreshSetelahHapus(id: string) {
+    setDetail(current => current === id ? null : current);
+    void queryClient.invalidateQueries({ queryKey: ['daftar-transaksi'] });
+    void queryClient.invalidateQueries({ queryKey: ['tahun-transaksi'] });
+  }
   useEffect(() => setCari(search.cari ?? ''), [search.cari]);
   useEffect(() => {
     const channel = supabase.channel('daftar-transaksi-paginasi').on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
@@ -98,20 +104,25 @@ function Halaman() {
       <div className="mb-3 flex items-center gap-3"><h3 className="text-sm font-bold">{new Date(date + 'T12:00:00+07:00').toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' })}</h3><span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">{rows.length} transaksi</span></div>
       <ul className="space-y-2">{rows.map(tr => {
         const phone = tr.guests?.phone?.replace(/\D/g, '').slice(-4) || '—';
-        return <li key={tr.id} className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-lg border border-gold/25 bg-background/70 p-2.5 transition-colors hover:border-gold/50 sm:grid-cols-[74px_minmax(0,1fr)_minmax(210px,.85fr)_110px_120px_32px] sm:gap-x-4 sm:p-3">
+        return <li key={tr.id} className="grid grid-cols-[64px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-lg border border-gold/25 bg-background/70 p-2.5 transition-colors hover:border-gold/50 sm:grid-cols-[74px_minmax(0,1fr)_minmax(175px,.85fr)_110px_120px_auto] sm:gap-x-4 sm:p-3">
           <div className="row-span-2 flex min-h-16 flex-col items-center justify-center rounded-md border border-gold/50 bg-primary-soft/40 px-1 text-center sm:row-span-1"><span className="w-full truncate text-[11px] text-gold-light" title={tr.rooms?.room_types?.name}>{tr.rooms?.room_types?.name ?? 'Kamar'}</span><strong className="mt-1 font-serif text-2xl leading-none text-foreground">{tr.rooms?.room_number ?? '—'}</strong></div>
           <div className="min-w-0"><p className="truncate text-sm font-bold" title={tr.guests?.full_name}>{tr.guests?.full_name?.toUpperCase() ?? 'TAMU'} · {phone}</p><Button variant="link" className="mt-0.5 h-auto max-w-full justify-start truncate p-0 font-mono text-xs text-gold" onClick={() => setDetail(tr.id)}>{tr.transaction_number}</Button></div>
           <div className="col-start-2 row-start-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground sm:col-start-auto sm:row-start-auto sm:text-xs"><span>Check-in <strong className="ml-1 font-mono text-foreground">{jam(tr.started_at)}</strong></span><span className="border-l border-gold/20 pl-3">Check-out <strong className="ml-1 font-mono text-foreground">{jam(tr.checked_out_at)}</strong></span></div>
           <div className="col-start-3 row-start-1 justify-self-end sm:col-start-auto sm:row-start-auto sm:justify-self-center"><Lencana kelas={labelClasses[tr.status]}>{labels[tr.status]}</Lencana></div>
           <strong className="col-start-3 row-start-2 whitespace-nowrap text-right text-sm sm:col-start-auto sm:row-start-auto">{tr.price_snapshot === null ? '—' : rupiah(Number(tr.price_snapshot))}</strong>
-          <Button variant="ghost" size="icon" className="col-start-2 row-start-3 size-8 border-l border-gold/20 text-siap-foreground sm:col-start-auto sm:row-start-auto" aria-label="Hubungi tamu via WhatsApp" title="Hubungi tamu via WhatsApp" disabled={!bolehHubungiTamu(posisiKode, tr.guests?.phone)} onClick={() => {
-            if (!bolehHubungiTamu(posisiKode, tr.guests?.phone) || !tr.guests?.phone) return;
-            openWhatsApp(tr.guests.phone);
-          }}><IkonWhatsApp /></Button>
+          <div className="col-start-2 row-start-3 flex sm:col-start-auto sm:row-start-auto">
+            <Button variant="ghost" size="icon" className="size-8 border-l border-gold/20 text-siap-foreground" aria-label="Hubungi tamu via WhatsApp" title="Hubungi tamu via WhatsApp" disabled={!bolehHubungiTamu(posisiKode, tr.guests?.phone)} onClick={() => {
+              if (!bolehHubungiTamu(posisiKode, tr.guests?.phone) || !tr.guests?.phone) return;
+              openWhatsApp(tr.guests.phone);
+            }}><IkonWhatsApp /></Button>
+            <TombolHapusDemo kind="transaction" id={tr.id} code={tr.transaction_number}
+              name={tr.guests?.full_name ?? 'Tamu'} amount={tr.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(tr.price_snapshot)}
+              onDeleted={() => refreshSetelahHapus(tr.id)} />
+          </div>
         </li>;
       })}</ul>
     </section>)}</div>
     <footer className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground"><span>{data.total ? `${(data.halaman - 1) * 20 + 1}–${Math.min(data.halaman * 20, data.total)} dari ${data.total} transaksi` : '0 transaksi'} · 20 per halaman</span>{paginasi(true)}</footer>
-    {detail && <DetailTransaksi transactionId={detail} onClose={() => setDetail(null)} />}
+    {detail && <DetailTransaksi transactionId={detail} onClose={() => setDetail(null)} onDeleted={() => refreshSetelahHapus(detail)} />}
   </Kerangka>;
 }
