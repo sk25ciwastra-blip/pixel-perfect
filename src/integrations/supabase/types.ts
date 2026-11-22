@@ -104,6 +104,7 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
+          deleted_at?: string | null
           employee_id: string
           id: string
           name: string
@@ -1774,6 +1775,8 @@ export type Database = {
       }
       transactions: {
         Row: {
+          demo_archived_at?: string | null
+          demo_archived_by?: string | null
           base_price_snapshot: number | null
           checked_out_at: string | null
           commission_mode_snapshot: string | null
@@ -2253,6 +2256,14 @@ export type Database = {
       next_expense_number: { Args: never; Returns: string }
       next_housekeeping_number: { Args: never; Returns: string }
       next_transaction_number: { Args: never; Returns: string }
+      owner_archive_demo: {
+        Args: { _id: string; _confirmation: string }
+        Returns: string
+      }
+      owner_delete_demo: {
+        Args: { _kind: string; _id: string; _confirmation: string; _demo_confirmed: boolean }
+        Returns: string
+      }
       open_finance_cash_session: {
         Args: { _opening_cash?: number }
         Returns: string

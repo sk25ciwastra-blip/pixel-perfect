@@ -10,6 +10,7 @@ import { rupiah } from '@/lib/data-contoh';
 import { meta } from '@/lib/meta';
 import { dalamPeriode, rentangLaporan, tanggalLaporan } from '@/lib/laporan-periode';
 import { buatCsvLaporan } from '@/lib/laporan-export';
+import { transaksiBelumDiarsipkan } from '@/lib/demo-archive';
 import '@/components/laporan.css';
 
 type Bagian = 'operasional' | 'closing' | 'riwayat' | 'harian' | 'pendapatan';
@@ -51,17 +52,20 @@ function Halaman() {
   const bayarPeriode = payments.rows.filter(p => dalamPeriode(p.created_at, periode));
   const biayaPeriode = expenses.rows.filter(p => dalamPeriode(p.created_at, periode));
   const trxPeriode = transactions.rows.filter(t => dalamPeriode(t.created_at, periode));
+  const jumlahArsip = trxPeriode.filter(t => !transaksiBelumDiarsipkan(t)).length;
   const penerimaan = bayarPeriode.reduce((sum, p) => sum + Number(p.amount), 0);
   const biaya = biayaPeriode.reduce((sum, p) => sum + Number(p.amount), 0);
   const perMetode = bayarPeriode.reduce<Record<string, number>>((acc, p) => { acc[p.method] = (acc[p.method] ?? 0) + Number(p.amount); return acc; }, {});
   const rekap = useMemo(() => {
     const tanggal = new Set([...payments.rows, ...expenses.rows, ...transactions.rows].filter(p => dalamPeriode(p.created_at, periode)).map(p => tanggalLaporan(p.created_at)));
-    return [...tanggal].sort().reverse().map(tgl => ({
-      tgl,
-      transaksi: transactions.rows.filter(t => tanggalLaporan(t.created_at) === tgl).length,
-      masuk: payments.rows.filter(p => tanggalLaporan(p.created_at) === tgl).reduce((sum, p) => sum + Number(p.amount), 0),
-      keluar: expenses.rows.filter(p => tanggalLaporan(p.created_at) === tgl).reduce((sum, p) => sum + Number(p.amount), 0),
-    }));
+    return [...tanggal].sort().reverse().map(tgl => {
+      const trx = transactions.rows.filter(t => tanggalLaporan(t.created_at) === tgl);
+      return {
+        tgl, transaksi: trx.length, arsipDemo: trx.filter(t => !transaksiBelumDiarsipkan(t)).length,
+        masuk: payments.rows.filter(p => tanggalLaporan(p.created_at) === tgl).reduce((sum, p) => sum + Number(p.amount), 0),
+        keluar: expenses.rows.filter(p => tanggalLaporan(p.created_at) === tgl).reduce((sum, p) => sum + Number(p.amount), 0),
+      };
+    });
   }, [payments.rows, expenses.rows, transactions.rows, periode]);
   const loading = payments.loading || expenses.loading || transactions.loading;
   const gagal = payments.error || expenses.error || transactions.error || sessions.error;
@@ -69,7 +73,7 @@ function Halaman() {
     if (loading || gagal) return;
     const csv = buatCsvLaporan({
       awal: periode.awal, akhir: periode.akhir,
-      penerimaan, pengeluaran: biaya, jumlahTransaksi: trxPeriode.length,
+      penerimaan, pengeluaran: biaya, jumlahTransaksi: trxPeriode.length, jumlahArsipDemo: jumlahArsip,
       rekap, metode: perMetode,
     });
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
@@ -103,9 +107,10 @@ function Halaman() {
           <Button className="lp-export" variant="outline" disabled={loading || Boolean(gagal)} onClick={exportCsv} title="Unduh rekap operasional periode ini dalam CSV"><Download />Ekspor CSV</Button>
         </div>
         {gagal && <p className="lp-error" role="alert">Sebagian laporan belum dapat dimuat. Silakan muat ulang halaman.</p>}
+        {bagian !== 'closing' && bagian !== 'riwayat' && <p className="mb-2 text-xs text-muted-foreground">Total historis mencakup transaksi Arsip DEMO dan pembayaran yang tercatat pada periode laporan.</p>}
         <div className="lp-kpis">
           {[{ label: 'Total Penerimaan', nilai: loading || payments.error ? '—' : rupiah(penerimaan), ikon: Coins },
-            { label: 'Total Transaksi Baru', nilai: loading || transactions.error ? '—' : `${trxPeriode.length} Transaksi`, ikon: BedDouble },
+            { label: 'Total Transaksi Baru', nilai: loading || transactions.error ? '—' : `${trxPeriode.length} Transaksi${jumlahArsip ? ` · ${jumlahArsip} Arsip DEMO` : ''}`, ikon: BedDouble },
             { label: 'Total Tamu Baru', nilai: guests.loading || guests.error ? '—' : `${guests.rows.filter(g => dalamPeriode(g.created_at, periode)).length} Tamu`, ikon: Users },
             { label: 'Total Tamu Lama', nilai: '—', ikon: UserRound }].map(k => <article className="lp-kpi" key={k.label}><span className="lp-kpi-icon"><k.ikon /></span><div><p>{k.label}</p><strong>{k.nilai}</strong></div></article>)}
         </div>
@@ -122,7 +127,7 @@ function Halaman() {
         {(bagian === 'operasional' || bagian === 'harian' || bagian === 'pendapatan') && <section className="lp-panel">
           <div className="lp-panel-head"><div className="lp-heading"><CalendarDays /><div><h2>Rekap Harian</h2><p>Ringkasan kinerja operasional per hari.</p></div></div><div className="lp-panel-actions"><Button variant="outline" asChild><Link to="/laporan" search={{ bagian: 'riwayat' }}><History />Riwayat Closing</Link></Button><Button className="lp-closing" asChild><Link to="/laporan" search={{ bagian: 'closing' }}><ClipboardCheck />Closing Shift</Link></Button></div></div>
           <div className="lp-table-scroll"><table className="lp-table"><thead><tr><th>Tanggal</th><th>Transaksi Baru</th><th>Penerimaan</th><th>Pengeluaran Operasional</th><th>Arus Kas Bersih</th><th>Aksi</th></tr></thead><tbody>
-            {rekap.map(r => <tr key={r.tgl}><td>{tanggalTeks(r.tgl)}</td><td>{r.transaksi} Transaksi</td><td>{rupiah(r.masuk)}</td><td>{rupiah(r.keluar)}</td><td className={r.masuk - r.keluar < 0 ? 'lp-negative' : 'lp-positive'}>{rupiah(r.masuk - r.keluar)}</td><td><Button variant="outline" asChild><Link to="/transaksi"><Eye />Detail</Link></Button></td></tr>)}
+            {rekap.map(r => <tr key={r.tgl}><td>{tanggalTeks(r.tgl)}</td><td>{r.transaksi} Transaksi{r.arsipDemo > 0 && <> · {r.arsipDemo} Arsip DEMO</>}</td><td>{rupiah(r.masuk)}</td><td>{rupiah(r.keluar)}</td><td className={r.masuk - r.keluar < 0 ? 'lp-negative' : 'lp-positive'}>{rupiah(r.masuk - r.keluar)}</td><td><Button variant="outline" asChild><Link to="/transaksi"><Eye />Daftar operasional</Link></Button></td></tr>)}
           </tbody></table></div>
           {!rekap.length && <p className="lp-empty">{loading ? 'Memuat rekap…' : gagal ? 'Rekap belum dapat dimuat.' : 'Belum ada catatan pada periode ini.'}</p>}
         </section>}

@@ -1,0 +1,137 @@
+name: B25 Issue99 merge parity with Booking P0
+on:
+  pull_request:
+    paths:
+      - .github/workflows/b25-issue99-merge-parity-review.yml
+      - src/**
+      - supabase/pending/20261122000000_owner_delete.sql
+      - supabase/pending/20261122000001_owner_demo_transaction_archive.sql
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  post-booking-main-integration:
+    if: github.event_name != 'pull_request' || github.event.pull_request.number == 101
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout PR merge preview, or branch on push
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate Booking P0 and Owner Archive composition (source only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs');
+          const read = file => fs.readFileSync(file,'utf8');
+          const booking=read('src/routes/booking.tsx');
+          const checkout=read('src/routes/index.tsx');
+          const people=read('src/routes/karyawan.tsx');
+          const trans=read('src/routes/transaksi.tsx');
+          const finance=read('src/routes/keuangan.tsx');
+          const owner=read('src/lib/owner-delete.functions.ts');
+          const a=read('supabase/pending/20261122000000_owner_delete.sql');
+          const b=read('supabase/pending/20261122000001_owner_demo_transaction_archive.sql');
+          const checks={
+            bookingOwnerCancel:booking.includes('cancel_booking_owner'),
+            bookingOwnerReschedule:booking.includes('reschedule_booking_owner'),
+            bookingOwnerManagement:booking.includes('Kelola Booking'),
+            bookingArchiveFilter:booking.includes('useTransaksiOperasional()'),
+            dashboardArchiveFilter:checkout.includes('useTransaksiOperasional()'),
+            employeeOwnerDelete:people.includes('TombolHapusDemo'),
+            transactionOwnerDelete:trans.includes('TombolHapusDemo'),
+            historicalFinanceVisible:finance.includes('nomorDenganArsip'),
+            ownerPostAuth:owner.includes('requireSupabaseAuth'),
+            ownerRpc:owner.includes('owner_delete_demo'),
+            archiveRpc:owner.includes('owner_archive_demo'),
+            bothSqlAtomic:a.trimEnd().endsWith('COMMIT;')&&b.trimEnd().endsWith('COMMIT;'),
+            employeeAuthGuard:a.includes('auth.sessions')&&a.includes('auth.refresh_tokens'),
+            auditAppendOnly:a.includes('owner_delete_immutable_event'),
+            archiveNotDeletingMoney:b.includes('demo_archived_at')&&!/DELETE FROM public\.payments/.test(b)
+          };
+          console.log(checks);
+          if(Object.values(checks).some(v=>!v))throw Error('Booking P0/Owner DEMO archival integration contract failed');
+          console.log('B25 ISSUE99 + BOOKING MERGE SOURCE CONTRACT: PASS');
+          NODE
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies transiently (no lockfile in repo)
+        run: npm install --ignore-scripts --no-save --no-package-lock --no-audit --no-fund
+      - name: Build latest Booking and Owner-delete combined UI without deploying
+        run: npm run build
+      - name: TypeScript after generated routes refresh
+        run: npx tsc --noEmit
+
+  owner-delete-ddl-on-disposable-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout reviewed PR merge snapshot
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Start disposable PostgreSQL 17 with no exposed port
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name b25_owner99_review -e POSTGRES_PASSWORD=synthetic-only -e POSTGRES_DB=postgres postgres:17
+          for i in {1..60}; do
+            if docker exec b25_owner99_review pg_isready -U postgres -d postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec b25_owner99_review pg_isready -U postgres -d postgres
+      - name: Install synthetic fixture and current-schema time columns
+        run: |
+          set -euo pipefail
+          docker exec -i b25_owner99_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 < scripts/fixtures/owner-delete.sql
+          docker exec b25_owner99_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "ALTER TABLE public.transactions ADD COLUMN created_at timestamptz NOT NULL DEFAULT now(), ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();"
+      - name: Apply both reviewed migrations atomically to disposable PG17 only
+        run: |
+          set -euo pipefail
+          (
+            echo 'BEGIN;'
+            sed '/^BEGIN;$/d;/^COMMIT;$/d' supabase/pending/20261122000000_owner_delete.sql
+            sed '/^BEGIN;$/d;/^COMMIT;$/d' supabase/pending/20261122000001_owner_demo_transaction_archive.sql
+            echo 'COMMIT;'
+          ) | docker exec -i b25_owner99_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 > "$RUNNER_TEMP/install.log" 2>&1 || {
+            cat "$RUNNER_TEMP/install.log"
+            exit 1
+          }
+          docker exec -i b25_owner99_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          DO $check$
+          BEGIN
+            IF to_regprocedure('public.owner_delete_demo(text,uuid,text,boolean)') IS NULL
+              OR to_regprocedure('public.owner_archive_demo(uuid,text)') IS NULL
+              OR to_regclass('owner_delete_private.demo_transaction_approvals') IS NULL
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns
+                WHERE table_schema='public' AND table_name='transactions' AND column_name='demo_archived_at')
+              OR NOT EXISTS (SELECT 1 FROM information_schema.columns
+                WHERE table_schema='public' AND table_name='employees' AND column_name='deleted_at')
+              OR (SELECT count(*) FROM owner_delete_private.events)<>0
+              OR (SELECT count(*) FROM owner_delete_private.demo_transaction_approvals)<>0
+              OR (SELECT count(*) FROM public.transactions)<>14
+              OR (SELECT count(*) FROM public.employees)<>7
+            THEN RAISE EXCEPTION 'Disposable guard test: code/data invariants failed'; END IF;
+          END;
+          $check$;
+          SQL
+          echo 'B25 OWNER DELETE + DEMO ARCHIVE ATOMIC SCHEMA INSTALL: PASS'
+      - name: Confirm repeat install rejects drift without altering data
+        run: |
+          set -euo pipefail
+          if docker exec -i b25_owner99_review psql -X -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            < supabase/pending/20261122000000_owner_delete.sql > "$RUNNER_TEMP/retry.log" 2>&1; then
+            echo 'FAIL: Repeat installation unexpectedly accepted'
+            exit 1
+          fi
+          grep -q 'STOP Owner/Delete Cloud preflight' "$RUNNER_TEMP/retry.log"
+          echo 'B25 REPEAT MIGRATION FAIL-CLOSED: PASS'
+      - name: Always destroy test-only PostgreSQL database
+        if: always()
+        run: docker rm -f b25_owner99_review || true

@@ -4,6 +4,7 @@ import {
   CircleDollarSign, History, CreditCard, Flag, Download, ChevronDown, Printer, X, Clock, SquarePlus, type LucideIcon,
 } from 'lucide-react';
 import { HeaderDetail, BagianDetail, NilaiDetail, kelasPopupDetail } from '@/components/detail-premium';
+import { TombolHapusDemo } from '@/components/hapus-data-demo';
 import '@/components/operasional-krem.css';
 import '@/components/detail-transaksi.css';
 import { IkonWhatsApp } from '@/components/ikon-whatsapp';
@@ -21,6 +22,7 @@ import { featureFlags } from '@/lib/feature-flags';
 type DetailTransaksiProps = {
   transactionId: string;
   onClose: () => void;
+  onDeleted?: () => void;
   mode?: 'full' | 'housekeeping';
 };
 
@@ -73,6 +75,7 @@ function WaktuMenginap({ value }: { value: string | null }) {
 export function DetailTransaksi({
   transactionId,
   onClose,
+  onDeleted,
   mode = 'full',
 }: DetailTransaksiProps) {
   const transactions = useTable('transactions', true, { column: 'id', value: transactionId });
@@ -285,6 +288,13 @@ export function DetailTransaksi({
                 : <button type="button" disabled title="Cetak struk pembayaran resmi belum diaktifkan. Owner dapat mencoba printer dengan tombol Tes Printer 58 mm."><Printer />Cetak Struk</button>}
               {posisiKode === 'owner' && <ReceiptPrinterTestButton />}
             </span>
+            {transaction.demo_archived_at && <span className="text-xs font-semibold">Arsip DEMO</span>}
+            {onDeleted && !transaction.demo_archived_at && <TombolHapusDemo kind="transaction" id={transaction.id} code={transaction.transaction_number}
+              name={guest?.full_name ?? 'Tamu'} amount={transaction.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(total)}
+              onDeleted={onDeleted} />}
+            {onDeleted && !transaction.demo_archived_at && <TombolHapusDemo kind="archive" id={transaction.id} code={transaction.transaction_number}
+              name={guest?.full_name ?? 'Tamu'} amount={transaction.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(total)}
+              onDeleted={onDeleted} />}
             <button type="button" className="dtx-tutup" onClick={onClose}>Tutup</button>
           </div>
         </footer>

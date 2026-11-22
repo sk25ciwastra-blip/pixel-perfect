@@ -8,7 +8,7 @@ import { Kerangka } from '@/components/kerangka';
 import { FormulirPemesanan } from '@/components/formulir-pemesanan';
 import { Button } from '@/components/ui/button';
 import { LencanaTeks } from '@/components/status-kamar';
-import { useTable } from '@/lib/data-live';
+import { useTable, useTransaksiOperasional } from '@/lib/data-live';
 import { rupiah } from '@/lib/data-contoh';
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
@@ -122,7 +122,7 @@ const [detailBookingId, setDetailBookingId] = useState('');
   const [adminError, setAdminError] = useState('');
   const [adminResult, setAdminResult] = useState('');
 
-  const transactions = useTable('transactions');
+  const transactions = useTransaksiOperasional();
 const payments = useTable('payments');
 const guests = useTable('guests');
 const rooms = useTable('rooms');

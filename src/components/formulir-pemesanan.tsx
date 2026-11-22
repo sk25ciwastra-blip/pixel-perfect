@@ -3,7 +3,7 @@ import { BedDouble, CreditCard, FileText, Info, Printer, Send, UserRound, X } fr
 import '@/components/check-in-reference.css';
 import { Button } from '@/components/ui/button';
 import { rupiah } from '@/lib/data-contoh';
-import { rpc, useTable } from '@/lib/data-live';
+import { rpc, useTable, useTransaksiOperasional } from '@/lib/data-live';
 import { useSesiKasKonteks } from '@/lib/sesi-kas';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { biayaTamuTambahan } from '@/lib/tamu-tambahan';
@@ -49,7 +49,7 @@ export function FormulirPemesanan({
   const packages = useTable('packages');
   const packagePrices = useTable('package_room_type_prices');
   const guests = useTable('guests');
-  const transactions = useTable('transactions');
+  const transactions = useTransaksiOperasional();
   const financeSettings = useTable('finance_settings');
 
   const [name, setName] = useState('');

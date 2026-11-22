@@ -38,7 +38,7 @@ import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } fr
 import { DetailTransaksi } from "@/components/detail-transaksi";
 import { usePeran } from "@/lib/peran";
 import { rupiah } from "@/lib/data-contoh";
-import { useTable } from "@/lib/data-live";
+import { useTable, useTransaksiOperasional } from "@/lib/data-live";
 import { meta } from "@/lib/meta";
 import { normalizeWhatsAppNumber, openWhatsApp } from "@/lib/whatsapp";
 import { supabase } from "@/integrations/supabase/client";
@@ -188,7 +188,7 @@ function Ringkasan() {
   const { peran, nama, posisi, posisiKode } = usePeran();
 
   const rooms = useTable("rooms");
-  const transactions = useTable("transactions");
+  const transactions = useTransaksiOperasional();
   const payments = useTable("payments");
   const guests = useTable("guests");
   const roomTypes = useTable("room_types");
@@ -344,7 +344,7 @@ function Ringkasan() {
   }
 
   async function checkOut(itemId: string) {
-    const item = transactions.rows.find((transaction) => transaction.id === itemId);
+    const item = transaksi.find((transaction) => transaction.id === itemId);
     const room = kamar.find((roomItem) => roomItem.id === item?.room_id);
     const guest = guests.rows.find((guestItem) => guestItem.id === item?.guest_id);
 
@@ -510,24 +510,25 @@ function Ringkasan() {
 
 
   const transaksiTerbaru = useMemo(() => {
-    const masuk = payments.rows.map((p) => {
+    const masuk = payments.rows.flatMap((p) => {
       const trx = transaksi.find((t) => t.id === p.transaction_id);
-      const guest = guests.rows.find((g) => g.id === trx?.guest_id);
-      return {
+      if (!trx) return [];
+      const guest = guests.rows.find((g) => g.id === trx.guest_id);
+      return [{
         id: `in-${p.id}`,
-        trxId: trx?.id ?? null,
+        trxId: trx.id,
         expenseId: null,
         jenis: "masuk" as const,
         judul: namaDepan(guest?.full_name),
         wa: guest?.phone ? guest.phone.replace(/\D/g, "").slice(-4) : "",
         catatan: "",
         operator: "",
-        sub: trx?.scheduled_check_in ? "Booking" : trx?.started_at ? "Walk-in" : "Pembayaran",
-        nomor: trx?.transaction_number ?? "—",
+        sub: trx.scheduled_check_in ? "Booking" : trx.started_at ? "Walk-in" : "Pembayaran",
+        nomor: trx.transaction_number,
         nominal: Number(p.amount),
         metode: p.method,
         waktu: p.created_at,
-      };
+      }];
     });
     const keluar = isFinanceViewer && !financeExpenses.error
       ? pengeluaranRows.map((e) => {
