@@ -3,7 +3,7 @@ import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarPlus, X, Search, CalendarDays, ArrowUpDown, User, Phone, Clock, Circle, ChevronRight } from 'lucide-react';
+import { CalendarPlus, X, Search, CalendarDays, ArrowUpDown, User, Phone, Clock, Circle, ChevronRight, Settings2 } from 'lucide-react';
 import { Kerangka } from '@/components/kerangka';
 import { FormulirPemesanan } from '@/components/formulir-pemesanan';
 import { Button } from '@/components/ui/button';
@@ -100,6 +100,7 @@ function Halaman() {
   const [urut, setUrut] = useState<'dekat' | 'jauh'>('dekat');
   const { posisiKode } = usePeran();
   const readOnly = posisiKode === 'inspector';
+  const canManageBooking = posisiKode === 'owner';
 
   const [open, setOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState('');
@@ -111,6 +112,15 @@ const [detailBookingId, setDetailBookingId] = useState('');
   const [paymentRequestFingerprint, setPaymentRequestFingerprint] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [adminBookingId, setAdminBookingId] = useState('');
+  const [adminAction, setAdminAction] = useState<'cancel' | 'reschedule'>('cancel');
+  const [adminConfirmation, setAdminConfirmation] = useState('');
+  const [adminReason, setAdminReason] = useState('');
+  const [adminFutureAcknowledged, setAdminFutureAcknowledged] = useState(false);
+  const [adminNewCheckIn, setAdminNewCheckIn] = useState('');
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [adminError, setAdminError] = useState('');
+  const [adminResult, setAdminResult] = useState('');
 
   const transactions = useTable('transactions');
 const payments = useTable('payments');
@@ -138,6 +148,89 @@ const {
       .filter((payment) => payment.transaction_id === selectedBookingId)
       .reduce((total, payment) => total + Number(payment.amount), 0);
   }, [payments.rows, selectedBookingId]);
+
+  const adminBooking = transactions.rows.find((item) => item.id === adminBookingId && item.status === 'booking');
+  const adminBookingIsFuture = Boolean(adminBooking?.scheduled_check_in &&
+    Date.parse(adminBooking.scheduled_check_in) > sekarang);
+
+  function openAdminBooking(transactionId: string) {
+    if (!canManageBooking || adminBusy) return;
+    const booking = transactions.rows.find((item) => item.id === transactionId && item.status === 'booking');
+    if (!booking) return;
+    setAdminBookingId(transactionId);
+    setAdminAction('cancel');
+    setAdminConfirmation('');
+    setAdminReason('');
+    setAdminFutureAcknowledged(false);
+    setAdminNewCheckIn('');
+    setAdminError('');
+  }
+
+  function closeAdminBooking() {
+    if (adminBusy) return;
+    setAdminBookingId('');
+    setAdminError('');
+  }
+
+  async function applyAdminBooking() {
+    if (!canManageBooking || adminBusy || !adminBooking) return;
+    if (adminConfirmation !== adminBooking.transaction_number) {
+      setAdminError('Ketik ulang nomor transaksi persis seperti yang tertera.');
+      return;
+    }
+    if (adminReason.trim().length < 10 || adminReason.trim().length > 500) {
+      setAdminError('Alasan wajib antara 10 sampai 500 karakter.');
+      return;
+    }
+    if (adminAction === 'cancel' && adminBookingIsFuture && !adminFutureAcknowledged) {
+      setAdminError('Booking masa depan memerlukan konfirmasi khusus Owner.');
+      return;
+    }
+    let proposedTime: string | undefined;
+    if (adminAction === 'reschedule') {
+      const candidate = new Date(adminNewCheckIn + '+07:00');
+      if (!adminNewCheckIn || !Number.isFinite(candidate.getTime())) {
+        setAdminError('Isi tanggal dan jam baru dalam WIB.');
+        return;
+      }
+      proposedTime = candidate.toISOString();
+    }
+    setAdminBusy(true);
+    setAdminError('');
+    const { data, error } = adminAction === 'cancel'
+      ? await rpc('cancel_booking_owner', {
+          _transaction_id: adminBooking.id,
+          _confirmation: adminConfirmation,
+          _reason: adminReason.trim(),
+          _ack_future: adminFutureAcknowledged,
+        })
+      : await rpc('reschedule_booking_owner', {
+          _transaction_id: adminBooking.id,
+          _confirmation: adminConfirmation,
+          _new_scheduled_check_in: proposedTime,
+          _reason: adminReason.trim(),
+        });
+    if (error) {
+      setAdminError(error.message);
+      setAdminBusy(false);
+      return;
+    }
+    try {
+      await Promise.all([transactions.refresh(), payments.refresh(), rooms.refresh()]);
+      setAdminResult(data === 'ALREADY_CANCELLED'
+        ? 'Booking sebelumnya sudah dibatalkan. Tidak ada perubahan keuangan.'
+        : data === 'NO_CHANGE'
+          ? 'Jadwal Booking tidak berubah.'
+          : adminAction === 'cancel'
+            ? 'Booking dibatalkan secara administratif. DP/pelunasan dan riwayat keuangan tetap tersimpan.'
+            : 'Jadwal Booking berhasil diubah dan dicatat dalam audit.');
+      setAdminBookingId('');
+    } catch (refreshError) {
+      setAdminError(refreshError instanceof Error ? refreshError.message : 'Perubahan tersimpan, tetapi pembaruan daftar gagal.');
+    } finally {
+      setAdminBusy(false);
+    }
+  }
 
   const selectedTotal = Number(selectedBooking?.price_snapshot ?? 0);
   const selectedRemaining = Math.max(selectedTotal - selectedPaid, 0);
@@ -516,6 +609,9 @@ Terima kasih.`;
                         )}
                       </>
                     )}
+                    {canManageBooking && booking.status === 'booking' && (
+                      <button type="button" className={tombolOutline} onClick={() => openAdminBooking(booking.id)}><Settings2 className="size-3.5" />Kelola</button>
+                    )}
                     <button type="button" className={tombolEmas} onClick={() => setDetailBookingId(booking.id)}><ChevronRight className="size-3.5" />Lihat Detail</button>
                   </div>
                 </li>
@@ -572,6 +668,7 @@ Terima kasih.`;
         )
       }
     >
+      {adminResult && <p role="status" className="mb-3 rounded-xl border border-gold/30 bg-[#F7F6F3] px-4 py-3 text-sm text-foreground">{adminResult}</p>}
       {transactions.error && (
         <p role="alert">{transactions.error}</p>
       )}
@@ -627,6 +724,64 @@ Terima kasih.`;
       </div>
       {baris(riwayat)}
 
+
+      {adminBooking && canManageBooking && (
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-navy-deep/80 p-4 backdrop-blur-sm">
+          <div role="dialog" aria-modal="true" aria-label="Kelola Booking khusus Owner" className="w-full max-w-lg space-y-4 rounded-2xl border border-gold/25 bg-[#F7F6F3] p-5 text-[oklch(0.22_0.02_75)] shadow-2xl">
+            <div>
+              <h2 className="text-lg font-bold">Kelola Booking</h2>
+              <p className="text-sm text-muted-foreground">Khusus Owner · {adminBooking.transaction_number}</p>
+            </div>
+            <fieldset className="grid grid-cols-2 gap-2" disabled={adminBusy}>
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                <input type="radio" name="booking-owner-action" checked={adminAction === 'cancel'} onChange={() => {setAdminAction('cancel');setAdminError('');}} />
+                Batalkan Booking
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                <input type="radio" name="booking-owner-action" checked={adminAction === 'reschedule'} onChange={() => {setAdminAction('reschedule');setAdminError('');}} />
+                Ubah Jadwal
+              </label>
+            </fieldset>
+            {adminAction === 'cancel' ? (
+              <div className="rounded-lg border border-amber-500/30 bg-white p-3 text-sm">
+                <strong>Pembatalan administratif saja.</strong> Pembayaran Booking tidak dikembalikan, dan struk, komisi serta catatan kas tetap tersimpan.
+                {adminBookingIsFuture && (
+                  <label className="mt-3 flex cursor-pointer items-start gap-2">
+                    <input type="checkbox" checked={adminFutureAcknowledged} disabled={adminBusy} onChange={(e) => setAdminFutureAcknowledged(e.target.checked)} className="mt-1" />
+                    Saya sebagai Owner menyetujui pembatalan Booking masa depan ini.
+                  </label>
+                )}
+              </div>
+            ) : (
+              <label className="block text-sm">
+                Jadwal Check-in baru (WIB)
+                <input type="datetime-local" value={adminNewCheckIn} disabled={adminBusy} onChange={(e) => setAdminNewCheckIn(e.target.value)}
+                  className="mt-1 block h-11 w-full rounded-lg border border-foreground/20 bg-white px-3" />
+                <span className="mt-1 block text-xs text-muted-foreground">Konfirmasi paling lambat 2 jam sebelum jadwal lama. Jadwal baru dihitung otomatis menurut paket; perubahan harga Weekday/Weekend akan ditolak.</span>
+              </label>
+            )}
+            <label className="block text-sm">
+              Alasan Owner (10–500 karakter)
+              <textarea value={adminReason} disabled={adminBusy} maxLength={500} rows={3} onChange={(e) => setAdminReason(e.target.value)}
+                placeholder="Alasan administratif yang jelas" className="mt-1 w-full resize-y rounded-lg border border-foreground/20 bg-white p-3" />
+            </label>
+            <label className="block text-sm">
+              Ketik ulang nomor transaksi sebagai konfirmasi
+              <input type="text" autoComplete="off" spellCheck={false} value={adminConfirmation} disabled={adminBusy}
+                onChange={(e) => setAdminConfirmation(e.target.value)} placeholder={adminBooking.transaction_number}
+                className="mt-1 h-11 w-full rounded-lg border border-foreground/20 bg-white px-3 font-mono" />
+            </label>
+            {adminError && <p role="alert" className="text-sm font-medium text-red-700">{adminError}</p>}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" disabled={adminBusy} onClick={closeAdminBooking}>Tutup tanpa perubahan</Button>
+              <Button type="button" disabled={adminBusy || adminConfirmation !== adminBooking.transaction_number || adminReason.trim().length < 10 || (adminAction === 'cancel' && adminBookingIsFuture && !adminFutureAcknowledged)}
+                onClick={() => void applyAdminBooking()}>
+                {adminBusy ? 'Memproses…' : adminAction === 'cancel' ? 'Batalkan Booking' : 'Simpan Jadwal'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {open && !readOnly && (
         <FormulirPemesanan
