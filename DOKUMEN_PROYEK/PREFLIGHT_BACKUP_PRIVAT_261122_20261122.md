@@ -30,7 +30,7 @@ Cloud dibaca **SELECT-only** pada **22 Nov 2026 09:49:37 UTC** (16:49:37 WIB), p
 | `storage.buckets` | 6 | 6 |
 | **`storage.objects`** | **6** | **7 — SELISIH 1** |
 
-**Temuan selisih Storage:** pada katalog Cloud, tepat **1 metadata objek Storage** memiliki `created_at` setelah `2026-11-22 04:24:30+00` (jika timestamp backup dianggap UTC), dan waktu metadata objek terakhir adalah **2026-11-22 04:26:22.390879 UTC**. Objek tersebut tercatat **sebelum ZIP selesai diunggah**, tetapi **setelah timestamp dump**. Ini konsisten dengan satu objek baru setelah snapshot dan belum tercakup. Karena waktu dump tidak memiliki offset, penyebab pastinya masih perlu konfirmasi. **Jangan memulihkan backup ini ke LIVE sebagai current-state.**
+**Temuan selisih Storage:** pada katalog Cloud, tepat **1 metadata objek Storage** memiliki `created_at` setelah `2026-11-22 04:24:30+00` (jika timestamp backup dianggap UTC), dan waktu metadata objek terakhir adalah **2026-11-22 04:26:22.390879 UTC**. Objek tersebut tercatat **sebelum ZIP selesai diunggah**, tetapi **setelah timestamp dump**. Ini konsisten dengan satu objek baru setelah snapshot dan belum tercakup. Karena waktu dump tidak memiliki offset, penyebab pastinya masih perlu konfirmasi. **Backup ini tetap sah untuk uji pemulihan *point-in-time* yang terisolasi; jangan memakai langsung untuk menimpa LIVE current-state tanpa rekonsiliasi delta. Selisih ini tidak mewajibkan ekspor ulang besok.**
 
 **Batas perbandingan:** kesamaan hitungan, jumlah uang dan dua referensi karyawan ke Auth bukan pembuktian byte-for-byte atau kesamaan semua row. Bukan bukti Storage object bytes sudah tersimpan dalam PGDMP; database dump biasanya hanya menyimpan metadata objek, bukan file fisik bucket.
 
@@ -50,7 +50,10 @@ Cloud dibaca **SELECT-only** pada **22 Nov 2026 09:49:37 UTC** (16:49:37 WIB), p
 
 ## 4. Rekomendasi langkah berikutnya (satu jalur)
 
-1. Ambil backup Cloud **baru sesudah perubahan Storage yang tercatat pukul 04:26:22 UTC** dan simpan privat; verifikasi SHA, PostgreSQL PGDMP, 89+ data blocks, 2 akun asli, sesi kas dan identitas source target.
+**Koreksi instruksi Owner 22 Nov 2026:** ekspor ulang yang sebelumnya diminta sebagai prasyarat langsung **dicabut**. Owner sudah menyediakan backup ini; lanjutkan pengujian pemulihan menggunakan arsip yang tersedia. Alat PostgreSQL 18 belum tersedia pada runtime pemeriksaan (tidak ada `pg_restore`, `initdb`, `pg_ctl`, `psql`, dan DNS apt tidak tersedia), sehingga RESTORE belum bisa dinyatakan PASS. Ini hambatan alat di sisi pengujian, **bukan** tugas ekspor baru untuk Owner.
+
+
+1. **Gunakan backup privat 22 November yang SUDAH diekspor Owner untuk uji `pg_restore` terisolasi sekarang. JANGAN meminta ekspor ulang otomatis.** Integritas ZIP/PGDMP dan 89/89 blok sudah PASS; metadata Storage 6 vs 7 hanyalah perbedaan titik waktu yang harus dicatat, tidak menggugurkan backup sebagai bahan uji restore. Backup baru hanya dinilai **pada saat perubahan Cloud benar-benar akan diotorisasi**, bila diperlukan untuk mencapai recovery point terbaru, bukan sebagai pekerjaan harian Owner.
 2. Di mesin/VM terisolasi yang mempunyai `pg_restore 18.x` dan PostgreSQL server sesuai, jalankan `pg_restore --list` dahulu, lalu uji restore satu transaksi penuh dengan `--single-transaction --exit-on-error` dan **tanpa koneksi Lovable/staging**. Jangan mengklaim Auth/ACL parity dari uji `--no-owner --no-acl`.
 3. Catat dependensi Supabase yang gagal pada restore dan status Auth/Storage data terpisah, bukan menonaktifkan pengaman demi mengakali PASS.
 4. Hanya setelah bukti restore yang cukup, fingerprint/preflight Cloud aktual dan persetujuan Owner khusus penerapan P0, pertimbangkan migrasi Checkout/Refund DRAFT PR #103. Jangan mengulang 4/4 race/tes refund yang sudah PASS.
