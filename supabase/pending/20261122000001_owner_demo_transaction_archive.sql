@@ -1,4 +1,28 @@
 BEGIN;
+-- Archive is phase two. Keep within the SAME outer database transaction as
+-- owner_delete installation during Cloud rollout to guarantee all-or-none.
+DO $archive_preflight$
+BEGIN
+ IF current_user <> 'postgres'
+  OR to_regnamespace('owner_delete_private') IS NULL
+  OR to_regclass('owner_delete_private.events') IS NULL
+  OR to_regprocedure('public.owner_delete_demo(text,uuid,text,boolean)') IS NULL
+  OR to_regprocedure('public.owner_archive_demo(uuid,text)') IS NOT NULL
+  OR to_regclass('owner_delete_private.demo_transaction_approvals') IS NOT NULL
+  OR EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public'
+      AND table_name='transactions' AND column_name IN('demo_archived_at','demo_archived_by'))
+ THEN
+   RAISE EXCEPTION 'STOP DEMO archive preflight: first phase missing or partial installation';
+ END IF;
+ IF NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public'
+     AND table_name='employees' AND column_name='deleted_at')
+   OR NOT EXISTS(SELECT 1 FROM pg_constraint
+     WHERE conrelid='owner_delete_private.events'::regclass
+       AND conname='events_action_check') THEN
+   RAISE EXCEPTION 'STOP DEMO archive preflight: prerequisites drifted';
+ END IF;
+END;
+$archive_preflight$;
 
 ALTER TABLE public.transactions ADD COLUMN demo_archived_at timestamptz,
   ADD COLUMN demo_archived_by uuid,
