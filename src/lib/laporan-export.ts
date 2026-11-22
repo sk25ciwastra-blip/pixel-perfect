@@ -28,7 +28,7 @@ export function buatCsvLaporan(data: LaporanCsv): string {
     [labelHasil, hasil ?? data.penerimaan - data.pengeluaran],
     ['Cakupan Refund', hasRefundCoverage
       ? 'Refund bisnis diperhitungkan; pergerakan internal sesi kas tidak dihitung sebagai pendapatan'
-      : 'Refund tidak terlihat pada peran ini, sehingga selisih bukan arus kas bersih'],
+      : 'Refund dan sebagian pengeluaran tidak terlihat bagi peran ini; selisih bukan arus kas bersih'],
     ['Total Transaksi Baru', data.jumlahTransaksi],
     ['Di antaranya Arsip DEMO', data.jumlahArsipDemo ?? 0],
     [],
