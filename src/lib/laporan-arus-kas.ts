@@ -20,5 +20,5 @@ export function hitungArusKasBersih(
 export function labelHasilArusKas(hasRefundCoverage: boolean): string {
   return hasRefundCoverage
     ? 'Arus Kas Bersih (setelah Refund)'
-    : 'Selisih Penerimaan - Biaya (belum termasuk Refund)';
+    : 'Selisih Data yang Terlihat (bukan Arus Kas Bersih)';
 }
