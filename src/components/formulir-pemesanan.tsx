@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { BedDouble, CreditCard, FileText, Info, Printer, Send, UserRound, X } from 'lucide-react';
 import '@/components/check-in-reference.css';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,12 @@ import {
   type CombinedPaymentComponent,
 } from '@/lib/combined-payments';
 
-type Mode = 'booking' | 'check_in';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { bookingPhoneInput, canonicalIndonesianWhatsApp, findSameGuest, suggestGuests, type GuestSearchRow } from '@/lib/guest-search';
+import { offerQueryKey, offerWhatsApp, offerWibFields, type Offer, type OfferDetail } from '@/lib/reservation-offers';
+
+type Mode = 'booking' | 'check_in' | 'offer';
 type DayMode = 'weekday' | 'weekend';
 type MetodePembayaran = 'Cash' | 'QRIS' | 'Transfer';
 
@@ -42,13 +47,24 @@ export function FormulirPemesanan({
   initialRoomId = '',
   onClose,
   onSaved,
+  offer,
+  onOfferSaved,
 }: {
   mode: Mode;
   initialRoomId?: string;
   onClose: () => void;
   onSaved: () => Promise<void>;
+  offer?: OfferDetail;
+  onOfferSaved?: (item: OfferDetail) => void;
 }) {
   const { posisiKode, masuk } = usePeran();
+  const client = useQueryClient();
+  const isOffer = mode === 'offer';
+  const scheduled = mode !== 'check_in';
+  const initialSlot = offer ? offerWibFields(offer.scheduled_check_in) : null;
+  const pending = useRef(false);
+  const offerRequest = useRef<{ key: string; id: string } | null>(null);
+  const [paymentVerified, setPaymentVerified] = useState(false);
   const rooms = useTable('rooms');
   const roomTypes = useTable('room_types');
   const packages = useTable('packages');
@@ -57,16 +73,16 @@ export function FormulirPemesanan({
   const transactions = useTransaksiOperasional();
   const financeSettings = useTable('finance_settings');
 
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const [name, setName] = useState(offer?.guest_name ?? '');
+  const [phone, setPhone] = useState(offer?.phone ?? '');
+  const [address, setAddress] = useState(offer?.address ?? '');
   const [extraGuests, setExtraGuests] = useState('0');
-  const [roomId, setRoomId] = useState(initialRoomId);
-  const [packageId, setPackageId] = useState('');
+  const [roomId, setRoomId] = useState(offer?.room_id ?? initialRoomId);
+  const [packageId, setPackageId] = useState(offer?.package_id ?? '');
   const [dayMode, setDayMode] = useState<DayMode>('weekday');
   const [dayModeDate, setDayModeDate] = useState('');
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('');
+  const [scheduledDate, setScheduledDate] = useState(initialSlot?.date ?? '');
+  const [scheduledTime, setScheduledTime] = useState(initialSlot?.time ?? '');
   const [methods, setMethods] = useState<MetodePembayaran[]>(['QRIS']);
   const [nominal, setNominal] = useState<Record<string, string>>({});
   const method = methods[0] ?? '';
@@ -74,10 +90,10 @@ export function FormulirPemesanan({
   const setAmount = (v: string) => setNominal(n => ({ ...n, [methods[0] ?? 'QRIS']: v }));
   const [paymentIdempotencyKeys, setPaymentIdempotencyKeys] = useState<Record<string, string>>(() => ({ QRIS: crypto.randomUUID() }));
   function toggleMethod(m: MetodePembayaran) {
-    const next = choosePaymentMethods(methods, m, featureFlags.combinedPayment);
+    const next = choosePaymentMethods(methods, m, featureFlags.combinedPayment && !offer);
     const adding = !methods.includes(m);
     setNominal(current => {
-      if (!featureFlags.combinedPayment) return amountAfterPaymentSwitch(current, methods, m, false);
+      if (!featureFlags.combinedPayment || offer) return amountAfterPaymentSwitch(current, methods, m, false);
       if (adding) return { ...current, [m]: current[m] ?? '' };
       const amounts = { ...current };
       if (!next.includes(m)) delete amounts[m];
@@ -103,24 +119,61 @@ export function FormulirPemesanan({
     error: sessionError,
   } = useSesiKasKonteks();
 
-  const matchedGuest = guests.rows.find(guest => guest.phone === phone.trim());
+  const [suggestionIndex, setSuggestionIndex] = useState(-1);
+  const guestLookupId = useId();
+  const canSearch = canPreviewBookingQuote('booking', posisiKode, masuk) && !offer;
+  const [remoteGuests, setRemoteGuests] = useState<{ key: string; rows: GuestSearchRow[] }>({ key: '', rows: [] });
+  const term = searchFocus === 'name' ? name.trim() : phone.trim();
+  const searchKey = searchFocus + ':' + term;
+  useEffect(() => {
+    if (!canSearch || !searchFocus || (searchFocus === 'name' ? term.length < 2 : term.replace(/\D/g, '').length < 3)) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const { data, error } = await supabase.rpc('search_reservation_guests', { _field: searchFocus, _term: term });
+          if (!cancelled && !error) setRemoteGuests({ key: searchKey, rows: data ?? [] });
+        } catch { /* Keep existing RLS-scoped results and manual entry when the new RPC is unavailable. */ }
+      })();
+    }, 180);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [canSearch, searchFocus, searchKey, term]);
+  const guestRows = remoteGuests.key === searchKey
+    ? [...new Map([...remoteGuests.rows, ...guests.rows].map(row => [row.id, row])).values()]
+    : guests.rows;
+  const matchedGuest = canSearch ? findSameGuest([...remoteGuests.rows, ...guests.rows], phone) : undefined;
+  const suggestions = canSearch ? suggestGuests(guestRows, searchFocus, name, phone) : [];
+  function lookupAttributes(field: 'name' | 'phone') {
+    if (!canSearch) return {};
+    const expanded = searchFocus === field && suggestions.length > 0;
+    const listId = guestLookupId + '-' + field;
+    return {
+      role: 'combobox',
+      'aria-autocomplete': 'list' as const,
+      'aria-expanded': expanded,
+      'aria-controls': expanded ? listId : undefined,
+      'aria-activedescendant': expanded && suggestionIndex >= 0 ? listId + '-' + suggestionIndex : undefined,
+    };
+  }
+  function focusGuest(field: 'name' | 'phone') {
+    setSearchFocus(field);
+    setSuggestionIndex(-1);
+  }
+  function navigateGuests(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Escape') { setSearchFocus(null); return; }
+    if (!suggestions.length) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      const step = event.key === 'ArrowDown' ? 1 : -1;
+      setSuggestionIndex(current => current < 0 ? (step > 0 ? 0 : suggestions.length - 1) : (current + step + suggestions.length) % suggestions.length);
+    }
+    if (event.key === 'Enter' && suggestions[suggestionIndex]) {
+      event.preventDefault();
+      pilihTamu(suggestions[suggestionIndex]);
+    }
+  }
 
-  const suggestions = useMemo(() => {
-    const term = (searchFocus === 'name' ? name : phone).trim().toLowerCase();
-    if (!searchFocus || matchedGuest) return [];
-    if (searchFocus === 'name' && term.length < 2) return [];
-    const digits = term.replace(/\D/g, '');
-    if (searchFocus === 'phone' && digits.length < 3) return [];
-    return guests.rows
-      .filter(guest =>
-        searchFocus === 'name'
-          ? guest.full_name.toLowerCase().includes(term)
-          : guest.phone.replace(/\D/g, '').includes(digits),
-      )
-      .slice(0, 6);
-  }, [guests.rows, name, phone, searchFocus, matchedGuest]);
-
-  function pilihTamu(guest: (typeof guests.rows)[number]) {
+  function pilihTamu(guest: GuestSearchRow) {
     setName(guest.full_name);
     setPhone(guest.phone);
     setAddress(guest.address);
@@ -147,9 +200,9 @@ export function FormulirPemesanan({
   const paymentTotal = methods.reduce((sum, m) => sum + Math.max(0, Number(nominal[m]) || 0), 0);
 
   const setting = financeSettings.rows[0];
-  const minimumDp = minimumDpAmount(total, setting);
+  const minimumDp = offer?.minimum_dp ?? minimumDpAmount(total, setting);
   const extraGuestOn = typeof window !== 'undefined' && extraGuestAktif(window.location.hostname);
-  const showQuote = canPreviewBookingQuote(mode, posisiKode, masuk);
+  const showQuote = !offer && canPreviewBookingQuote(scheduled ? 'booking' : mode, posisiKode, masuk);
   const [quoteDp, setQuoteDp] = useState<{
     setting: { minimum_dp_mode: string; minimum_dp_value: number } | null;
     loading: boolean;
@@ -172,7 +225,7 @@ export function FormulirPemesanan({
   const quoteMinimumDp = minimumDpAmount(total, quoteDp.setting);
   const quoteDraft: BookingQuoteDraft = {
     name: matchedGuest?.full_name ?? name,
-    phone,
+    phone: bookingPhoneInput(phone),
     roomNumber: selectedRoom?.active ? selectedRoom.room_number : '',
     roomType: selectedRoomType?.name ?? '',
     packageName: selectedPackage?.active ? selectedPackage.name : '',
@@ -201,7 +254,7 @@ export function FormulirPemesanan({
   }, [mode, methods, selectedPrice, total]);
 
   const availableRooms = rooms.rows.filter(
-    room => room.active && (mode === 'booking' || room.status === 'ready'),
+    room => room.active && (scheduled || room.status === 'ready'),
   );
   const [typeChoice, setTypeChoice] = useState('');
   const activeTypeId = typeChoice || selectedRoom?.room_type_id || '';
@@ -234,7 +287,7 @@ export function FormulirPemesanan({
     let cancelled = false;
     async function resolveDayMode() {
       let operationalDate: string;
-      if (mode === 'booking') {
+      if (scheduled) {
         if (!scheduledDate) return;
         operationalDate = scheduledDate;
       } else {
@@ -251,7 +304,7 @@ export function FormulirPemesanan({
       }
       const nextDayMode = data as DayMode;
       setDayMode(nextDayMode);
-      if (mode === 'booking') setDayModeDate(operationalDate);
+      if (scheduled) setDayModeDate(operationalDate);
     }
     void resolveDayMode();
     return () => { cancelled = true; };
@@ -263,12 +316,61 @@ export function FormulirPemesanan({
     if (mode === 'check_in') setAmount(nextPackageId ? String(priceForPackage(nextPackageId)) : '0');
   }
 
+  async function saveOffer() {
+    const canonicalPhone = canonicalIndonesianWhatsApp(phone);
+    if (!showQuote || !quoteDayReady || quoteLoading || quoteLoadError || quoteMinimumDp === null || !quoteDraft.checkIn ||
+        !quoteDraft.roomNumber || !quoteDraft.packageName || !quoteDraft.name.trim() || !(matchedGuest?.address ?? address).trim() ||
+        !canonicalPhone) {
+      setError('Lengkapi data tamu, WhatsApp Indonesia, jadwal, dan tunggu harga serta DP resmi.');
+      return;
+    }
+    const data = {
+      _name: matchedGuest?.full_name ?? name, _phone: canonicalPhone, _address: matchedGuest?.address ?? address,
+      _room: roomId, _package: packageId, _start: quoteDraft.checkIn,
+    };
+    const key = JSON.stringify(data);
+    if (offerRequest.current?.key !== key) offerRequest.current = { key, id: crypto.randomUUID() };
+    let tab: Window | null = null;
+    try {
+      tab = window.open('about:blank', '_blank');
+      if (tab) tab.opener = null;
+    } catch { tab?.close(); tab = null; }
+    pending.current = true;
+    setSaving(true);
+    try {
+      const response = await supabase.rpc('create_reservation_offer', { ...data, _id: offerRequest.current.id });
+      if (response.error || !response.data) throw new Error(response.error?.message ?? 'Penawaran belum dapat dikonfirmasi.');
+      const item = response.data as unknown as OfferDetail;
+      void client.invalidateQueries({ queryKey: offerQueryKey });
+      if (item.status !== 'DRAFT' && item.status !== 'SENT') {
+        tab?.close();
+        toast.error(item.reason ?? 'Penawaran tidak lagi aktif. Lihat Riwayat Penawaran di Detail Tamu.');
+      } else {
+        try {
+          const { url } = offerWhatsApp(item);
+          if (tab && url) tab.location.replace(url);
+          else tab?.close();
+        } catch { tab?.close(); tab = null; }
+        toast.success('Penawaran tersimpan. Kirim manual atau buka kembali dari antrean.');
+      }
+      onOfferSaved?.(item);
+    } catch (failure) {
+      tab?.close();
+      setError(failure instanceof Error ? failure.message : 'Penyimpanan belum dapat dikonfirmasi. Coba lagi.');
+    } finally {
+      pending.current = false;
+      setSaving(false);
+    }
+  }
+
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending.current) return;
     setError('');
+    if (isOffer) { await saveOffer(); return; }
     if (dataError || dataLoading) { setError('Data belum siap. Coba lagi sebentar.'); return; }
 
-    const normalizedPhone = phone.trim();
+    const normalizedPhone = bookingPhoneInput(matchedGuest?.phone ?? phone);
     const normalizedName = matchedGuest?.full_name ?? name.trim();
     const normalizedAddress = matchedGuest?.address ?? address.trim();
     const payment = Number(amount);
@@ -313,6 +415,36 @@ export function FormulirPemesanan({
     }
     if (mode === 'check_in' && paymentTotal !== total) {
       setError('Pembayaran check-in langsung harus sama dengan harga resmi.'); return;
+    }
+
+    if (offer) {
+      if (!paymentVerified || isTraining || methods.length !== 1) {
+        setError('Konfirmasi penerimaan pembayaran, pilih satu metode, dan gunakan sesi non-Training.');
+        return;
+      }
+      pending.current = true;
+      setSaving(true);
+      try {
+        const { data, error: failure } = await supabase.rpc('transition_reservation_offer', {
+          _id: offer.id, _action: 'convert', _amount: paymentTotal, _method: method, _session: sessionId, _payment_verified: paymentVerified,
+        });
+        if (failure || !data) throw new Error(failure?.message ?? 'Booking belum dapat dikonfirmasi.');
+        const result = data as unknown as Offer;
+        void client.invalidateQueries({ queryKey: offerQueryKey });
+        if (result.status !== 'CONVERTED' || !result.transaction_number) {
+          setError(result.reason ?? 'Penawaran tidak lagi aktif.');
+          return;
+        }
+        setSavedNumber(result.transaction_number);
+        toast.success('Booking resmi berhasil disimpan.');
+        void onSaved().catch(() => toast.error('Booking tersimpan. Muat ulang untuk memperbarui tampilan.'));
+      } catch (failure) {
+        setError(failure instanceof Error ? failure.message : 'Booking belum dapat dikonfirmasi. Coba lagi dengan penawaran yang sama.');
+      } finally {
+        pending.current = false;
+        setSaving(false);
+      }
+      return;
     }
 
     const requestFingerprint = JSON.stringify({
@@ -364,7 +496,7 @@ export function FormulirPemesanan({
     await onSaved();
   }
 
-  const judul = mode === 'booking' ? 'Form Booking' : 'Form Check-in Langsung';
+  const judul = isOffer ? 'Buat Penawaran' : mode === 'booking' ? 'Form Booking' : 'Form Check-in Langsung';
 
   function kirimStruk() {
     const pesan = [
@@ -379,12 +511,12 @@ export function FormulirPemesanan({
     openWhatsApp(phone, pesan);
   }
 
-  if (savedNumber) return <CheckInBerhasil mode={mode} transactionNumber={savedNumber} room={selectedRoom?.room_number ?? '—'} roomType={selectedRoomType?.name ?? '—'} packageName={selectedPackage?.name ?? '—'} onClose={onClose} />;
+  if (savedNumber) return <CheckInBerhasil mode={mode === 'check_in' ? 'check_in' : 'booking'} transactionNumber={savedNumber} room={selectedRoom?.room_number ?? '—'} roomType={selectedRoomType?.name ?? '—'} packageName={selectedPackage?.name ?? '—'} onClose={onClose} />;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep/75 p-4 backdrop-blur-sm"
-      onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}
+      onMouseDown={event => { if (event.target === event.currentTarget && !pending.current) onClose(); }}
     >
       <div
         role="dialog"
@@ -394,8 +526,8 @@ export function FormulirPemesanan({
       >
         {!savedNumber ? <div className="ci-header">
           <p>OPERASIONAL / TRANSAKSI BARU</p>
-          <div className="ci-header-title"><h2>{mode === 'booking' ? 'Reservasi' : 'Check-in Langsung'}</h2><span className="ci-header-id">ID otomatis setelah disimpan</span></div>
-          <Button type="button" variant="ghost" size="icon" aria-label="Tutup" onClick={onClose}><X /></Button>
+          <div className="ci-header-title"><h2>{isOffer ? 'Buat Penawaran' : mode === 'booking' ? 'Reservasi' : 'Check-in Langsung'}</h2><span className="ci-header-id">{isOffer ? 'Penawaran tidak menahan kamar' : 'ID otomatis setelah disimpan'}</span></div>
+          <Button type="button" variant="ghost" size="icon" aria-label="Tutup" disabled={saving} onClick={onClose}><X /></Button>
         </div> : <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold">{savedNumber && mode === 'check_in' ? 'Check-in Berhasil' : judul}</h2>
           <Button type="button" variant="ghost" size="icon" aria-label="Tutup" onClick={onClose}>
@@ -432,26 +564,48 @@ export function FormulirPemesanan({
           <form onSubmit={save} className="ci-form">
             <div className="ci-grid">
               <section className="ci-pane"><h3><UserRound />Identitas Tamu</h3><div className="ci-fields">
-                <div className="relative"><Bidang label="Nomor WhatsApp"><input required type="tel" inputMode="tel" maxLength={16} value={phone} onFocus={() => setSearchFocus('phone')} onBlur={() => setTimeout(() => setSearchFocus(null), 150)} onChange={event => setPhone(event.target.value)} className={fieldClass} placeholder="Ketik nomor untuk mencari tamu" /></Bidang>{searchFocus === 'phone' && suggestions.length > 0 && <Saran items={suggestions} onPick={pilihTamu} />}</div>
-                <div className="relative"><Bidang label="Nama Tamu"><input required={!matchedGuest} maxLength={100} value={matchedGuest?.full_name ?? name} disabled={Boolean(matchedGuest)} onFocus={() => setSearchFocus('name')} onBlur={() => setTimeout(() => setSearchFocus(null), 150)} onChange={event => setName(event.target.value)} className={fieldClass} placeholder="Ketik nama untuk mencari tamu" /></Bidang>{searchFocus === 'name' && suggestions.length > 0 && <Saran items={suggestions} onPick={pilihTamu} />}</div>
-                <Bidang label="Alamat"><input required={!matchedGuest} maxLength={500} value={matchedGuest?.address ?? address} disabled={Boolean(matchedGuest)} onChange={event => setAddress(event.target.value)} className={fieldClass} /></Bidang>
+                <div className="relative z-20" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setSearchFocus(null); }}>
+                  <Bidang label="Nomor WhatsApp"><input required type="tel" inputMode="tel" maxLength={16} value={phone}
+                    {...lookupAttributes('phone')}
+                    readOnly={Boolean(offer)} onFocus={() => focusGuest('phone')} onKeyDown={navigateGuests}
+                    onChange={event => { setPhone(event.target.value); focusGuest('phone'); }} className={fieldClass}
+                    placeholder="Ketik sebagian nomor untuk mencari tamu" /></Bidang>
+                  {searchFocus === 'phone' && <Saran id={guestLookupId + '-phone'} items={suggestions} active={suggestionIndex} onPick={pilihTamu} />}
+                </div>
+                <div className="relative z-10" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setSearchFocus(null); }}>
+                  <Bidang label="Nama Tamu"><input required maxLength={100} value={matchedGuest?.full_name ?? name}
+                    {...lookupAttributes('name')}
+                    readOnly={Boolean(offer || matchedGuest)} onFocus={() => focusGuest('name')} onKeyDown={navigateGuests}
+                    onChange={event => { setName(event.target.value); focusGuest('name'); }} className={fieldClass}
+                    placeholder="Ketik sebagian nama untuk mencari tamu" /></Bidang>
+                  {searchFocus === 'name' && <Saran id={guestLookupId + '-name'} items={suggestions} active={suggestionIndex} onPick={pilihTamu} />}
+                </div>
+                <Bidang label="Alamat"><input required maxLength={500} value={matchedGuest?.address ?? address}
+                  readOnly={Boolean(offer || matchedGuest)} onChange={event => setAddress(event.target.value)} className={fieldClass} /></Bidang>
                 <Bidang label="Jumlah Tamu"><div className={readClass}>{jumlahTamu}</div></Bidang>
               </div>{matchedGuest && <p className="ci-notice">Tamu terdaftar: <strong>{matchedGuest.full_name}</strong>. Data lama digunakan.</p>}</section>
               <section className="ci-pane"><h3><BedDouble />Rincian Menginap</h3><div className="ci-fields">
-                <Bidang label="Tipe Kamar"><select required value={activeTypeId} onChange={event => { setTypeChoice(event.target.value); handleRoomChange(''); }} className={fieldClass}><option value="">Pilih tipe kamar</option>{typesWithRooms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Bidang>
-                <Bidang label="Nomor Kamar"><select required disabled={!activeTypeId} value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}><option value="">{activeTypeId ? 'Pilih nomor kamar' : 'Pilih tipe kamar terlebih dahulu'}</option>{selectedRoomUnavailable && selectedRoom && <option value={selectedRoom.id} disabled>Kamar {selectedRoom.room_number} · Belum tersedia</option>}{roomsOfType.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}</select></Bidang>
-                {mode === 'booking' && <>
-                <Bidang label="Tanggal Check-in"><input required type="date" value={scheduledDate} onChange={event => { setDayModeDate(''); setScheduledDate(event.target.value); }} className={fieldClass} /></Bidang>
-                <Bidang label="Jam Check-in"><input required type="time" value={scheduledTime} onChange={event => setScheduledTime(event.target.value)} className={fieldClass} /></Bidang>
+                <Bidang label="Tipe Kamar"><select required disabled={Boolean(offer)} value={activeTypeId} onChange={event => { setTypeChoice(event.target.value); handleRoomChange(''); }} className={fieldClass}><option value="">Pilih tipe kamar</option>{typesWithRooms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Bidang>
+                <Bidang label="Nomor Kamar"><select required disabled={!activeTypeId || Boolean(offer)} value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}><option value="">{activeTypeId ? 'Pilih nomor kamar' : 'Pilih tipe kamar terlebih dahulu'}</option>{selectedRoomUnavailable && selectedRoom && <option value={selectedRoom.id} disabled>Kamar {selectedRoom.room_number} · Belum tersedia</option>}{roomsOfType.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}</select></Bidang>
+                {scheduled && <>
+                <Bidang label="Tanggal Check-in"><input required type="date" readOnly={Boolean(offer)} value={scheduledDate} onChange={event => { setDayModeDate(''); setScheduledDate(event.target.value); }} className={fieldClass} /></Bidang>
+                <Bidang label="Jam Check-in"><input required type="time" readOnly={Boolean(offer)} value={scheduledTime} onChange={event => setScheduledTime(event.target.value)} className={fieldClass} /></Bidang>
                 </>}
-                <Bidang label="Pilih Paket"><select required disabled={!selectedRoomType?.pricing_group} value={packageId} onChange={event => handlePackageChange(event.target.value)} className={fieldClass}><option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>{paketUrut.map(pack => { const price = priceForPackage(pack.id); return <option key={pack.id} value={pack.id} disabled={price <= 0}>{pack.name}</option>; })}</select></Bidang>
+                <Bidang label="Pilih Paket"><select required disabled={!selectedRoomType?.pricing_group || Boolean(offer)} value={packageId} onChange={event => handlePackageChange(event.target.value)} className={fieldClass}><option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>{paketUrut.map(pack => { const price = priceForPackage(pack.id); return <option key={pack.id} value={pack.id} disabled={price <= 0}>{pack.name}</option>; })}</select></Bidang>
                 <Bidang label={`Harga Kamar (${dayMode === 'weekday' ? 'WEEKDAY' : 'WEEKEND'})`}><div className={readClass}>{selectedPrice > 0 ? rupiah(selectedPrice) : '—'}</div></Bidang>
                 {mode === 'check_in' && <Bidang label="TAMU TAMBAHAN (RP. 50.000/ORANG)"><input type="number" min={0} max={18} step={1} value={extraGuests} onChange={event => setExtraGuests(event.target.value)} onFocus={event => event.currentTarget.select()} className={fieldClass} /></Bidang>}
               </div>{selectedRoomUnavailable && <p role="alert" className="ci-notice text-destructive">Kamar belum tersedia untuk Check-in Langsung. Pilih kamar tersedia; Check-in ganda tidak diizinkan.</p>}</section>
-              <section className="ci-pane"><h3><CreditCard />Pembayaran</h3><p className="ci-method-label">Metode Pembayaran (maks. {featureFlags.combinedPayment ? '2' : '1'})</p><div className="ci-methods">{(['Cash', 'QRIS', 'Transfer'] as MetodePembayaran[]).map(m => <Button key={m} type="button" variant="outline" aria-pressed={methods.includes(m)} disabled={!methods.includes(m) && methods.length >= 2} onClick={() => toggleMethod(m)}>{m.toUpperCase()}</Button>)}</div><div className="ci-fields">{methods.map(m => <Bidang key={m} label={`Nominal ${m.toUpperCase()}${mode === 'booking' && minimumDp !== null && m === methods[0] ? ` (DP min. ${rupiah(minimumDp)})` : ''}`}><input required type="number" min={0} max={total > 0 ? total : undefined} step="1" value={nominal[m] ?? '0'} readOnly={mode === 'check_in' && methods.length === 1} onChange={event => setNominal(n => ({ ...n, [m]: event.target.value }))} onFocus={event => event.currentTarget.select()} className={fieldClass} /></Bidang>)}</div>{methods.length > 1 && <p className="ci-notice">{featureFlags.combinedPayment ? 'Dua metode dicatat dalam satu transaksi dengan riwayat pembayaran masing-masing.' : 'Pembayaran gabungan belum diaktifkan.'}</p>}</section>
-              <section className="ci-pane"><h3><FileText />Ringkasan Pembayaran</h3><div className="ci-summary"><Baris k="Harga kamar" v={rupiah(selectedPrice)} /><Baris k={`Tamu tambahan (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} /><div className="ci-total"><span>Total Tagihan</span><span>{rupiah(total)}</span></div>{methods.map(m => <Baris key={m} k={`Dibayar ${m.toUpperCase()}`} v={rupiah(Math.max(0, Number(nominal[m]) || 0))} />)}<div className="ci-balance"><span>Sisa Tagihan</span><span>{rupiah(Math.max(0, total - paymentTotal))}</span></div></div>{mode === 'booking' && minimumDp !== null && <p className="ci-notice">Minimum DP {setting?.minimum_dp_mode === 'PERCENTAGE' ? `${Number(setting.minimum_dp_value)}%` : 'Owner'}: {rupiah(minimumDp)}</p>}{extra.tambahan > 0 && !extraGuestOn && <p className="ci-notice text-destructive">Biaya tamu tambahan belum dapat disimpan sistem, menunggu persetujuan Owner.</p>}</section>
+              {!isOffer && <><section className="ci-pane"><h3><CreditCard />Pembayaran</h3><p className="ci-method-label">Metode Pembayaran (maks. {featureFlags.combinedPayment && !offer ? '2' : '1'})</p><div className="ci-methods">{(['Cash', 'QRIS', 'Transfer'] as MetodePembayaran[]).map(m => <Button key={m} type="button" variant="outline" aria-pressed={methods.includes(m)} disabled={!methods.includes(m) && methods.length >= 2} onClick={() => toggleMethod(m)}>{m.toUpperCase()}</Button>)}</div><div className="ci-fields">{methods.map(m => <Bidang key={m} label={`Nominal ${m.toUpperCase()}${mode === 'booking' && minimumDp !== null && m === methods[0] ? ` (DP min. ${rupiah(minimumDp)})` : ''}`}><input required type="number" min={0} max={total > 0 ? total : undefined} step="1" value={nominal[m] ?? '0'} readOnly={mode === 'check_in' && methods.length === 1} onChange={event => setNominal(n => ({ ...n, [m]: event.target.value }))} onFocus={event => event.currentTarget.select()} className={fieldClass} /></Bidang>)}</div>{methods.length > 1 && <p className="ci-notice">{featureFlags.combinedPayment ? 'Dua metode dicatat dalam satu transaksi dengan riwayat pembayaran masing-masing.' : 'Pembayaran gabungan belum diaktifkan.'}</p>}</section>
+              <section className="ci-pane"><h3><FileText />Ringkasan Pembayaran</h3><div className="ci-summary"><Baris k="Harga kamar" v={rupiah(selectedPrice)} /><Baris k={`Tamu tambahan (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} /><div className="ci-total"><span>Total Tagihan</span><span>{rupiah(total)}</span></div>{methods.map(m => <Baris key={m} k={`Dibayar ${m.toUpperCase()}`} v={rupiah(Math.max(0, Number(nominal[m]) || 0))} />)}<div className="ci-balance"><span>Sisa Tagihan</span><span>{rupiah(Math.max(0, total - paymentTotal))}</span></div></div>{mode === 'booking' && minimumDp !== null && <p className="ci-notice">Minimum DP {setting?.minimum_dp_mode === 'PERCENTAGE' ? `${Number(setting.minimum_dp_value)}%` : 'Owner'}: {rupiah(minimumDp)}</p>}{extra.tambahan > 0 && !extraGuestOn && <p className="ci-notice text-destructive">Biaya tamu tambahan belum dapat disimpan sistem, menunggu persetujuan Owner.</p>}</section></>}
             </div>
-            {showQuote && !saving && <BookingQuote
+            {offer && <label className="ci-notice flex items-center gap-2">
+              <input type="checkbox" checked={paymentVerified} onChange={event => setPaymentVerified(event.target.checked)} />
+              Saya sudah memverifikasi pembayaran yang benar-benar diterima.
+            </label>}
+            {isOffer && <p className="ci-notice">Total {quoteDayReady && selectedPrice > 0 ? rupiah(total) : '—'}
+              {' · '}Minimum DP {quoteDayReady && selectedPrice > 0 && quoteMinimumDp !== null ? rupiah(Math.ceil(quoteMinimumDp)) : '—'}
+            </p>}
+            {showQuote && !isOffer && !saving && <BookingQuote
               key={JSON.stringify([quoteDraft, roomId, packageId, quoteDayReady, quoteLoading, quoteLoadError])}
               draft={quoteDraft}
               roomId={roomId}
@@ -460,10 +614,10 @@ export function FormulirPemesanan({
               loading={quoteLoading}
               loadError={quoteLoadError}
             />}
-            {isTraining && <p className="ci-notice">Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.</p>}
-            {selectedPrice > 0 && <p className="ci-notice">{activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.' : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.' : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}</p>}
+            {!isOffer && isTraining && <p className="ci-notice">Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.</p>}
+            {!isOffer && selectedPrice > 0 && <p className="ci-notice">{activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.' : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.' : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}</p>}
             {error && <p role="alert" className="ci-notice text-destructive">{error}</p>}
-            <footer className="ci-footer"><p className="ci-reminder"><Info />Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan</p><div className="ci-footer-actions"><Button type="button" variant="outline" onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || dataLoading || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
+            <footer className="ci-footer"><p className="ci-reminder"><Info />Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan</p><div className={isOffer ? 'ci-footer-actions max-w-full flex-wrap' : 'ci-footer-actions'}><Button type="button" variant="outline" disabled={saving} onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || (isOffer ? quoteLoading : dataLoading) || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : isOffer ? 'Simpan Penawaran & Buka WhatsApp' : offer ? 'Konfirmasi Booking' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
           </form>
         )}
       </div>
@@ -471,15 +625,22 @@ export function FormulirPemesanan({
   );
 }
 
-function Saran({ items, onPick }: { items: { id: string; full_name: string; phone: string }[]; onPick: (g: never) => void }) {
+function Saran({ id, items, active, onPick }: { id: string; items: GuestSearchRow[]; active: number; onPick: (guest: GuestSearchRow) => void }) {
+  if (!items.length) return null;
   return (
-    <ul className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-xl border border-gold/25 bg-background shadow-lembut">
-      {items.map(g => (
-        <li key={g.id}>
+    <ul id={id} role="listbox" aria-label="Saran tamu" className="absolute left-0 right-0 top-full z-10 mt-1 max-h-52 overflow-y-auto rounded-xl border border-gold/25 bg-[var(--success-paper)] text-[var(--premium-ink)] shadow-lembut">
+      {items.map((g, index) => (
+        <li key={g.id} role="presentation">
           <button
             type="button"
-            onMouseDown={e => { e.preventDefault(); onPick(g as never); }}
-            className="flex w-full justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-secondary"
+            role="option"
+            id={id + '-' + index}
+            aria-selected={index === active}
+            tabIndex={-1}
+            onPointerDown={event => event.preventDefault()}
+            onClick={() => onPick(g)}
+            className={'flex w-full justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-[var(--premium-highlight)]' +
+              (index === active ? ' bg-[var(--premium-highlight)]' : '')}
           >
             <span className="truncate font-semibold">{g.full_name}</span>
             <span className="font-mono text-xs text-muted-foreground">{g.phone}</span>
