@@ -1021,6 +1021,59 @@ export type Database = {
           },
         ]
       }
+      hk_supply_items: {
+        Row: { id: string; name: string; unit: string; quantity: number; minimum: number | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      hk_issue_reports: {
+        Row: {
+          id: string
+          room_id: string | null
+          room_number: string | null
+          area: string | null
+          supply_id: string | null
+          category: "pemakaian" | "kekurangan" | "kerusakan" | "kebersihan" | "lainnya"
+          description: string
+          priority: "rendah" | "normal" | "tinggi" | "mendesak"
+          status: "DILAPORKAN" | "DIPROSES" | "SELESAI"
+          reported_by: string
+          reported_by_name: string
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: [
+          { foreignKeyName: "hk_issue_reports_room_id_fkey"; columns: ["room_id"]; isOneToOne: false; referencedRelation: "rooms"; referencedColumns: ["id"] },
+          { foreignKeyName: "hk_issue_reports_supply_id_fkey"; columns: ["supply_id"]; isOneToOne: false; referencedRelation: "hk_supply_items"; referencedColumns: ["id"] },
+        ]
+      }
+      hk_operational_events: {
+        Row: {
+          actor_id: string
+          request_id: string
+          actor_name: string
+          created_at: string
+          action: "initial" | "adjust" | "minimum" | "report" | "follow_up"
+          supply_id: string | null
+          issue_id: string | null
+          note: string
+          balance_before: number | null
+          balance_after: number | null
+          minimum_before: number | null
+          minimum_after: number | null
+          status_before: Database["public"]["Tables"]["hk_issue_reports"]["Row"]["status"] | null
+          status_after: Database["public"]["Tables"]["hk_issue_reports"]["Row"]["status"] | null
+          request_payload: Json
+        }
+        Insert: never
+        Update: never
+        Relationships: [
+          { foreignKeyName: "hk_operational_events_supply_id_fkey"; columns: ["supply_id"]; isOneToOne: false; referencedRelation: "hk_supply_items"; referencedColumns: ["id"] },
+          { foreignKeyName: "hk_operational_events_issue_id_fkey"; columns: ["issue_id"]; isOneToOne: false; referencedRelation: "hk_issue_reports"; referencedColumns: ["id"] },
+        ]
+      }
       housekeeping_history: {
         Row: {
           action: string
@@ -1913,6 +1966,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      record_hk_operational_action: {
+        Args: { _request_id: string; _action: string; _payload: Json }
+        Returns: string
+      }
       activate_receipt_template_version: {
         Args: { _template_id: string }
         Returns: undefined

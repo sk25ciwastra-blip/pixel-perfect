@@ -9,8 +9,9 @@ import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
 import { ChecklistHousekeeping } from '@/components/checklist-housekeeping';
 import { PerawatanBerkala } from '@/components/perawatan-berkala';
+import { HousekeepingStockIssues } from '@/components/housekeeping-stock-issues';
 import { Link } from '@tanstack/react-router';
-import { BedDouble, Brush, ClipboardCheck, ClipboardList, History, Wrench, CheckCircle2, Users, Package, Layers, Eye, ChevronRight, ChevronLeft, ChevronDown, Clock3, LoaderCircle, MoreHorizontal, TriangleAlert } from 'lucide-react';
+import { BedDouble, Brush, ClipboardCheck, ClipboardList, History, Wrench, CheckCircle2, Users, Package, Eye, ChevronRight, ChevronLeft, ChevronDown, Clock3, LoaderCircle, MoreHorizontal, TriangleAlert } from 'lucide-react';
 import '@/components/housekeeping.css';
 import latarHousekeeping from '@/assets/header-transaksi.jpg';
 import { ringkasanHousekeeping } from '@/lib/housekeeping-ringkasan';
@@ -119,9 +120,6 @@ function Halaman() {
   const progress = progressTotal ? Math.round(finishedToday.size / progressTotal * 100) : 0;
   const queueRooms = activeRooms.filter(room => room.status === 'dirty' || room.status === 'cleaning');
   const completionSummary = useMemo(() => ringkasanHousekeeping(history.rows), [history.rows]);
-
-  const linenPanel = <section className="hk-bottom-panel"><div className="hk-panel-header"><Layers /><h2>Perlengkapan &amp; Linen</h2><Link to="/housekeeping" search={{ bagian: 'perlengkapan' }} className="hk-gold-link">Lihat Detail <ChevronRight /></Link></div><div className="hk-stock-grid">{[{ label: 'Handuk', ikon: Layers }, { label: 'Sprei Set', ikon: BedDouble }, { label: 'Amenitas', ikon: Package }].map(item => <div className="hk-stock-item" key={item.label}><item.ikon /><div><p>{item.label}</p><strong>— / —</strong></div><p className="hk-stock-empty">Stok belum tersedia</p></div>)}</div></section>;
-  const maintenancePanel = <section className="hk-bottom-panel"><div className="hk-panel-header"><Wrench /><h2>Perawatan &amp; Kendala</h2></div><div className="hk-maintenance-empty"><CheckCircle2 /><div><p>Status kendala belum tersedia.</p><p className="text-muted-foreground">Riwayat perawatan dapat dilihat di tab Perawatan.</p></div><Link to="/housekeeping" search={{ bagian: 'perawatan' }} className="hk-outline-link">Lihat Perawatan <ChevronRight /></Link></div></section>;
 
   function refreshAll() {
     return Promise.all([
@@ -267,7 +265,7 @@ function Halaman() {
         </section>
       )}
       {bagian === 'perawatan' && <PerawatanBerkala readOnly={!canAdvance} />}
-      {bagian === 'perlengkapan' && <div className="hk-bottom">{linenPanel}{maintenancePanel}</div>}
+      {bagian === 'perlengkapan' && !canAdvance && <p className="hk-bottom-panel p-4">Akses stok dan laporan kendala tersedia untuk Owner, Supervisor, dan Housekeeping.</p>}
 
       {(bagian === 'status' || bagian === 'checklist') && (<>
         <div className="hk-stats hk-stats-reference">
@@ -341,6 +339,15 @@ function Halaman() {
         </div>
         <div className="hk-bottom hk-reference-bottom"><RiwayatReferensi history={history.rows} rooms={rooms.rows} /><GrafikReferensi data={completionSummary} history={history.rows} /></div>
       </>)}
+      {canAdvance && (bagian === 'status' || bagian === 'perlengkapan') &&
+        <HousekeepingStockIssues
+          key={bagian}
+          summary={bagian === 'status'}
+          owner={posisiKode === 'owner'}
+          review={canOverride}
+          rooms={activeRooms}
+          maintenanceCount={maintenance.loading || maintenance.error ? null : maintenance.rows.length}
+        />}
 
       </div>
 
