@@ -3,6 +3,7 @@ import { SubPengaturan } from '@/components/pengaturan-sub';
 import { useEffect, useState } from 'react';
 import { Landmark, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { Kerangka } from '@/components/kerangka';
 import { rpc, useTable } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
@@ -46,13 +47,34 @@ function HalamanPengaturanKeuangan() {
     if (config) { setCommissionMode(config.mode); setCommissionRate(String(config.rate)); setPerRoomAmount(String(config.per_room_amount)); }
   }, [commissionConfigs.rows, financeSettings.rows]);
 
-  async function run(action: () => Promise<{ error?: { message: string } | null }>) {
+  async function run(
+    action: () => Promise<{ error?: { message: string } | null; partial?: boolean }>,
+    successLabel: string,
+  ) {
+    if (busy) return;
     setBusy(true); setMessage('');
     try {
       const result = await action();
-      if (result.error) setMessage(result.error.message);
-      else { setMessage('Tersimpan.'); await Promise.all([commissionConfigs.refresh(), financeSettings.refresh(), banks.refresh()]); }
-    } finally { setBusy(false); }
+      if (result.error) {
+        const detail = result.partial
+          ? `Minimum DP berhasil disimpan, tetapi komisi gagal diperbarui: ${result.error.message}`
+          : result.error.message;
+        setMessage(detail);
+        if (result.partial) toast.warning('Sebagian perubahan berhasil', { description: detail });
+        else toast.error('Perubahan gagal disimpan', { description: detail });
+        if (result.partial) await Promise.allSettled([commissionConfigs.refresh(), financeSettings.refresh(), banks.refresh()]);
+        return;
+      }
+      setMessage(successLabel);
+      toast.success(successLabel);
+      await Promise.allSettled([commissionConfigs.refresh(), financeSettings.refresh(), banks.refresh()]);
+    } catch (failure) {
+      const detail = failure instanceof Error ? failure.message : 'Terjadi gangguan. Periksa data sebelum mencoba lagi.';
+      setMessage(detail);
+      toast.error('Hasil penyimpanan belum dapat dipastikan', { description: detail });
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!isOwner) {
@@ -76,8 +98,8 @@ function HalamanPengaturanKeuangan() {
             const first = await rpc('set_finance_settings', { _minimum_dp_mode: minimumDpMode, _minimum_dp_value: angka(minimumDpValue) });
             if (first.error) return { error: first.error };
             const second = await rpc('set_finance_commission_config', { _mode: commissionMode, _rate: angka(commissionRate), _per_room_amount: angka(perRoomAmount) });
-            return { error: second.error };
-          })}>Simpan Konfigurasi</Button>
+            return { error: second.error, partial: Boolean(second.error) };
+          }, 'Minimum DP dan komisi berhasil disimpan')}>Simpan Konfigurasi</Button>
         </section>
         <section className="panel-mewah p-5">
           <div className="mb-4 flex items-center gap-3"><span className="ikon-bulat h-10 w-10 text-gold"><Landmark size={20} aria-hidden="true" /></span><h2 className="font-serif text-xl">Rekening Owner untuk Transfer</h2></div>
@@ -89,7 +111,7 @@ function HalamanPengaturanKeuangan() {
           <Button className="mt-4 w-full" disabled={busy} onClick={() => void run(async () => {
             const { error } = await rpc('upsert_finance_bank_account', { _id: null, _bank_name: bankName, _account_name: accountName, _account_number: accountNumber, _logo_key: '', _active: true });
             return { error };
-          })}>Tambah Rekening</Button>
+          }, 'Rekening Owner berhasil ditambahkan')}>Tambah Rekening</Button>
           <ul className="mt-3 space-y-2 text-sm">{banks.rows.filter((bank) => bank.active).map((bank) => <li key={bank.id} className="rounded-md bg-secondary px-3 py-2">{bank.bank_name} · {bank.account_name} · {bank.account_number}</li>)}</ul>
         </section>
       </div>
