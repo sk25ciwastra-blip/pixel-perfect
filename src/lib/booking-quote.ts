@@ -72,7 +72,7 @@ export function formatBookingQuote(draft: BookingQuoteDraft, schedule: { schedul
 
   const wib = (date: Date) => `${dateWib.format(date)} • ${timeWib.format(date)} WIB`;
   const dpBasis = draft.dpMode === 'PERCENTAGE' ? ` (${draft.dpValue!.toLocaleString('id-ID')}%)` : '';
-  const packageLabel = singleLine(draft.packageName).replace(/^Paket\\s+/i, '');
+  const packageLabel = singleLine(draft.packageName).replace(/^Paket\s+/i, '');
   const message = [
     '*BATURADEN 25 HOMESTAY*',
     '*— RINCIAN PENAWARAN RESERVASI —*',
