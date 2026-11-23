@@ -132,3 +132,21 @@ select
 ```
 
 Pastikan index ada dan semua definisi cocok. Tiga nilai akses langsung harus `false`; grant RPC staf harus `true` dan body tetap menolak role yang tidak berhak. Verifikasi kasus lintas format dan rollback modul pada fixture terisolasi, bukan dengan data tamu LIVE. Release gate tetap **HOLD**.
+## Rehearsal clone PR #141 · BLOCKED sebelum migrasi
+
+Checkpoint yang diperiksa adalah `76ed06e` dan `36e7cce`, dengan persetujuan Owner terbatas pada clone PostgreSQL 17. Baseline yang harus direproduksi adalah Baturaden-25-Staging pada checkpoint tersebut. Pemeriksaan kali ini hanya melihat inventaris lokal dan daftar objek arsip melalui `pg_restore --list`. Arsip tidak dipulihkan dan data tamu/pembayaran tidak dibaca.
+
+| Tahap | Hasil | Bukti atau blocker |
+| --- | --- | --- |
+| Persiapan dan parity clone | **BLOCKED** | Snapshot schema-only yang cocok dan manifest katalog staging belum tersedia. Arsip lokal 21 Oktober (PG 17.6) memuat Booking 10 argumen. Arsip 20 November (PG 17.6) memuat Training serta Booking 10, 12, dan 13 argumen. Checkpoint staging mencatat Booking 12 argumen dan belum memiliki Training. Metadata staging 15 Oktober mendahului baseline Finance yang dimaksud. |
+| Training `20261018000000` | **BLOCKED** | Tidak dijalankan karena parity clone belum terbukti. |
+| Quote-read #136 | **BLOCKED** | Tidak dijalankan karena baseline Training pada clone yang cocok belum terverifikasi. |
+| Issue #140 | **BLOCKED** | Tidak dijalankan karena kedua prasyarat belum diverifikasi pada clone yang cocok. |
+| Postcheck dan fixture | **BLOCKED** | Tidak ada clone target yang telah dimigrasikan. Suite PASS lama tidak diulang. |
+| Rollback #140 | **BLOCKED** | Tidak ada instalasi #140 pada clone target yang dapat di-rollback. Rollback Training dan #136 merupakan lingkup terpisah. |
+
+PG 17.6 di atas adalah versi sumber yang tercantum pada arsip. Runtime clone, hash skema dan hash fungsi baseline belum dapat dicatat karena belum ada snapshot yang cocok. Tidak ada tahap yang dilaporkan FAIL karena belum ada migrasi yang dijalankan.
+
+Pemeriksaan lokal minimal yang dilakukan adalah `pg_restore --list <arsip-lokal>` dengan filter nama fungsi Booking dan Training, serta pencarian snapshot schema-only di workspace dan inventaris cadangan lokal. Pekerjaan dapat dilanjutkan setelah tersedia snapshot schema-only tersanitasi dari checkpoint staging yang cocok, beserta manifest peran, owner/ACL, RLS, trigger, dan fungsi Auth/sesi. Restore hanya pada cluster disposable PG17. Bandingkan katalog clone dengan manifest sebelum menjalankan urutan di addendum, lalu catat hash fungsi sebelum dan sesudah serta hasil postcheck. Jika manifest tidak cocok, berhenti sebelum DDL.
+
+**Release gate tetap HOLD.** Staging dan LIVE tidak dihubungi untuk rehearsal ini. Tidak ada restore, SQL Cloud, penulisan data operasional, merge, atau publish.
