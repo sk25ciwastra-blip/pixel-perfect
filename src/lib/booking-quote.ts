@@ -32,7 +32,7 @@ export type BookingQuoteDraft = {
 };
 
 const dateWib = new Intl.DateTimeFormat('id-ID', {
-  timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', year: 'numeric',
+  timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric',
 });
 const timeWib = new Intl.DateTimeFormat('id-ID', {
   timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
@@ -70,31 +70,37 @@ export function formatBookingQuote(draft: BookingQuoteDraft, schedule: { schedul
     throw new Error('Jadwal resmi paket tidak sesuai dengan waktu yang dipilih.');
   }
 
-  const wib = (date: Date) => `${dateWib.format(date)}, ${timeWib.format(date)} WIB`;
+  const wib = (date: Date) => `${dateWib.format(date)} • ${timeWib.format(date)} WIB`;
   const dpBasis = draft.dpMode === 'PERCENTAGE' ? ` (${draft.dpValue!.toLocaleString('id-ID')}%)` : '';
+  const packageLabel = singleLine(draft.packageName).replace(/^Paket\\s+/i, '');
   const message = [
     '*BATURADEN 25 HOMESTAY*',
-    '*Penawaran / Permintaan Reservasi*',
+    '*— RINCIAN PENAWARAN RESERVASI —*',
     '',
     `Halo Kak ${singleLine(draft.name)},`,
-    'Berikut rincian penawaran menginap untuk Kakak.',
+    'Berikut rincian reservasi yang Kakak ajukan.',
     '',
-    `Kamar: ${singleLine(draft.roomType)} · No. ${singleLine(draft.roomNumber)}`,
-    `Paket: ${singleLine(draft.packageName)}`,
-    `Check-in: ${wib(start)}`,
-    `Check-out: ${wib(end)}`,
-    `Jumlah tamu: ${draft.guestCount} orang`,
+    '*DETAIL RESERVASI*',
+    `Tipe Kamar : ${singleLine(draft.roomType)}`,
+    `No. Kamar : ${singleLine(draft.roomNumber)}`,
+    `Paket : ${packageLabel}`,
+    `Check-in : ${wib(start)}`,
+    `Check-out : ${wib(end)}`,
+    `Jumlah Tamu : ${draft.guestCount} Orang`,
     '',
-    `Harga kamar (${draft.dayMode === 'weekday' ? 'Weekday' : 'Weekend'}): ${rupiah(draft.roomPrice)}`,
-    `Biaya tambahan: ${rupiah(draft.extraCharge)}`,
-    `Total tagihan: ${rupiah(draft.total)}`,
-    `Minimum DP${dpBasis}: ${rupiah(draft.minimumDp!)}`,
-    `Opsi bayar lunas: ${rupiah(draft.total)}`,
+    '*RINCIAN PEMBAYARAN*',
+    `Harga Kamar (${draft.dayMode === 'weekday' ? 'Weekday' : 'Weekend'}) : ${rupiah(draft.roomPrice)}`,
+    `Biaya Tambahan : ${rupiah(draft.extraCharge)}`,
+    `*Total Tagihan : ${rupiah(draft.total)}*`,
     '',
-    'Penawaran ini tidak mengunci kamar. Ketersediaan diperiksa kembali saat Booking resmi.',
-    'Mohon tunggu konfirmasi setelah pembayaran diverifikasi. Bukti reservasi dikirim setelah Booking resmi.',
+    `Minimum DP${dpBasis} : *${rupiah(draft.minimumDp!)}*`,
+    `Pembayaran Lunas : *${rupiah(draft.total)}*`,
     '',
-    'Terima kasih telah memilih Baturaden 25 Homestay.',
+    '*INFORMASI RESERVASI*',
+    'Reservasi akan dikonfirmasi setelah pembayaran diverifikasi oleh Admin. Ketersediaan kamar dapat berubah sebelum Booking dikonfirmasi.',
+    '',
+    'Terima kasih telah memilih *Baturaden 25 Homestay*.',
+    'Kami menantikan kedatangan Kakak! ✨',
   ].join('\n');
   return { message, phone: normalizeWhatsAppNumber(draft.phone) };
 }
