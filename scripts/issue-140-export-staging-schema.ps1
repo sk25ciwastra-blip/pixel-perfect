@@ -1,11 +1,17 @@
 param(
   [Parameter(Mandatory)][string]$OutputDirectory,
-  [Parameter(Mandatory)][string]$PgBin
+  [Parameter(Mandatory)][string]$PgBin,
+  [ValidateSet('Direct','SessionPooler')][string]$ConnectionMode = 'Direct'
 )
 $ErrorActionPreference = 'Stop'
 $ref = 'bgtztcfbkcrvcipxbfti'
 if (-not $env:PGUSER) { throw 'Inject the approved staging PGUSER and ephemeral authentication locally before export.' }
 if ($env:PGPASSWORD) { throw 'Use a temporary local PGPASSFILE or interactive authentication, not PGPASSWORD.' }
+# The Supabase session pooler requires a project-scoped database username.
+# Fail closed if credentials are scoped to a different staging project.
+if ($ConnectionMode -eq 'SessionPooler' -and -not $env:PGUSER.EndsWith(".$ref", [StringComparison]::Ordinal)) {
+  throw "Session pooler PGUSER must end with .$ref. Copy the exact User from Supabase staging Connect > Session pooler."
+}
 
 $target = [IO.Path]::GetFullPath($OutputDirectory)
 $gitRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -27,7 +33,8 @@ foreach ($name in @('PGHOSTADDR','PGSERVICE','PGSERVICEFILE','PGOPTIONS','PGREQU
 }
 $env:PGSSLMODE = 'verify-full'
 $env:PGOPTIONS = '-c default_transaction_read_only=on -c search_path=pg_catalog'
-$connection = @('--host', "db.$ref.supabase.co", '--port', '5432', '--dbname', 'postgres')
+$hostName = if ($ConnectionMode -eq 'SessionPooler') { 'aws-0-ap-northeast-1.pooler.supabase.com' } else { "db.$ref.supabase.co" }
+$connection = @('--host', $hostName, '--port', '5432', '--dbname', 'postgres')
 $manifestSql = Join-Path $PSScriptRoot 'issue-140-staging-manifest.sql'
 function Read-Manifest {
   $result = & $psql @connection -X -qAt -v ON_ERROR_STOP=1 -f $manifestSql
@@ -53,6 +60,8 @@ try {
   [IO.File]::WriteAllText((Join-Path $target 'staging-catalog.json'), $before)
   [ordered]@{
     staging_ref = $ref
+    connection_mode = $ConnectionMode
+    endpoint_host = $hostName
     checkpoint = '76ed06e / 36e7cce'
     exported_utc = [DateTime]::UtcNow.ToString('o')
     schema_sha256 = (Get-FileHash -LiteralPath $schema -Algorithm SHA256).Hash
