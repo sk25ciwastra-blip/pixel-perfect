@@ -102,17 +102,28 @@ test('roles, date validation and 2-guest Booking parity', () => {
 test('formats official timestamp values as WIB, with configured percentage or fixed DP', () => {
   const { message, phone } = formatBookingQuote(draft, schedule);
   expect(phone).toBe('6281234567890');
-  expect(message).toContain('28 Nov 2026, 13.00 WIB');
-  expect(message).toContain('29 Nov 2026, 12.00 WIB');
-  expect(message).toContain('Harga kamar (Weekend): Rp 400.001');
-  expect(message).toContain('Minimum DP (40%): Rp 160.001');
+  expect(message).toContain('Sabtu, 28 Nov 2026 • 13.00 WIB');
+  expect(message).toContain('Minggu, 29 Nov 2026 • 12.00 WIB');
+  expect(message).toContain('Harga Kamar (Weekend) : Rp 400.001');
+  expect(message).toContain('Minimum DP (40%) : *Rp 160.001*');
   expect(message).not.toMatch(/TRX|undefined|Sisa Tagihan/i);
+  expect(message).toContain('*— RINCIAN PENAWARAN RESERVASI —*');
+  expect(message).toContain('*DETAIL RESERVASI*');
+  expect(message).toContain('Tipe Kamar : Superior');
+  expect(message).toContain('No. Kamar : 07');
+  expect(message).toContain('Paket : Harian');
+  expect(message).toContain('*RINCIAN PEMBAYARAN*');
+  expect(message).toContain('*Total Tagihan : Rp 400.001*');
+  expect(message).toContain('*INFORMASI RESERVASI*');
+  expect(message).toContain('Ketersediaan kamar dapat berubah sebelum Booking dikonfirmasi.');
+  expect(message).not.toMatch(/Konfirmasi Pesanan|&#x|\\\\/);
+
   const fixed = { minimum_dp_mode: 'AMOUNT', minimum_dp_value: 57500.25 };
   const weekday = { ...draft, dayMode: 'weekday' as const, phone: '+6281234567890', roomPrice: 300000, total: 300000,
     minimumDp: Math.ceil(minimumDpAmount(300000, fixed)!), dpMode: fixed.minimum_dp_mode, dpValue: fixed.minimum_dp_value };
   const result = formatBookingQuote(weekday, schedule);
-  expect(result.message).toContain('Harga kamar (Weekday): Rp 300.000');
-  expect(result.message).toContain('Minimum DP: Rp 57.501');
+  expect(result.message).toContain('Harga Kamar (Weekday) : Rp 300.000');
+  expect(result.message).toContain('Minimum DP : *Rp 57.501*');
   const url = new URL(whatsAppDraftUrl(result.phone, result.message)!);
   expect(url.searchParams.get('text')).toBe(result.message);
   expect(url.searchParams.get('phone')).toBe(result.phone);
