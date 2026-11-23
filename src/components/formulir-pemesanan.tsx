@@ -26,7 +26,7 @@ import {
 
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { findSameGuest, suggestGuests, type GuestSearchRow } from '@/lib/guest-search';
+import { bookingPhoneInput, canonicalIndonesianWhatsApp, findSameGuest, suggestGuests, type GuestSearchRow } from '@/lib/guest-search';
 import { offerQueryKey, offerWhatsApp, offerWibFields, type Offer, type OfferDetail } from '@/lib/reservation-offers';
 
 type Mode = 'booking' | 'check_in' | 'offer';
@@ -225,7 +225,7 @@ export function FormulirPemesanan({
   const quoteMinimumDp = minimumDpAmount(total, quoteDp.setting);
   const quoteDraft: BookingQuoteDraft = {
     name: matchedGuest?.full_name ?? name,
-    phone,
+    phone: bookingPhoneInput(phone),
     roomNumber: selectedRoom?.active ? selectedRoom.room_number : '',
     roomType: selectedRoomType?.name ?? '',
     packageName: selectedPackage?.active ? selectedPackage.name : '',
@@ -317,14 +317,15 @@ export function FormulirPemesanan({
   }
 
   async function saveOffer() {
+    const canonicalPhone = canonicalIndonesianWhatsApp(phone);
     if (!showQuote || !quoteDayReady || quoteLoading || quoteLoadError || quoteMinimumDp === null || !quoteDraft.checkIn ||
         !quoteDraft.roomNumber || !quoteDraft.packageName || !quoteDraft.name.trim() || !(matchedGuest?.address ?? address).trim() ||
-        !/^(?:08\d{7,12}|\+?62[1-9]\d{7,12})$/.test(phone.trim())) {
+        !canonicalPhone) {
       setError('Lengkapi data tamu, WhatsApp Indonesia, jadwal, dan tunggu harga serta DP resmi.');
       return;
     }
     const data = {
-      _name: matchedGuest?.full_name ?? name, _phone: phone, _address: matchedGuest?.address ?? address,
+      _name: matchedGuest?.full_name ?? name, _phone: canonicalPhone, _address: matchedGuest?.address ?? address,
       _room: roomId, _package: packageId, _start: quoteDraft.checkIn,
     };
     const key = JSON.stringify(data);
@@ -369,7 +370,7 @@ export function FormulirPemesanan({
     if (isOffer) { await saveOffer(); return; }
     if (dataError || dataLoading) { setError('Data belum siap. Coba lagi sebentar.'); return; }
 
-    const normalizedPhone = matchedGuest?.phone ?? phone.trim();
+    const normalizedPhone = bookingPhoneInput(matchedGuest?.phone ?? phone);
     const normalizedName = matchedGuest?.full_name ?? name.trim();
     const normalizedAddress = matchedGuest?.address ?? address.trim();
     const payment = Number(amount);

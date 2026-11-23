@@ -3,6 +3,18 @@ import { normalizeWhatsAppNumber } from '@/lib/whatsapp';
 export type GuestSearchRow = { id: string; full_name: string; phone: string; address: string };
 export type GuestSearchField = 'name' | 'phone';
 
+export function canonicalIndonesianWhatsApp(value: string) {
+  if (!/^\+?[\d\s().-]+$/.test(value.trim())) return null;
+  const canonical = normalizeWhatsAppNumber(value);
+  return /^62[1-9]\d{7,12}$/.test(canonical) ? canonical : null;
+}
+
+export function bookingPhoneInput(value: string) {
+  const raw = value.trim();
+  // Preserve the official request fingerprint for previously valid inputs.
+  return /^[0-9+]{8,16}$/.test(raw) ? raw : canonicalIndonesianWhatsApp(raw) ?? raw;
+}
+
 export function findSameGuest(guests: GuestSearchRow[], phone: string) {
   const normalized = normalizeWhatsAppNumber(phone);
   if (normalized.length < 8) return undefined;

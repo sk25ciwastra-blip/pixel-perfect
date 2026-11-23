@@ -1,4 +1,23 @@
 begin;
+set local lock_timeout = '5s';
+
+do $preflight$
+declare
+  prerequisite text;
+begin
+  foreach prerequisite in array array[
+    'booking_quote_private.require_operator()',
+    'public.get_booking_quote_minimum_dp()',
+    'public.check_booking_quote_schedule(uuid,uuid,timestamp with time zone)',
+    'public.finance_training_is_restricted(uuid)',
+    'public.finance_is_booking_operator(uuid)',
+    'public.get_operational_day_mode(date)'
+  ] loop
+    if to_regprocedure(prerequisite) is null then
+      raise exception 'Prasyarat penawaran belum terpasang: %', prerequisite;
+    end if;
+  end loop;
+end $preflight$;
 
 create schema reservation_offer_private;
 revoke all on schema reservation_offer_private from public, anon, authenticated, service_role;
@@ -14,8 +33,97 @@ create unique index guests_offer_canonical_wa_idx on public.guests
   (reservation_offer_private.canonical_wa(phone))
   where reservation_offer_private.canonical_wa(phone) ~ '^62[1-9][0-9]{7,12}$';
 
+-- Shared by the three reservation routes and offer creation. Called inside the
+-- official transaction, after its room lock. It can never update a guest.
+create function reservation_offer_private.resolve_guest(_name text, _phone text, _address text)
+returns uuid language plpgsql security invoker set search_path = '' as $$
+declare
+  normalized text := reservation_offer_private.canonical_wa(_phone);
+  indonesian boolean := coalesce(normalized ~ '^62[1-9][0-9]{7,12}$', false);
+  guest uuid;
+begin
+  perform pg_advisory_xact_lock(hashtextextended('offer-guest:' || case when indonesian then normalized else _phone end, 0));
+  for attempt in 1..2 loop
+    if indonesian then
+      select g.id into guest from public.guests g
+      where reservation_offer_private.canonical_wa(g.phone) = normalized
+        and reservation_offer_private.canonical_wa(g.phone) ~ '^62[1-9][0-9]{7,12}$';
+    else
+      select g.id into guest from public.guests g where g.phone = _phone;
+    end if;
+    if found then return guest; end if;
+    -- A manual guest write may have won after lookup. Recheck once.
+    if attempt = 2 then exit; end if;
+    if length(trim(coalesce(_address,''))) = 0 then raise exception 'Alamat wajib diisi untuk tamu baru'; end if;
+    insert into public.guests(full_name, address, phone) values (trim(_name), trim(_address), _phone)
+      on conflict do nothing returning id into guest;
+    if found then return guest; end if;
+  end loop;
+  raise exception 'Identitas WhatsApp berubah bersamaan. Coba lagi.' using errcode = '40001';
+end $$;
+
+-- Store the exact original definitions for an atomic rollback. Function
+-- ownership, grants, argument defaults, guards and payment logic stay intact.
+create table reservation_offer_private.booking_originals (
+  signature text primary key,
+  original_definition text not null,
+  patched_sha256 bytea not null
+);
+revoke all on reservation_offer_private.booking_originals from public, anon, authenticated, service_role;
+
+do $patch$
+declare
+  writer record;
+  definition text;
+  old_block text;
+  patched text;
+  reviewed_legacy constant text := 'SELECT id INTO selected_guest FROM public.guests WHERE phone = _phone; IF selected_guest IS NULL THEN IF length(trim(coalesce(_address, ''''))) = 0 THEN RAISE EXCEPTION ''Alamat wajib diisi untuk tamu baru''; END IF; INSERT INTO public.guests (full_name, address, phone) VALUES (trim(_name), trim(_address), _phone) RETURNING id INTO selected_guest; END IF;';
+  reviewed_combined constant text := 'SELECT id INTO selected_guest FROM public.guests WHERE phone = _phone; IF selected_guest IS NULL THEN IF length(trim(coalesce(_address, ''''))) = 0 THEN RAISE EXCEPTION ''Alamat wajib diisi untuk tamu baru''; END IF; INSERT INTO public.guests(full_name, address, phone) VALUES(trim(_name), trim(_address), _phone) RETURNING id INTO selected_guest; END IF;';
+  block_pattern constant text := 'SELECT id INTO selected_guest FROM public\.guests WHERE phone = _phone;[[:space:]]+IF selected_guest IS NULL THEN[[:space:]]+IF [^;]+;[[:space:]]*END IF;[[:space:]]+INSERT INTO public\.guests[^;]+;[[:space:]]*END IF;';
+  count_single integer := 0;
+begin
+  for writer in
+    select p.oid, p.proname, p.prosrc, p.prosecdef, p.proowner,
+           format('%I.%I(%s)', n.nspname, p.proname, oidvectortypes(p.proargtypes)) as signature
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prokind = 'f'
+      and (p.proname in ('create_reservation','create_reservation_combined',
+            'create_training_reservation','create_training_reservation_combined')
+        or p.prosrc ~* 'insert[[:space:]]+into[[:space:]]+(public\.)?guests([[:space:]]|\()')
+  loop
+    if writer.proname in ('create_training_reservation','create_training_reservation_combined') then
+      if writer.prosrc ~* 'insert[[:space:]]+into[[:space:]]+(public\.)?guests([[:space:]]|\()'
+        or writer.prosrc !~* ('public\.' || replace(writer.proname,'_training_','_') || '[[:space:]]*\(') then
+        raise exception 'Tinjau ulang delegasi Training % sebelum migrasi penawaran.', writer.signature;
+      end if;
+      continue;
+    end if;
+    if writer.signature not in (
+      'public.create_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamp with time zone, uuid, uuid)',
+      'public.create_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamp with time zone, uuid, uuid, integer)',
+      'public.create_reservation_combined(text, uuid, uuid, text, text, text, jsonb, text, timestamp with time zone, uuid, text, uuid, integer)'
+    ) or not writer.prosecdef or writer.proowner is distinct from (select oid from pg_roles where rolname = current_user) then
+      raise exception 'Tinjau ABI dan pemilik penulis tamu % sebelum migrasi penawaran.', writer.signature;
+    end if;
+    definition := pg_get_functiondef(writer.oid);
+    old_block := (regexp_match(definition, block_pattern))[1];
+    if old_block is null or regexp_replace(old_block, '[[:space:]]+', ' ', 'g') not in (reviewed_legacy, reviewed_combined)
+      or (select count(*) from regexp_matches(definition, block_pattern, 'g')) <> 1
+      or (select count(*) from regexp_matches(writer.prosrc, 'insert[[:space:]]+into[[:space:]]+(public\.)?guests([[:space:]]|\()', 'gi')) <> 1 then
+      raise exception 'Blok lookup tamu pada % berbeda dari checkpoint. Hentikan pemasangan.', writer.signature;
+    end if;
+    patched := replace(definition, old_block, 'selected_guest := reservation_offer_private.resolve_guest(_name, _phone, _address);');
+    execute patched;
+    insert into reservation_offer_private.booking_originals values
+      (writer.signature, definition, sha256(convert_to(pg_get_functiondef(writer.oid), 'UTF8')));
+    if writer.proname = 'create_reservation' then count_single := count_single + 1; end if;
+  end loop;
+  if count_single = 0 then raise exception 'ABI Booking resmi belum tersedia.'; end if;
+end $patch$;
+
 create table public.reservation_offers (
   id uuid primary key check (id <> '00000000-0000-0000-0000-000000000000'),
+  booking_key uuid not null unique default gen_random_uuid(),
   guest_id uuid not null references public.guests(id),
   room_id uuid not null references public.rooms(id),
   package_id uuid not null references public.packages(id),
@@ -166,6 +274,7 @@ declare
 begin
   perform booking_quote_private.require_operator();
   if _id is null or canonical is null or canonical !~ '^62[1-9][0-9]{7,12}$'
+    or trim(_phone) !~ '^\+?[0-9[:space:]().-]+$'
     or not coalesce(length(trim(_name)) between 1 and 100 and length(trim(_address)) between 1 and 500, false)
   then raise exception 'Periksa nama, alamat, dan WhatsApp Indonesia.'; end if;
   perform pg_advisory_xact_lock(hashtextextended('offer:' || _id::text, 0));
@@ -184,19 +293,7 @@ begin
   perform 1 from public.rooms where id = _room and active for update;
   if not found then raise exception 'Kamar tidak aktif.'; end if;
   select * into t from reservation_offer_private.terms(_room, _package, _start);
-  perform pg_advisory_xact_lock(hashtextextended('offer-guest:' || canonical, 0));
-  select g.id into guest from public.guests g where reservation_offer_private.canonical_wa(g.phone) = canonical
-    and reservation_offer_private.canonical_wa(g.phone) ~ '^62[1-9][0-9]{7,12}$';
-  if not found then
-    insert into public.guests(full_name, phone, address) values (trim(_name), canonical, trim(_address))
-      on conflict (reservation_offer_private.canonical_wa(phone))
-      where reservation_offer_private.canonical_wa(phone) ~ '^62[1-9][0-9]{7,12}$' do nothing
-      returning id into guest;
-    if guest is null then
-      select g.id into strict guest from public.guests g where reservation_offer_private.canonical_wa(g.phone) = canonical
-        and reservation_offer_private.canonical_wa(g.phone) ~ '^62[1-9][0-9]{7,12}$';
-    end if;
-  end if;
+  guest := reservation_offer_private.resolve_guest(_name, canonical, _address);
 
   insert into public.reservation_offers(id, guest_id, room_id, package_id, room_number, room_type, package_name,
     check_in_at, check_out_at, day_mode, total, minimum_dp_mode, minimum_dp_value, minimum_dp, created_by, request_fingerprint, guest_phone_canonical,
@@ -320,17 +417,16 @@ begin
     select * into strict g from public.guests where id = q.guest_id for share;
     if reservation_offer_private.canonical_wa(g.phone) is distinct from q.guest_phone_canonical
       or not coalesce(length(trim(g.full_name)) between 1 and 100 and length(trim(g.address)) between 1 and 500, false)
-      or g.phone !~ '^[0-9+]{8,16}$'
     then raise exception 'Identitas tamu berubah atau tidak valid. Periksa Detail Tamu dan buat penawaran baru.'; end if;
     update public.reservation_offers set status = 'CONVERTING' where id = q.id;
     if to_regprocedure('public.create_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid,integer)') is not null then
       number := public.create_reservation(
-        'booking', q.room_id, q.package_id, g.full_name, g.phone, g.address,
-        _amount, _method, t.day, q.check_in_at, q.id, _session, 2);
+        'booking', q.room_id, q.package_id, g.full_name, q.guest_phone_canonical, g.address,
+        _amount, _method, t.day, q.check_in_at, q.booking_key, _session, 2);
     else
       number := public.create_reservation(
-        'booking', q.room_id, q.package_id, g.full_name, g.phone, g.address,
-        _amount, _method, t.day, q.check_in_at, q.id, _session);
+        'booking', q.room_id, q.package_id, g.full_name, q.guest_phone_canonical, g.address,
+        _amount, _method, t.day, q.check_in_at, q.booking_key, _session);
     end if;
     select tr.id into strict txn from public.transactions tr where tr.transaction_number = number
       and tr.guest_id = q.guest_id and tr.room_id = q.room_id and tr.package_id = q.package_id

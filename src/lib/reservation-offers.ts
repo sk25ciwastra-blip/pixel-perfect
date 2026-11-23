@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { formatBookingQuote } from '@/lib/booking-quote';
 import { whatsAppDraftUrl } from '@/lib/whatsapp';
+import { canonicalIndonesianWhatsApp } from '@/lib/guest-search';
 
 export type Offer = {
   id: string;
@@ -41,7 +42,7 @@ export const offerStatus: Record<Offer['status'], string> = {
 
 export function offerWhatsApp(offer: OfferDetail) {
   const quote = formatBookingQuote({
-    name: offer.guest_name, phone: offer.phone, roomNumber: offer.room_number,
+    name: offer.guest_name, phone: canonicalIndonesianWhatsApp(offer.phone) ?? offer.phone, roomNumber: offer.room_number,
     roomType: offer.room_type, packageName: offer.package_name, checkIn: offer.scheduled_check_in,
     guestCount: offer.guest_count, dayMode: offer.day_mode, roomPrice: offer.total, extraCharge: 0,
     total: offer.total, minimumDp: offer.minimum_dp, dpMode: offer.minimum_dp_mode, dpValue: offer.minimum_dp_value,
