@@ -164,3 +164,35 @@ pwsh -NoProfile -File scripts/issue-140-export-staging-schema.ps1 -PgBin '<folde
 Skrip menetapkan transaksi read-only dan endpoint staging, memeriksa ABI checkpoint sebelum ekspor, lalu menjalankan `pg_dump --schema-only --no-owner --no-privileges`. Manifest katalog dicatat sebelum dan sesudah, dan output ditolak bila berbeda. Hasil yang diharapkan adalah `staging-schema.sql`, `staging-catalog.json`, dan `staging-export.json` berisi hash SHA-256. Generator manifest mencakup owner, ACL, role, membership, RLS, trigger, index, extension, dan hash definisi fungsi termasuk fungsi Auth/sesi. Definisi fungsi berada dalam DDL. Tidak ada pembacaan baris pengguna atau transaksi.
 
 Ekspor lokal berstatus belum ditinjau sampai Owner/operator memastikan tidak ada rahasia tertanam dalam DDL dan metadata. Foreign servers memblokir skrip dan subscription dihilangkan untuk menghindari connection string. Jika sumber memakai subscription yang relevan, catat kontrak tersanitasi dan tahan parity sampai ditinjau. Setting PostgREST efektif harus dikonfirmasi dari konfigurasi resmi staging jika tidak ditemukan dalam katalog, tanpa menyalin rahasia API. Setelah restore PG17 disposable, pulihkan owner/ACL dan role yang diperlukan dari manifest tanpa password, gunakan `scripts/issue-140-staging-manifest.sql` dengan `search_path=pg_catalog` di clone, lalu cocokkan objek, hash, RLS, trigger dan lingkup API sebelum DDL. Jalur Approved tetap Training → #136 → #140 → postcheck → rollback. Release gate **HOLD**.
+
+
+### Jalur alternatif IPv4 Session Pooler (checkpoint 23 November 2026)
+
+Owner memverifikasi koneksi TCP **PASS** dari PowerShell Windows ke host resmi
+`aws-0-ap-northeast-1.pooler.supabase.com` pada port **5432**. DNS direct
+`db.bgtztcfbkcrvcipxbfti.supabase.co` mengembalikan IPv6 global, tetapi
+komputer tidak memiliki rute/alamat IPv6 global yang tampak; koneksi database
+direct belum terverifikasi. **Koneksi TCP PASS bukan autentikasi PostgreSQL PASS**.
+
+Skrip pada commit `69e413f` mendukung opsi **`-ConnectionMode SessionPooler`**
+yang mengizinkan hanya host resmi di atas dan menolak `PGUSER` yang tidak
+berakhiran `.bgtztcfbkcrvcipxbfti`. Pengaturan SSL tetap `verify-full`,
+server target `postgres`, role disuplai *lokal* berdasarkan kolom **User**
+di Supabase Connect → Session pooler, kata sandi dengan prompt atau
+`PGPASSFILE` sementara; jangan menyimpan password ke GitHub/chat/log.
+Jika verifikasi sertifikat gagal, konfigurasi CA tepercaya melalui
+`PGSSLROOTCERT` yang sesuai—**jangan menurunkan mode TLS**.
+
+Perintah hanya dijalankan pada PC operator berwenang, di root repo:
+
+```powershell
+$env:PGUSER = '<User persis dari Supabase Connect > Session pooler>'
+$PgBin = "$HOME\AppData\Local\Baturaden25-RestoreLab-20261030\pgsql\bin"
+pwsh -NoProfile -File .\scripts\issue-140-export-staging-schema.ps1 -PgBin $PgBin -OutputDirectory "$HOME\B25-Staging-Export-20261123" -ConnectionMode SessionPooler
+```
+
+Gunakan nama folder output baru yang belum ada. Mode ini **tidak mengubah staging**
+dan melakukan inspeksi katalog sebelum/sesudah dump. Review pribadi terlebih dahulu
+untuk literal sensitif dalam DDL, lalu pastikan hash dan parity sebelum clone.
+Jika autentikasi atau izin catalog/dump ditolak, laporkan **BLOCKED**; jangan
+mengganti ke akun/host lain atau memberi grant tanpa persetujuan.
