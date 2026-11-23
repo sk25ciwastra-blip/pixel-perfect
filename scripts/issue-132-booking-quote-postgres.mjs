@@ -78,6 +78,111 @@ try {
     public.get_operational_day_mode('2026-11-28') as override`);
   assert.deepEqual({ ...days }, { weekday: 'weekday', friday: 'weekend', holiday: 'weekend', override: 'weekday' });
   console.log('PASS official read-only timing for Pagi, Malam, Harian, invalid hour, weekday/weekend, holiday and Owner override');
+
+  await db.unsafe(`
+    create role authenticated;
+    create role anon;
+    create role service_role;
+    create schema auth;
+    create table auth.users (id uuid primary key, banned_until timestamptz);
+    create function auth.uid() returns uuid language sql stable as $$
+      select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
+    $$;
+    grant usage on schema auth to authenticated;
+    create type public.app_role as enum ('owner', 'employee');
+    create type public.employee_position as enum ('receptionist', 'supervisor', 'housekeeping');
+    create type public.room_status as enum ('ready', 'occupied');
+    create table public.user_roles (user_id uuid, role public.app_role);
+    create table public.employees (user_id uuid, position public.employee_position, active boolean);
+    create function public.has_role(_user_id uuid, _role public.app_role) returns boolean
+      language sql stable security definer set search_path = '' as $$
+      select exists (select 1 from public.user_roles where user_id = _user_id and role = _role)
+    $$;
+    create table public.finance_settings (
+      id boolean primary key, minimum_dp_mode text, minimum_dp_value numeric, secret_finance_column text
+    );
+    insert into public.finance_settings values (true, 'PERCENTAGE', 42.5, 'restricted');
+    alter table public.finance_settings enable row level security;
+    grant select on public.finance_settings to authenticated;
+    create policy finance_settings_read on public.finance_settings for select to authenticated
+      using (public.has_role(auth.uid(), 'owner'::public.app_role));
+    create table public.rooms (id uuid primary key, active boolean, status public.room_status);
+    create table public.transactions (
+      room_id uuid, status text, scheduled_check_in timestamptz, scheduled_check_out timestamptz,
+      started_at timestamptz, ends_at timestamptz
+    );
+    alter table public.transactions enable row level security;
+    grant select on public.transactions to authenticated;
+  `);
+  const roleSource = await readFile('supabase/migrations/20261003000011_role_permission_foundation.sql', 'utf8');
+  await db.unsafe(roleSource.match(/create or replace function public\.has_employee_position\([\s\S]+?\$\$;/i)[0]);
+  await db.unsafe(await readFile('supabase/pending/20261123084929_booking_quote_read_guards.sql', 'utf8'));
+
+  const [owner, receptionist, supervisor, hk, suspended, banned, outsider, room, otherRoom] = Array.from({ length: 9 }, () => randomUUID());
+  await db`insert into auth.users values (${owner}, null), (${receptionist}, null), (${supervisor}, now()-interval '1 day'),
+    (${hk}, null), (${suspended}, null), (${banned}, now()+interval '1 day'), (${outsider}, null)`;
+  await db`insert into public.user_roles values (${owner}, 'owner'), (${receptionist}, 'employee'),
+    (${supervisor}, 'employee'), (${hk}, 'employee'), (${suspended}, 'employee'), (${banned}, 'employee')`;
+  await db`insert into public.employees values (${receptionist}, 'receptionist', true), (${supervisor}, 'supervisor', true),
+    (${hk}, 'housekeeping', true), (${suspended}, 'receptionist', false), (${banned}, 'supervisor', true), (${outsider}, 'supervisor', true)`;
+  await db`insert into public.rooms values (${room}, true, 'ready'), (${otherRoom}, true, 'ready')`;
+  const [{ id: packageId }] = await db`select id from public.packages where name = 'Paket Harian'`;
+  const actAs = (actor, run, role = 'authenticated') => db.begin('read only', async tx => {
+    await tx.unsafe('set local role ' + role);
+    await tx`select set_config('request.jwt.claim.sub', ${actor}, true)`;
+    return run(tx);
+  });
+  const dp = tx => tx`select * from public.get_booking_quote_minimum_dp()`;
+  const schedule = tx => tx`select * from public.check_booking_quote_schedule(
+    ${room}, ${packageId}, '2099-11-28T13:00:00+07:00')`;
+  for (const actor of [owner, receptionist, supervisor]) {
+    const [setting] = await actAs(actor, dp);
+    assert.deepEqual({ ...setting }, { minimum_dp_mode: 'PERCENTAGE', minimum_dp_value: '42.5' });
+    const rows = await actAs(actor, tx => tx`select * from public.finance_settings`);
+    assert.equal(rows.length, actor === owner ? 1 : 0);
+    assert.equal((await actAs(actor, schedule))[0].has_conflict, false);
+  }
+  for (const actor of [hk, suspended, banned, outsider, '']) {
+    await assert.rejects(actAs(actor, dp), { code: '42501' });
+    await assert.rejects(actAs(actor, schedule), { code: '42501' });
+  }
+  for (const role of ['anon', 'service_role']) {
+    await assert.rejects(actAs(owner, dp, role), { code: '42501' });
+    await assert.rejects(actAs(owner, schedule, role), { code: '42501' });
+  }
+  await db`update public.finance_settings set minimum_dp_mode = 'AMOUNT', minimum_dp_value = 72500.25`;
+  assert.deepEqual({ ...(await actAs(receptionist, dp))[0] }, { minimum_dp_mode: 'AMOUNT', minimum_dp_value: '72500.25' });
+  console.log('PASS scoped DP projection, updated config, unchanged full-row RLS, active roles and denied roles');
+
+  const isConflict = async expected => assert.equal((await actAs(supervisor, schedule))[0].has_conflict, expected);
+  await db`insert into public.transactions values
+    (${room}, 'booking', '2099-11-27T13:00:00+07:00', '2099-11-28T13:00:00+07:00', null, null),
+    (${room}, 'booking', '2099-11-29T12:00:00+07:00', '2099-11-30T12:00:00+07:00', null, null),
+    (${otherRoom}, 'booking', '2099-11-28T13:00:00+07:00', '2099-11-29T12:00:00+07:00', null, null),
+    (${room}, 'check_out', null, null, '2099-11-28T13:00:00+07:00', '2099-11-29T12:00:00+07:00')`;
+  await isConflict(false);
+  await db`insert into public.transactions values
+    (${room}, 'booking', '2099-11-28T12:00:00+07:00', '2099-11-28T14:00:00+07:00', null, null)`;
+  await isConflict(true);
+  await db`delete from public.transactions where room_id = ${room}`;
+  await db`insert into public.transactions values (${room}, 'booking', null, null, null, null)`;
+  await isConflict(true);
+  await db`delete from public.transactions where room_id = ${room}`;
+  await db`insert into public.transactions values
+    (${room}, 'check_in', null, null, '2099-11-28T12:00:00+07:00', '2099-11-28T13:00:00+07:00')`;
+  await isConflict(false);
+  await db`update public.transactions set ends_at = '2099-11-28T14:00:00+07:00' where room_id = ${room}`;
+  await isConflict(true);
+  await db`update public.transactions set ends_at = null where room_id = ${room}`;
+  await isConflict(true);
+  await db`update public.transactions set started_at = now()-interval '2 hours', ends_at = now()-interval '1 hour' where room_id = ${room}`;
+  await isConflict(true);
+  await db`delete from public.transactions where room_id = ${room}`;
+  await db`update public.rooms set status = 'occupied' where id = ${room}`;
+  await isConflict(true);
+  await db`update public.rooms set active = false where id = ${room}`;
+  await assert.rejects(actAs(supervisor, schedule), /Kamar tidak aktif/);
+  console.log('PASS strict Booking overlap, adjacent windows, active stays, incomplete/overdue occupancy and inactive rooms');
 } finally {
   await db.end();
   await server.stop();

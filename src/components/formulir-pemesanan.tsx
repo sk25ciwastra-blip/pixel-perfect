@@ -15,6 +15,7 @@ import { CheckInBerhasil } from '@/components/check-in-berhasil';
 import { BookingQuote } from '@/components/booking-quote';
 import { canPreviewBookingQuote, quoteCheckInWib, type BookingQuoteDraft } from '@/lib/booking-quote';
 import { usePeran } from '@/lib/peran';
+import { supabase } from '@/integrations/supabase/client';
 import {
   createReservationCombined,
   createTrainingReservationCombined,
@@ -149,6 +150,26 @@ export function FormulirPemesanan({
   const minimumDp = minimumDpAmount(total, setting);
   const extraGuestOn = typeof window !== 'undefined' && extraGuestAktif(window.location.hostname);
   const showQuote = canPreviewBookingQuote(mode, posisiKode, masuk);
+  const [quoteDp, setQuoteDp] = useState<{
+    setting: { minimum_dp_mode: string; minimum_dp_value: number } | null;
+    loading: boolean;
+  }>({ setting: null, loading: true });
+  useEffect(() => {
+    if (!showQuote) return;
+    let cancelled = false;
+    setQuoteDp({ setting: null, loading: true });
+    async function readQuoteDp() {
+      try {
+        const { data, error } = await supabase.rpc('get_booking_quote_minimum_dp');
+        if (!cancelled) setQuoteDp({ setting: error ? null : data?.[0] ?? null, loading: false });
+      } catch {
+        if (!cancelled) setQuoteDp({ setting: null, loading: false });
+      }
+    }
+    void readQuoteDp();
+    return () => { cancelled = true; };
+  }, [showQuote, posisiKode]);
+  const quoteMinimumDp = minimumDpAmount(total, quoteDp.setting);
   const quoteDraft: BookingQuoteDraft = {
     name: matchedGuest?.full_name ?? name,
     phone,
@@ -161,12 +182,12 @@ export function FormulirPemesanan({
     roomPrice: selectedPrice,
     extraCharge: extra.total,
     total,
-    minimumDp: minimumDp === null ? null : Math.ceil(minimumDp),
-    dpMode: setting?.minimum_dp_mode,
-    dpValue: setting ? Number(setting.minimum_dp_value) : undefined,
+    minimumDp: quoteMinimumDp === null ? null : Math.ceil(quoteMinimumDp),
+    dpMode: quoteDp.setting?.minimum_dp_mode,
+    dpValue: quoteDp.setting ? Number(quoteDp.setting.minimum_dp_value) : undefined,
   };
-  const quoteData = [rooms, roomTypes, packages, packagePrices, guests, financeSettings];
-  const quoteLoading = quoteData.some(source => source.loading);
+  const quoteData = [rooms, roomTypes, packages, packagePrices, guests];
+  const quoteLoading = quoteDp.loading || quoteData.some(source => source.loading);
   const quoteLoadError = quoteData.some(source => Boolean(source.error));
   const quoteDayReady = Boolean(scheduledDate && dayModeDate === scheduledDate);
 

@@ -39,7 +39,8 @@ export function BookingQuote({ draft, roomId, packageId, dayReady, loading, load
     requestActive.current = true;
     setBusy(true);
     try {
-      const { data, error: scheduleError } = await supabase.rpc('calculate_scheduled_booking_times', {
+      const { data, error: scheduleError } = await supabase.rpc('check_booking_quote_schedule', {
+        _room_id: roomId,
         _package_id: packageId, _scheduled_check_in: draft.checkIn,
       });
       if (scheduleError || !data?.[0]) {
@@ -48,21 +49,12 @@ export function BookingQuote({ draft, roomId, packageId, dayReady, loading, load
       }
 
       const schedule = data[0];
-      const quote = formatBookingQuote(draft, schedule);
-      const { data: conflict, error: conflictError } = await supabase.from('transactions')
-        .select('id')
-        .eq('room_id', roomId)
-        .eq('status', 'booking')
-        .lt('scheduled_check_in', schedule.scheduled_check_out)
-        .gt('scheduled_check_out', schedule.scheduled_check_in)
-        .limit(1)
-        .maybeSingle();
-      if (conflictError) {
+      if (typeof schedule.has_conflict !== 'boolean') {
         setError('Konflik jadwal kamar gagal diperiksa. Coba lagi.');
-      } else if (conflict) {
-        setError('Jadwal kamar bentrok dengan Booking lain. Pilih kamar atau jadwal berbeda.');
+      } else if (schedule.has_conflict) {
+        setError('Jadwal kamar bentrok atau okupansi belum dapat dipastikan. Pilih kamar atau jadwal berbeda.');
       } else {
-        setPreview(quote);
+        setPreview(formatBookingQuote(draft, schedule));
       }
     } catch (failure) {
       setError(failure instanceof Error && failure.message.startsWith('Jadwal resmi paket')

@@ -1966,6 +1966,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_booking_quote_minimum_dp: {
+        Args: never
+        Returns: { minimum_dp_mode: string; minimum_dp_value: number }[]
+      }
+      check_booking_quote_schedule: {
+        Args: { _room_id: string; _package_id: string; _scheduled_check_in: string }
+        Returns: { scheduled_check_in: string; scheduled_check_out: string; has_conflict: boolean }[]
+      }
       record_hk_operational_action: {
         Args: { _request_id: string; _action: string; _payload: Json }
         Returns: string

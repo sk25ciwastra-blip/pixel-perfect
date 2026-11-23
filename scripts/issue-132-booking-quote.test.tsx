@@ -21,6 +21,7 @@ const { minimumDpAmount } = await import('../src/lib/combined-payments');
 const schedule = {
   scheduled_check_in: '2026-11-28T13:00:00+07:00',
   scheduled_check_out: '2026-11-29T12:00:00+07:00',
+  has_conflict: false,
 };
 const dpSetting = { minimum_dp_mode: 'PERCENTAGE', minimum_dp_value: 40 };
 const draft: BookingQuoteDraft = {
@@ -31,18 +32,9 @@ const draft: BookingQuoteDraft = {
 };
 
 let response: { data: (typeof schedule)[] | null; error: { code: string; message: string } | null };
-let conflict: { data: { id: string } | null; error: null | object };
 let unblock: (() => void) | undefined;
 let scheduleGate: Promise<void> | undefined;
 const calls: unknown[][] = [];
-const filters = {
-  select(column: string) { calls.push(['select', column]); return this; },
-  eq(column: string, value: string) { calls.push(['eq', column, value]); return this; },
-  lt(column: string, value: string) { calls.push(['lt', column, value]); return this; },
-  gt(column: string, value: string) { calls.push(['gt', column, value]); return this; },
-  limit(value: number) { calls.push(['limit', value]); return this; },
-  async maybeSingle() { return conflict; },
-};
 mock.module('../src/integrations/supabase/client', () => ({
   supabase: {
     async rpc(name: string, args: object) {
@@ -50,7 +42,7 @@ mock.module('../src/integrations/supabase/client', () => ({
       await scheduleGate;
       return response;
     },
-    from(table: string) { calls.push(['from', table]); return filters; },
+    from(table: string) { throw new Error('Unexpected direct table access: ' + table); },
   },
 }));
 const { BookingQuote } = await import('../src/components/booking-quote');
@@ -62,7 +54,6 @@ beforeEach(() => {
   scheduleGate = undefined;
   unblock = undefined;
   response = { data: [schedule], error: null };
-  conflict = { data: null, error: null };
   container = document.createElement('form');
   document.body.append(container);
   root = createRoot(container);
@@ -149,9 +140,7 @@ test('preview is read-only, suppresses duplicate clicks and sends the exact draf
   expect(copied).toEqual([message.value]);
   expect(officialSubmits).toBe(0);
   expect(calls).toEqual([
-    ['rpc', 'calculate_scheduled_booking_times', { _package_id: 'package', _scheduled_check_in: draft.checkIn }],
-    ['from', 'transactions'], ['select', 'id'], ['eq', 'room_id', 'room'], ['eq', 'status', 'booking'],
-    ['lt', 'scheduled_check_in', schedule.scheduled_check_out], ['gt', 'scheduled_check_out', schedule.scheduled_check_in], ['limit', 1],
+    ['rpc', 'check_booking_quote_schedule', { _room_id: 'room', _package_id: 'package', _scheduled_check_in: draft.checkIn }],
   ]);
 
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Denied'); } } });
@@ -175,8 +164,7 @@ test('blocks unknown DP, stale day mode, invalid package schedule and room overl
   response = { data: null, error: { code: 'P0001', message: 'Check-in di luar jam yang diizinkan untuk paket ini' } };
   await act(async () => button('Preview Penawaran').click());
   expect(container.textContent).toContain('Check-in di luar jam');
-  response = { data: [schedule], error: null };
-  conflict = { data: { id: 'booking' }, error: null };
+  response = { data: [{ ...schedule, has_conflict: true }], error: null };
   await act(async () => button('Preview Penawaran').click());
   expect(container.textContent).toContain('Jadwal kamar bentrok');
   expect(document.querySelector('a[href*="web.whatsapp.com"]')).toBeNull();
