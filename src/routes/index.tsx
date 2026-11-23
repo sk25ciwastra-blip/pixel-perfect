@@ -33,6 +33,9 @@ import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import panorama from "@/assets/panorama-kota-malam.png.asset.json";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
+import { OfferQueue } from "@/components/reservation-offer-queue";
+import { canPreviewBookingQuote } from "@/lib/booking-quote";
+import type { OfferDetail } from "@/lib/reservation-offers";
 import { PopupBerhasil } from "@/components/check-in-berhasil";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
@@ -185,7 +188,7 @@ function jamWib(value: string) {
 const statusKamarMap = { ready: "siap", occupied: "terisi", dirty: "perlu", cleaning: "sedang" } as const;
 
 function Ringkasan() {
-  const { peran, nama, posisi, posisiKode } = usePeran();
+  const { peran, nama, posisi, posisiKode, masuk, training } = usePeran();
 
   const rooms = useTable("rooms");
   const transactions = useTransaksiOperasional();
@@ -599,7 +602,10 @@ function Ringkasan() {
     if (tersimpan > 0) setTarget(tersimpan);
   }, []);
 
-  const [modal, setModal] = useState<"check_in" | "booking" | "pengeluaran" | null>(null);
+  const [modal, setModal] = useState<"check_in" | "booking" | "pengeluaran" | "offer" | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
+  const [convertOffer, setConvertOffer] = useState<OfferDetail | null>(null);
+  const canQuote = canPreviewBookingQuote("booking", posisiKode, masuk);
   const refreshSemua = async () => {
     await Promise.all([transactions.refresh(), rooms.refresh(), payments.refresh(), guests.refresh()]);
   };
@@ -691,10 +697,16 @@ function Ringkasan() {
                   </Link>
                 </div>
               )}
+              {canQuote && <div className="mt-2">
+                <TombolAksi ikon={CalendarPlus} judul="BUAT PENAWARAN" onClick={() => setModal("offer")} />
+              </div>}
             </section>
             {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
           </div>
 
+          {canQuote && <OfferQueue selected={selectedOffer} select={setSelectedOffer}
+            owner={posisiKode === "owner"} conversionAllowed={!training.is_training}
+            convert={offer => { setSelectedOffer(null); setConvertOffer(offer); }} />}
           {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
           <div className="mt-5 grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,1.95fr)_minmax(320px,1fr)]">
             <section className="panel-mewah db-panel-operasional flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar">
@@ -964,6 +976,13 @@ function Ringkasan() {
       )}
       {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {modal === "booking" && <FormulirPemesanan mode="booking" onClose={() => setModal(null)} onSaved={refreshSemua} />}
+      {canQuote && modal === "offer" && <FormulirPemesanan mode="offer" onClose={() => setModal(null)} onSaved={refreshSemua}
+        onOfferSaved={offer => {
+          setModal(null);
+          if (offer.status === "DRAFT" || offer.status === "SENT") setSelectedOffer(offer.id);
+        }} />}
+      {canQuote && convertOffer && <FormulirPemesanan key={convertOffer.id} mode="booking" offer={convertOffer}
+        onClose={() => setConvertOffer(null)} onSaved={refreshSemua} />}
       {modal === "pengeluaran" && (
         <FormulirPengeluaran
           sessionId={checkoutSessionId}

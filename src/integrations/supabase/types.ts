@@ -1966,6 +1966,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_reservation_offer: {
+        Args: { _id: string; _name: string; _phone: string; _address: string; _room: string; _package: string; _start: string }
+        Returns: Json
+      }
+      read_reservation_offers: {
+        Args: { _guest?: string; _id?: string; _page?: number }
+        Returns: Json
+      }
+      search_reservation_guests: {
+        Args: { _field: string; _term: string }
+        Returns: { id: string; full_name: string; phone: string; address: string }[]
+      }
+      transition_reservation_offer: {
+        Args: { _id: string; _action: string; _amount?: number; _method?: string; _session?: string; _payment_verified?: boolean }
+        Returns: Json
+      }
       get_booking_quote_minimum_dp: {
         Args: never
         Returns: { minimum_dp_mode: string; minimum_dp_value: number }[]
