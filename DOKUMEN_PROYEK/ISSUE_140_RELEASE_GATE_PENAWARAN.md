@@ -47,3 +47,54 @@ Verifikasi salah satu ABI Booking tersedia, mengembalikan nomor resmi, memakai `
 2. Verifikasi pemberian EXECUTE, RLS/no direct writes, fungsi status, trigger dan unique index pada katalog. Gunakan fixture staging terisolasi bila pengujian mutasi disetujui terpisah. Catat commit, project ref dan hasil, tanpa menyertakan identitas/nomor WA. Profil staff nyata dan bukti visual browser masih menunggu persetujuan terpisah.
 3. Owner menentukan keputusan merge dan publish setelah review. Tidak ada izin LIVE dari issue/PR draft ini.
 4. Rollback aplikasi dengan menerbitkan commit sebelumnya. Jika perlu menghentikan akses, cabut EXECUTE pada RPC publik dan implementasi private untuk create/read/search/transition, dalam satu transaksi. Pertahankan data/audit dan trigger yang menjaga penawaran bersaing. Lepas trigger invalidasi atau index canonical hanya setelah penilaian terpisah atas dampak Booking/identitas. Tidak ada DROP data pada rollback standar.
+
+
+## Checkpoint preflight staging — 23 November 2026 WIB (read-only)
+
+Target **Baturaden-25-Staging**, ref `bgtztcfbkcrvcipxbfti`; bukan Lovable Cloud LIVE.
+Pemeriksaan menggunakan query `SELECT` saja. Tidak ada migrasi, fixture, perubahan data, atau aktivasi fitur.
+
+| Syarat | Hasil staging |
+| --- | --- |
+| Versi server | PostgreSQL 17 |
+| Jumlah baris guests | 0 (tabel kosong; tidak membuktikan keamanan LIVE) |
+| Duplikasi WA kanonis 08/62/+62 | 0 grup, **vacuous karena guests = 0** |
+| `booking_quote_private.require_operator()` | **BELUM ADA** |
+| `get_booking_quote_minimum_dp()` | **BELUM ADA** |
+| `check_booking_quote_schedule(uuid,uuid,timestamptz)` | **BELUM ADA** |
+| `finance_training_is_restricted(uuid)` | **BELUM ADA** |
+| `finance_is_booking_operator(uuid)` | Ada |
+| `create_reservation(...,uuid,uuid)` / 12-arg | Ada |
+| `create_reservation(...,uuid,uuid,integer)` / 13-arg | Belum ada |
+| `reservation_offers` | Belum ada (wajar sebelum migrasi) |
+
+**Gate belum terpenuhi: HOLD.** PR #141 tidak boleh langsung menjalankan migrasi di staging;
+identifikasi dan verifikasi seluruh prasyarat sebelum mengusulkan pemasangan terurut.
+Definisi aktual fungsi Booking 12-arg staging sudah dibaca: ia mencari tamu dengan
+`WHERE phone = _phone` (perbandingan literal), baru membuat `guests` baru.
+Sementara migrasi penawaran membuat indeks unik berbasis canonical WA. Kedua
+pendekatan berpotensi bentrok pada **jalur Booking/Check-in biasa yang memakai 08
+vs 62/+62**, bukan hanya pada konversi penawaran. Sebelum aktivasi, Codex harus
+memberikan patch kompatibilitas yang mempertahankan identitas tamu lama,
+hak akses, idempotensi, dan perilaku transaksi. Jangan menggabung atau
+menormalisasi ulang data historis tanpa keputusan Owner.
+
+### Tindak lanjut Codex
+
+1. Cocokkan **migration #136 quote-read** dan fungsi Training resmi yang masih
+   absen pada staging; buat matriks dependensi dan urutan deploy *pending* saja.
+2. Periksa dan perbaiki kompatibilitas `create_reservation` untuk
+   `08xxxxxxxx`, `62xxxxxxxx`, dan `+62xxxxxxxx` bersama indeks kanonis;
+   audit juga fungsi direct Check-in dan update tamu supaya tidak gagal ketika
+   pengguna memasukkan format alternatif. Jangan melemahkan uniqueness.
+3. Tambah tes terfokus untuk tamu lama dalam ketiga format, tidak membuat
+   duplikasi, tidak kehilangan data dan tidak menciptakan transaksi parsial;
+   sertakan guard role, minimal DP, idempotensi, bentrok jadwal, serta
+   rollback jalur resmi.
+4. Validasi ABI, lock order, dan permission menggunakan definisi staging
+   saat ini; perbarui checklist role dan `pre/postcheck`, tanpa mengeksekusi
+   migrasi atau menambah fixture di Cloud.
+5. Kirim commit koreksi pada **PR #141 yang sama**. Pertahankan DRAFT/HOLD sampai
+   Owner menyetujui preflight dan urutan migrasi; tidak ada pengulangan suite
+   lama yang sudah PASS. Pemeriksaan LIVE memerlukan preflight non-PII
+   tersendiri; hasil staging tidak boleh digeneralisasikan menjadi PASS LIVE.
