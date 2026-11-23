@@ -17,6 +17,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PeranProvider } from "../lib/peran";
 import { Opening } from "../components/opening";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -145,6 +146,7 @@ function RootComponent() {
       <PeranProvider>
         <AccessGate><Outlet /></AccessGate>
         <Opening />
+        <Toaster position="top-right" richColors closeButton />
       </PeranProvider>
     </QueryClientProvider>
   );
