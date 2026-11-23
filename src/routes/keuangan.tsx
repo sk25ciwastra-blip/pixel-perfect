@@ -1,7 +1,7 @@
 import { rpc } from "@/lib/data-live";
 import { createFileRoute } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Wallet, Banknote, QrCode, Landmark, Percent, RotateCcw, ArrowUpRight, ArrowDownLeft, ClipboardCheck, CalendarDays, ReceiptText, Coins, Check, Search, SlidersHorizontal, Send, BadgeCheck, Clock, Upload, Info, ChartNoAxesCombined, ChevronRight, Layers, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Kerangka } from '@/components/kerangka';
@@ -106,6 +106,9 @@ function HalamanKeuangan() {
   const [refundMethod, setRefundMethod] = useState('CASH');
   const [refundSourceType, setRefundSourceType] = useState('OWNER_FUNDS');
   const [refundSourceSessionId, setRefundSourceSessionId] = useState('');
+  const refundInFlight = useRef(false);
+  const refundAttempt = useRef({ fingerprint: '', key: '' });
+  const [refundPage, setRefundPage] = useState(0);
   const [handoffActual, setHandoffActual] = useState('');
   const [handoffReason, setHandoffReason] = useState('');
 
@@ -273,7 +276,7 @@ function HalamanKeuangan() {
   }
 
   async function refund() {
-    if (!refundTransactionId || !refundAmount || !refundReason) return;
+    if (!isOwner || busy || refundInFlight.current || !refundTransactionId || !(angka(refundAmount) > 0) || !refundReason.trim()) return;
     const target = transactions.rows.find((item) => item.id === refundTransactionId);
     if (!target || !canRefundTransactionStatus(target.status)) {
       setMessage('Pembayaran Booking tidak dapat direfund. Pilih transaksi Check-in atau Selesai yang memenuhi ketentuan.');
@@ -285,13 +288,27 @@ function HalamanKeuangan() {
       setMessage('Sumber dana refund wajib berasal dari sesi kas OPEN atau Dana Owner. Sesi FINAL tidak boleh dipilih.');
       return;
     }
-    await run(async () => {
-      const { error } = await rpc('create_finance_refund', { _idempotency_key: crypto.randomUUID(), _transaction_id: refundTransactionId, _amount: angka(refundAmount), _refund_method: refundMethod, _source_type: refundSourceType, _source_session_id: refundSourceType === 'OWNER_FUNDS' ? null : refundSourceSessionId || null, _reason: refundReason });
-      return { error };
-    });
+    const payload = { _transaction_id: refundTransactionId, _amount: angka(refundAmount), _refund_method: refundMethod, _source_type: refundSourceType, _source_session_id: refundSourceType === 'OWNER_FUNDS' ? null : refundSourceSessionId || null, _reason: refundReason.trim() };
+    const fingerprint = JSON.stringify(payload);
+    if (refundAttempt.current.fingerprint !== fingerprint) refundAttempt.current = { fingerprint, key: crypto.randomUUID() };
+    refundInFlight.current = true; setBusy(true); setMessage('');
+    let confirmed = false;
+    try {
+      const { data, error } = await rpc('create_finance_refund', { ...payload, _idempotency_key: refundAttempt.current.key });
+      if (error) throw new Error(error.message);
+      if (typeof data !== 'string' || !data) throw new Error('Hasil Refund belum dapat dikonfirmasi. Ulangi permintaan yang sama; jangan ubah nominal.');
+      confirmed = true;
+      setRefundAmount(''); setRefundReason(''); setRefundPage(0);
+      setMessage(`Refund ${rupiah(payload._amount)} berhasil dicatat. ID: ${data}. Lihat Riwayat Refund Owner di bawah.`);
+      await refreshFinance();
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : 'Koneksi terputus.';
+      setMessage(confirmed ? `Refund sudah berhasil dicatat. Tampilan belum diperbarui: ${reason}` : `Refund belum dapat dikonfirmasi: ${reason} Jika mengulang, gunakan rincian yang sama agar tidak tercatat dua kali.`);
+    } finally { refundInFlight.current = false; setBusy(false); }
   }
 
   async function decideDeposit(id: string, status: 'DITERIMA' | 'DITOLAK' | 'BELUM_DITERIMA') {
+    if (!isOwner || busy) return;
     await run(async () => {
       const { error } = await rpc('decide_finance_deposit', { _deposit_id: id, _status: status, _reason: status === 'DITERIMA' ? '' : 'Perlu tindak lanjut Owner' });
       return { error };
@@ -315,12 +332,24 @@ function HalamanKeuangan() {
   const sessionDeposits = deposits.rows.filter((deposit) => deposit.session_id === sid);
   const sessionExpenses = expenses.rows.filter((expense) => expense.session_id === sid);
   const sessionRefunds = refunds.rows.filter((item) => item.source_session_id === sid);
+  const ownerRefundHistory = useQuery({
+    queryKey: ['finance-owner-refund-history', isOwner, refundPage, refunds.rows.map(row => row.id)],
+    enabled: isOwner,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('finance_refunds')
+        .select('id,transaction_id,amount,refund_method,source_type,source_session_id,reason,created_at')
+        .order('created_at', { ascending: false }).order('id', { ascending: false })
+        .range(refundPage * 20, refundPage * 20 + 20);
+      if (error) throw error;
+      return { rows: data.slice(0, 20), hasNext: data.length > 20 };
+    },
+  });
   const byMethod = (method: string) => sessionPayments.filter((payment) => payment.method.toUpperCase() === method.toUpperCase());
   const total = (rows: { amount: number }[]) => rows.reduce((sum, row) => sum + Number(row.amount), 0);
   const nama = (id?: string | null) => !id
     ? 'Identitas petugas tidak tercatat'
     : employees.rows.find((employee) => employee.user_id === id)?.name ?? 'Profil petugas tidak tersedia';
-  const missingIds = [...new Set([...sessionPayments, ...sessionRefunds].map(row => row.transaction_id))]
+  const missingIds = [...new Set([...sessionPayments, ...sessionRefunds, ...(isOwner ? ownerRefundHistory.data?.rows ?? [] : [])].map(row => row.transaction_id))]
     .filter(id => !transactions.rows.some(row => row.id === id)).sort();
   const jejakTrx = useQuery({
     queryKey: ['keuangan-jejak-trx', missingIds],
@@ -481,20 +510,20 @@ function HalamanKeuangan() {
           </Panel>}
         </div>
         <div className="kf-colonne">
-          {selectedSession && (
-            <Panel judul="Setoran ke Owner" sub="Ajukan setoran uang ke rekening owner.">
-              <div className="grid gap-3 sm:grid-cols-2">
+          {(selectedSession || isOwner) && (
+            <Panel judul="Setoran ke Owner" sub={selectedSession ? "Ajukan setoran uang ke rekening owner." : "Konfirmasi setoran sesi FINAL tanpa membuka sesi kas baru."}>
+              {selectedSession && <><div className="grid gap-3 sm:grid-cols-2">
                 <label className={label}><span className="mb-1.5 block">Nominal Setoran</span><RpInput value={depositAmount} onChange={setDepositAmount} /></label>
                 <label className={label}><span className="mb-1.5 block">Metode Setoran</span><select value={depositMethod} onChange={(e) => setDepositMethod(e.target.value)} className={input}><option value="Transfer">Transfer Bank</option><option value="CASH">Cash</option></select></label>
                 {depositMethod === 'Transfer' && !banks.rows.some((bank) => bank.active) && <p role="alert" className="sm:col-span-2 text-xs text-bahaya-foreground">Belum ada rekening Owner aktif. Setoran Transfer belum dapat diajukan; aktifkan rekening melalui Pengaturan Keuangan terlebih dahulu.</p>}
                  {depositMethod === 'Transfer' && banks.rows.some((bank) => bank.active) && <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Rekening Tujuan</span><select value={depositBankId} onChange={(e) => setDepositBankId(e.target.value)} className={input}><option value="">Rekening Owner</option>{banks.rows.filter((bank) => bank.active).map((bank) => <option key={bank.id} value={bank.id}>{bank.bank_name} · {bank.account_number}</option>)}</select></label>}
                 <label className={`${label} sm:col-span-2`}><span className="mb-1.5 block">Referensi Transfer (Opsional)</span><input value={depositProof} onChange={(e) => setDepositProof(e.target.value)} className={input} placeholder="Contoh: TRF123456789" /></label>
               </div>
-              <Button className="mt-4 w-full gap-2" disabled={busy || (depositMethod === 'Transfer' && !banks.rows.some((bank) => bank.active))} onClick={() => void submitDeposit()}><Send size={16} aria-hidden="true" />Ajukan Setoran</Button>
+              <Button className="mt-4 w-full gap-2" disabled={busy || (depositMethod === 'Transfer' && !banks.rows.some((bank) => bank.active))} onClick={() => void submitDeposit()}><Send size={16} aria-hidden="true" />Ajukan Setoran</Button></>}
               {isOwner && deposits.rows.some((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER') && (
                 <div className="mt-5 border-t border-gold/15 pt-4">
                   <p className="mb-3 text-xs text-muted-foreground">Setoran menunggu konfirmasi Owner</p>
-                  <ul className="space-y-2">{deposits.rows.filter((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER').map((deposit) => <li key={deposit.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-secondary px-3 py-2 text-sm"><span>{deposit.method} · {rupiah(Number(deposit.amount))}</span><span className="flex gap-2"><Button size="sm" onClick={() => void decideDeposit(deposit.id, 'DITERIMA')}>Terima</Button><Button size="sm" variant="outline" onClick={() => void decideDeposit(deposit.id, 'DITOLAK')}>Tolak</Button><Button size="sm" variant="ghost" onClick={() => void decideDeposit(deposit.id, 'BELUM_DITERIMA')}>Belum diterima</Button></span></li>)}</ul>
+                  <ul className="space-y-2">{deposits.rows.filter((deposit) => deposit.status === 'MENUNGGU_KONFIRMASI_OWNER').map((deposit) => <li key={deposit.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-secondary px-3 py-2 text-sm"><span>{deposit.method} · {rupiah(Number(deposit.amount))}</span><span className="flex gap-2"><Button size="sm" disabled={busy} onClick={() => void decideDeposit(deposit.id, 'DITERIMA')}>Terima</Button><Button size="sm" variant="outline" disabled={busy} onClick={() => void decideDeposit(deposit.id, 'DITOLAK')}>Tolak</Button><Button size="sm" variant="ghost" disabled={busy} onClick={() => void decideDeposit(deposit.id, 'BELUM_DITERIMA')}>Belum diterima</Button></span></li>)}</ul>
                 </div>
               )}
             </Panel>
@@ -511,10 +540,14 @@ function HalamanKeuangan() {
                 {refundSourceType !== 'OWNER_FUNDS' && <label className={label}><span className="mb-1.5 block">Sesi Sumber</span><select value={refundSourceSessionId} onChange={(e) => setRefundSourceSessionId(e.target.value)} className={input}><option value="">Pilih sesi sumber</option>{sessions.rows.filter((session) => canSourceRefundFromSession(session.status)).map((session) => <option key={session.id} value={session.id}>{session.operational_date} · {nama(session.opened_by)}</option>)}</select></label>}
 </div></details>
               </div>
-              <Button className="mt-4 w-full gap-2" disabled={!isOwner || busy} onClick={() => void refund()}><RotateCcw size={16} aria-hidden="true" />Catat Refund</Button>
+              <Button className="mt-4 w-full gap-2" disabled={!isOwner || busy || !refundTransactionId || !(angka(refundAmount) > 0) || !refundReason.trim()} onClick={() => void refund()}><RotateCcw size={16} aria-hidden="true" />Catat Refund</Button>
             </Panel>
           )}
         </div>
+          {isOwner && <Panel judul="Riwayat Refund Owner" sub="Seluruh sumber dana sesuai hak akses, termasuk Dana Owner tanpa sesi. Tidak mengubah saldo atau snapshot sesi lama.">
+            <div className="mb-3 flex gap-2"><Button variant="outline" disabled={ownerRefundHistory.isFetching} onClick={() => void ownerRefundHistory.refetch()}>Muat ulang Refund</Button></div>
+            {ownerRefundHistory.isPending ? <p role="status">Memuat riwayat Refund…</p> : ownerRefundHistory.error ? <p role="alert">Riwayat Refund belum dapat dimuat. Coba muat ulang.</p> : <><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th>Waktu WIB</th><th>Transaksi</th><th>Nominal</th><th>Sumber</th><th>Alasan</th></tr></thead><tbody>{ownerRefundHistory.data?.rows.map(row => <tr key={row.id} className="border-t border-gold/10"><td className="px-2 py-2">{new Date(row.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}</td><td><button type="button" className="text-gold underline" onClick={() => setDetailTrx(row.transaction_id)}>{nomorTrx(row.transaction_id)}</button></td><td>{rupiah(Number(row.amount))} · {row.refund_method}</td><td>{row.source_type === 'OWNER_FUNDS' ? 'Dana Owner' : row.source_type}</td><td>{row.reason}</td></tr>)}</tbody></table></div>{!ownerRefundHistory.data?.rows.length && <p>Belum ada Refund tercatat.</p>}<div className="mt-3 flex items-center gap-3"><Button variant="outline" disabled={refundPage === 0 || ownerRefundHistory.isFetching} onClick={() => setRefundPage(page => page - 1)}>Refund sebelumnya</Button><span>Halaman {refundPage + 1}</span><Button variant="outline" disabled={!ownerRefundHistory.data?.hasNext || ownerRefundHistory.isFetching} onClick={() => setRefundPage(page => page + 1)}>Refund berikutnya</Button></div></>}
+          </Panel>}
           {selectedSession && (
             <section className="kf-panel" data-panel="closing" id="keuangan-closing">
               <div className="kf-closing-summary">
