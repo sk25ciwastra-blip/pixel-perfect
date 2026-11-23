@@ -150,3 +150,17 @@ PG 17.6 di atas adalah versi sumber yang tercantum pada arsip. Runtime clone, ha
 Pemeriksaan lokal minimal yang dilakukan adalah `pg_restore --list <arsip-lokal>` dengan filter nama fungsi Booking dan Training, serta pencarian snapshot schema-only di workspace dan inventaris cadangan lokal. Pekerjaan dapat dilanjutkan setelah tersedia snapshot schema-only tersanitasi dari checkpoint staging yang cocok, beserta manifest peran, owner/ACL, RLS, trigger, dan fungsi Auth/sesi. Restore hanya pada cluster disposable PG17. Bandingkan katalog clone dengan manifest sebelum menjalankan urutan di addendum, lalu catat hash fungsi sebelum dan sesudah serta hasil postcheck. Jika manifest tidak cocok, berhenti sebelum DDL.
 
 **Release gate tetap HOLD.** Staging dan LIVE tidak dihubungi untuk rehearsal ini. Tidak ada restore, SQL Cloud, penulisan data operasional, merge, atau publish.
+
+## Ekspor titik pemeriksaan staging · alat siap, akses BLOCKED
+
+Konektor katalog tidak menyediakan transport `pg_dump`. Sesi kerja tidak mempunyai koneksi PostgreSQL staging yang diotorisasi. Tidak ada ekspor atau DDL staging yang dijalankan. Rehearsal dan semua tahap setelahnya tetap **BLOCKED**.
+
+Diperlukan akses jaringan ke `db.bgtztcfbkcrvcipxbfti.supabase.co:5432` dan role login staging yang disetujui untuk membaca katalog dan mengambil lock ACCESS SHARE yang diperlukan `pg_dump --schema-only`. Gunakan PostgreSQL client 17, TLS verify-full dengan CA tepercaya, serta autentikasi sementara lewat `PGPASSFILE` lokal berizin ketat atau prompt interaktif. Jalankan dari shell terpisah dengan `PGUSER` yang diotorisasi. Jangan menyalin kredensial ke chat, GitHub, argumen URL, atau repositori. Jika jaringan hanya mendukung IPv4/pooler, Owner dapat menyediakan ekspor dari jalur resmi yang terverifikasi untuk ref staging yang sama, tanpa memakai skrip direct-host di bawah.
+
+```powershell
+pwsh -NoProfile -File scripts/issue-140-export-staging-schema.ps1 -PgBin '<folder PG17 client>' -OutputDirectory '<folder privat baru di luar repo>'
+```
+
+Skrip menetapkan transaksi read-only dan endpoint staging, memeriksa ABI checkpoint sebelum ekspor, lalu menjalankan `pg_dump --schema-only --no-owner --no-privileges`. Manifest katalog dicatat sebelum dan sesudah, dan output ditolak bila berbeda. Hasil yang diharapkan adalah `staging-schema.sql`, `staging-catalog.json`, dan `staging-export.json` berisi hash SHA-256. Generator manifest mencakup owner, ACL, role, membership, RLS, trigger, index, extension, dan hash definisi fungsi termasuk fungsi Auth/sesi. Definisi fungsi berada dalam DDL. Tidak ada pembacaan baris pengguna atau transaksi.
+
+Ekspor lokal berstatus belum ditinjau sampai Owner/operator memastikan tidak ada rahasia tertanam dalam DDL dan metadata. Foreign servers memblokir skrip dan subscription dihilangkan untuk menghindari connection string. Jika sumber memakai subscription yang relevan, catat kontrak tersanitasi dan tahan parity sampai ditinjau. Setting PostgREST efektif harus dikonfirmasi dari konfigurasi resmi staging jika tidak ditemukan dalam katalog, tanpa menyalin rahasia API. Setelah restore PG17 disposable, pulihkan owner/ACL dan role yang diperlukan dari manifest tanpa password, gunakan `scripts/issue-140-staging-manifest.sql` dengan `search_path=pg_catalog` di clone, lalu cocokkan objek, hash, RLS, trigger dan lingkup API sebelum DDL. Jalur Approved tetap Training → #136 → #140 → postcheck → rollback. Release gate **HOLD**.
