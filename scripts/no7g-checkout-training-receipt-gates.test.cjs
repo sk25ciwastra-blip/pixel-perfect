@@ -41,7 +41,7 @@ check('Booking training uses training wrappers for payment and check-in',()=>{
 });
 check('Trainee closing not rendered, refund Owner-only',()=>{
  assert.ok(finance.includes("!isTraining && <Button"));
- assert.ok(finance.includes('disabled={!isOwner || busy} onClick={() => void refund()'));
+ assert.ok(/disabled=\{!isOwner\s*\|\|\s*busy[^}]*\}\s+onClick=\{\(\) => void refund\(\)\}/.test(finance));
 });
 check('58mm receipt has fail-closed flag and disabled inactive control',()=>{
  assert.ok(receipt.includes('featureFlags.receipt58mm'));
