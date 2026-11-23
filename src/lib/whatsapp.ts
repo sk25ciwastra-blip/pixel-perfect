@@ -14,16 +14,14 @@ export function normalizeWhatsAppNumber(value: string) {
   return digits;
 }
 
-export function openWhatsApp(phone: string, message?: string) {
+export function whatsAppDraftUrl(phone: string, message?: string) {
   const number = normalizeWhatsAppNumber(phone);
+  if (!number) return undefined;
+  const text = message ? `&text=${encodeURIComponent(message)}` : '';
+  return `https://web.whatsapp.com/send?phone=${number}${text}`;
+}
 
-  if (!number) return;
-
-  const text = message ? `?text=${encodeURIComponent(message)}` : '';
-
- window.open(
-  `https://web.whatsapp.com/send?phone=${number}${text ? `&${text.slice(1)}` : ''}`,
-  '_blank',
-  'noopener,noreferrer',
-);
+export function openWhatsApp(phone: string, message?: string) {
+  const url = whatsAppDraftUrl(phone, message);
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
 }
