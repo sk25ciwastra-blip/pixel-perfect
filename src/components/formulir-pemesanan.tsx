@@ -12,6 +12,10 @@ import { featureFlags, extraGuestAktif } from '@/lib/feature-flags';
 import { choosePaymentMethods, amountAfterPaymentSwitch } from '@/lib/payment-method-choice';
 import { ReceiptTransactionButton } from '@/components/receipt-actions';
 import { CheckInBerhasil } from '@/components/check-in-berhasil';
+import { BookingQuote } from '@/components/booking-quote';
+import { canPreviewBookingQuote, quoteCheckInWib, type BookingQuoteDraft } from '@/lib/booking-quote';
+import { usePeran } from '@/lib/peran';
+import { supabase } from '@/integrations/supabase/client';
 import {
   createReservationCombined,
   createTrainingReservationCombined,
@@ -44,6 +48,7 @@ export function FormulirPemesanan({
   onClose: () => void;
   onSaved: () => Promise<void>;
 }) {
+  const { posisiKode, masuk } = usePeran();
   const rooms = useTable('rooms');
   const roomTypes = useTable('room_types');
   const packages = useTable('packages');
@@ -59,6 +64,7 @@ export function FormulirPemesanan({
   const [roomId, setRoomId] = useState(initialRoomId);
   const [packageId, setPackageId] = useState('');
   const [dayMode, setDayMode] = useState<DayMode>('weekday');
+  const [dayModeDate, setDayModeDate] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [methods, setMethods] = useState<MetodePembayaran[]>(['QRIS']);
@@ -143,6 +149,47 @@ export function FormulirPemesanan({
   const setting = financeSettings.rows[0];
   const minimumDp = minimumDpAmount(total, setting);
   const extraGuestOn = typeof window !== 'undefined' && extraGuestAktif(window.location.hostname);
+  const showQuote = canPreviewBookingQuote(mode, posisiKode, masuk);
+  const [quoteDp, setQuoteDp] = useState<{
+    setting: { minimum_dp_mode: string; minimum_dp_value: number } | null;
+    loading: boolean;
+  }>({ setting: null, loading: true });
+  useEffect(() => {
+    if (!showQuote) return;
+    let cancelled = false;
+    setQuoteDp({ setting: null, loading: true });
+    async function readQuoteDp() {
+      try {
+        const { data, error } = await supabase.rpc('get_booking_quote_minimum_dp');
+        if (!cancelled) setQuoteDp({ setting: error ? null : data?.[0] ?? null, loading: false });
+      } catch {
+        if (!cancelled) setQuoteDp({ setting: null, loading: false });
+      }
+    }
+    void readQuoteDp();
+    return () => { cancelled = true; };
+  }, [showQuote, posisiKode]);
+  const quoteMinimumDp = minimumDpAmount(total, quoteDp.setting);
+  const quoteDraft: BookingQuoteDraft = {
+    name: matchedGuest?.full_name ?? name,
+    phone,
+    roomNumber: selectedRoom?.active ? selectedRoom.room_number : '',
+    roomType: selectedRoomType?.name ?? '',
+    packageName: selectedPackage?.active ? selectedPackage.name : '',
+    checkIn: quoteCheckInWib(scheduledDate, scheduledTime) ?? '',
+    guestCount: jumlahTamu,
+    dayMode,
+    roomPrice: selectedPrice,
+    extraCharge: extra.total,
+    total,
+    minimumDp: quoteMinimumDp === null ? null : Math.ceil(quoteMinimumDp),
+    dpMode: quoteDp.setting?.minimum_dp_mode,
+    dpValue: quoteDp.setting ? Number(quoteDp.setting.minimum_dp_value) : undefined,
+  };
+  const quoteData = [rooms, roomTypes, packages, packagePrices, guests];
+  const quoteLoading = quoteDp.loading || quoteData.some(source => source.loading);
+  const quoteLoadError = quoteData.some(source => Boolean(source.error));
+  const quoteDayReady = Boolean(scheduledDate && dayModeDate === scheduledDate);
 
   useEffect(() => {
     if (mode === 'check_in' && methods.length === 1 && selectedPrice > 0) {
@@ -198,11 +245,13 @@ export function FormulirPemesanan({
       const { data, error: dayModeError } = await rpc('get_operational_day_mode', { _calendar_date: operationalDate });
       if (cancelled) return;
       if (dayModeError || (data !== 'weekday' && data !== 'weekend')) {
+        setDayModeDate('');
         setError('Jenis hari gagal ditentukan dari kalender operasional.');
         return;
       }
       const nextDayMode = data as DayMode;
       setDayMode(nextDayMode);
+      if (mode === 'booking') setDayModeDate(operationalDate);
     }
     void resolveDayMode();
     return () => { cancelled = true; };
@@ -392,7 +441,7 @@ export function FormulirPemesanan({
                 <Bidang label="Tipe Kamar"><select required value={activeTypeId} onChange={event => { setTypeChoice(event.target.value); handleRoomChange(''); }} className={fieldClass}><option value="">Pilih tipe kamar</option>{typesWithRooms.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Bidang>
                 <Bidang label="Nomor Kamar"><select required disabled={!activeTypeId} value={roomId} onChange={event => handleRoomChange(event.target.value)} className={fieldClass}><option value="">{activeTypeId ? 'Pilih nomor kamar' : 'Pilih tipe kamar terlebih dahulu'}</option>{selectedRoomUnavailable && selectedRoom && <option value={selectedRoom.id} disabled>Kamar {selectedRoom.room_number} · Belum tersedia</option>}{roomsOfType.map(room => <option key={room.id} value={room.id}>Kamar {room.room_number}</option>)}</select></Bidang>
                 {mode === 'booking' && <>
-                <Bidang label="Tanggal Check-in"><input required type="date" value={scheduledDate} onChange={event => setScheduledDate(event.target.value)} className={fieldClass} /></Bidang>
+                <Bidang label="Tanggal Check-in"><input required type="date" value={scheduledDate} onChange={event => { setDayModeDate(''); setScheduledDate(event.target.value); }} className={fieldClass} /></Bidang>
                 <Bidang label="Jam Check-in"><input required type="time" value={scheduledTime} onChange={event => setScheduledTime(event.target.value)} className={fieldClass} /></Bidang>
                 </>}
                 <Bidang label="Pilih Paket"><select required disabled={!selectedRoomType?.pricing_group} value={packageId} onChange={event => handlePackageChange(event.target.value)} className={fieldClass}><option value="">{selectedRoomType?.pricing_group ? 'Pilih paket' : 'Pilih kamar terlebih dahulu'}</option>{paketUrut.map(pack => { const price = priceForPackage(pack.id); return <option key={pack.id} value={pack.id} disabled={price <= 0}>{pack.name}</option>; })}</select></Bidang>
@@ -402,6 +451,15 @@ export function FormulirPemesanan({
               <section className="ci-pane"><h3><CreditCard />Pembayaran</h3><p className="ci-method-label">Metode Pembayaran (maks. {featureFlags.combinedPayment ? '2' : '1'})</p><div className="ci-methods">{(['Cash', 'QRIS', 'Transfer'] as MetodePembayaran[]).map(m => <Button key={m} type="button" variant="outline" aria-pressed={methods.includes(m)} disabled={!methods.includes(m) && methods.length >= 2} onClick={() => toggleMethod(m)}>{m.toUpperCase()}</Button>)}</div><div className="ci-fields">{methods.map(m => <Bidang key={m} label={`Nominal ${m.toUpperCase()}${mode === 'booking' && minimumDp !== null && m === methods[0] ? ` (DP min. ${rupiah(minimumDp)})` : ''}`}><input required type="number" min={0} max={total > 0 ? total : undefined} step="1" value={nominal[m] ?? '0'} readOnly={mode === 'check_in' && methods.length === 1} onChange={event => setNominal(n => ({ ...n, [m]: event.target.value }))} onFocus={event => event.currentTarget.select()} className={fieldClass} /></Bidang>)}</div>{methods.length > 1 && <p className="ci-notice">{featureFlags.combinedPayment ? 'Dua metode dicatat dalam satu transaksi dengan riwayat pembayaran masing-masing.' : 'Pembayaran gabungan belum diaktifkan.'}</p>}</section>
               <section className="ci-pane"><h3><FileText />Ringkasan Pembayaran</h3><div className="ci-summary"><Baris k="Harga kamar" v={rupiah(selectedPrice)} /><Baris k={`Tamu tambahan (${extra.tambahan} × ${rupiah(extra.tarif)})`} v={rupiah(extra.total)} /><div className="ci-total"><span>Total Tagihan</span><span>{rupiah(total)}</span></div>{methods.map(m => <Baris key={m} k={`Dibayar ${m.toUpperCase()}`} v={rupiah(Math.max(0, Number(nominal[m]) || 0))} />)}<div className="ci-balance"><span>Sisa Tagihan</span><span>{rupiah(Math.max(0, total - paymentTotal))}</span></div></div>{mode === 'booking' && minimumDp !== null && <p className="ci-notice">Minimum DP {setting?.minimum_dp_mode === 'PERCENTAGE' ? `${Number(setting.minimum_dp_value)}%` : 'Owner'}: {rupiah(minimumDp)}</p>}{extra.tambahan > 0 && !extraGuestOn && <p className="ci-notice text-destructive">Biaya tamu tambahan belum dapat disimpan sistem, menunggu persetujuan Owner.</p>}</section>
             </div>
+            {showQuote && !saving && <BookingQuote
+              key={JSON.stringify([quoteDraft, roomId, packageId, quoteDayReady, quoteLoading, quoteLoadError])}
+              draft={quoteDraft}
+              roomId={roomId}
+              packageId={packageId}
+              dayReady={quoteDayReady}
+              loading={quoteLoading}
+              loadError={quoteLoadError}
+            />}
             {isTraining && <p className="ci-notice">Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.</p>}
             {selectedPrice > 0 && <p className="ci-notice">{activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.' : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.' : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}</p>}
             {error && <p role="alert" className="ci-notice text-destructive">{error}</p>}
