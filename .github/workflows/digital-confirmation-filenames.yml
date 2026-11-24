@@ -1,0 +1,25 @@
+name: B25 digital confirmation filenames
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/payment-confirmation*.ts'
+      - 'src/lib/use-payment-confirmation.ts'
+      - 'scripts/payment-confirmation*.test.ts'
+      - '.github/workflows/digital-confirmation-filenames.yml'
+  workflow_dispatch:
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Focused filename regression and existing confirmation tests
+        run: bun test scripts/payment-confirmation-filename.test.ts scripts/payment-confirmation.test.ts scripts/payment-confirmation-whatsapp.test.ts
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Build
+        run: bun run build
