@@ -19,7 +19,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Focused filename regression and existing confirmation tests
         run: bun test scripts/payment-confirmation-filename.test.ts scripts/payment-confirmation.test.ts scripts/payment-confirmation-whatsapp.test.ts
-      - name: TypeScript
-        run: bunx tsc --noEmit
-      - name: Build
+      - name: Build (generates TanStack route types)
         run: bun run build
+      - name: TypeScript after build
+        run: bunx tsc --noEmit
