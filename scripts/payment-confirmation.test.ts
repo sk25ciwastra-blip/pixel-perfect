@@ -312,9 +312,9 @@ test('download uses a local PDF Blob and filename, no print window or public upl
     set href(value: string) { expect(value).toBe('blob:local'); }, set download(value: string) { filename = value; },
     click: () => { clicked = true; }, remove: () => { removed = true; },
   }) } as never;
-  try { downloadConfirmationBytes(new Uint8Array([1, 2, 3]), 'TEST/NUMBER'); }
+  try { downloadConfirmationBytes(new Uint8Array([1, 2, 3]), buildPaymentConfirmation(fixture())); }
   finally { globalThis.document = previousDocument; URL.createObjectURL = previousCreate; URL.revokeObjectURL = previousRevoke; }
-  expect([clicked, removed, filename]).toEqual([true, true, 'Payment-Confirmation-TEST_NUMBER.pdf']);
+  expect([clicked, removed, filename]).toEqual([true, true, 'RESERVASI-FIXTURE-GUEST-7890-BTRDTRX-000025.pdf']);
 });
 
 test('Booking integration adds headless success capture only, no new UI or second check-in path', () => {
