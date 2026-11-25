@@ -14,10 +14,13 @@ test('Owner Manajemen Kamar opens existing Tipe Kamar management, not a dead car
   assert.match(rooms, /aria-label=\{\x60\$\{r\.active\?/);
 });
 
-test('Profile Homestay and Metode Pembayaran remain unavailable without proven write contract', () => {
-  for (const title of ['Profil Homestay', 'Metode Pembayaran']) {
-    const line = settings.split('\n').find(line => line.includes('label: "' + title + '"'));
-    assert.ok(line, 'missing expected settings card: ' + title);
-    assert.doesNotMatch(line, /ke:/, title + ' must not be linked to a nonfunctional page');
-  }
+test('Integrated Poin6 links profile and payment cards only to existing guarded pages', () => {
+  assert.match(settings, /label: "Profil Homestay"[^\n]*ke: "\/pengaturan-profil-homestay"/);
+  assert.match(settings, /label: "Metode Pembayaran"[^\n]*ke: "\/pengaturan-metode-pembayaran"/);
+  const profile = readFileSync('src/routes/pengaturan-profil-homestay.tsx', 'utf8');
+  const methods = readFileSync('src/routes/pengaturan-metode-pembayaran.tsx', 'utf8');
+  assert.match(profile, /if \(!owner\)/);
+  assert.match(profile, /b25_read_homestay_profile/);
+  assert.match(methods, /if \(!owner\)/);
+  assert.match(methods, /featureFlags\.combinedPayment/);
 });
