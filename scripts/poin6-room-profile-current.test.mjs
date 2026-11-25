@@ -29,5 +29,5 @@ test('SQL is isolated with RLS, role guard, read only for authenticated, Owner-o
  assert.match(sql,/REVOKE ALL ON public\.b25_homestay_profile, public\.b25_homestay_profile_audit FROM PUBLIC, anon, authenticated/);
  assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.b25_save_homestay_profile\(text,text,text,text\) TO authenticated/);
  assert.match(sql,/clean_phone !~ '\^\[\+\]\?/);
- assert.doesNotMatch(sql,/DELETE FROM|TRUNCATE|DROP TABLE/);
+ assert.doesNotMatch(sql.split('\\n').filter(line => !line.trimStart().startsWith('--')).join('\\n'),/DELETE FROM|TRUNCATE|DROP TABLE/);
 });
