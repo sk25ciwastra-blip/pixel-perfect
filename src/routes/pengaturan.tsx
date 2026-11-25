@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { Building2, Package, BedDouble, CreditCard, Percent, KeyRound, ChevronRight, Receipt, Wallet, LayoutGrid } from "lucide-react";
+import { Building2, Package, BedDouble, CreditCard, Percent, KeyRound, ChevronRight, Receipt, Wallet, LayoutGrid, MessageSquareText } from "lucide-react";
 import { Kerangka } from "@/components/kerangka";
 import { usePeran } from "@/lib/peran";
 import { meta } from "@/lib/meta";
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/pengaturan")({
   component: HalamanPengaturan,
 });
 
-type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan";
+type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan" | "/pengaturan-template-whatsapp";
 type Item = { ikon: LucideIcon; label: string; ket: string; ke?: Ke };
 
 const kelompok: { judul: string; item: Item[] }[] = [
@@ -19,6 +19,7 @@ const kelompok: { judul: string; item: Item[] }[] = [
     { ikon: BedDouble, label: "Tipe Kamar", ket: "Jenis kamar yang tersedia.", ke: "/tipe-kamar" },
     { ikon: Package, label: "Paket & Harga", ket: "Durasi paket dan tarif kamar.", ke: "/paket" },
     { ikon: Building2, label: "Profil Homestay", ket: "Nama, alamat, dan kontak." },
+    { ikon: MessageSquareText, label: "Template WhatsApp", ket: "Pesan resmi per fitur; khusus Owner.", ke: "/pengaturan-template-whatsapp" },
   ]},
   { judul: "Keuangan", item: [
     { ikon: CreditCard, label: "Metode Pembayaran", ket: "Cash, QRIS, dan Transfer." },
