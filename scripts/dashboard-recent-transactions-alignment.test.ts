@@ -1,0 +1,30 @@
+import { test, expect } from 'bun:test';
+import { readFileSync } from 'node:fs';
+const page=readFileSync('src/routes/index.tsx','utf8');
+const css=readFileSync('src/components/dashboard-panel.css','utf8');
+const start=page.indexOf('{/* Transaksi terbaru */}');
+const end=page.indexOf('{/* Tiga modul analitik berjajar */}',start);
+const block=page.slice(start,end);
+test('recent dashboard transaction uses aligned four-column layout and EXPENSE badge',()=>{
+  expect(start).toBeGreaterThan(-1);
+  expect(end).toBeGreaterThan(start);
+  expect(block).toContain('className="db-recent-row py-2.5"');
+  expect(block).toContain('className="db-recent-identity min-w-0"');
+  expect(block).toContain('className="db-recent-status');
+  expect(block).toContain('className="db-recent-amount');
+  expect(block).toContain('className="db-recent-time');
+  expect(block).toContain(': "EXPENSE"');
+  expect(block).not.toContain(': "Pengeluaran"');
+  expect(css).toContain('grid-template-columns: 36px minmax(0, 1fr) 84px 112px;');
+  expect(css).toContain('grid-template-rows: 19px 14px 20px;');
+  expect(css).toContain('@media (max-width: 440px)');
+});
+test('original financial records, time, payment method, amount and clickable detail remain',()=>{
+  expect(block).toContain('rupiah(t.nominal)');
+  expect(block).toContain('jamWib(t.waktu)');
+  expect(block).toContain('labelMetode');
+  expect(block).toContain('setDetailTransactionId(t.trxId)');
+  expect(block).toContain('setDetailExpenseId(t.expenseId)');
+  expect(page).toContain('record_finance_expense');
+  expect(page).toContain('const transaksiTerbaru = useMemo');
+});
