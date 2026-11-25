@@ -1,0 +1,27 @@
+name: B25 Poin4 Manual WhatsApp Reminders
+on:
+  push:
+    branches:
+      - feat/poin4-manual-timed-whatsapp-reminders-20261125
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  manual-reminders:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Timed reminder pure and UI contracts
+        run: bun test scripts/poin4-manual-reminder-contract.test.ts
+      - name: Build app
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit

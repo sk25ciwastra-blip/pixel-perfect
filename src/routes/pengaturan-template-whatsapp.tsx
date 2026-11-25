@@ -6,6 +6,7 @@ import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
 import { usePeran } from '@/lib/peran';
 import { supabase } from '@/integrations/supabase/client';
+import { rpc } from '@/lib/data-live';
 import {
   WHATSAPP_TEMPLATE_FIELDS, validateWhatsAppTemplate,
   type WhatsAppTemplateKind,
@@ -13,6 +14,7 @@ import {
 import { meta } from '@/lib/meta';
 import { OWNER_APPROVED_QUOTE_TEMPLATE } from '@/lib/whatsapp-template-approved';
 import { OWNER_APPROVED_BOOKING_CONFIRMATION, OWNER_APPROVED_PAYMENT_CONFIRMATION } from '@/lib/whatsapp-template-confirmations-approved';
+import { OWNER_APPROVED_BOOKING_30_MIN_REMINDER, OWNER_APPROVED_STAY_END_REMINDER } from '@/lib/whatsapp-template-reminders-approved';
 
 export const Route = createFileRoute('/pengaturan-template-whatsapp')({
   head: () => meta('Template WhatsApp', 'Pengaturan template pesan khusus Owner Baturaden 25 Homestay.'),
@@ -26,12 +28,16 @@ type Version = {
 const kinds: { key: WhatsAppTemplateKind; title: string; description: string }[] = [
   { key: 'PENAWARAN_RESERVASI', title: 'Penawaran Reservasi', description: 'Sebelum DP diverifikasi; bukan Booking resmi dan tidak boleh memuat nomor TRX.' },
   { key: 'KONFIRMASI_BOOKING', title: 'Konfirmasi Booking', description: 'Setelah Booking resmi dengan nomor transaksi yang telah tersimpan.' },
-  { key: 'KONFIRMASI_PEMBAYARAN', title: 'Konfirmasi Pembayaran', description: 'Hanya setelah data pembayaran/refund terverifikasi.' },
+  { key: 'PENGINGAT_BOOKING_30_MENIT', title: 'Pengingat Booking (30 menit)', description: 'Muncul saat tersisa 30 menit menuju Check-in; Receptionist mengirim WhatsApp secara manual.' },
+  { key: 'PENGINGAT_WAKTU_HABIS', title: 'Pengingat Waktu Habis', description: 'Muncul ketika waktu menginap berakhir; sampaikan toleransi 15 menit, tanpa otomatis menagih overtime.' },
 ];
 const initialApprovedDraft: Record<WhatsAppTemplateKind, string> = {
   PENAWARAN_RESERVASI: OWNER_APPROVED_QUOTE_TEMPLATE,
   KONFIRMASI_BOOKING: OWNER_APPROVED_BOOKING_CONFIRMATION,
+  // Legacy kind is intentionally not in the official selection.
   KONFIRMASI_PEMBAYARAN: OWNER_APPROVED_PAYMENT_CONFIRMATION,
+  PENGINGAT_BOOKING_30_MENIT: OWNER_APPROVED_BOOKING_30_MIN_REMINDER,
+  PENGINGAT_WAKTU_HABIS: OWNER_APPROVED_STAY_END_REMINDER,
 };
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) + ' WIB';
@@ -76,15 +82,17 @@ function PengaturanTemplateWhatsApp() {
   const validation = validateWhatsAppTemplate(kind, body);
   const active = versions.find(item => item.status === 'ACTIVE');
   const unchanged = body === (active?.body ?? '');
-  const draftSuggestion = backendReady && !active;
+  const draftSuggestion = backendReady && !active && Boolean(initialApprovedDraft[kind]);
 
   async function save() {
     if (!owner || !backendReady || busy || unchanged || validation.length) return;
     setBusy(true); setError('');
     try {
-      const { error: saveError } = await supabase.rpc('owner_save_whatsapp_template', {
-        _kind: kind, _body: body,
-      });
+      const reminderKind = kind === 'PENGINGAT_BOOKING_30_MENIT' || kind === 'PENGINGAT_WAKTU_HABIS';
+      const { error: saveError } = await rpc(
+        reminderKind ? 'owner_save_whatsapp_reminder_template' : 'owner_save_whatsapp_template',
+        { _kind: kind, _body: body },
+      );
       if (saveError) throw saveError;
       await reload(kind);
       toast.success('Template baru berhasil disimpan dengan riwayat versi.');

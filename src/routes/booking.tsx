@@ -24,6 +24,7 @@ import { featureFlags } from '@/lib/feature-flags';
 import { choosePaymentMethods, amountAfterPaymentSwitch } from '@/lib/payment-method-choice';
 import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 import { DialogCheckInBerhasil } from '@/components/konfirmasi-pembayaran';
+import { ManualWhatsAppReminders } from '@/components/pengingat-whatsapp-manual';
 
 export const Route = createFileRoute('/booking')({
   head: () =>
@@ -669,6 +670,13 @@ Terima kasih.`;
       }
     >
       {adminResult && <p role="status" className="mb-3 rounded-xl border border-gold/30 bg-[#F7F6F3] px-4 py-3 text-sm text-foreground">{adminResult}</p>}
+      <ManualWhatsAppReminders
+        transactions={transactions.rows}
+        guests={guests.rows}
+        rooms={rooms.rows}
+        roomTypes={roomTypes.rows}
+        nowMs={sekarang}
+      />
       {transactions.error && (
         <p role="alert">{transactions.error}</p>
       )}

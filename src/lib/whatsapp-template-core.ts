@@ -13,9 +13,18 @@ export const WHATSAPP_TEMPLATE_FIELDS = {
     'CHECKIN_WIB', 'CHECKOUT_WIB', 'JUMLAH_TAMU', 'TOTAL_TAGIHAN',
     'DP_DITERIMA', 'SISA_TAGIHAN', 'STATUS_PEMBAYARAN',
   ],
+  // Legacy confirmation is retained for safe reading of historical drafts,
+  // but no longer displayed among the four Owner-approved template kinds.
   KONFIRMASI_PEMBAYARAN: [
     'NAMA_TAMU', 'NOMOR_TRANSAKSI', 'TOTAL_TAGIHAN',
     'TOTAL_DIBAYAR_BERSIH', 'SISA_TAGIHAN', 'STATUS_PEMBAYARAN',
+  ],
+  PENGINGAT_BOOKING_30_MENIT: [
+    'NAMA_TAMU', 'NOMOR_TRANSAKSI', 'TIPE_KAMAR', 'NOMOR_KAMAR',
+    'CHECKIN_WIB',
+  ],
+  PENGINGAT_WAKTU_HABIS: [
+    'NAMA_TAMU', 'NOMOR_TRANSAKSI', 'NOMOR_KAMAR', 'BATAS_CHECKOUT_WIB',
   ],
 } as const;
 
