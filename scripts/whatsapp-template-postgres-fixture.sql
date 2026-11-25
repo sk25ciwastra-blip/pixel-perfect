@@ -90,8 +90,10 @@ BEGIN
   RAISE EXCEPTION 'FAIL: direct authenticated insert accepted';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
 END $$;
+-- Switch explicitly from Owner to the employee being tested.
+SELECT set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', false);
 SELECT set_config('request.jwt.claim.training', 'none', false);
-DO $$
+DO $
 DECLARE n integer;
 BEGIN
  SELECT count(*) INTO n FROM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
