@@ -1,3 +1,5 @@
+import { confirmationFilename } from './payment-confirmation-filename';
+import type { PaymentConfirmation } from './payment-confirmation';
 /** Rasterizes the confirmation PDF into a single JPG; browser-only, loaded dynamically. */
 export async function confirmationPdfToJpg(pdfBytes: Uint8Array): Promise<Blob> {
   const pdfjs = await import('pdfjs-dist');
@@ -36,11 +38,11 @@ export async function confirmationPdfToJpg(pdfBytes: Uint8Array): Promise<Blob> 
   return blob;
 }
 
-export function downloadConfirmationJpg(blob: Blob, transactionNumber: string) {
+export function downloadConfirmationJpg(blob: Blob, data: PaymentConfirmation) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `Payment-Confirmation-${transactionNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}.jpg`;
+  anchor.download = confirmationFilename(data, 'jpg');
   document.body.appendChild(anchor);
   try { anchor.click(); } finally { anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); }
 }
