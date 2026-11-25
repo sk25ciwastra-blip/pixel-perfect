@@ -131,12 +131,12 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 ### Koreksi Owner — pilihan Template WhatsApp (26 November 2026)
 
 **Daftar template yang diminta Owner kini berbeda dari empat jenis yang tampil pada source hasil PR #176.** Revisi redaksi sudah ditulis dalam [Draf Empat Template WhatsApp](DRAF_4_TEMPLATE_WHATSAPP_OWNER_20261126.md), dengan empat pilihan yang diinginkan:
-1. **Konfirmasi Reservasi** (setelah pembayaran dikonfirmasi/nomor TRX resmi).
+1. **Konfirmasi Reservasi** (ringkasan permintaan **sebelum pembayaran**, tanpa nomor TRX; bukan Booking resmi).
 2. **Pengingat Booking** (30 menit sebelum Check-in).
 3. **Pengingat Waktu Habis** (saat batas Check-out; toleransi 15 menit).
 4. **Pemberitahuan Overtime** (setelah masa toleransi; minta tamu menghubungi admin untuk konfirmasi overtime Rp50.000/jam atau perpanjangan).
 
-**Jangan menganggap implementasi selesai:** PR #176 yang sudah MERGED hanya menyempurnakan empat pilihan lama dan **belum menghapus Penawaran Reservasi dari menu** maupun menyediakan jenis keempat Overtime. Versi ACTIVE LIVE tidak diubah pada revisi redaksi ini. Detail Reservasi masih memerlukan template prepayment `PENAWARAN_RESERVASI` di belakang layar; jangan menghapus versi/servisnya secara destruktif hanya untuk menyembunyikan menu. Jenis `KONFIRMASI_PEMBAYARAN` juga masih memiliki pembaca historis. Jenis backend Overtime **belum ada** dan membutuhkan implementasi serta release gate terpisah.
+**Jangan menganggap implementasi selesai:** PR #176 yang sudah MERGED hanya menyempurnakan pilihan lama dan **belum mengganti label Penawaran Reservasi menjadi Konfirmasi Reservasi** maupun menyediakan jenis keempat Overtime. Versi ACTIVE LIVE tidak diubah pada revisi redaksi ini. Template pra-pembayaran `PENAWARAN_RESERVASI` harus tetap dipakai Detail Reservasi; jangan hapus versi/servisnya. Jenis `KONFIRMASI_BOOKING` tetap berbeda untuk Booking resmi sesudah pembayaran, sedangkan `KONFIRMASI_PEMBAYARAN` masih memiliki pembaca historis. Jenis backend Overtime **belum ada** dan membutuhkan implementasi serta release gate terpisah.
 
 **Status:** KEPUTUSAN KATEGORI OWNER TERCATAT; **TEKS BARU DRAF / BELUM ACTIVE / BELUM UAT**. Pengiriman tetap manual. Biaya Rp50.000/jam adalah isi pesan yang diminta Owner, **bukan perubahan otomatis pada tarif/charge keuangan**. Prioritas saat memperbaiki UI-26-07 adalah menghapus pilihan lama dari menu secara aman, menyiapkan opsi keempat hanya saat jalur benar-benar berfungsi, dan mempertahankan alur sebelum pembayaran yang sudah PASS.
 
