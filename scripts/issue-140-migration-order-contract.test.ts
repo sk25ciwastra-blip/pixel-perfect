@@ -59,3 +59,12 @@ test('All 10 Training SECURITY DEFINER RPCs explicitly deny PUBLIC and anon whil
   ]) expect(revoke).toContain('public.' + name + '(');
   expect((revoke.match(/public\.[a-z_]+\(/g) ?? []).length).toBe(10);
 });
+
+test('LIVE legacy 10-argument Booking delegator is hash-locked and never patched', () => {
+  expect(offer).toContain("if writer.signature =");
+  expect(offer).toContain("'public.create_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamp with time zone)'");
+  expect(offer).toContain("decode('2dec54022b5b5164c6c1c0b4af8f42af4c8337202549a8f373a1cb6ee1cb39be', 'hex')");
+  expect(offer).toContain("or not writer.prosecdef");
+  expect(offer).toContain("Delegator Booking legacy 10 argumen berbeda dari checkpoint");
+  expect(offer).toContain("if count_single = 0");
+});
