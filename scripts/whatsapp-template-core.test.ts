@@ -30,6 +30,7 @@ describe('Poin 4/7 WhatsApp templates (no DB or send effects)', () => {
   it('blocks unknown/malformed tokens and unsafe control characters', () => {
     expect(validateWhatsAppTemplate('KONFIRMASI_BOOKING', 'Halo [NAMA_TAMU] [PASSWORD]')).not.toEqual([]);
     expect(validateWhatsAppTemplate('KONFIRMASI_BOOKING', 'Halo [nama_tamu]')).not.toEqual([]);
+    expect(validateWhatsAppTemplate('KONFIRMASI_BOOKING', 'Halo [NAMA_TAMU] [STATUS')).not.toEqual([]);
     expect(() => renderWhatsAppTemplate('KONFIRMASI_BOOKING', booking, {
       NAMA_TAMU: 'A\\nB', NOMOR_TRANSAKSI: 'BTRDTRX-000027',
     })).toThrow();
