@@ -1096,4 +1096,19 @@ REVOKE ALL ON FUNCTION public.finance_training_is_restricted(uuid) FROM PUBLIC, 
 REVOKE ALL ON FUNCTION public.finance_training_session_is_valid(uuid, uuid) FROM PUBLIC, authenticated;
 REVOKE ALL ON FUNCTION public.finance_training_context_valid(uuid) FROM PUBLIC, authenticated;
 
+-- Deny PUBLIC/anon access to externally exposed SECURITY DEFINER Training RPCs.
+-- Existing authenticated grants above are intentionally retained.
+REVOKE EXECUTE ON FUNCTION
+  public.check_in_training_booking(uuid,uuid),
+  public.check_out_training_transaction(uuid,uuid),
+  public.create_finance_training_assignment(uuid,uuid,date),
+  public.create_training_finance_deposit(uuid,uuid,text,numeric,uuid,text),
+  public.create_training_reservation(text,uuid,uuid,text,text,text,numeric,text,text,timestamptz,uuid,uuid),
+  public.get_finance_training_context(),
+  public.get_training_finance_session_summary(uuid),
+  public.record_training_finance_expense(uuid,uuid,numeric,text,text,text),
+  public.record_training_transaction_payment(uuid,numeric,text,uuid,uuid),
+  public.resolve_finance_training_assignment(uuid,text,text)
+FROM PUBLIC, anon;
+
 COMMIT;
