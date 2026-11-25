@@ -2,7 +2,7 @@
  * No scheduling, sending, charging, database writes, or persistence here.
  * The UI must re-read the authoritative transaction before preparing the message.
  */
-export type ManualReminderKind = 'PENGINGAT_BOOKING_30_MENIT' | 'PENGINGAT_WAKTU_HABIS';
+export type ManualReminderKind = 'PENGINGAT_BOOKING_30_MENIT' | 'PENGINGAT_WAKTU_HABIS' | 'PEMBERITAHUAN_OVERTIME';
 export type ReminderCandidate = {
   id: string;
   transaction_number: string;
@@ -28,10 +28,12 @@ export function manualReminderEligibility(
   }
   if (item.status === 'check_in') {
     const end = item.ends_at ? Date.parse(item.ends_at) : NaN;
-    // Only this 15-minute notice window is authorised; does not create an
-    // overtime charge, grace rule, or room status transition.
-    return Number.isFinite(end) && nowMs >= end && nowMs < end + CHECKOUT_REMINDER_TOLERANCE_MS
-      ? 'PENGINGAT_WAKTU_HABIS' : null;
+    // Exactly 15 min of checkout-end reminder; afterwards the separate
+    // Owner-requested overtime NOTICE becomes eligible. This pure function
+    // never calculates charges, extends stays or sends WhatsApp.
+    if (!Number.isFinite(end) || nowMs < end) return null;
+    return nowMs < end + CHECKOUT_REMINDER_TOLERANCE_MS
+      ? 'PENGINGAT_WAKTU_HABIS' : 'PEMBERITAHUAN_OVERTIME';
   }
   return null;
 }
