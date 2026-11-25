@@ -95,8 +95,8 @@ DECLARE
   old_value jsonb;
 BEGIN
   IF actor IS NULL
-     OR NOT public.has_role(actor, 'owner'::public.app_role)
-     OR public.finance_training_is_restricted(actor) THEN
+     OR public.has_role(actor, 'owner'::public.app_role) IS DISTINCT FROM TRUE
+     OR public.finance_training_is_restricted(actor) IS DISTINCT FROM FALSE THEN
     RAISE EXCEPTION 'Hanya Owner aktif yang dapat mengatur metode pembayaran';
   END IF;
   IF code NOT IN ('CASH','QRIS','TRANSFER') OR _enabled IS NULL
@@ -139,8 +139,8 @@ DECLARE
   s public.b25_payment_method_settings%ROWTYPE;
 BEGIN
   IF actor IS NULL
-     OR NOT public.has_role(actor, 'owner'::public.app_role)
-     OR public.finance_training_is_restricted(actor) THEN
+     OR public.has_role(actor, 'owner'::public.app_role) IS DISTINCT FROM TRUE
+     OR public.finance_training_is_restricted(actor) IS DISTINCT FROM FALSE THEN
     RAISE EXCEPTION 'Hanya Owner aktif yang dapat mengaktifkan kontrol pembayaran';
   END IF;
   IF _enabled IS NULL OR char_length(why) NOT BETWEEN 5 AND 500 THEN
