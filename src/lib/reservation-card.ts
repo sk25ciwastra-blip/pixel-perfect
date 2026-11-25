@@ -60,7 +60,7 @@ function loadImage(path: string): Promise<HTMLImageElement> {
   });
 }
 
-function round(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, fill: string, stroke?: string) {
+function round(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, fill: string | CanvasGradient, stroke?: string) {
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, r);
   ctx.fillStyle = fill;
@@ -136,7 +136,7 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   round(ctx, 353, 366, 416, 370, 15, '#ffffff', '#dca742');
   // Preserve actual QR modules; do not generate an artificial QR or annotate on it.
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(qr, 375, 377, 372, 348);
+  ctx.drawImage(qr, 382, 375, 354, 354);
   ctx.imageSmoothingEnabled = true;
 
   // Cream reservation body.
@@ -183,15 +183,17 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   round(ctx, 60, payTop + 152, 457, 59, 21, '#f9c45e');
   text(ctx, 'TOTAL', 79, payTop + 190, 28, ink, 800);
   text(ctx, rupiah(fields.total), 245, payTop + 190, 35, ink, 800, 260);
-  round(ctx, 562, payTop + 64, 225, 147, 19, '#f8d78c', '#d7ad5a');
-  round(ctx, 804, payTop + 64, 246, 147, 19, '#fffdfa', '#d7ad5a');
-  text(ctx, 'DP', 674, payTop + 110, 28, ink, 800);
-  text(ctx, fields.dpLabel, 674, payTop + 136, 19, ink, 600, 215);
-  text(ctx, rupiah(fields.minimumDp), 674, payTop + 179, 32, ink, 800, 212);
-  text(ctx, 'atau', 795, payTop + 143, 23, '#9d6c22', 800);
-  text(ctx, 'LUNAS', 926, payTop + 111, 28, ink, 800);
-  text(ctx, '(100%)', 926, payTop + 137, 19, ink, 600);
-  text(ctx, rupiah(fields.total), 926, payTop + 179, 32, ink, 800, 221);
+  round(ctx, 562, payTop + 64, 216, 147, 19, '#f8d78c', '#d7ad5a');
+  round(ctx, 837, payTop + 64, 217, 147, 19, '#fffdfa', '#d7ad5a');
+  ctx.textAlign = 'center';
+  text(ctx, 'DP', 670, payTop + 110, 28, ink, 800);
+  text(ctx, fields.dpLabel, 670, payTop + 136, 19, ink, 600, 205);
+  text(ctx, rupiah(fields.minimumDp), 670, payTop + 179, 32, ink, 800, 206);
+  text(ctx, 'atau', 807, payTop + 143, 23, '#9d6c22', 800);
+  text(ctx, 'LUNAS', 946, payTop + 111, 28, ink, 800);
+  text(ctx, '(100%)', 946, payTop + 137, 19, ink, 600);
+  text(ctx, rupiah(fields.total), 946, payTop + 179, 32, ink, 800, 200);
+  ctx.textAlign = 'left';
 
   const warnY = payTop + 228;
   round(ctx, 67, warnY, 988, 89, 30, navy, '#e9bd64');
