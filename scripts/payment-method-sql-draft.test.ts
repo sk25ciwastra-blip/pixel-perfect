@@ -18,7 +18,8 @@ test('RLS, revoke, Owner-only access, no public table grants',()=>{
   expect(sql).toContain('ALTER TABLE public.b25_payment_method_audit ENABLE ROW LEVEL SECURITY');
   expect(sql).toContain('REVOKE ALL ON public.b25_payment_method_settings, public.b25_payment_method_audit FROM PUBLIC, anon, authenticated');
   expect(sql).toContain("public.has_role(actor, 'owner'::public.app_role)");
-  expect(sql).toContain('public.finance_training_is_restricted(actor)');
+  expect(sql).toContain('public.finance_training_is_restricted(actor) IS DISTINCT FROM FALSE');
+  expect(sql).toContain("public.has_role(actor, 'owner'::public.app_role) IS DISTINCT FROM TRUE");
   expect(sql).toContain('auth.uid()');
   expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.b25_read_payment_method_settings() TO authenticated');
   expect(sql).not.toContain('GRANT SELECT ON public.b25_payment_method_settings');
