@@ -19,7 +19,7 @@ async function readActiveReservationTemplate(): Promise<ActiveTemplate> {
   const active = data?.[0];
   if (!active || typeof active.body !== 'string' || !active.body.trim() ||
       !Number.isSafeInteger(active.revision) || active.revision <= 0) {
-    throw new Error('Belum ada template Penawaran Reservasi ACTIVE yang dapat digunakan.');
+    throw new Error('Belum ada template Konfirmasi Reservasi aktif yang dapat digunakan.');
   }
   return { body: active.body, revision: active.revision };
 }
@@ -78,7 +78,7 @@ export function ReservationWhatsAppMessage({ offer, cardReady }: {
   }
 
   return <section aria-label="Template WhatsApp Reservasi" className="space-y-2 rounded-xl border border-[#d8c49c] bg-[#fffdf8] p-3 text-sm">
-    <h3 className="font-semibold text-[#342819]">Template WhatsApp — Penawaran Reservasi</h3>
+    <h3 className="font-semibold text-[#342819]">Template WhatsApp — Konfirmasi Reservasi</h3>
     <p className="text-xs text-[#755e42]">Teks dari template ACTIVE milik Owner dan data reservasi tersimpan. Belum menjadi Booking resmi.</p>
     {active.isPending && <p role="status">Memuat template resmi…</p>}
     {active.isError && <p role="alert" className="text-red-800">{active.error instanceof Error ? active.error.message : 'Template gagal dimuat.'} <Button type="button" size="sm" variant="outline" onClick={() => void active.refetch()}>Coba lagi</Button></p>}
