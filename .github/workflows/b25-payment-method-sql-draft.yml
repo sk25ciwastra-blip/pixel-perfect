@@ -1,0 +1,24 @@
+name: B25 Owner Payment Method SQL Draft Audit
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - supabase/pending/20261125_b25_payment_method_policy_owner_draft.sql
+      - scripts/payment-method-sql-draft.test.ts
+      - .github/workflows/b25-payment-method-sql-draft.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/payment-method-sql-draft.test.ts
+      - run: bun run build
+      - run: bunx tsc --noEmit
