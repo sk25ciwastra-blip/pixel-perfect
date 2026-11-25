@@ -883,24 +883,24 @@ function Ringkasan() {
                     const warnaMetode = metodeKode === "qris" ? "var(--v0-info)" : metodeKode === "transfer" ? "var(--v0-ungu)" : "var(--gold)";
                     const labelMetode = metodeKode === "qris" ? "QRIS" : metodeKode === "transfer" ? "TRANSFER" : "CASH";
                     return (
-                      <li key={t.id} className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2.5 py-2.5">
+                      <li key={t.id} className="db-recent-row py-2.5">
                         <span aria-hidden="true" className={`inline-flex size-9 shrink-0 items-center justify-center rounded-lg border ${t.jenis === "masuk" ? "border-siap/40 bg-siap/10 text-siap-foreground" : "border-bahaya/40 bg-bahaya/10 text-bahaya-foreground"}`}>
                           {t.jenis === "masuk" ? <ArrowDownLeft className="size-4" strokeWidth={2} /> : <ArrowUpRight className="size-4" strokeWidth={2} />}
                         </span>
-                        <div className="min-w-0">
+                        <div className="db-recent-identity min-w-0">
                           <p className="truncate text-sm font-medium leading-snug">{t.judul}{t.jenis === "masuk" && t.wa && <span className="tabular-nums"> - {t.wa}</span>}</p>
-                          {t.jenis === "keluar" && (t.catatan || t.operator) && <p className="truncate text-[10px] leading-snug text-muted-foreground">{[t.catatan, t.operator && `Oleh ${t.operator}`].filter(Boolean).join(" - ")}</p>}
+                          <p className="truncate text-[10px] leading-snug text-muted-foreground" aria-hidden={t.jenis !== "keluar" || !(t.catatan || t.operator)}>{t.jenis === "keluar" ? [t.catatan, t.operator && `Oleh ${t.operator}`].filter(Boolean).join(" - ") || "\u00a0" : "\u00a0"}</p>
                           {t.nomor !== "—" && (t.trxId || t.expenseId) ? (
                             <Button variant="link" className="h-auto p-0 font-mono text-[11px] font-bold leading-snug text-gold hover:text-gold-light" onClick={() => (t.trxId ? setDetailTransactionId(t.trxId) : t.expenseId ? setDetailExpenseId(t.expenseId) : undefined)}>{t.nomor}</Button>
                           ) : <span className="font-mono text-[11px] text-gold">{t.nomor}</span>}
                         </div>
-                        <div className="flex flex-col items-center gap-1 border-l border-gold/20 pl-2.5">
-                          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Pembayaran") : "Pengeluaran"}</span>
-                          <span className="text-[11px] tabular-nums text-muted-foreground">{jamWib(t.waktu)} WIB</span>
+                        <div className="db-recent-status flex flex-col items-center justify-center border-l border-gold/20">
+                          <span className={`db-recent-badge rounded-full border text-[9px] font-semibold uppercase tracking-wide ${t.jenis === "masuk" ? "border-gold/40 text-foreground/90" : "border-bahaya/50 bg-bahaya/10 text-bahaya-foreground"}`}>{t.jenis === "masuk" ? (t.sub || "Pembayaran") : "EXPENSE"}</span>
+                          <span className="db-recent-time tabular-nums text-muted-foreground">{jamWib(t.waktu)} WIB</span>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
+                        <div className="db-recent-amount flex flex-col items-end justify-center">
                           <p className={`whitespace-nowrap text-base font-bold tabular-nums ${t.jenis === "masuk" ? "text-siap-foreground" : "text-bahaya-foreground"}`}>{t.jenis === "masuk" ? "+ " : "– "}{rupiah(t.nominal)}</p>
-                          <span className="inline-flex items-center rounded-md border px-2 text-[9px] font-bold tracking-[0.08em]" style={{ color: warnaMetode, borderColor: `color-mix(in oklab, ${warnaMetode} 45%, transparent)`, backgroundColor: `color-mix(in oklab, ${warnaMetode} 12%, transparent)` }}>{labelMetode}</span>
+                          <span className="db-recent-method inline-flex items-center rounded-md border px-2 text-[9px] font-bold tracking-[0.08em]" style={{ color: warnaMetode, borderColor: `color-mix(in oklab, ${warnaMetode} 45%, transparent)`, backgroundColor: `color-mix(in oklab, ${warnaMetode} 12%, transparent)` }}>{labelMetode}</span>
                         </div>
                       </li>
                     );
