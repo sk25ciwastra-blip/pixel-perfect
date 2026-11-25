@@ -16,6 +16,7 @@ import { canAccessSupervisorOperationalPage } from "../lib/supervisor-routes";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PeranProvider } from "../lib/peran";
+import { B25ThemeProvider } from "../lib/b25-theme-provider";
 import { Opening } from "../components/opening";
 import { Toaster } from "../components/ui/sonner";
 
@@ -143,11 +144,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <PeranProvider>
-        <AccessGate><Outlet /></AccessGate>
-        <Opening />
-        <Toaster position="top-right" richColors closeButton />
-      </PeranProvider>
+      <B25ThemeProvider>
+        <PeranProvider>
+          <AccessGate><Outlet /></AccessGate>
+          <Opening />
+          <Toaster position="top-right" richColors closeButton />
+        </PeranProvider>
+      </B25ThemeProvider>
     </QueryClientProvider>
   );
 }
