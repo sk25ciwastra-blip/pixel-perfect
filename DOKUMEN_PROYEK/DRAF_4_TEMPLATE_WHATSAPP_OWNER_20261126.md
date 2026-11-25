@@ -4,16 +4,18 @@
 
 ## Daftar resmi yang diminta Owner untuk pilihan Pengaturan
 
-1. **Konfirmasi Reservasi** — setelah pembayaran diverifikasi dan Booking resmi diterbitkan. Jenis backend saat ini: `KONFIRMASI_BOOKING`, **nama tampilan yang diinginkan:** Konfirmasi Reservasi.
+1. **Konfirmasi Reservasi** — *konfirmasi rincian permintaan sebelum pembayaran*, status **MENUNGGU PEMBAYARAN**; **BELUM Booking resmi, belum ada TRX, kamar belum terkunci**. Jenis backend yang tepat untuk teks ini adalah `PENAWARAN_RESERVASI` (nama internal lama), dengan nama tampilan baru **Konfirmasi Reservasi**. Jenis `KONFIRMASI_BOOKING` adalah jalur lain sesudah pembayaran dan tidak boleh dicampur.
 2. **Pengingat Booking** — 30 menit sebelum jadwal Check-in, Receptionist mengirim manual. Backend: `PENGINGAT_BOOKING_30_MENIT`.
 3. **Pengingat Waktu Habis** — saat waktu menginap berakhir, pesan toleransi 15 menit. Backend: `PENGINGAT_WAKTU_HABIS`.
 4. **Pemberitahuan Overtime** — setelah waktu Check-out dan toleransi 15 menit, petugas meminta tamu menghubungi admin untuk mengonfirmasi biaya overtime **Rp50.000/jam** atau perpanjangan menginap. **Jenis backend baru BELUM ADA**; perlu peninjauan implementasi, gating manual, dan persetujuan migrasi terpisah.
 
-**Yang tidak ditampilkan sebagai pilihan di Pengaturan:** `PENAWARAN_RESERVASI` dan `KONFIRMASI_PEMBAYARAN`. **Jangan langsung DELETE** tabel/versi/RPC kedua jenis: `PENAWARAN_RESERVASI` masih digunakan Detail Reservasi untuk menyalin rincian sebelum pembayaran, sedangkan `KONFIRMASI_PEMBAYARAN` masih direferensikan pendamping PDF. Sembunyikan dari menu Owner *hanya setelah* memastikan alur layanan tetap berjalan; jangan mematikan template prepayment yang sudah ACTIVE.
+**Label tampilan yang diperbarui:** jenis backend `PENAWARAN_RESERVASI` tetap dipakai sebagai **Konfirmasi Reservasi sebelum pembayaran**, bukan dihapus. `KONFIRMASI_BOOKING` tetap dipertahankan untuk alur Booking resmi sesudah pembayaran meskipun tidak termasuk empat pilihan utama yang diminta Owner. `KONFIRMASI_PEMBAYARAN` juga masih direferensikan pendamping PDF historis. **Jangan DELETE** jenis, versi ACTIVE, riwayat, RPC, atau data tanpa audit alur terpisah.
 
 **Batas waktu:** Nomor #4 baru pesan **pemberitahuan**; kode biaya, kebijakan overtime, charge event, atau pencatatan keuangan tidak boleh diubah oleh revisi redaksi template ini. Pengiriman tetap **manual**.
 
-## 1. Konfirmasi Reservasi
+## 1. Konfirmasi Reservasi — draf revisi Owner, 26 November 2026
+
+**Koreksi Owner:** ini adalah *konfirmasi rincian permintaan sebelum pembayaran*, dengan susunan seperti template Penawaran sebelumnya. Pesan menyatakan permintaan tamu sudah dicatat sementara dan menampilkan kamar, jadwal, tarif, DP minimum serta opsi lunas. **Belum menerima pembayaran, belum ada nomor TRX, kamar belum terkunci, dan bukan bukti Booking resmi.** Draf ini **belum disetujui sebagai versi ACTIVE**.
 
 ```text
 *BATURADEN 25 HOMESTAY*
@@ -21,29 +23,46 @@
 
 Halo Kak [NAMA_TAMU] 👋
 
-Terima kasih telah melakukan reservasi di *Baturaden 25 Homestay*. Kami informasikan bahwa reservasi Kakak telah berhasil dikonfirmasi.
+Terima kasih telah memilih *Baturaden 25 Homestay*.
+
+Permintaan reservasi Kakak telah kami catat. Berikut rincian pemesanan kamar dan informasi pembayaran yang perlu Kakak konfirmasi.
 
 *DETAIL RESERVASI*
-No. Transaksi: [NOMOR_TRANSAKSI]
-Tipe Kamar: [TIPE_KAMAR]
-No. Kamar: [NOMOR_KAMAR]
-Paket: [PAKET]
-Check-in: [CHECKIN_WIB]
-Check-out: [CHECKOUT_WIB]
-Jumlah Tamu: [JUMLAH_TAMU] orang
+Nama Tamu : [NAMA_TAMU]
+Tipe Kamar : [TIPE_KAMAR]
+No. Kamar : [NOMOR_KAMAR]
+Paket : [PAKET]
+Check-in : [CHECKIN_WIB]
+Check-out : [CHECKOUT_WIB]
+Jumlah Tamu : [JUMLAH_TAMU] Orang
 
-*RINCIAN PEMBAYARAN*
-Total Tagihan: [TOTAL_TAGIHAN]
-Sisa Pembayaran: [SISA_TAGIHAN]
-Status Pembayaran: [STATUS_PEMBAYARAN]
+*RINCIAN HARGA*
+Harga Kamar : [HARGA_KAMAR]
+Biaya Tambahan : [BIAYA_TAMBAHAN]
+*Total Tagihan : [TOTAL_TAGIHAN]*
 
-Mohon simpan nomor transaksi dan bukti reservasi Kakak untuk memudahkan proses Check-in.
+*PILIHAN PEMBAYARAN*
+Minimum DP (50%) : *[DP_MINIMUM]*
+Pembayaran Lunas : *[TOTAL_TAGIHAN]*
 
-Kami menantikan kedatangan Kakak. Sampai bertemu! ✨
+*STATUS RESERVASI*
+⏳ *MENUNGGU PEMBAYARAN*
 
-*Baturaden 25 Homestay*
+Silakan memilih pembayaran DP minimum atau pelunasan sesuai rincian di atas.
+
+Setelah pembayaran kami terima dan verifikasi, reservasi Kakak akan dikonfirmasi sebagai *Booking resmi* dan bukti reservasi akan kami berikan.
+
+*PENTING*
+Pesan ini bukan bukti Booking resmi. Kamar belum terkunci dan ketersediaannya dapat berubah hingga pembayaran berhasil diverifikasi.
+
+Jika membutuhkan bantuan, silakan menghubungi admin kami.
+
+Terima kasih telah memilih *Baturaden 25 Homestay*. ✨
+
 _Your Comfort, Our Priority._
 ```
+
+**Pemetaan teknis yang benar:** template ini harus memanfaatkan kind `PENAWARAN_RESERVASI` yang sudah tersedia; label di Pengaturan dapat menjadi `Konfirmasi Reservasi`, **tanpa menciptakan Booking resmi** atau mengubah versi ACTIVE secara diam-diam. Semua token di atas termasuk allowlist `PENAWARAN_RESERVASI`: `NAMA_TAMU`, `TIPE_KAMAR`, `NOMOR_KAMAR`, `PAKET`, `CHECKIN_WIB`, `CHECKOUT_WIB`, `JUMLAH_TAMU`, `HARGA_KAMAR`, `BIAYA_TAMBAHAN`, `TOTAL_TAGIHAN`, dan `DP_MINIMUM`. Label 50% mengikuti ketentuan Owner saat ini; nilai `DP_MINIMUM` tetap dari sistem resmi. Tidak ada `NOMOR_TRANSAKSI`, `DP_DITERIMA`, `TOTAL_DIBAYAR_BERSIH` atau klaim sukses pembayaran dalam template pra-Booking ini.
 
 ## 2. Pengingat Booking — 30 Menit
 
@@ -123,6 +142,6 @@ Terima kasih atas pengertian dan kerja sama Kakak. 🙏
 ## Pelaksanaan aman
 
 - **Saat ini:** empat template lama masih ada di source/DB; PR #176 yang sudah MERGED hanya memperjelas tampilan, **belum mengubah pilihan**.
-- **Langkah kode berikutnya (perlu review):** mapping empat pilihan baru di Pengaturan tanpa memutus ketergantungan lama; jenis Overtime perlu dukungan backend/manual reminder dan uji role + waktu, bukan sekadar menambah tab tidak berfungsi.
+- **Langkah kode berikutnya (perlu review):** label `Konfirmasi Reservasi` memakai jenis `PENAWARAN_RESERVASI` pra-pembayaran yang sudah ada; `KONFIRMASI_BOOKING` tetap dipertahankan untuk Booking resmi sesudah pembayaran. Jenis Overtime perlu dukungan backend/manual reminder dan uji role + waktu, bukan sekadar menambah tab tidak berfungsi.
 - **Setelah teks disetujui Owner:** simpan versi ACTIVE melalui jalur Owner/audit resmi. Jangan mengganti ACTIVE diam-diam melalui kode, GitHub, atau SQL.
 - **Status UAT:** empat redaksi di atas DRAF; khusus notifikasi overtime **belum tersedia sebagai fungsi**, jangan dinyatakan PASS.
