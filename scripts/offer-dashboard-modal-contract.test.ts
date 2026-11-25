@@ -91,3 +91,13 @@ test('Saving a reservation opens its QRIS card preview, never the old auto-Whats
   expect(queue).toContain('makeReservationCardJpg(item)');
   expect(queue).toContain('RESERVATION_CARD_CAPTION');
 });
+
+test('QRIS download and WhatsApp stay disabled until JPG is ready; preview supports retry', () => {
+  expect(queue).toContain("card?.url && <Button asChild");
+  expect(queue).toContain("card?.url && whatsAppDraftUrl(item.phone, RESERVATION_CARD_CAPTION)");
+  expect(queue).toContain("disabled={busy || !card?.url}");
+  expect(queue).toContain("Coba Buat Ulang Kartu");
+  expect(queue).toContain("setCardRetry(value => value + 1)");
+  expect(queue).toContain("}, [item?.id, cardRetry])");
+  expect(queue).toContain("URL.revokeObjectURL(objectUrl)");
+});
