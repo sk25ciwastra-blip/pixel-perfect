@@ -10,7 +10,7 @@
 
 ## 1. Posisi repository dan integrasi
 
-- **Baseline `main` terakhir yang diperiksa:** merge [PR #172](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/172), commit `a3426fba11c3da7482311edf1df0c74c4d41e380` (26 November).
+- **Baseline kode aplikasi pada `main` sebelum commit dokumentasi ini:** merge [PR #172](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/172), commit `a3426fba11c3da7482311edf1df0c74c4d41e380` (26 November).
 - **Lovable:** pembacaan metadata setelah PR #172 menunjukkan source Lovable pada commit yang sama; kode yang disinkronkan **tidak** membuktikan preview berhasil dibangun atau situs yang telah dipublish memakai versi baru. Saat pemeriksaan, Lovable melaporkan `needs_attention / out_of_credits`. Tidak ada publish baru yang diotorisasi dalam rangkaian perbaikan ini.
 - **GitHub CI:** 16/16 workflow PASS sebelum merge untuk PR #169, #170, #171, dan #172 (PR #168 juga lulus CI). Ini bukti build/kontrak kode, **bukan** bukti seluruh alur browser dan Cloud.
 - PR berikut tidak diperlakukan sebagai langkah yang masih perlu di-merge. **Semuanya MERGED**:
