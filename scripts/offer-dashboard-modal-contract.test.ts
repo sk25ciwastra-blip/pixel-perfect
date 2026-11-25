@@ -41,7 +41,12 @@ test('Lihat detail leads to verified official Booking flow, never auto converts'
   expect(booking).toContain("_payment_verified: paymentVerified");
   expect(booking).toContain("result.status !== 'CONVERTED' || !result.transaction_number");
   expect(booking).toContain('Verifikasi Pembayaran & Terbitkan TRX');
-  expect(queue).toContain('Lampirkan QRIS resmi secara manual');
+  expect(queue).toContain('Unduh Kartu JPG');
+  expect(queue).toContain('makeReservationCardJpg(item)');
+  expect(queue).toContain('download={reservationCardFilename(item)}');
+  expect(queue).toContain('RESERVATION_CARD_CAPTION');
+  expect(queue).toContain('lampirkan file JPG');
+  expect(queue).not.toContain('<textarea aria-label="Pesan rincian reservasi"');
 });
 test('dashboard continues using real room occupancy and housekeeping action indicator', () => {
   expect(dashboard).toContain('nilai: String(jumlahTerisi)');
@@ -59,4 +64,20 @@ test('No duplicate Penawaran language leaks into the one-door Reservation interf
   expect(queue).toContain('Ya, batalkan reservasi');
   expect(booking).not.toContain('Ringkasan Penawaran');
   expect(booking).toContain('Ringkasan Reservasi');
+});
+
+test('Kartu Reservasi is downloaded as JPG using official QRIS without auto-sending or paying', () => {
+  const card = readFileSync('src/lib/reservation-card.ts', 'utf8');
+  expect(card).toContain("'/assets/qris-resmi-baturaden25.png'");
+  expect(card).toContain("'/assets/Logo_Resmi_BTRD25_Transparan.png'");
+  expect(card).toContain("canvas.toBlob(resolve, 'image/jpeg', .96)");
+  expect(card).toContain("reservationCardFields(offer)");
+  expect(card).toContain('Alamat');
+  expect(card).toContain('WhatsApp');
+  expect(card).toContain('DP');
+  expect(card).toContain('LUNAS');
+  expect(card).toContain('INI BUKAN BUKTI BOOKING RESMI');
+  expect(card).not.toContain("supabase.rpc(");
+  expect(queue).toContain('URL.revokeObjectURL(objectUrl)');
+  expect(queue).toContain('Membuka WhatsApp tidak mengirim pesan otomatis.');
 });
