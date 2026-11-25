@@ -26,12 +26,16 @@ type Version = {
 const kinds: { key: WhatsAppTemplateKind; title: string; description: string }[] = [
   { key: 'PENAWARAN_RESERVASI', title: 'Penawaran Reservasi', description: 'Sebelum DP diverifikasi; bukan Booking resmi dan tidak boleh memuat nomor TRX.' },
   { key: 'KONFIRMASI_BOOKING', title: 'Konfirmasi Booking', description: 'Setelah Booking resmi dengan nomor transaksi yang telah tersimpan.' },
-  { key: 'KONFIRMASI_PEMBAYARAN', title: 'Konfirmasi Pembayaran', description: 'Hanya setelah data pembayaran/refund terverifikasi.' },
+  { key: 'PENGINGAT_BOOKING_30_MENIT', title: 'Pengingat Booking (30 menit)', description: 'Muncul saat tersisa 30 menit menuju Check-in; Receptionist mengirim WhatsApp secara manual.' },
+  { key: 'PENGINGAT_WAKTU_HABIS', title: 'Pengingat Waktu Habis', description: 'Muncul ketika waktu menginap berakhir; sampaikan toleransi 15 menit, tanpa otomatis menagih overtime.' },
 ];
 const initialApprovedDraft: Record<WhatsAppTemplateKind, string> = {
   PENAWARAN_RESERVASI: OWNER_APPROVED_QUOTE_TEMPLATE,
   KONFIRMASI_BOOKING: OWNER_APPROVED_BOOKING_CONFIRMATION,
+  // Legacy kind is intentionally not in the official selection.
   KONFIRMASI_PEMBAYARAN: OWNER_APPROVED_PAYMENT_CONFIRMATION,
+  PENGINGAT_BOOKING_30_MENIT: '',
+  PENGINGAT_WAKTU_HABIS: '',
 };
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) + ' WIB';
@@ -76,7 +80,7 @@ function PengaturanTemplateWhatsApp() {
   const validation = validateWhatsAppTemplate(kind, body);
   const active = versions.find(item => item.status === 'ACTIVE');
   const unchanged = body === (active?.body ?? '');
-  const draftSuggestion = backendReady && !active;
+  const draftSuggestion = backendReady && !active && Boolean(initialApprovedDraft[kind]);
 
   async function save() {
     if (!owner || !backendReady || busy || unchanged || validation.length) return;
@@ -110,7 +114,8 @@ function PengaturanTemplateWhatsApp() {
           <section className="panel-mewah space-y-3 p-5">
             <h2 className="font-serif text-xl">Isi Pesan</h2>
             {draftSuggestion && <p role="status" className="rounded-lg border border-gold/30 p-3 text-sm">Teks template yang sudah disetujui Owner telah disiapkan otomatis. Ini masih draf, belum aktif untuk karyawan. Tinjau lalu tekan Simpan Versi Baru agar tersimpan atas akun Owner dan tercatat dalam riwayat.</p>}
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            {!active && backendReady && !initialApprovedDraft[kind] && <p role="note" className="rounded-lg border border-amber-500/30 p-3 text-sm">Teks pengingat belum disetujui Owner. Isi template setelah redaksi disetujui; tidak ada pengingat yang dikirim otomatis.</p>}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>
             {loading ? <p>Memuat template…</p> : <>
               <label htmlFor="wa-template-body" className="text-sm">Teks WhatsApp (maksimal 4.000 karakter)</label>
               <textarea id="wa-template-body" className="min-h-60 w-full rounded-lg border border-input bg-background p-3 text-sm"
