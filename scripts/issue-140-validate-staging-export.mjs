@@ -6,7 +6,7 @@
  */
 import { createHash } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
-import { isAbsolute, join, resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const EXPECTED_REF = 'bgtztcfbkcrvcipxbfti';
 const EXPECTED_CHECKPOINT = '76ed06e / 36e7cce';
