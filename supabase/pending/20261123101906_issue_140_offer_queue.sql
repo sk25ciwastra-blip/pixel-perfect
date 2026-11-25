@@ -98,6 +98,22 @@ begin
       end if;
       continue;
     end if;
+    -- LIVE retains a reviewed legacy 10-argument delegator to the 12-argument
+    -- official Booking writer. It does not insert guests and must stay intact.
+    -- Pin its exact LIVE definition hash, owner and SECURITY DEFINER metadata
+    -- rather than widening the allowlist for guest-writing functions.
+    if writer.signature =
+       'public.create_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamp with time zone)' then
+      if writer.prosrc ~* 'insert[[:space:]]+into[[:space:]]+(public\\.)?guests([[:space:]]|\\()'
+        or not writer.prosecdef
+        or writer.proowner is distinct from (select oid from pg_roles where rolname = current_user)
+        or sha256(convert_to(pg_get_functiondef(writer.oid), 'UTF8')) is distinct from
+          decode('2dec54022b5b5164c6c1c0b4af8f42af4c8337202549a8f373a1cb6ee1cb39be', 'hex')
+      then
+        raise exception 'Delegator Booking legacy 10 argumen berbeda dari checkpoint. Hentikan instalasi: %', writer.signature;
+      end if;
+      continue;
+    end if;
     if writer.signature not in (
       'public.create_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamp with time zone, uuid, uuid)',
       'public.create_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamp with time zone, uuid, uuid, integer)',
