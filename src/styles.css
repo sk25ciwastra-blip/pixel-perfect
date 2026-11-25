@@ -481,3 +481,41 @@
     transform: none;
   }
 }
+
+
+/* B25 Poin 7 — automatic Morning Blue (06:00–17:59 WIB).
+ * Night Gold uses original tokens unchanged. Morning accents only the shared
+ * navigation shell, not warm-white forms, semantic statuses or payment colors.
+ * Exact visual polish remains Lovable's responsibility.
+ */
+:root[data-b25-theme="morning"] {
+  --sidebar-mewah: linear-gradient(
+    180deg,
+    oklch(0.29 0.087 242) 0%,
+    oklch(0.20 0.055 245) 52%,
+    oklch(0.14 0.025 250) 100%
+  );
+  --b25-shell-accent: oklch(0.77 0.10 235);
+  --b25-shell-overlay: oklch(0.25 0.066 245 / 0.94);
+}
+:root[data-b25-theme="morning"] .b25-shell-sidebar {
+  border-right-color: oklch(0.75 0.09 230 / 0.28);
+}
+:root[data-b25-theme="morning"] .b25-shell-mobile-header,
+:root[data-b25-theme="morning"] .b25-shell-bottom-nav {
+  background-color: var(--b25-shell-overlay);
+  border-color: oklch(0.75 0.09 230 / 0.28);
+}
+:root[data-b25-theme="morning"] .b25-shell-sidebar .menu-aktif {
+  background: linear-gradient(90deg, oklch(0.66 0.09 230 / 0.22), transparent 85%);
+  box-shadow: inset 0 0 0 1px oklch(0.7 0.09 235 / 0.22);
+}
+:root[data-b25-theme="morning"] .b25-shell-sidebar .menu-aktif::before {
+  background: var(--b25-shell-accent);
+  box-shadow: 0 0 12px oklch(0.76 0.09 235 / 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-b25-theme] .b25-shell-sidebar .menu-aktif {
+    transition: none;
+  }
+}

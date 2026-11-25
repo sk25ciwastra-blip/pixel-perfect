@@ -5,6 +5,8 @@ import {
   IdCard, Settings, MoreHorizontal, X, FileBarChart, LogOut, ChevronDown, type LucideIcon,
 } from "lucide-react";
 import { usePeran } from "@/lib/peran";
+import { useB25Theme } from "@/lib/b25-theme-provider";
+import type { B25ThemePreference } from "@/lib/b25-appearance";
 import { canAccessSupervisorOperationalPage } from "@/lib/supervisor-routes";
 import { setSesiKasKonteks, useSesiKasKonteks } from "@/lib/sesi-kas";
 import { useTable } from "@/lib/data-live";
@@ -119,7 +121,7 @@ export function Kerangka({
     <div className={`min-h-screen bg-background text-foreground`}>
       {/* Sidebar desktop */}
       <aside
-        className="fixed inset-y-0 left-0 z-30 hidden w-[228px] flex-col overflow-hidden border-r border-gold/15 text-foreground lg:flex"
+        className="b25-shell-sidebar fixed inset-y-0 left-0 z-30 hidden w-[228px] flex-col overflow-hidden border-r border-gold/15 text-foreground lg:flex"
         style={{ background: "var(--sidebar-mewah)" }}
       >
         <img src={gedungSate} alt="" aria-hidden="true" width={768} height={1024} className="pointer-events-none absolute inset-x-0 bottom-0 h-80 w-full object-cover object-[50%_40%] opacity-55 [mask-image:linear-gradient(to_top,black_35%,transparent)]" />
@@ -147,7 +149,7 @@ export function Kerangka({
       </aside>
 
       {/* Header HP */}
-      <header className="sticky top-0 z-20 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-gold/20 bg-navy-deep/90 px-4 py-3 text-foreground backdrop-blur lg:hidden">
+      <header className="b25-shell-mobile-header sticky top-0 z-20 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-gold/20 bg-navy-deep/90 px-4 py-3 text-foreground backdrop-blur lg:hidden">
         <Logo ringkas />
         <MenuProfil ringkas />
       </header>
@@ -183,7 +185,7 @@ export function Kerangka({
       </main>
 
       {/* Navigasi bawah HP */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-gold/20 bg-navy-deep/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_30px_-12px_oklch(0_0_0/0.9)] backdrop-blur lg:hidden">
+      <nav className="b25-shell-bottom-nav fixed inset-x-0 bottom-0 z-30 border-t border-gold/20 bg-navy-deep/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_30px_-12px_oklch(0_0_0/0.9)] backdrop-blur lg:hidden">
         <ul className="grid grid-cols-5">
           {bawah.filter((m) => bolehAksesMenu(m.ke, peran, posisiKode)).map((m) => (
             <li key={m.ke}>
@@ -250,6 +252,7 @@ export function Kerangka({
 
 export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
   const { nama, posisi, keluar } = usePeran();
+  const { preference, appearance, setPreference } = useB25Theme();
   const { isSessionHelper, isTraining, openSessions, activeSession, assistedSessionId, selectAssistedSession, loading: sesiLoading } = useSesiKasKonteks();
   const employees = useTable("employees");
   const namaPemilik = (openedBy: string) => employees.rows.find((employee) => employee.user_id === openedBy)?.name ?? "Pemilik sesi";
@@ -306,6 +309,26 @@ export function MenuProfil({ ringkas }: { ringkas?: boolean }) {
               {assistedSessionId && <button type="button" className="text-xs font-semibold text-gold-light underline" onClick={() => selectAssistedSession(null)}>Keluar dari mode bantu</button>}
             </div>
           )}
+          <div className="my-3 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
+          <div className="rounded-lg border border-gold/20 bg-background/35 p-2.5">
+            <label htmlFor={ringkas ? "b25-tema-mobile" : "b25-tema-desktop"} className="mb-2 block text-xs font-semibold text-foreground">
+              Tema tampilan · {appearance === 'morning' ? 'Morning Blue' : 'Night Gold'}
+            </label>
+            <select
+              id={ringkas ? "b25-tema-mobile" : "b25-tema-desktop"}
+              className="w-full rounded-lg border border-gold/25 bg-background px-2 py-2 text-xs text-foreground"
+              value={preference}
+              onChange={(event) => setPreference(event.target.value as B25ThemePreference)}
+              aria-label="Pilih tema tampilan"
+            >
+              <option value="auto">Otomatis (06.00 / 18.00 WIB)</option>
+              <option value="morning">Pagi — Morning Blue</option>
+              <option value="night">Malam — Night Gold</option>
+            </select>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              Hanya mengubah tampilan Anda; tidak memengaruhi jadwal Booking atau harga.
+            </p>
+          </div>
           <div className="my-3 h-px bg-gradient-to-r from-transparent via-gold/35 to-transparent" />
           {yakin ? (
             <div className="space-y-2">
