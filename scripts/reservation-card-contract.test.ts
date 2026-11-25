@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { reservationCardFields, reservationCardFilename, RESERVATION_CARD_CAPTION } from '../src/lib/reservation-card';
 import { whatsAppReservationChatUrl, whatsAppReservationRecipient, whatsAppReservationWebUrl } from '../src/lib/whatsapp';
 import type { OfferDetail } from '../src/lib/reservation-offers';
+import { renderPendingReservationMessage, pendingReservationMessageFingerprint } from '../src/lib/reservation-whatsapp-message';
+import { OWNER_APPROVED_QUOTE_TEMPLATE } from '../src/lib/whatsapp-template-approved';
 
 const pending = {
   id: 'bcc96661-b33a-45ab-8d99-35368e6e8c0e',
@@ -116,4 +118,28 @@ test('Desktop WhatsApp Web recipient-only link matches Owner-proven URL without 
     expect(whatsAppReservationRecipient(phone)).toBeUndefined();
   }
   expect(whatsAppReservationWebUrl('081234567890')).toBe('https://web.whatsapp.com/send?phone=6281234567890');
+});
+
+test('official reservation template uses saved price, guest count and 50 percent DP without creating TRX', () => {
+  const message = renderPendingReservationMessage(pending, OWNER_APPROVED_QUOTE_TEMPLATE);
+  expect(message).toContain('Halo Kak Saipul');
+  expect(message).toContain('Rp 90.000');
+  expect(message).toContain('Rp 45.000');
+  expect(message).toContain('05');
+  expect(message).toContain('WIB');
+  expect(message).not.toContain('TRX');
+  const extra = renderPendingReservationMessage(
+    { ...pending, guest_count: 3, total: 140000, minimum_dp: 70000 },
+    OWNER_APPROVED_QUOTE_TEMPLATE,
+  );
+  expect(extra).toContain('Rp 50.000');
+  expect(extra).toContain('Rp 140.000');
+  expect(extra).toContain('3 Orang');
+  expect(() => renderPendingReservationMessage(
+    { ...pending, status: 'CONVERTED' }, OWNER_APPROVED_QUOTE_TEMPLATE,
+  )).toThrow('tidak lagi menunggu pembayaran');
+  expect(() => renderPendingReservationMessage(pending, 'Halo [NOMOR_TRANSAKSI]')).toThrow();
+  expect(pendingReservationMessageFingerprint(pending)).not.toBe(
+    pendingReservationMessageFingerprint({ ...pending, total: 140000 }),
+  );
 });
