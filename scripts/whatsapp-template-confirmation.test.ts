@@ -35,16 +35,16 @@ describe('Poin4 WhatsApp confirmed financial values', () => {
       document);
     expect(message).toContain('BTRDTRX-000027');
     expect(message).toContain('08:30 WIB');
-    expect(message).toContain('Rp120.000');
-    expect(message).toContain('Rp60.000');
+    expect(message.replaceAll('\u00a0', ' ')).toContain('Rp 120.000');
+    expect(message.replaceAll('\u00a0', ' ')).toContain('Rp 60.000');
     expect(message).not.toContain('[SISA_TAGIHAN]');
   });
   it('reports NET paid and outstanding from ledger, not gross when refunded', () => {
     const refunded = { ...document, totals: { ...document.totals,
       grossPaid: 120000, refunded: 30000, netPaid: 90000, remaining: 30000 } } as PaymentConfirmation;
     const values = confirmationTemplateValues('KONFIRMASI_PEMBAYARAN', refunded);
-    expect(values.TOTAL_DIBAYAR_BERSIH).toBe('Rp90.000');
-    expect(values.SISA_TAGIHAN).toBe('Rp30.000');
+    expect(String(values.TOTAL_DIBAYAR_BERSIH).replaceAll('\u00a0', ' ')).toBe('Rp 90.000');
+    expect(String(values.SISA_TAGIHAN).replaceAll('\u00a0', ' ')).toBe('Rp 30.000');
   });
   it('never describes walk-in as Booking confirmed', () => {
     const walkin = { ...document, times: { ...document.times,
