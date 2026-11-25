@@ -102,6 +102,7 @@ export function buildPaymentConfirmation(input: ConfirmationInput) {
   }
   return {
     transactionId: t.id, transactionNumber: t.transaction_number, transactionStatus: t.status,
+    origin: t.scheduled_check_in ? 'BOOKING' as const : 'WALK_IN' as const,
     generatedAt: confirmationDate(input.generatedAt), business: { ...input.business },
     guest: { name: input.guest.full_name, phone: input.canReadGuestPhone ? input.guest.phone : null },
     room: { number: input.room.room_number, type: input.roomType.name },
