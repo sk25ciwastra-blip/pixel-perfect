@@ -20,8 +20,8 @@ describe('Booking quote / Owner template integration values', () => {
       'Halo [NAMA_TAMU]. Kamar [NOMOR_KAMAR]. [CHECKIN_WIB] - [CHECKOUT_WIB]. Total [TOTAL_TAGIHAN], DP [DP_MINIMUM].',
       verified.templateValues);
     expect(message).toContain('Halo Andin. Kamar 03.');
-    expect(message).toContain('Rp100.000');
-    expect(message).toContain('Rp50.000');
+    expect(message).toContain('Rp 100.000');
+    expect(message).toContain('Rp 50.000');
     expect(message).toContain('WIB');
     expect(verified.message).toContain('Ketersediaan kamar dapat berubah');
     expect(verified.phone).toBe('6281234567890');
