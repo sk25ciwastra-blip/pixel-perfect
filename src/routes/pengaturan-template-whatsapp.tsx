@@ -86,9 +86,11 @@ function PengaturanTemplateWhatsApp() {
     if (!owner || !backendReady || busy || unchanged || validation.length) return;
     setBusy(true); setError('');
     try {
-      const { error: saveError } = await supabase.rpc('owner_save_whatsapp_template', {
-        _kind: kind, _body: body,
-      });
+      const reminderKind = kind === 'PENGINGAT_BOOKING_30_MENIT' || kind === 'PENGINGAT_WAKTU_HABIS';
+      const { error: saveError } = await supabase.rpc(
+        reminderKind ? 'owner_save_whatsapp_reminder_template' : 'owner_save_whatsapp_template',
+        { _kind: kind, _body: body },
+      );
       if (saveError) throw saveError;
       await reload(kind);
       toast.success('Template baru berhasil disimpan dengan riwayat versi.');
