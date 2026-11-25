@@ -2,7 +2,7 @@ import { test, expect } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { reservationCardFields, reservationCardFilename, RESERVATION_CARD_CAPTION } from '../src/lib/reservation-card';
-import { whatsAppReservationChatUrl } from '../src/lib/whatsapp';
+import { whatsAppReservationChatUrl, whatsAppReservationRecipient, whatsAppReservationWebUrl } from '../src/lib/whatsapp';
 import type { OfferDetail } from '../src/lib/reservation-offers';
 
 const pending = {
@@ -97,4 +97,22 @@ test('Reservation WhatsApp opens the intended Indonesian recipient with a short 
   for (const phone of ['0812', '', '0000000000', '62081234567890', '++6281234567890', '081234abc567']) {
     expect(whatsAppReservationChatUrl(phone, 'halo')).toBeUndefined();
   }
+});
+
+test('Desktop fallback routes straight to WhatsApp Web with intended recipient and caption', () => {
+  for (const phone of ['081234567890', '+6281234567890', '6281234567890', '81234567890', '08 1234-567890']) {
+    const href = whatsAppReservationWebUrl(phone, RESERVATION_CARD_CAPTION);
+    expect(href).toBeDefined();
+    const link = new URL(href!);
+    expect(link.origin).toBe('https://web.whatsapp.com');
+    expect(link.pathname).toBe('/send');
+    expect(link.searchParams.get('phone')).toBe('6281234567890');
+    expect(link.searchParams.get('text')).toBe(RESERVATION_CARD_CAPTION);
+    expect(whatsAppReservationRecipient(phone)).toBe('6281234567890');
+  }
+  for (const phone of ['', '0812', '62081234567890', '++6281234567890', '081234abc567']) {
+    expect(whatsAppReservationWebUrl(phone, 'halo')).toBeUndefined();
+    expect(whatsAppReservationRecipient(phone)).toBeUndefined();
+  }
+  expect(whatsAppReservationWebUrl('081234567890')).toBe('https://web.whatsapp.com/send?phone=6281234567890');
 });
