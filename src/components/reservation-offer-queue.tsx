@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCheck, ChevronRight, CreditCard, Download, FileText, Image as ImageIcon, MessageCircle, XCircle } from 'lucide-react';
+import { CheckCheck, ChevronRight, Copy, CreditCard, Download, FileText, Image as ImageIcon, MessageCircle, XCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { rupiah } from '@/lib/data-contoh';
 import { supabase } from '@/integrations/supabase/client';
 import { offerQueryKey, offerStatus, offerWib, readOffer, readOffers, type Offer, type OfferDetail } from '@/lib/reservation-offers';
 import { makeReservationCardJpg, reservationCardFilename, RESERVATION_CARD_CAPTION } from '@/lib/reservation-card';
-import { whatsAppReservationChatUrl } from '@/lib/whatsapp';
+import { whatsAppReservationChatUrl, whatsAppReservationRecipient, whatsAppReservationWebUrl } from '@/lib/whatsapp';
 
 function Slot({ offer }: { offer: Offer }) {
   return <span>{offerWib.format(new Date(offer.scheduled_check_in))} – {offerWib.format(new Date(offer.scheduled_check_out))} WIB</span>;
@@ -145,6 +145,8 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const item = detail.isSuccess ? detail.data : null;
   const chatUrl = item ? whatsAppReservationChatUrl(item.phone, RESERVATION_CARD_CAPTION) : undefined;
+  const webChatUrl = item ? whatsAppReservationWebUrl(item.phone, RESERVATION_CARD_CAPTION) : undefined;
+  const recipient = item ? whatsAppReservationRecipient(item.phone) : undefined;
   const [card, setCard] = useState<{ url: string; error: string } | null>(null);
   const [cardRetry, setCardRetry] = useState(0);
   // One immutable JPG per detail popup. Polling status never changes the image or its QRIS.
@@ -179,6 +181,15 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
       toast.error(failure instanceof Error ? failure.message : 'Gagal memperbarui reservasi.');
     } finally { setBusy(false); }
   }
+  async function copyWhatsAppValue(value: string, description: string) {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(value);
+      toast.success(`${description} berhasil disalin.`);
+    } catch {
+      toast.error('Penyalinan diblokir browser. Pilih dan salin teks yang ditampilkan secara manual.');
+    }
+  }
   return <Dialog open onOpenChange={open => { if (!open) close(); }}>
     <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-1.25rem)] max-w-xl overflow-y-auto rounded-[22px] border border-[#deca9f] bg-[#fffaf0] text-[#2c251b] shadow-[0_22px_60px_rgba(22,17,12,.26)]">
       <div className="rounded-xl bg-[#292119] px-4 py-4 text-[#fff5e5]"><p className="mb-1 text-[10px] font-semibold uppercase tracking-[.16em] text-[#dabc7e]">Baturaden 25 Homestay</p><DialogTitle className="font-serif text-xl">Detail Reservasi</DialogTitle></div>
@@ -202,11 +213,22 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
           <p className="text-xs font-semibold uppercase tracking-wide text-[#6f5738]">Kirim kartu reservasi & QRIS</p>
           <div className="flex flex-wrap gap-2">
             {card?.url && <Button asChild variant="outline" className="min-h-10 border-[#bf933e] bg-[#f3d590] px-4 text-[#332411] hover:bg-[#e9c270] hover:text-[#332411]"><a href={card.url} download={reservationCardFilename(item)}><Download aria-hidden="true" />Unduh Kartu JPG</a></Button>}
-            {card?.url && chatUrl && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={chatUrl} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Buka WhatsApp</a></Button>}
+            {card?.url && webChatUrl && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={webChatUrl} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Buka WhatsApp Web</a></Button>}
+            {card?.url && chatUrl && <Button asChild variant="outline" className="min-h-10 border-[#c0a46b] bg-[#fffdf8] px-4 text-[#4b391d] hover:bg-[#f7edd6]"><a href={chatUrl} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Via Link WhatsApp</a></Button>}
             {item.status === 'DRAFT' && <Button type="button" variant="outline" className="min-h-10 border-[#bd8c39] bg-[#e6b75f] px-4 text-[#30200c] hover:bg-[#d6a246] hover:text-[#30200c]" disabled={busy || !card?.url} onClick={() => void transition('sent')}><CheckCheck aria-hidden="true" />Sudah Dikirim</Button>}
           </div>
-          {card?.url && !chatUrl && <p role="alert" className="text-xs text-red-800">Nomor WhatsApp tujuan belum valid. Periksa nomor tamu sebelum mengirim kartu.</p>}
-          <p className="text-xs leading-relaxed text-[#7c6545]"><strong>Urutan kirim:</strong> unduh JPG, buka WhatsApp dengan caption singkat, lampirkan file JPG, kirim manual, lalu tandai <strong>Sudah Dikirim</strong>. Tombol WhatsApp tidak melampirkan gambar secara otomatis.</p>
+          {card?.url && !webChatUrl && <p role="alert" className="text-xs text-red-800">Nomor WhatsApp tujuan belum valid. Periksa nomor tamu sebelum mengirim kartu.</p>}
+          {card?.url && recipient && <details className="rounded-lg border border-[#e1cb9f] bg-[#fffdf8] p-3 text-xs text-[#6a5031]">
+            <summary className="cursor-pointer font-semibold">Jika WhatsApp gagal membuka nomor tujuan</summary>
+            <p className="mt-2">Buka WhatsApp Web di tab browser biasa dan cari nomor berikut. Salin caption setelah chat tujuan terbuka.</p>
+            <p className="mt-2 select-all font-mono text-sm font-semibold text-[#322715]">{recipient}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={() => void copyWhatsAppValue(recipient, 'Nomor WhatsApp')}><Copy aria-hidden="true" className="mr-1 size-4" />Salin Nomor</Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => void copyWhatsAppValue(RESERVATION_CARD_CAPTION, 'Caption')}><Copy aria-hidden="true" className="mr-1 size-4" />Salin Caption</Button>
+            </div>
+            <p className="mt-2 select-all text-[#493721]">{RESERVATION_CARD_CAPTION}</p>
+          </details>}
+          <p className="text-xs leading-relaxed text-[#7c6545]"><strong>Urutan kirim:</strong> unduh JPG, buka WhatsApp Web (atau coba link WhatsApp), pastikan chat sesuai nomor tamu, lampirkan file JPG, kirim manual, lalu tandai <strong>Sudah Dikirim</strong>. Tombol WhatsApp tidak melampirkan gambar secara otomatis.</p>
           {(canConvert || owner) && <div className="flex flex-wrap items-center gap-2 border-t border-[#e3d0af] pt-3">
             {canConvert && <Button type="button" variant="outline" className="min-h-10 border-[#54422c] bg-[#30271d] px-4 text-[#f8deb0] hover:bg-[#483521] hover:text-[#fff1d5]" disabled={busy} onClick={() => convert(item)}><CreditCard aria-hidden="true" />Telah Dibayar · Verifikasi</Button>}
             {owner && <Button type="button" variant="outline" className={confirmCancel ? 'min-h-10 border-[#a92e28] bg-[#ac302b] px-4 text-white hover:bg-[#8e251f] hover:text-white' : 'min-h-10 border-[#d9b9ae] bg-[#fff9f4] px-4 text-[#973b2d] hover:bg-[#fce9e4] hover:text-[#872d22]'} disabled={busy} onClick={() => {
