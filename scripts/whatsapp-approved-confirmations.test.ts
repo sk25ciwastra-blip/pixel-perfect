@@ -41,8 +41,10 @@ describe('Poin 4 Owner-approved Booking / Payment confirmations', () => {
     expect(ui).toContain("PENAWARAN_RESERVASI: OWNER_APPROVED_QUOTE_TEMPLATE");
     expect(ui).toContain("KONFIRMASI_BOOKING: OWNER_APPROVED_BOOKING_CONFIRMATION");
     expect(ui).toContain("KONFIRMASI_PEMBAYARAN: OWNER_APPROVED_PAYMENT_CONFIRMATION");
-    expect(ui).toContain("const draftSuggestion = backendReady && !active;");
-    expect(ui).toContain("supabase.rpc('owner_save_whatsapp_template'");
+    expect(ui).toContain("const draftSuggestion = backendReady && !active && Boolean(initialApprovedDraft[kind]);");
+    expect(ui).toContain("reminderKind ? 'owner_save_whatsapp_reminder_template' : 'owner_save_whatsapp_template'");
+    expect(ui).toContain("const { error: saveError } = await rpc(");
+    expect(ui).toContain("onClick={() => void save()}");
     expect(ui).toContain('disabled={!backendReady || busy || unchanged || validation.length > 0}');
   });
 });

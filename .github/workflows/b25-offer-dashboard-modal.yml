@@ -1,0 +1,39 @@
+name: B25 Offer Dashboard KPI and Modal Draft
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - src/routes/index.tsx
+      - src/components/reservation-offer-queue.tsx
+      - src/components/formulir-pemesanan.tsx
+      - scripts/offer-dashboard-modal-contract.test.ts
+      - scripts/issue-140-release-gate-readonly.sql
+      - scripts/issue-140-release-gate-readonly.test.ts
+      - scripts/issue-140-migration-order-contract.test.ts
+      - scripts/issue-140-catalog-compatibility-readonly.sql
+      - scripts/issue-140-catalog-compatibility-readonly.test.ts
+      - scripts/issue-140-validate-staging-export.mjs
+      - scripts/issue-140-validate-staging-export.test.ts
+      - scripts/issue-140-verify-clone-parity.mjs
+      - scripts/issue-140-verify-clone-parity.test.ts
+      - supabase/migrations/20261018000000_finance_training_enforcement.sql
+      - supabase/pending/20261125150000_issue140_training_anon_rpc_hardening.sql
+      - supabase/pending/20261123084929_booking_quote_read_guards.sql
+      - supabase/pending/20261123101906_issue_140_offer_queue.sql
+      - .github/workflows/b25-offer-dashboard-modal.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dashboard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/offer-dashboard-modal-contract.test.ts scripts/issue-140-release-gate-readonly.test.ts scripts/issue-140-migration-order-contract.test.ts scripts/issue-140-catalog-compatibility-readonly.test.ts scripts/issue-140-validate-staging-export.test.ts scripts/issue-140-verify-clone-parity.test.ts
+      - run: bun run build
+      - run: bunx tsc --noEmit
