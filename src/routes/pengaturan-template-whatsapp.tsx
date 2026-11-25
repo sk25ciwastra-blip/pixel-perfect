@@ -6,6 +6,7 @@ import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
 import { usePeran } from '@/lib/peran';
 import { supabase } from '@/integrations/supabase/client';
+import { rpc } from '@/lib/data-live';
 import {
   WHATSAPP_TEMPLATE_FIELDS, validateWhatsAppTemplate,
   type WhatsAppTemplateKind,
@@ -87,7 +88,7 @@ function PengaturanTemplateWhatsApp() {
     setBusy(true); setError('');
     try {
       const reminderKind = kind === 'PENGINGAT_BOOKING_30_MENIT' || kind === 'PENGINGAT_WAKTU_HABIS';
-      const { error: saveError } = await supabase.rpc(
+      const { error: saveError } = await rpc(
         reminderKind ? 'owner_save_whatsapp_reminder_template' : 'owner_save_whatsapp_template',
         { _kind: kind, _body: body },
       );
