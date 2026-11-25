@@ -32,7 +32,7 @@ describe('Poin 4/7 WhatsApp templates (no DB or send effects)', () => {
     expect(validateWhatsAppTemplate('KONFIRMASI_BOOKING', 'Halo [nama_tamu]')).not.toEqual([]);
     expect(validateWhatsAppTemplate('KONFIRMASI_BOOKING', 'Halo [NAMA_TAMU] [STATUS')).not.toEqual([]);
     expect(() => renderWhatsAppTemplate('KONFIRMASI_BOOKING', booking, {
-      NAMA_TAMU: 'A\\nB', NOMOR_TRANSAKSI: 'BTRDTRX-000027',
+      NAMA_TAMU: 'A\nB', NOMOR_TRANSAKSI: 'BTRDTRX-000027',
     })).toThrow();
   });
   it('keeps Unicode guest names readable', () => {
