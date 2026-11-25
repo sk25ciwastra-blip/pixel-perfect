@@ -280,7 +280,7 @@ export function downloadConfirmationBytes(bytes: Uint8Array, data: PaymentConfir
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = confirmationFilename(data, 'pdf';
+  anchor.download = confirmationFilename(data, 'pdf');
   document.body.appendChild(anchor);
   try { anchor.click(); } finally { anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); }
 }
