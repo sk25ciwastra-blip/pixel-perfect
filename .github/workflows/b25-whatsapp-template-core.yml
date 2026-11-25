@@ -10,6 +10,10 @@ on:
     paths:
       - 'src/lib/whatsapp-template-core.ts'
       - 'src/lib/booking-quote.ts'
+      - 'src/lib/whatsapp-confirmation-template.ts'
+      - 'src/components/pesan-template-konfirmasi.tsx'
+      - 'src/components/konfirmasi-pembayaran.tsx'
+      - 'scripts/whatsapp-template-confirmation.test.ts'
       - 'src/components/booking-quote.tsx'
       - 'scripts/whatsapp-template-core.test.ts'
       - 'scripts/whatsapp-template-booking.test.ts'
@@ -53,7 +57,7 @@ jobs:
       - name: Install pinned dependencies
         run: bun install --frozen-lockfile
       - name: Pure template regression
-        run: bun test scripts/whatsapp-template-core.test.ts scripts/whatsapp-template-booking.test.ts
+        run: bun test scripts/whatsapp-template-core.test.ts scripts/whatsapp-template-booking.test.ts scripts/whatsapp-template-confirmation.test.ts
       - name: Build and generate route types
         run: bun run build
       - name: TypeScript
