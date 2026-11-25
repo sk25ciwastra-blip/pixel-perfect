@@ -1,0 +1,27 @@
+name: B25 Poin4 Approved Confirmation Templates
+on:
+  push:
+    branches:
+      - feat/poin4-approved-confirmation-prefill-20261125
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  confirmation-prefill:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Approved templates and no-overwrite tests
+        run: bun test scripts/whatsapp-approved-confirmations.test.ts
+      - name: Build application
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
