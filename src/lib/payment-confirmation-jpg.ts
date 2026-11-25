@@ -39,10 +39,11 @@ export async function confirmationPdfToJpg(pdfBytes: Uint8Array): Promise<Blob> 
 }
 
 export function downloadConfirmationJpg(blob: Blob, data: PaymentConfirmation) {
+  const filename = confirmationFilename(data, 'jpg');
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = confirmationFilename(data, 'jpg');
+  anchor.download = filename;
   document.body.appendChild(anchor);
   try { anchor.click(); } finally { anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); }
 }
