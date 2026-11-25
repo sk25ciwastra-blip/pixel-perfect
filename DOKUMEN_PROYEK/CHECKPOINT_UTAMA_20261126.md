@@ -91,13 +91,12 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 - **Pengecualian wajib:** popup berhasil **Check-in** dan popup berhasil **Reservasi/Booking** yang sudah mempunyai alur bukti/struk. Dialog konfirmasi **sebelum** hapus, refund, pembatalan dan tindakan sensitif **bukan** ActionResultDialog dan tetap dilindungi.
 - **Status:** konsep dan desain telah dibahas; **BELUM ADA implementasi global, PR, atau UAT**. Jangan memasang massal tanpa memetakan seluruh handler, role dan feedback agar tidak merusak alur operasional.
 
-## 6A. ADDENDUM OWNER — 13 revisi desain Lovable (26 November 2026)
+## 6A. ADDENDUM OWNER — 12 revisi desain Lovable aktif (26 November 2026)
 
-**Sumber:** permintaan Owner dalam obrolan 26 November 2026. **Status seluruh 13 item: BACKLOG DESAIN / BELUM DIKERJAKAN DALAM ADDENDUM INI.** Urutan di bawah mengikuti urutan yang diberikan Owner, **bukan prioritas teknis atau persetujuan publish**.
+**Sumber:** permintaan Owner dan koreksi lanjutan pada 26 November 2026. **Status 12 item aktif: BACKLOG DESAIN / BELUM DIKERJAKAN DALAM ADDENDUM INI.** Item asli `UI-26-01` (popup dan tombol Aksi Cepat Penawaran) **DICABUT ATAS KOREKSI OWNER** dan tidak lagi menjadi pekerjaan. ID lama tidak dipakai ulang agar riwayat konsisten. Urutan di bawah mengikuti urutan permintaan aktif Owner, **bukan prioritas teknis atau persetujuan publish**.
 
 | ID | Revisi desain yang akan dikerjakan di Lovable | Batas pekerjaan / catatan agar tidak salah alur | Status |
 | --- | --- | --- | --- |
-| UI-26-01 | **Popup dan tombol form Aksi Cepat Penawaran** | Istilah **Penawaran** dari daftar Owner perlu diselaraskan dengan keputusan terbaru **Reservasi Satu Pintu** pada PR #167: Aksi Cepat resmi saat ini CHECK-IN, RESERVASI, EXPENSE. Jangan menghidupkan kembali pintu Penawaran terpisah atau mengubah bisnis tanpa keputusan Owner khusus. Catat permintaan desain popup/tombol sesuai istilah Owner. | BELUM REVISI |
 | UI-26-02 | **Popup berhasil atau gagal di semua fitur** | Gunakan acuan **B25 Global Action Result Dialog / `ActionResultDialog`** yang dibahas pada §6: dua varian Success dan Error, teks dinamis per aksi, **tanpa tombol X di atas**, tombol Tutup di bawah. **Kecualikan popup berhasil Check-in dan Reservasi/Booking**; jangan mengganti konfirmasi sebelum aksi destruktif. | BELUM REVISI |
 | UI-26-03 | **Rapikan susunan histori Booking** | Rapikan komposisi/posisi visual Riwayat Booking; **jangan mengulang** perbaikan kode kolom Check-in/Check-out PR #171 dan pusat status PR #172 tanpa temuan baru. Pertahankan pengelompokan, data, status, dan fungsi Booking. | BELUM REVISI |
 | UI-26-04 | **Rapikan grafik pada Dashboard** | Revisi tampilan/penataan grafik, bukan rumus, data pendapatan, atau sumber hitungan; pertahankan widget operasional yang tidak sedang direvisi. | BELUM REVISI |
@@ -112,7 +111,7 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 | UI-26-13 | **Form Reservasi** | Ikuti §5: font/gaya **sama seperti form Check-in & Pengeluaran**, header **OPERASIONAL / PERMINTAAN RESERVASI**, dua panel identitas/rincian, ringkasan DP minimum 50%, footer **Simpan Reservasi & Lihat Kartu**. Alur tetap Reservasi menunggu pembayaran, belum TRX/kamar terkunci. | BELUM REVISI |
 
 **Aturan pengerjaan:**
-1. Ini adalah **daftar tugas desain di Lovable**, **bukan** persetujuan untuk mengubah backend, SQL Cloud, uang, data UAT, akses, atau publish. Tidak ada dari 13 item dinyatakan PASS, MERGED, atau selesai hanya karena tercatat di sini.
+1. Ini adalah **daftar 12 tugas desain aktif di Lovable**, **bukan** persetujuan untuk mengubah backend, SQL Cloud, uang, data UAT, akses, atau publish. Tidak ada dari 12 item aktif dinyatakan PASS, MERGED, atau selesai hanya karena tercatat di sini.
 2. Kerjakan satu item per iterasi, gunakan screenshot dan persetujuan visual Owner yang benar, lalu tandai status secara faktual: **BELUM REVISI → SKETSA / OWNER REVIEW → IMPLEMENTASI → UAT VISUAL PASS**. Bukti sinkron GitHub ≠ publish ≠ UAT.
 3. Item yang sudah memiliki rancangan (§4–§6) **tidak dianggap implementasi**. Contoh: tabel Transaksi, Form Reservasi, dan `ActionResultDialog`.
 4. Setelah item dikerjakan di Lovable, simpan **file/PR/commit, lingkup perubahan, hasil tes dan UAT, status publish** ke checkpoint ini agar obrolan selanjutnya tidak memulai ulang. Jangan otomatis memindahkan status item lain.
@@ -122,7 +121,7 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
-1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (13 revisi desain Lovable) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.
+1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.
 2. Tahap berikutnya fokus **desain** yang diminta Owner: mulai form Reservasi atau Daftar Transaksi berdasarkan pilihan pekerjaan saat sesi baru; **pilih satu layar per iterasi**, jaga handler/perizinan.
 3. Jika implementasi desain dimulai, buat branch/PR khusus, review diff terfokus, test TypeScript/build/kontrak baru, lalu minta approval untuk **merge**; publish Lovable dan perubahan Cloud tetap meminta otorisasi terpisah.
 4. UAT desain baru harus dilakukan di browser Owner/Receptionist pada versi yang benar; jangan menyebut CI atau sinkronisasi source sebagai PASS visual.
