@@ -99,15 +99,16 @@ test('Reservation WhatsApp opens the intended Indonesian recipient with a short 
   }
 });
 
-test('Desktop fallback routes straight to WhatsApp Web with intended recipient and caption', () => {
+test('Desktop WhatsApp Web recipient-only link matches Owner-proven URL without extra parameters', () => {
   for (const phone of ['081234567890', '+6281234567890', '6281234567890', '81234567890', '08 1234-567890']) {
-    const href = whatsAppReservationWebUrl(phone, RESERVATION_CARD_CAPTION);
+    const href = whatsAppReservationWebUrl(phone);
     expect(href).toBeDefined();
     const link = new URL(href!);
     expect(link.origin).toBe('https://web.whatsapp.com');
     expect(link.pathname).toBe('/send');
     expect(link.searchParams.get('phone')).toBe('6281234567890');
-    expect(link.searchParams.get('text')).toBe(RESERVATION_CARD_CAPTION);
+    expect(link.search).toBe('?phone=6281234567890');
+    expect(link.searchParams.get('text')).toBeNull();
     expect(whatsAppReservationRecipient(phone)).toBe('6281234567890');
   }
   for (const phone of ['', '0812', '62081234567890', '++6281234567890', '081234abc567']) {
