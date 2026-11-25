@@ -196,3 +196,23 @@ dan melakukan inspeksi katalog sebelum/sesudah dump. Review pribadi terlebih dah
 untuk literal sensitif dalam DDL, lalu pastikan hash dan parity sebelum clone.
 Jika autentikasi atau izin catalog/dump ditolak, laporkan **BLOCKED**; jangan
 mengganti ke akun/host lain atau memberi grant tanpa persetujuan.
+
+
+## Checkpoint STAGING terpasang 25 November 2026 — supersedes historical BLOCKED checkpoints
+
+**This is a new checkpoint, not a retroactive change of previous clone-rehearsal reports.** Prior sections documenting BLOCKED clone or Staging access describe earlier points in time. The Owner explicitly approved isolated Supabase Staging deployment. Docker, Supabase CLI, and full clone parity were NOT used; consequently clone parity/recovery still cannot be claimed PASS.
+
+- **Target:** `Baturaden-25-Staging`, Supabase ref `bgtztcfbkcrvcipxbfti`, PostgreSQL 17.11, separate from Lovable Cloud LIVE.
+- **Schema migration ledger (Supabase apply_migration):**
+  - `20261125145706` — Training enforcement, with Owner/Supervisor *Bantu Sesi Aktif* preserved;
+  - `20261125145739` — Booking Quote-Read guard and DP/schedule wrappers;
+  - `20261125145821` — reservation offer queue, reader, writer, transition, canonical WA unique index, audit/invalidation triggers;
+  - `20261125150021` — revoked accidental PUBLIC/anon EXECUTE on 10 Training SECURITY DEFINER RPCs;
+  - `20261125150729` — guarded configuration-only adjustment: Staging minimum DP **50%** per final Owner rule, with `ceil` rounding.
+- **Catalog/security postchecks PASS:** 10 Training RPCs blocked to anon and still callable by authenticated role; Quote and Offer anon grants denied; offer tables/events RLS enabled, no direct client access; Booking writer original definitions saved with matching patched SHA; original financial payment/state triggers and authorized Owner/Supervisor session assistance preserved. Informational RLS-without-policy advisory for private offer tables is intentional; broad authenticated definer/other advisories are NOT all resolved.
+- **Staging rollback-only SQL smoke test PASS** with existing Owner identity claim simulated in the SQL session (not a real browser login). Verified 2-hour schedule = 120 minutes, no conflict, 50% DP, DRAFT creation, idempotent retry, detail/list, manual `SENT`, rejection of conversion without verified payment/session, cancellation by Owner; second negative test rejected the same UUID with different payload, unknown Auth identity reading a quote, and unknown identity marking sent. Every test used `BEGIN ... ROLLBACK`. Independent postcheck found **11 rooms and 0 guests, 0 offers/events, 0 transactions/payments, 0 cash sessions, 0 employees**.
+- **CI PR #166:** 18/18 workflow runs SUCCESS at commit `74f7d7bf9e92093f35093f9fe8a9c7b9c96cedff`, including quote/confirmation template source-contract updates without changing 4 Owner-approved WhatsApp templates.
+- **E2E blockers:** Staging has only 1 Auth user (Owner), `public.employees=0`: no actual Receptionist login. Supabase connector does not expose official Auth-user provisioning. Existing Lovable project `Pixel Perfect Homestay Hub` is at source `ebdc3070f7ec4ce8fbbfa452960d6e843f2c10da`, not the PR head; available preview therefore cannot prove candidate UI. Lovable status `needs_attention` / `out_of_credits`. No Lovable draft created: draft preview can share the LIVE database. The tracked frontend `.env` points to **a non-Staging Supabase project**, so DO NOT open the existing preview or run it against the Staging checklist without explicit configuration isolation.
+- **Separate WhatsApp backend dependency:** `public.whatsapp_template_versions` and Owner save-template RPCs do not exist in Staging. The four official message templates and Owner-version flow are separate from the Penawaran RPC migrations and need their own authorized setup/test.
+
+**Next gate:** use official Supabase Auth onboarding to create an isolated Staging Receptionist, provision employee permissions using the application's approved flow, and produce a candidate-specific browser preview configured with *Staging-only* environment variables. Then run role-by-role E2E, manual WhatsApp text/confirmation, collision/unavailable-room paths and paid conversion with safe Staging fixture plus explicit cleanup. Do **not** create users by inserting directly into `auth.users`, change Lovable LIVE config, expose any secret keys, or use credits without authorization. **PR #166 remains DRAFT/HOLD, no merge, LIVE SQL, or publish**. No financial transaction has been persisted during these smoke tests.
