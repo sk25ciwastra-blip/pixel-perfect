@@ -1,0 +1,40 @@
+name: B25 Poin6 Payment Methods Overview Gate
+on:
+  push:
+    branches:
+      - feat/poin6-payment-methods-settings-20261125
+    paths:
+      - src/routes/pengaturan-metode-pembayaran.tsx
+      - src/routes/pengaturan.tsx
+      - scripts/poin6-payment-methods-contract.test.mjs
+      - .github/workflows/b25-poin6-payment-methods.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/routes/pengaturan-metode-pembayaran.tsx
+      - src/routes/pengaturan.tsx
+      - scripts/poin6-payment-methods-contract.test.mjs
+      - .github/workflows/b25-poin6-payment-methods.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  payment-overview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify Poin6 methods route contracts
+        run: node --test scripts/poin6-payment-methods-contract.test.mjs
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Build TanStack routes without deployment
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
