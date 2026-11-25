@@ -31,6 +31,10 @@ test('Card uses stored reservation snapshot, 50 percent DP and WIB times', () =>
   expect(card.checkIn).toContain('10.10');
   expect(card.checkOut).toContain('12.10');
   expect(card.checkIn).toContain('WIB');
+  expect(card.checkInDate).toContain('27 Nov 2026');
+  expect(card.checkInTime).toBe('10.10 WIB');
+  expect(card.checkOutDate).toContain('27 Nov 2026');
+  expect(card.checkOutTime).toBe('12.10 WIB');
   expect(reservationCardFilename(pending)).toBe('RESERVASI-Saipul-bcc96661.jpg');
   expect(RESERVATION_CARD_CAPTION).toContain('Halo Kak');
 });
