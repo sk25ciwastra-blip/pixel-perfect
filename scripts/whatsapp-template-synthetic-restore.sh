@@ -43,3 +43,26 @@ psql "$RESTORE_URI" -v ON_ERROR_STOP=1 -At -c \
       ELSE 'FAIL synthetic restore mismatch' END" \
   | tee "$tmp/check.txt"
 grep -q '^PASS synthetic isolated restore' "$tmp/check.txt"
+
+
+# Two independent simulated Owner sessions race to save one kind.
+# The advisory transaction lock must create sequential revision numbers
+# without losing audit history or producing two ACTIVE versions.
+for n in 3 4; do
+  (
+    psql "$RESTORE_URI" -X -v ON_ERROR_STOP=1 -c \
+      "SELECT set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', false);
+       SELECT public.owner_save_whatsapp_template('PENAWARAN_RESERVASI', 'Simulasi revisi ${n}: [NAMA_TAMU]');" \
+      >"$tmp/owner_${n}.log"
+  ) &
+done
+wait
+psql "$RESTORE_URI" -v ON_ERROR_STOP=1 -At -c \
+  "SELECT CASE WHEN
+    (SELECT count(*) FROM public.whatsapp_template_versions WHERE kind='PENAWARAN_RESERVASI')=4
+    AND (SELECT count(*) FROM public.whatsapp_template_versions WHERE kind='PENAWARAN_RESERVASI' AND status='ACTIVE')=1
+    AND (SELECT max(revision) FROM public.whatsapp_template_versions WHERE kind='PENAWARAN_RESERVASI')=4
+    AND (SELECT count(*) FROM public.whatsapp_template_audit WHERE kind='PENAWARAN_RESERVASI')=7
+    THEN 'PASS simultaneous Owner edits serialized with complete audit'
+    ELSE 'FAIL concurrent Owner edit state' END" | tee "$tmp/concurrent.txt"
+grep -q '^PASS simultaneous Owner edits' "$tmp/concurrent.txt"
