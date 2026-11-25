@@ -43,3 +43,19 @@ test('Training payment guard preserves Owner/Supervisor Bantu Sesi Aktif alongsi
   const body = training.match(/CREATE OR REPLACE FUNCTION public\.finance_prepare_payment\(\)[\s\S]*?\$function\$;/i)?.[0] ?? '';
   expect(body).toMatch(/selected_session\.opened_by\s*<>\s*NEW\.recorded_by[\s\S]*?AND NOT public\.finance_is_owner_or_supervisor\(NEW\.recorded_by\)[\s\S]*?AND NOT public\.finance_training_context_matches_session\(/);
 });
+
+const trainingAnonAcl = readFileSync('supabase/pending/20261125150000_issue140_training_anon_rpc_hardening.sql','utf8');
+
+test('All 10 Training SECURITY DEFINER RPCs explicitly deny PUBLIC and anon while retaining staff grants', () => {
+  const revoke = trainingAnonAcl.slice(trainingAnonAcl.indexOf('REVOKE EXECUTE ON FUNCTION')).trim();
+  expect(revoke).toContain('FROM PUBLIC, anon;');
+  expect(training).toContain(revoke);
+  for (const name of [
+    'check_in_training_booking', 'check_out_training_transaction',
+    'create_finance_training_assignment', 'create_training_finance_deposit',
+    'create_training_reservation', 'get_finance_training_context',
+    'get_training_finance_session_summary', 'record_training_finance_expense',
+    'record_training_transaction_payment', 'resolve_finance_training_assignment',
+  ]) expect(revoke).toContain('public.' + name + '(');
+  expect((revoke.match(/public\.[a-z_]+\(/g) ?? []).length).toBe(10);
+});
