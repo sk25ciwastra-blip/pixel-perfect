@@ -139,6 +139,28 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 
 **Keputusan setelah ekspor:** arsip ditemukan ≠ validasi restore PASS. Migrasi tetap NO-GO hingga checksum, pembacaan TOC, pemulihan terisolasi, pembandingan fingerprint terbaru, dan persetujuan Owner yang terpisah terbukti.
 
+## Addendum backup 25 November 2026 — arsip privat berhasil diverifikasi integritasnya
+
+**Perubahan gerbang:** backup LIVE terbaru kini **TERSEDIA**, bukan lagi sekadar bucket kosong. Owner mengunggah `pixel-perfect-homestay-hub_261125.backup.zip` secara privat, dan `storage.objects` LIVE dikonfirmasi dengan **SELECT metadata saja**.
+
+| Bukti | Hasil |
+|---|---|
+| Bucket `database_export_25_11_26` | 🟢 Private (`public=false`), 1 objek |
+| Objek Cloud Storage | `pixel-perfect-homestay-hub_261125.backup`, 1.014.628 byte; dibuat 2026-11-25 01:50:59 UTC |
+| ZIP diterima (lokal privat) | 1.014.806 byte, 1 entry, CRC PASS |
+| File `.backup` dari ZIP | 1.014.628 byte; ukuran cocok dengan objek bucket |
+| SHA-256 ZIP | `19761478eff92fc2a583084aa14a303cc4b7fcf987ada8e47725f3bcb80785bc` |
+| SHA-256 berkas `.backup` | `e50c1823b62bbd25786cf03b12508ef989bebeb176cf4f526e262086b5c234f2` |
+| Format PostgreSQL | `PGDMP` 1.16, header valid |
+| Kompresi | 97/97 frame Zstandard berhasil didekompresi |
+| Inventaris CREATE TABLE | 45 `public`, 27 `auth`, 10 `storage`; jumlah `public` sesuai fingerprint LIVE 25 Nov |
+
+**Batas bukti:** ukuran Cloud Storage yang cocok dengan file ZIP **tidak membuktikan identitas checksum objek Cloud** (hash Cloud belum dibandingkan). Analisis header dan payload frame **tidak sama dengan `pg_restore --list` atau restore skema/data penuh**. Tidak ada `pg_restore` di runtime pemeriksa; RLS/ACL/Auth/Storage pemulihan **belum PASS**. `CREATE TABLE` count saja tidak membuktikan persamaan setiap definisi.
+
+**Keputusan gerbang:** 🟢 backup baru ditemukan, integritas ZIP/PGDMP/frame terverifikasi dan inventaris skema cocok secara jumlah; 🔴 restore PostgreSQL terisolasi, ACL/Auth/Storage parity dan jalur pemulihan nyata belum selesai. PR #145 tetap DRAFT/HOLD dan tidak ada migrasi/publish.
+
+**Keamanan:** backup ZIP/.backup tidak diunggah ke GitHub/CI, tidak ada SQL DML/DDL pada Cloud. Laporan JSON tanpa data tamu/keuangan hanya boleh dibagikan sebagai metadata.
+
 ## Release gates (all required, sequential)
 1. 🟢 Identify correct Lovable LIVE project and database (done via connector); 🔴 approved change window still pending.
 2. 🟢 Execute **only read-only** structural preflight on LIVE (done); 🔴 independent final security review still pending.
