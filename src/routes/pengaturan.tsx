@@ -10,7 +10,7 @@ export const Route = createFileRoute("/pengaturan")({
   component: HalamanPengaturan,
 });
 
-type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan";
+type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan" | "/pengaturan-metode-pembayaran";
 type Item = { ikon: LucideIcon; label: string; ket: string; ke?: Ke };
 
 const kelompok: { judul: string; item: Item[] }[] = [
@@ -21,7 +21,7 @@ const kelompok: { judul: string; item: Item[] }[] = [
     { ikon: Building2, label: "Profil Homestay", ket: "Nama, alamat, dan kontak." },
   ]},
   { judul: "Keuangan", item: [
-    { ikon: CreditCard, label: "Metode Pembayaran", ket: "Cash, QRIS, dan Transfer." },
+    { ikon: CreditCard, label: "Metode Pembayaran", ket: "Cash, QRIS, Transfer, dan status pembayaran gabungan.", ke: "/pengaturan-metode-pembayaran" },
     { ikon: Receipt, label: "Daftar Pengeluaran", ket: "Jenis dan keperluan pengeluaran.", ke: "/daftar-pengeluaran" },
     { ikon: Percent, label: "Minimum DP & Komisi", ket: "Ketentuan DP dan komisi.", ke: "/pengaturan-keuangan" },
     { ikon: Wallet, label: "Rekening Owner", ket: "Rekening tujuan transfer.", ke: "/pengaturan-keuangan" },
