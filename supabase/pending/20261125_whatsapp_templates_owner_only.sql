@@ -134,10 +134,60 @@ $$;
 REVOKE ALL ON FUNCTION public.owner_save_whatsapp_template(text,text)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.owner_save_whatsapp_template(text,text) TO authenticated;
+
+-- Narrow, read-only RPC: employees never get direct SELECT on table.
+-- Training guard must exist AND return false. Missing/stale functions deny.
+CREATE OR REPLACE FUNCTION public.read_active_whatsapp_template(_kind text)
+RETURNS TABLE(kind text, revision integer, body text)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = ''
+AS $read$
+DECLARE
+  _actor uuid := auth.uid();
+  _is_owner boolean;
+  _active_staff boolean;
+  _restricted boolean := true;
+BEGIN
+  IF _actor IS NULL OR _kind IS NULL OR _kind NOT IN (
+    'PENAWARAN_RESERVASI','KONFIRMASI_BOOKING','KONFIRMASI_PEMBAYARAN'
+  ) THEN
+    RAISE EXCEPTION 'Akses template WhatsApp ditolak' USING ERRCODE = '42501';
+  END IF;
+  _is_owner := public.has_role(_actor, 'owner'::public.app_role);
+  IF NOT _is_owner THEN
+    -- No elevated access solely based on employee position in JWT.
+    SELECT EXISTS (
+      SELECT 1 FROM public.user_roles roles
+      JOIN public.employees emp ON emp.user_id = roles.user_id
+      WHERE roles.user_id = _actor AND roles.role = 'employee'::public.app_role
+        AND emp.active = true AND emp.position::text IN ('receptionist','supervisor')
+    ) INTO _active_staff;
+    IF NOT _active_staff THEN
+      RAISE EXCEPTION 'Akses template WhatsApp ditolak' USING ERRCODE = '42501';
+    END IF;
+    -- Old staging installations may not have Training. Never assume NONE.
+    IF pg_catalog.to_regprocedure('public.finance_training_current_user_is_restricted()') IS NULL THEN
+      RAISE EXCEPTION 'Pengaman Training belum tersedia' USING ERRCODE = '42501';
+    END IF;
+    EXECUTE 'SELECT public.finance_training_current_user_is_restricted()' INTO _restricted;
+    IF _restricted IS DISTINCT FROM false THEN
+      RAISE EXCEPTION 'Akses template dibatasi selama Training' USING ERRCODE = '42501';
+    END IF;
+  END IF;
+  RETURN QUERY SELECT w.kind, w.revision, w.body
+    FROM public.whatsapp_template_versions w
+    WHERE w.kind = _kind AND w.status = 'ACTIVE'
+    ORDER BY w.revision DESC LIMIT 1;
+END;
+$read$;
+REVOKE ALL ON FUNCTION public.read_active_whatsapp_template(text)
+ FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.read_active_whatsapp_template(text)
+ TO authenticated;
+
 COMMIT;
 
 -- Release gate:
 -- 1. Review against LIVE schema and independently test server-side token whitelist.
 -- 2. Test anon/employee/HK/Training denial and Owner concurrent revisions.
--- 3. Implement authenticated controlled read for staff only after review.
+-- 3. Controlled staff read RPC now pending; validate Training function and LIVE schema before release.
 -- 4. No table delete, no data seeding, and no automatic message sending.
