@@ -116,6 +116,15 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 - 🔴 CI: [Focused Gate #45526495442](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/45526495442) belum selesai saat pembaruan pertama. Jangan tandai PASS sebelum hasil workflow sukses.
 - 🔴 Backup LIVE: arsip terbaru tetap belum ditemukan melalui sumber yang terhubung; tidak ada bukti restore penuh. Tidak ada perubahan Cloud.
 
+## Addendum pemeriksaan posisi LIVE dan izin baca — 25 November 2026
+
+- 🟢 SQL fixture PostgreSQL di CI kini memakai `public.employee_position` enum yang cocok dengan metadata Lovable LIVE: receptionist, housekeeping, supervisor, inspector, investor. Sebelumnya fixture menyederhanakannya sebagai `text`.
+- 🟢 Ditambahkan pemeriksaan **penolakan akses template untuk Inspector dan Investor** dengan role employee aktif, selain Housekeeping, nonaktif, Training, anon. Tidak ada grant baru.
+- 🟢 **GitHub Actions run #45527505680 SUCCESS** pada commit `dcb5d0e8c4aba4b240b4f1a7bb951d03fff0086c`: PostgreSQL synthetic fixture & restore, regresi Bun, build, TypeScript PASS.
+- 🟢 Backups: diperiksa ulang berkas yang tersedia di percakapan; tidak ada backup PostgreSQL LIVE baru yang terlampir. Connector Lovable yang tersedia mendukung membaca database, **bukan aksi unduh backup**; jangan mengklaim arsip telah dibuat.
+- 🔴 **Prasyarat Owner/ops untuk langkah berikutnya:** backup LIVE terbaru melalui saluran privat dan bukti restorasi **isolated** sesuai handoff 19/21 Nov; jangan kirim dump berisi tamu/Auth/keuangan ke GitHub/CI publik.
+- 🔴 Migrasi SQL, merge, deploy, publish, UAT LIVE tetap HOLD sampai gerbang bukti backup dan persetujuan eksplisit terlewati.
+
 ## Release gates (all required, sequential)
 1. 🟢 Identify correct Lovable LIVE project and database (done via connector); 🔴 approved change window still pending.
 2. 🟢 Execute **only read-only** structural preflight on LIVE (done); 🔴 independent final security review still pending.
