@@ -85,6 +85,12 @@ BEGIN
   IF SQLERRM = 'FAIL: malformed token accepted' THEN RAISE; END IF;
  END;
  BEGIN
+  PERFORM public.owner_save_whatsapp_template('PENAWARAN_RESERVASI','Halo [NAMA_TAMU]' || chr(13) || 'Terima kasih');
+  RAISE EXCEPTION 'FAIL: carriage return template accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM = 'FAIL: carriage return template accepted' THEN RAISE; END IF;
+ END;
+ BEGIN
   INSERT INTO public.whatsapp_template_versions (kind,revision,body,created_by)
   VALUES ('KONFIRMASI_BOOKING', 1, 'Hello [NAMA_TAMU]', auth.uid());
   RAISE EXCEPTION 'FAIL: direct authenticated insert accepted';
