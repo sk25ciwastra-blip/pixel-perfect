@@ -100,6 +100,11 @@ test('QRIS download and WhatsApp stay disabled until JPG is ready; preview suppo
   expect(queue).toContain("card?.url && webChatUrl && <Button asChild");
   expect(queue).toContain('<a href={webChatUrl} target="_blank" rel="noopener noreferrer">');
   expect(queue).toContain("Buka WhatsApp Web");
+  expect(queue).toContain("Salin Link Chat");
+  expect(queue).toContain("copyWhatsAppValue(webChatUrl, 'Link chat WhatsApp')");
+  expect(queue).toContain("{webChatUrl && <p className=");
+  expect(queue).toContain("Ctrl+T");
+  expect(queue).toContain("Ctrl+V");
   expect(queue).toContain("Salin Nomor");
   expect(queue).toContain("Salin Caption");
   expect(queue).toContain("copyWhatsAppValue(RESERVATION_CARD_CAPTION, 'Caption')");
