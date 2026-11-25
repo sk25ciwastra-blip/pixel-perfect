@@ -33,6 +33,9 @@ import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
 import panorama from "@/assets/panorama-kota-malam.png.asset.json";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
+import { OfferQueue } from "@/components/reservation-offer-queue";
+import { canPreviewBookingQuote } from "@/lib/booking-quote";
+import type { OfferDetail } from "@/lib/reservation-offers";
 import { PopupBerhasil } from "@/components/check-in-berhasil";
 import { skalaGrafik, skalaAdaptif, posisiSkala, labelJuta, type ModeGrafik } from "@/lib/skala-grafik";
 import { DetailTransaksi } from "@/components/detail-transaksi";
@@ -185,7 +188,7 @@ function jamWib(value: string) {
 const statusKamarMap = { ready: "siap", occupied: "terisi", dirty: "perlu", cleaning: "sedang" } as const;
 
 function Ringkasan() {
-  const { peran, nama, posisi, posisiKode } = usePeran();
+  const { peran, nama, posisi, posisiKode, masuk, training } = usePeran();
 
   const rooms = useTable("rooms");
   const transactions = useTransaksiOperasional();
@@ -395,41 +398,6 @@ function Ringkasan() {
   const jumlahPerlu = hitung("perlu");
   const persenTerisi = kamarAktif.length > 0 ? Math.round((jumlahTerisi / kamarAktif.length) * 100) : 0;
 
-  const statistik: Kpi[] = [
-    ...(peran === "owner"
-      ? [{
-          label: "Pendapatan Hari Ini",
-          nilai: rupiah(pembayaranHariIni.reduce((total, payment) => total + Number(payment.amount), 0)),
-          catatan: "pembayaran hari ini",
-          ikon: CircleDollarSign,
-          varian: "hijau" as const,
-        }]
-      : []),
-    {
-      label: "Booking Aktif",
-      nilai: String(bookingAktif.length),
-      catatan: "menunggu kedatangan",
-      ikon: CalendarDays,
-      varian: "emas",
-    },
-    {
-      label: "Kamar Terisi",
-      nilai: String(jumlahTerisi),
-      catatan: `dari ${kamarAktif.length} kamar`,
-      ikon: BedDouble,
-      varian: "emas",
-      cincin: persenTerisi,
-    },
-    ...(peran !== "owner"
-      ? [{
-          label: "Perlu Dibersihkan",
-          nilai: String(jumlahPerlu),
-          catatan: "setelah Check-out",
-          ikon: Brush,
-          varian: "amber" as const,
-        }]
-      : []),
-  ];
   const isFinanceViewer = peran === "owner" || posisiKode === "supervisor";
   const pengeluaranRows = financeExpenses.rows as unknown as {
     id: string; category: string; note: string; recorded_by: string; expense_number: string | null; amount: number; method: string; created_at: string;
@@ -599,7 +567,52 @@ function Ringkasan() {
     if (tersimpan > 0) setTarget(tersimpan);
   }, []);
 
-  const [modal, setModal] = useState<"check_in" | "booking" | "pengeluaran" | null>(null);
+  const [modal, setModal] = useState<"check_in" | "booking" | "pengeluaran" | "offer" | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
+  const [convertOffer, setConvertOffer] = useState<OfferDetail | null>(null);
+  const canQuote = canPreviewBookingQuote("booking", posisiKode, masuk);
+  // KPI Penawaran hanya untuk peran yang memiliki akses penawaran.
+  // Jumlah Perlu Tindakan memakai indikator checklist yang sudah ada, bukan data baru.
+  const statistik: Kpi[] = canQuote ? [
+    {
+      label: "Kamar Terisi",
+      nilai: String(jumlahTerisi),
+      catatan: `dari ${kamarAktif.length} kamar`,
+      ikon: BedDouble,
+      varian: "emas",
+      cincin: persenTerisi,
+    },
+    {
+      label: "Perlu Tindakan",
+      nilai: indikator.perluTindakan === null ? "—" : String(indikator.perluTindakan),
+      catatan: "kamar butuh perhatian",
+      ikon: Info,
+      varian: "amber",
+    },
+  ] : [
+    {
+      label: "Booking Aktif",
+      nilai: String(bookingAktif.length),
+      catatan: "menunggu kedatangan",
+      ikon: CalendarDays,
+      varian: "emas",
+    },
+    {
+      label: "Kamar Terisi",
+      nilai: String(jumlahTerisi),
+      catatan: `dari ${kamarAktif.length} kamar`,
+      ikon: BedDouble,
+      varian: "emas",
+      cincin: persenTerisi,
+    },
+    {
+      label: "Perlu Dibersihkan",
+      nilai: String(jumlahPerlu),
+      catatan: "setelah Check-out",
+      ikon: Brush,
+      varian: "amber",
+    },
+  ];
   const refreshSemua = async () => {
     await Promise.all([transactions.refresh(), rooms.refresh(), payments.refresh(), guests.refresh()]);
   };
@@ -674,10 +687,11 @@ function Ringkasan() {
             <section className="panel-mewah min-w-0 p-4" aria-labelledby="judul-aksi-cepat">
               <h2 id="judul-aksi-cepat" className="flex items-center gap-3 text-sm font-semibold tracking-[0.2em] text-gold"><BellRing className="size-5" strokeWidth={1.6} aria-hidden="true" />AKSI CEPAT<span className="h-px flex-1 bg-gradient-to-r from-gold/50 to-transparent" aria-hidden="true" /></h2>
               {bolehAksiTransaksi ? (
-                <div className="mt-4 grid grid-cols-3 gap-1.5">
-                  <TombolAksi ikon={LogIn} judul="CHECK-IN" utama onClick={() => setModal("check_in")} />
-                  <TombolAksi ikon={CalendarPlus} judul="RESERVASI" onClick={() => setModal("booking")} />
-                  <TombolAksi ikon={ReceiptText} judul="EXPENSE" onClick={() => setModal("pengeluaran")} />
+                <div className={`mt-4 grid gap-1.5 ${canQuote ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"}`}>
+                  <TombolAksi ikon={LogIn} judul="CHECK-IN" utama rapat={canQuote} onClick={() => setModal("check_in")} />
+                  <TombolAksi ikon={CalendarPlus} judul="RESERVASI" rapat={canQuote} onClick={() => setModal("booking")} />
+                  {canQuote && <TombolAksi ikon={FileText} judul="PENAWARAN" rapat onClick={() => setModal("offer")} />}
+                  <TombolAksi ikon={ReceiptText} judul="EXPENSE" rapat={canQuote} onClick={() => setModal("pengeluaran")} />
                 </div>
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -692,9 +706,11 @@ function Ringkasan() {
                 </div>
               )}
             </section>
+            {canQuote && <OfferQueue selected={selectedOffer} select={setSelectedOffer}
+              owner={posisiKode === "owner"} conversionAllowed={!training.is_training}
+              convert={offer => { setSelectedOffer(null); setConvertOffer(offer); }} />}
             {statistik.map((item) => <KartuKpi key={item.label} item={item} />)}
           </div>
-
           {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
           <div className="mt-5 grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,1.95fr)_minmax(320px,1fr)]">
             <section className="panel-mewah db-panel-operasional flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar">
@@ -964,6 +980,13 @@ function Ringkasan() {
       )}
       {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {modal === "booking" && <FormulirPemesanan mode="booking" onClose={() => setModal(null)} onSaved={refreshSemua} />}
+      {canQuote && modal === "offer" && <FormulirPemesanan mode="offer" onClose={() => setModal(null)} onSaved={refreshSemua}
+        onOfferSaved={offer => {
+          setModal(null);
+          if (offer.status === "DRAFT" || offer.status === "SENT") setSelectedOffer(offer.id);
+        }} />}
+      {canQuote && convertOffer && <FormulirPemesanan key={convertOffer.id} mode="booking" offer={convertOffer}
+        onClose={() => setConvertOffer(null)} onSaved={refreshSemua} />}
       {modal === "pengeluaran" && (
         <FormulirPengeluaran
           sessionId={checkoutSessionId}
@@ -1094,15 +1117,15 @@ function JudulModul({ id, ikon: Ikon, judul, sub, aksi }: { id: string; ikon: Lu
   );
 }
 
-function TombolAksi({ ikon: Ikon, judul, utama, onClick }: { ikon: LucideIcon; judul: string; utama?: boolean; onClick: () => void }) {
+function TombolAksi({ ikon: Ikon, judul, utama, rapat, onClick }: { ikon: LucideIcon; judul: string; utama?: boolean; rapat?: boolean; onClick: () => void }) {
   return (
     <Button
       variant="ghost"
       type="button"
       onClick={onClick}
-      className={`flex h-auto min-h-12 min-w-0 whitespace-pre-line flex-row items-center justify-start gap-1 rounded-lg border px-2 py-2.5 text-left text-[0.7rem] font-bold whitespace-nowrap leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
+      className={`flex h-auto min-h-12 min-w-0 flex-row items-center justify-start gap-1 rounded-lg border py-2.5 text-left font-bold whitespace-nowrap leading-tight transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${rapat ? "px-1.5 text-[0.63rem]" : "px-2 text-[0.7rem]"} ${utama ? "emas-isi border-transparent" : "border-gold/30 bg-navy-deep/70 text-foreground hover:border-gold/70 hover:text-gold-light"}`}
     >
-      <Ikon className={`size-5 shrink-0 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
+      <Ikon className={`${rapat ? "size-4" : "size-5"} shrink-0 ${utama ? "" : "text-gold"}`} strokeWidth={1.7} />
       <span className="min-w-0 whitespace-nowrap">{judul}</span>
     </Button>
   );
