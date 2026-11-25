@@ -24,7 +24,6 @@ export type WhatsAppTemplateValues = Record<string, string | number | null | und
 const MAX_TEMPLATE_LENGTH = 4000;
 const MAX_VALUE_LENGTH = 300;
 const TOKEN = /\[([A-Z][A-Z0-9_]*)\]/g;
-const BRACKETS = /\[[^\]\r\n]*\]/g;
 const FORBIDDEN_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 const forbiddenValue = /[\r\n\u2028\u2029\u0000-\u001F\u007F]/;
 
@@ -40,8 +39,10 @@ export function validateWhatsAppTemplate(kind: WhatsAppTemplateKind, template: s
     if (!allowed.has(token)) errors.push(`Variabel [${token}] tidak tersedia untuk ${kind}.`);
   }
   // Reject malformed/unknown bracket syntax rather than shipping literal tokens to customers.
-  const remaining = template.replace(TOKEN, '').match(BRACKETS) ?? [];
-  if (remaining.length) errors.push('Format variabel harus [NAMA_VARIABEL] dan terdaftar.');
+  const remaining = template.replace(TOKEN, '');
+  if (remaining.includes('[') || remaining.includes(']')) {
+    errors.push('Format variabel harus [NAMA_VARIABEL] dan terdaftar.');
+  }
   if (!tokens.length) errors.push('Template wajib memuat minimal satu variabel resmi.');
   return errors;
 }
