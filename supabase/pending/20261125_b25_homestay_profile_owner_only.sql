@@ -79,79 +79,8 @@ BEGIN
     OR char_length(clean_address)>500
     OR char_length(clean_phone)>30
     OR char_length(clean_whatsapp)>30
-    OR (clean_phone<>'' AND clean_phone !~ '^[+]?[0-9 ()-]{6,30})
-    OR (clean_whatsapp<>'' AND clean_whatsapp !~ '^\\+?[0-9 ()-]{6,30}$') THEN
-   RAISE EXCEPTION 'Isi Profil Homestay tidak valid';
- END IF;
- SELECT * INTO old_record FROM public.b25_homestay_profile WHERE id=true FOR UPDATE;
- IF NOT FOUND THEN RAISE EXCEPTION 'Data profil belum terinisialisasi'; END IF;
- IF (old_record.business_name,old_record.address,old_record.phone,old_record.whatsapp)
-    IS NOT DISTINCT FROM (clean_name,clean_address,clean_phone,clean_whatsapp) THEN
-   RETURN;
- END IF;
- old_value:=jsonb_build_object(
-   'business_name',old_record.business_name,'address',old_record.address,
-   'phone',old_record.phone,'whatsapp',old_record.whatsapp);
- next_value:=jsonb_build_object(
-   'business_name',clean_name,'address',clean_address,'phone',clean_phone,'whatsapp',clean_whatsapp);
- UPDATE public.b25_homestay_profile SET business_name=clean_name,
-   address=clean_address,phone=clean_phone,whatsapp=clean_whatsapp,
-   updated_by=actor,updated_at=clock_timestamp() WHERE id=true;
- INSERT INTO public.b25_homestay_profile_audit(actor_id,old_value,new_value)
- VALUES(actor,old_value,next_value);
-END;
-$fn$;
-
-REVOKE ALL ON FUNCTION public.b25_read_homestay_profile() FROM PUBLIC,anon,authenticated;
-REVOKE ALL ON FUNCTION public.b25_save_homestay_profile(text,text,text,text) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.b25_read_homestay_profile() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.b25_save_homestay_profile(text,text,text,text) TO authenticated;
-
-COMMIT;
--- POSTCHECK (on isolated review DB): read RPC succeeds with valid logged-in context;
--- writes Owner-only, non-Owner/anon/Training denied, no-op has no audit, update append-only audit.
--- ROLLBACK PLAN (separately authorized):
--- DROP FUNCTION public.b25_save_homestay_profile(text,text,text,text);
--- DROP FUNCTION public.b25_read_homestay_profile();
--- DROP TABLE public.b25_homestay_profile_audit;
--- DROP TABLE public.b25_homestay_profile;
-)
-    OR (clean_whatsapp<>'' AND clean_whatsapp !~ '^[+]?[0-9 ()-]{6,30}) THEN
-   RAISE EXCEPTION 'Isi Profil Homestay tidak valid';
- END IF;
- SELECT * INTO old_record FROM public.b25_homestay_profile WHERE id=true FOR UPDATE;
- IF NOT FOUND THEN RAISE EXCEPTION 'Data profil belum terinisialisasi'; END IF;
- IF (old_record.business_name,old_record.address,old_record.phone,old_record.whatsapp)
-    IS NOT DISTINCT FROM (clean_name,clean_address,clean_phone,clean_whatsapp) THEN
-   RETURN;
- END IF;
- old_value:=jsonb_build_object(
-   'business_name',old_record.business_name,'address',old_record.address,
-   'phone',old_record.phone,'whatsapp',old_record.whatsapp);
- next_value:=jsonb_build_object(
-   'business_name',clean_name,'address',clean_address,'phone',clean_phone,'whatsapp',clean_whatsapp);
- UPDATE public.b25_homestay_profile SET business_name=clean_name,
-   address=clean_address,phone=clean_phone,whatsapp=clean_whatsapp,
-   updated_by=actor,updated_at=clock_timestamp() WHERE id=true;
- INSERT INTO public.b25_homestay_profile_audit(actor_id,old_value,new_value)
- VALUES(actor,old_value,next_value);
-END;
-$fn$;
-
-REVOKE ALL ON FUNCTION public.b25_read_homestay_profile() FROM PUBLIC,anon,authenticated;
-REVOKE ALL ON FUNCTION public.b25_save_homestay_profile(text,text,text,text) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.b25_read_homestay_profile() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.b25_save_homestay_profile(text,text,text,text) TO authenticated;
-
-COMMIT;
--- POSTCHECK (on isolated review DB): read RPC succeeds with valid logged-in context;
--- writes Owner-only, non-Owner/anon/Training denied, no-op has no audit, update append-only audit.
--- ROLLBACK PLAN (separately authorized):
--- DROP FUNCTION public.b25_save_homestay_profile(text,text,text,text);
--- DROP FUNCTION public.b25_read_homestay_profile();
--- DROP TABLE public.b25_homestay_profile_audit;
--- DROP TABLE public.b25_homestay_profile;
-) THEN
+    OR (clean_phone<>'' AND clean_phone !~ '^[+]?[0-9 ()-]{6,30}$')
+    OR (clean_whatsapp<>'' AND clean_whatsapp !~ '^[+]?[0-9 ()-]{6,30}$') THEN
    RAISE EXCEPTION 'Isi Profil Homestay tidak valid';
  END IF;
  SELECT * INTO old_record FROM public.b25_homestay_profile WHERE id=true FOR UPDATE;
