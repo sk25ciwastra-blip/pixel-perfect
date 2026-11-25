@@ -45,7 +45,7 @@ test('Lihat detail leads to verified official Booking flow, never auto converts'
   expect(queue).toContain('makeReservationCardJpg(item)');
   expect(queue).toContain('download={reservationCardFilename(item)}');
   expect(queue).toContain('RESERVATION_CARD_CAPTION');
-  expect(queue).toContain('lampirkan file JPG');
+  expect(queue).toContain('lampirkan JPG');
   expect(queue).not.toContain('<textarea aria-label="Pesan rincian reservasi"');
 });
 test('dashboard continues using real room occupancy and housekeeping action indicator', () => {
