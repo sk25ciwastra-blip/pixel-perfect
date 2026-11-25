@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
-import { BedDouble, Pencil, Plus, ShieldAlert } from 'lucide-react';
+import { BedDouble, Pencil, Plus, ShieldAlert, DoorOpen, CheckCircle2, CircleOff, Layers3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
@@ -9,6 +9,7 @@ import { useTable, useTransaksiOperasional, type Room } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
+import './pengaturan-manajemen-kamar.css';
 
 export const Route = createFileRoute('/pengaturan-manajemen-kamar')({
   head: () => meta('Manajemen Kamar', 'Kelola data kamar Baturaden 25 Homestay.'),
@@ -124,27 +125,27 @@ function ManajemenKamar() {
   return (
     <Kerangka judul="Manajemen Kamar" keterangan="Kelola kamar individual tanpa mengubah pengaturan jenis kamar.">
       <SubPengaturan>
-        <div className="space-y-5">
-          <header className="panel-mewah flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
+        <div className="mk-page space-y-5">
+          <header className="mk-hero panel-mewah flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Inventaris kamar</p>
-              <h2 className="mt-2 font-serif text-2xl font-semibold">Daftar Seluruh Kamar</h2>
+              <p className="mk-eyebrow text-xs font-semibold uppercase tracking-[0.2em]">INVENTARIS / OPERASIONAL</p>
+              <h2 className="mk-hero-title mt-2 font-serif text-2xl font-semibold">Daftar Seluruh Kamar</h2>
               <p className="mt-1 text-sm text-muted-foreground">Kelola nomor, lokasi lantai, dan aktivasi kamar dari satu halaman.</p>
             </div>
-            <Button onClick={() => openEditor(null)} disabled={types.loading || !!types.error || !types.rows.length}>
+            <Button className="mk-add-button" onClick={() => openEditor(null)} disabled={types.loading || !!types.error || !types.rows.length}>
               <Plus className="mr-2 size-4" />Tambah Kamar
             </Button>
           </header>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="mk-summary grid gap-3 sm:grid-cols-3">
             {[
-              { label: 'Total kamar', value: allRooms.length },
-              { label: 'Kamar aktif', value: activeCount },
-              { label: 'Sedang terisi', value: usedCount },
+              { label: 'Total kamar', value: allRooms.length, icon: DoorOpen },
+              { label: 'Kamar aktif', value: activeCount, icon: CheckCircle2 },
+              { label: 'Sedang terisi', value: usedCount, icon: Layers3 },
             ].map(metric => (
-              <div key={metric.label} className="rounded-xl border border-gold/20 bg-background/70 p-4">
-                <p className="text-xs text-muted-foreground">{metric.label}</p>
-                <p className="mt-2 font-serif text-2xl font-semibold text-foreground">{metric.value}</p>
+              <div key={metric.label} className="mk-stat rounded-xl p-4">
+                <div className="mk-stat-heading"><p className="text-xs">{metric.label}</p><metric.icon className="size-4" aria-hidden="true" /></div>
+                <p className="mt-2 font-serif text-2xl font-semibold">{rooms.loading ? "—" : metric.value}</p>
               </div>
             ))}
           </div>
@@ -152,10 +153,11 @@ function ManajemenKamar() {
           {(rooms.error || types.error || error) && <p role="alert" className="rounded-lg border border-destructive/40 p-3 text-sm text-destructive">{error || rooms.error || types.error}</p>}
           {(rooms.loading || types.loading) && <p role="status">Memuat inventaris kamar…</p>}
 
-          <section aria-label="Daftar seluruh kamar" className="overflow-hidden rounded-xl border border-gold/20 bg-background/70">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[690px] text-left text-sm">
-                <thead className="border-b border-gold/20 bg-gold/10 text-xs uppercase tracking-wide">
+          <section aria-label="Daftar seluruh kamar" className="mk-list overflow-hidden rounded-xl">
+            <div className="mk-list-heading"><div><p className="mk-section-kicker">DIREKTORI KAMAR</p><h3>Seluruh Unit</h3></div><span className="mk-count">{rooms.loading ? "Memuat..." : `${allRooms.length} unit`}</span></div>
+            <div className="mk-table-wrapper overflow-x-auto">
+              <table className="mk-table w-full min-w-[690px] text-left text-sm">
+                <thead className="text-xs uppercase tracking-wide">
                   <tr>
                     <th className="px-4 py-3">Nomor</th>
                     <th className="px-4 py-3">Tipe</th>
@@ -165,19 +167,19 @@ function ManajemenKamar() {
                     <th className="px-4 py-3 text-right">Tindakan</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gold/10">
+                <tbody>
                   {allRooms.map(room => {
                     const type = types.rows.find(item => item.id === room.room_type_id);
-                    return <tr key={room.id} className="hover:bg-gold/5">
-                      <td className="px-4 py-3 font-semibold"><span className="inline-flex min-w-10 items-center justify-center rounded-lg bg-zinc-950 px-3 py-2 text-gold-light">{room.room_number}</span></td>
+                    return <tr key={room.id}>
+                      <td className="px-4 py-3 font-semibold"><span className="mk-room-number">{room.room_number}</span></td>
                       <td className="px-4 py-3">{type?.name ?? 'Tidak diketahui'}</td>
                       <td className="px-4 py-3">{room.lantai ?? '—'}</td>
-                      <td className="px-4 py-3">{statusKamar[room.status]}</td>
-                      <td className="px-4 py-3">{room.active ? 'Aktif' : 'Nonaktif'}</td>
+                      <td className="px-4 py-3"><span className={`mk-condition mk-condition-${room.status}`}>{statusKamar[room.status]}</span></td>
+                      <td className="px-4 py-3"><span className={`mk-activation ${room.active ? "mk-activation-on" : "mk-activation-off"}`}><span aria-hidden="true" />{room.active ? "Aktif" : "Nonaktif"}</span></td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => openEditor(room)}><Pencil className="mr-1 size-3.5" />Ubah</Button>
-                          <Button size="sm" variant="outline" disabled={busyRoom === room.id} onClick={() => void toggleActive(room)}>
+                        <div className="mk-actions flex items-center justify-end gap-2">
+                          <Button className="mk-button-edit" size="sm" variant="outline" onClick={() => openEditor(room)}><Pencil className="mr-1 size-3.5" />Ubah</Button>
+                          <Button className="mk-button-status" size="sm" variant="outline" disabled={busyRoom === room.id} onClick={() => void toggleActive(room)}>
                             {busyRoom === room.id ? 'Memproses…' : room.active ? 'Nonaktifkan' : 'Aktifkan'}
                           </Button>
                         </div>
@@ -192,7 +194,7 @@ function ManajemenKamar() {
           <p className="flex items-start gap-2 text-xs text-muted-foreground"><ShieldAlert className="mt-0.5 size-4 shrink-0" />Kamar yang terisi atau mempunyai booking aktif tidak boleh dinonaktifkan. Tidak ada perubahan data tanpa tindakan Owner.</p>
         </div>
         {dialog && <div className="fixed inset-0 z-50 grid place-items-center bg-navy-deep/75 p-4 backdrop-blur-sm">
-          <form onSubmit={e => void save(e)} role="dialog" aria-modal="true" aria-label={dialog.room ? 'Ubah Kamar' : 'Tambah Kamar'} className="w-full max-w-md space-y-4 rounded-2xl border border-gold/25 bg-background p-6 shadow-xl">
+          <form onSubmit={e => void save(e)} role="dialog" aria-modal="true" aria-label={dialog.room ? 'Ubah Kamar' : 'Tambah Kamar'} className="mk-editor w-full max-w-md space-y-4 rounded-2xl border border-gold/25 bg-background p-6 shadow-xl">
             <div className="flex items-center gap-3"><BedDouble className="size-5 text-gold" /><h2 className="font-serif text-xl font-semibold">{dialog.room ? 'Ubah Kamar' : 'Tambah Kamar'}</h2></div>
             <label className="block text-sm">Nomor kamar<input className="mt-1 h-11 w-full rounded-lg border border-input bg-background px-3" required maxLength={20} value={nomor} onChange={e => setNomor(e.target.value)} /></label>
             <label className="block text-sm">Tipe kamar
