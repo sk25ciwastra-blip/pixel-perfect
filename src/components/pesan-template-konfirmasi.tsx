@@ -11,9 +11,10 @@ type Kind = 'KONFIRMASI_BOOKING' | 'KONFIRMASI_PEMBAYARAN';
  * Uses the same revalidated payment ledger as PDF; does not send,
  * create payments/receipts, or automatically attach a file.
  */
-export function PesanTemplateKonfirmasi({ transactionId, pdfReady }: {
+export function PesanTemplateKonfirmasi({ transactionId, pdfReady, expectedLedgerRevision }: {
   transactionId: string;
   pdfReady: boolean;
+  expectedLedgerRevision: string;
 }) {
   const [kind, setKind] = useState<Kind>('KONFIRMASI_PEMBAYARAN');
   const [message, setMessage] = useState('');
@@ -27,14 +28,16 @@ export function PesanTemplateKonfirmasi({ transactionId, pdfReady }: {
     try {
       // RLS and transaction-scoped refund RPC are checked before any customer text.
       const document = await loadPaymentConfirmation(transactionId, supabase);
-      if (document.transactionId !== transactionId) throw new Error('Transaksi berubah.');
+      if (document.transactionId !== transactionId || document.ledgerRevision !== expectedLedgerRevision) {
+        throw new Error('Data pembayaran berubah sejak PDF diunduh. Unduh PDF terbaru sebelum membuat pesan.');
+      }
       const response = await supabase.rpc('read_active_whatsapp_template', { _kind: kind });
       if (response.error) throw new Error('Template resmi belum dapat diakses. Periksa izin dan aktivasi Owner.');
       const template = response.data?.[0]?.body;
       if (!template) throw new Error('Owner belum mengaktifkan template untuk jenis pesan ini.');
       const rendered = renderConfirmationTemplate(kind, template, document);
       const latest = await loadPaymentConfirmation(transactionId, supabase);
-      if (latest.transactionId !== transactionId || latest.ledgerRevision !== document.ledgerRevision ||
+      if (latest.transactionId !== transactionId || latest.ledgerRevision !== expectedLedgerRevision ||
           latest.transactionStatus !== document.transactionStatus || latest.guest.phone !== document.guest.phone) {
         throw new Error('Data pembayaran atau hak akses berubah; muat ulang dokumen sebelum membuat pesan.');
       }
