@@ -14,6 +14,7 @@ import {
 import { meta } from '@/lib/meta';
 import { OWNER_APPROVED_QUOTE_TEMPLATE } from '@/lib/whatsapp-template-approved';
 import { OWNER_APPROVED_BOOKING_CONFIRMATION, OWNER_APPROVED_PAYMENT_CONFIRMATION } from '@/lib/whatsapp-template-confirmations-approved';
+import { OWNER_APPROVED_BOOKING_30_MIN_REMINDER, OWNER_APPROVED_STAY_END_REMINDER } from '@/lib/whatsapp-template-reminders-approved';
 
 export const Route = createFileRoute('/pengaturan-template-whatsapp')({
   head: () => meta('Template WhatsApp', 'Pengaturan template pesan khusus Owner Baturaden 25 Homestay.'),
@@ -35,8 +36,8 @@ const initialApprovedDraft: Record<WhatsAppTemplateKind, string> = {
   KONFIRMASI_BOOKING: OWNER_APPROVED_BOOKING_CONFIRMATION,
   // Legacy kind is intentionally not in the official selection.
   KONFIRMASI_PEMBAYARAN: OWNER_APPROVED_PAYMENT_CONFIRMATION,
-  PENGINGAT_BOOKING_30_MENIT: '',
-  PENGINGAT_WAKTU_HABIS: '',
+  PENGINGAT_BOOKING_30_MENIT: OWNER_APPROVED_BOOKING_30_MIN_REMINDER,
+  PENGINGAT_WAKTU_HABIS: OWNER_APPROVED_STAY_END_REMINDER,
 };
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) + ' WIB';
@@ -117,7 +118,6 @@ function PengaturanTemplateWhatsApp() {
           <section className="panel-mewah space-y-3 p-5">
             <h2 className="font-serif text-xl">Isi Pesan</h2>
             {draftSuggestion && <p role="status" className="rounded-lg border border-gold/30 p-3 text-sm">Teks template yang sudah disetujui Owner telah disiapkan otomatis. Ini masih draf, belum aktif untuk karyawan. Tinjau lalu tekan Simpan Versi Baru agar tersimpan atas akun Owner dan tercatat dalam riwayat.</p>}
-            {!active && backendReady && !initialApprovedDraft[kind] && <p role="note" className="rounded-lg border border-amber-500/30 p-3 text-sm">Teks pengingat belum disetujui Owner. Isi template setelah redaksi disetujui; tidak ada pengingat yang dikirim otomatis.</p>}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             {loading ? <p>Memuat template…</p> : <>
               <label htmlFor="wa-template-body" className="text-sm">Teks WhatsApp (maksimal 4.000 karakter)</label>
