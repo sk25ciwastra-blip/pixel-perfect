@@ -51,3 +51,12 @@ test('dashboard continues using real room occupancy and housekeeping action indi
   expect(dashboard).toContain('label: "Perlu Tindakan"');
   expect(dashboard).toContain('label: "Booking Aktif"'); // unchanged fallback for other roles
 });
+
+test('No duplicate Penawaran language leaks into the one-door Reservation interface', () => {
+  expect(dashboard).not.toContain('judul="PENAWARAN"');
+  expect(queue).not.toContain('Penawaran Menunggu');
+  expect(queue).not.toContain('Detail Penawaran');
+  expect(queue).toContain('Ya, batalkan reservasi');
+  expect(booking).not.toContain('Ringkasan Penawaran');
+  expect(booking).toContain('Ringkasan Reservasi');
+});

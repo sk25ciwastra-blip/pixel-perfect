@@ -187,7 +187,7 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
             {canConvert && <Button type="button" variant="outline" className="min-h-10 border-[#54422c] bg-[#30271d] px-4 text-[#f8deb0] hover:bg-[#483521] hover:text-[#fff1d5]" disabled={busy} onClick={() => convert(item)}><CreditCard aria-hidden="true" />Telah Dibayar · Verifikasi</Button>}
             {owner && <Button type="button" variant="outline" className={confirmCancel ? 'min-h-10 border-[#a92e28] bg-[#ac302b] px-4 text-white hover:bg-[#8e251f] hover:text-white' : 'min-h-10 border-[#d9b9ae] bg-[#fff9f4] px-4 text-[#973b2d] hover:bg-[#fce9e4] hover:text-[#872d22]'} disabled={busy} onClick={() => {
               if (confirmCancel) void transition('cancel'); else setConfirmCancel(true);
-            }}><XCircle aria-hidden="true" />{confirmCancel ? 'Ya, batalkan penawaran' : 'Batalkan'}</Button>}
+            }}><XCircle aria-hidden="true" />{confirmCancel ? 'Ya, batalkan reservasi' : 'Batalkan'}</Button>}
           </div>}
         </div>
       </>}

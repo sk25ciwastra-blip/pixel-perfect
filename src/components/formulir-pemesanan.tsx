@@ -439,7 +439,7 @@ export function FormulirPemesanan({
         toast.success('Booking resmi berhasil disimpan.');
         void onSaved().catch(() => toast.error('Booking tersimpan. Muat ulang untuk memperbarui tampilan.'));
       } catch (failure) {
-        setError(failure instanceof Error ? failure.message : 'Booking belum dapat dikonfirmasi. Coba lagi dengan penawaran yang sama.');
+        setError(failure instanceof Error ? failure.message : 'Booking belum dapat dikonfirmasi. Coba lagi dengan reservasi yang sama.');
       } finally {
         pending.current = false;
         setSaving(false);
@@ -604,7 +604,7 @@ export function FormulirPemesanan({
               <input type="checkbox" checked={paymentVerified} onChange={event => setPaymentVerified(event.target.checked)} />
               Saya sudah memverifikasi pembayaran yang benar-benar diterima.
             </label>}
-            {isOffer && <div className="rounded-2xl border border-[#ddc69b] bg-[#fffdf7] p-4 shadow-[0_4px_18px_rgba(40,30,13,0.07)]" aria-label="Ringkasan Penawaran"><p className="mb-3 text-[11px] font-bold uppercase tracking-[.12em] text-[#8c6a38]">Ringkasan Penawaran</p><div className="grid grid-cols-2 gap-3"><div><p className="text-xs text-[#7b6748]">Total Tagihan</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 ? rupiah(total) : '—'}</strong></div><div className="border-l border-[#e6d5b4] pl-3"><p className="text-xs text-[#7b6748]">Minimum DP</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 && quoteMinimumDp !== null ? rupiah(Math.ceil(quoteMinimumDp)) : '—'}</strong></div></div><p className="mt-3 border-t border-[#e7d7b7] pt-3 text-xs text-[#705b3d]">Nilai mengikuti tarif dan minimum DP resmi. Reservasi masuk antrean hingga pembayaran diverifikasi.</p></div>}
+            {isOffer && <div className="rounded-2xl border border-[#ddc69b] bg-[#fffdf7] p-4 shadow-[0_4px_18px_rgba(40,30,13,0.07)]" aria-label="Ringkasan Reservasi"><p className="mb-3 text-[11px] font-bold uppercase tracking-[.12em] text-[#8c6a38]">Ringkasan Reservasi</p><div className="grid grid-cols-2 gap-3"><div><p className="text-xs text-[#7b6748]">Total Tagihan</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 ? rupiah(total) : '—'}</strong></div><div className="border-l border-[#e6d5b4] pl-3"><p className="text-xs text-[#7b6748]">Minimum DP</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 && quoteMinimumDp !== null ? rupiah(Math.ceil(quoteMinimumDp)) : '—'}</strong></div></div><p className="mt-3 border-t border-[#e7d7b7] pt-3 text-xs text-[#705b3d]">Nilai mengikuti tarif dan minimum DP resmi. Reservasi masuk antrean hingga pembayaran diverifikasi.</p></div>}
             {showQuote && !isOffer && !saving && <BookingQuote
               key={JSON.stringify([quoteDraft, roomId, packageId, quoteDayReady, quoteLoading, quoteLoadError])}
               draft={quoteDraft}
