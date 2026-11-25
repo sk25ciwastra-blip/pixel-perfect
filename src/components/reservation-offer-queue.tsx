@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronRight, FileText } from 'lucide-react';
+import { CheckCheck, ChevronRight, Copy, CreditCard, FileText, MessageCircle, XCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
