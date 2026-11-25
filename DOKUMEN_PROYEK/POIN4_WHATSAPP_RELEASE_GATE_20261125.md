@@ -101,6 +101,14 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 - 🔴 BATAS: `--no-owner --no-acl` sengaja tidak membuktikan pemulihan privilege/RLS policy/keutuhan Auth/Storage. Data fixture hanya dummy, **tidak berisi data tamu atau backup LIVE**.
 - 🔴 BACKUP LIVE: arsip segar dan restore penuh ke Supabase-compatible isolated environment tetap merupakan **syarat terpisah** sebelum migrasi, tidak dapat digantikan oleh uji sintetis.
 
+## Addendum keamanan revisi serentak dan pencarian backup — 25 November 2026
+
+- 🟢 **Tes concurrency:** `scripts/whatsapp-template-synthetic-restore.sh` kini mensimulasikan dua sesi Owner menyimpan jenis template yang sama secara paralel. Postcheck mewajibkan 4 versi berurutan, satu ACTIVE, dan 7 baris audit (versi awal 2 dengan 3 audit). Ini menguji kunci revisi transaksi tanpa mengubah Cloud.
+- 🟢 **Pencarian sumber backup:** ditelusuri Library privat, Google Drive yang terhubung dan runtime terisolasi. Belum ditemukan **arsip backup LIVE baru** yang dapat diakses untuk full restore. Penelusuran tidak membuktikan bahwa Owner tidak menyimpan backup di tempat lain.
+- 🔴 **Gate restore LIVE:** tetap BLOCKED sampai arsip privat terbaru tersedia dan berhasil dipulihkan di lingkungan terpisah yang kompatibel dengan Supabase, dengan laporan fingerprint/schema/RLS/ACL/otorisasi yang dapat diaudit.
+- 🔴 **Larangan:** jangan memindahkan backup yang mungkin memuat data tamu/Auth/finansial ke repositori GitHub, artifacts CI publik, chat, atau target staging/LIVE.
+- **Bukti CI concurrency:** periksa GitHub Actions yang sesuai commit `e9da6dd9edd12c701d9dad36fa603249b30a980c`. Jangan menyatakan semua gate PASS sebelum job selesai.
+
 ## Release gates (all required, sequential)
 1. 🟢 Identify correct Lovable LIVE project and database (done via connector); 🔴 approved change window still pending.
 2. 🟢 Execute **only read-only** structural preflight on LIVE (done); 🔴 independent final security review still pending.
