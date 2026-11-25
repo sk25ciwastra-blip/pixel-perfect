@@ -1,0 +1,46 @@
+name: B25 Poin7 Morning Blue Night Gold Focused Gate
+on:
+  push:
+    branches:
+      - feat/poin7-auto-morning-blue-night-gold-20261125
+    paths:
+      - src/lib/b25-appearance.ts
+      - src/lib/b25-theme-provider.tsx
+      - src/routes/__root.tsx
+      - src/components/kerangka.tsx
+      - src/styles.css
+      - scripts/poin7-appearance.test.ts
+      - .github/workflows/b25-poin7-appearance.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/lib/b25-appearance.ts
+      - src/lib/b25-theme-provider.tsx
+      - src/routes/__root.tsx
+      - src/components/kerangka.tsx
+      - src/styles.css
+      - scripts/poin7-appearance.test.ts
+      - .github/workflows/b25-poin7-appearance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  appearance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Install frozen deps
+        run: bun install --frozen-lockfile
+      - name: Pure Poin7 WIB boundary tests
+        run: bun test scripts/poin7-appearance.test.ts
+      - name: Build without publication
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
