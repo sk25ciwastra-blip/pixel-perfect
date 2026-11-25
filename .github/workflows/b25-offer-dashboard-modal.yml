@@ -17,6 +17,7 @@ on:
       - scripts/issue-140-verify-clone-parity.mjs
       - scripts/issue-140-verify-clone-parity.test.ts
       - supabase/migrations/20261018000000_finance_training_enforcement.sql
+      - supabase/pending/20261125150000_issue140_training_anon_rpc_hardening.sql
       - supabase/pending/20261123084929_booking_quote_read_guards.sql
       - supabase/pending/20261123101906_issue_140_offer_queue.sql
       - .github/workflows/b25-offer-dashboard-modal.yml
