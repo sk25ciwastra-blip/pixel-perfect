@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, expect, test } from 'bun:test';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { act } from 'react';
@@ -18,12 +18,14 @@ Object.assign(globalThis, { window: browser, IS_REACT_ACT_ENVIRONMENT: true });
 
 const { createRoot } = await import('react-dom/client');
 const { minimumDpAmount } = await import('../src/lib/combined-payments');
+const { BookingQuote } = await import('../src/components/booking-quote');
+
 const schedule = {
   scheduled_check_in: '2026-11-28T13:00:00+07:00',
   scheduled_check_out: '2026-11-29T12:00:00+07:00',
   has_conflict: false,
 };
-const dpSetting = { minimum_dp_mode: 'PERCENTAGE', minimum_dp_value: 40 };
+const dpSetting = { minimum_dp_mode: 'PERCENTAGE', minimum_dp_value: 50 };
 const draft: BookingQuoteDraft = {
   name: 'Rani & Dwi', phone: '081234567890', roomNumber: '07', roomType: 'Superior',
   packageName: 'Paket Harian', checkIn: schedule.scheduled_check_in, guestCount: 2,
@@ -31,52 +33,22 @@ const draft: BookingQuoteDraft = {
   minimumDp: minimumDpAmount(400001, dpSetting), dpMode: dpSetting.minimum_dp_mode, dpValue: dpSetting.minimum_dp_value,
 };
 
-let response: { data: (typeof schedule)[] | null; error: { code: string; message: string } | null };
-let unblock: (() => void) | undefined;
-let scheduleGate: Promise<void> | undefined;
-const calls: unknown[][] = [];
-mock.module('../src/integrations/supabase/client', () => ({
-  supabase: {
-    async rpc(name: string, args: object) {
-      calls.push(['rpc', name, args]);
-      await scheduleGate;
-      return response;
-    },
-    from(table: string) { throw new Error('Unexpected direct table access: ' + table); },
-  },
-}));
-const { BookingQuote } = await import('../src/components/booking-quote');
 let root: ReturnType<typeof createRoot>;
 let container: HTMLElement;
-
 beforeEach(() => {
-  calls.length = 0;
-  scheduleGate = undefined;
-  unblock = undefined;
-  response = { data: [schedule], error: null };
   container = document.createElement('form');
   document.body.append(container);
   root = createRoot(container);
 });
-
 afterEach(async () => {
-  unblock?.();
   await act(async () => root.unmount());
   container.remove();
 });
-
-function render(candidate = draft, dayReady = true) {
+function render(candidate = draft, dayReady = true, loading = false, loadError = false) {
   return act(async () => {
-    root.render(<BookingQuote key={JSON.stringify([candidate, dayReady])} draft={candidate} roomId="room"
-      packageId="package" dayReady={dayReady} loading={false} loadError={false} />);
+    root.render(<BookingQuote key={JSON.stringify([candidate, dayReady, loading, loadError])}
+      draft={candidate} dayReady={dayReady} loading={loading} loadError={loadError} />);
   });
-}
-
-function button(label: string) {
-  const target = [...document.querySelectorAll('button')].find(item => item.textContent === label);
-  if (!target) throw new Error('Missing button ' + label);
-  expect(target.type).toBe('button');
-  return target;
 }
 
 test('roles, date validation and 2-guest Booking parity', () => {
@@ -105,7 +77,7 @@ test('formats official timestamp values as WIB, with configured percentage or fi
   expect(message).toContain('Sabtu, 28 Nov 2026 • 13.00 WIB');
   expect(message).toContain('Minggu, 29 Nov 2026 • 12.00 WIB');
   expect(message).toContain('Harga Kamar (Weekend) : Rp 400.001');
-  expect(message).toContain('Minimum DP (40%) : *Rp 160.001*');
+  expect(message).toContain('Minimum DP (50%) : *Rp 200.001*');
   expect(message).not.toMatch(/TRX|undefined|Sisa Tagihan/i);
   expect(message).toContain('*— RINCIAN PENAWARAN RESERVASI —*');
   expect(message).toContain('*DETAIL RESERVASI*');
@@ -130,53 +102,32 @@ test('formats official timestamp values as WIB, with configured percentage or fi
   expect(() => formatBookingQuote(draft, { ...schedule, scheduled_check_out: schedule.scheduled_check_in })).toThrow('Jadwal');
 });
 
-test('preview is read-only, suppresses duplicate clicks and sends the exact draft to WhatsApp', async () => {
-  let officialSubmits = 0;
-  container.addEventListener('submit', event => { event.preventDefault(); officialSubmits++; });
-  const copied: string[] = [];
-  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text: string) => { copied.push(text); } } });
+test('Booking only shows official price summary, never a second offer or WhatsApp action', async () => {
+  let submits = 0;
+  container.addEventListener('submit', event => { event.preventDefault(); submits++; });
   await render();
-  scheduleGate = new Promise(resolve => { unblock = resolve; });
-  await act(async () => { button('Preview Penawaran').click(); button('Preview Penawaran').click(); });
-  expect(calls).toHaveLength(1);
-  await act(async () => unblock?.());
-
-  const message = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Pesan penawaran"]')!;
-  expect(message.readOnly).toBe(true);
-  const link = document.querySelector<HTMLAnchorElement>('a[href*="web.whatsapp.com"]')!;
-  expect(link.target).toBe('_blank');
-  expect(link.rel).toBe('noopener noreferrer');
-  expect(new URL(link.href).searchParams.get('text')).toBe(message.value);
-  await act(async () => button('Salin Pesan').click());
-  expect(copied).toEqual([message.value]);
-  expect(officialSubmits).toBe(0);
-  expect(calls).toEqual([
-    ['rpc', 'check_booking_quote_schedule', { _room_id: 'room', _package_id: 'package', _scheduled_check_in: draft.checkIn }],
-  ]);
-
-  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('Denied'); } } });
-  await act(async () => button('Salin Pesan').click());
-  expect(document.body.textContent).toContain('Salin teks yang dipilih');
-  expect(document.activeElement).toBe(message);
-  await render({ ...draft, name: 'Tamu lain' });
-  expect(document.querySelector('a[href*="web.whatsapp.com"]')).toBeNull();
+  expect(container.querySelector('section[aria-label="Ringkasan Harga Booking"]')).not.toBeNull();
+  const text = container.textContent ?? '';
+  expect(text).toContain('Ringkasan Harga Booking');
+  expect(text).toContain('Harga kamar (Weekend)');
+  expect(text).toContain('400.001');
+  expect(text).toContain('Minimum DP (50%)');
+  expect(text).toContain('200.001');
+  expect(container.querySelector('button')).toBeNull();
+  expect(container.querySelector('textarea')).toBeNull();
+  expect(container.querySelector('a[href*="whatsapp"]')).toBeNull();
+  expect(text).not.toContain('Preview Penawaran');
+  expect(submits).toBe(0);
 });
 
-test('blocks unknown DP, stale day mode, invalid package schedule and room overlap', async () => {
+test('Booking price summary preserves missing-DP, incomplete pricing and loading states', async () => {
   await render({ ...draft, minimumDp: null });
-  await act(async () => button('Preview Penawaran').click());
-  expect(container.textContent).toContain('Pengaturan DP resmi');
-  expect(calls).toHaveLength(0);
+  expect(container.textContent).toContain('Pengaturan DP resmi belum dapat dibaca');
   await render(draft, false);
-  await act(async () => button('Preview Penawaran').click());
-  expect(container.textContent).toContain('Jenis hari belum dapat ditentukan');
-  expect(calls).toHaveLength(0);
-  await render();
-  response = { data: null, error: { code: 'P0001', message: 'Check-in di luar jam yang diizinkan untuk paket ini' } };
-  await act(async () => button('Preview Penawaran').click());
-  expect(container.textContent).toContain('Check-in di luar jam');
-  response = { data: [{ ...schedule, has_conflict: true }], error: null };
-  await act(async () => button('Preview Penawaran').click());
-  expect(container.textContent).toContain('Jadwal kamar bentrok');
-  expect(document.querySelector('a[href*="web.whatsapp.com"]')).toBeNull();
+  expect(container.textContent).toContain('Pilih tanggal, kamar, dan paket dengan harga resmi');
+  await render(draft, true, true);
+  expect(container.textContent).toContain('Memuat data harga resmi');
+  await render(draft, true, false, true);
+  expect(container.textContent).toContain('Data harga resmi gagal dimuat');
+  expect(container.querySelector('button')).toBeNull();
 });
