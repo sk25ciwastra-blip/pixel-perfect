@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { SubPengaturan } from '@/components/pengaturan-sub';
 import { useEffect, useState } from 'react';
-import { Landmark, Settings2 } from 'lucide-react';
+import { Settings2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Kerangka } from '@/components/kerangka';
@@ -10,7 +10,7 @@ import { usePeran } from '@/lib/peran';
 import { meta } from '@/lib/meta';
 
 export const Route = createFileRoute('/pengaturan-keuangan')({
-  head: () => meta('Pengaturan Keuangan', 'Minimum DP, komisi, dan rekening Owner untuk transfer.'),
+  head: () => meta('Minimum DP & Komisi', 'Pengaturan minimum DP dan komisi Baturaden 25 Homestay.'),
   component: HalamanPengaturanKeuangan,
 });
 
@@ -19,16 +19,12 @@ function angka(value: string) {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
-const input = 'h-10 min-w-0 w-full rounded-md border border-input bg-background/60 px-3 text-sm';
-const label = 'block min-w-0 text-xs text-muted-foreground';
-
 // Owner finance settings moved from Keuangan; same RPCs and Owner-only gate.
 function HalamanPengaturanKeuangan() {
   const { posisiKode, training } = usePeran();
   const isOwner = posisiKode === 'owner' && !training.is_training;
   const commissionConfigs = useTable('finance_commission_configs', isOwner);
   const financeSettings = useTable('finance_settings', isOwner);
-  const banks = useTable('finance_bank_accounts');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [minimumDpMode, setMinimumDpMode] = useState('AMOUNT');
@@ -36,9 +32,6 @@ function HalamanPengaturanKeuangan() {
   const [commissionMode, setCommissionMode] = useState('PERCENTAGE');
   const [commissionRate, setCommissionRate] = useState('8');
   const [perRoomAmount, setPerRoomAmount] = useState('0');
-  const [bankName, setBankName] = useState('');
-  const [accountName, setAccountName] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
 
   useEffect(() => {
     const setting = financeSettings.rows[0];
@@ -62,12 +55,12 @@ function HalamanPengaturanKeuangan() {
         setMessage(detail);
         if (result.partial) toast.warning('Sebagian perubahan berhasil', { description: detail });
         else toast.error('Perubahan gagal disimpan', { description: detail });
-        if (result.partial) await Promise.allSettled([commissionConfigs.refresh(), financeSettings.refresh(), banks.refresh()]);
+        if (result.partial) await Promise.allSettled([commissionConfigs.refresh(), financeSettings.refresh()]);
         return;
       }
       setMessage(successLabel);
       toast.success(successLabel);
-      await Promise.allSettled([commissionConfigs.refresh(), financeSettings.refresh(), banks.refresh()]);
+      await Promise.allSettled([commissionConfigs.refresh(), financeSettings.refresh()]);
     } catch (failure) {
       const detail = failure instanceof Error ? failure.message : 'Terjadi gangguan. Periksa data sebelum mencoba lagi.';
       setMessage(detail);
@@ -82,39 +75,58 @@ function HalamanPengaturanKeuangan() {
   }
 
   return (
-    <Kerangka judul="Pengaturan Keuangan"><SubPengaturan>
-      {message && <p role="alert" className="mb-4 rounded-md bg-secondary px-3 py-2 text-sm">{message}</p>}
-      <div className="grid gap-5 lg:grid-cols-2">
-        <section className="panel-mewah p-5">
-          <div className="mb-4 flex items-center gap-3"><span className="ikon-bulat h-10 w-10 text-gold"><Settings2 size={20} aria-hidden="true" /></span><h2 className="font-serif text-xl">Pengaturan minimum DP dan Komisi</h2></div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className={label}><span className="mb-1.5 block">Ketentuan minimum DP</span><select value={minimumDpMode} onChange={(e) => setMinimumDpMode(e.target.value)} className={input}><option value="AMOUNT">Minimum nominal</option><option value="PERCENTAGE">Minimum persentase</option></select></label>
-            <label className={label}><span className="mb-1.5 block">Nilai minimum DP</span><input value={minimumDpValue} onChange={(e) => setMinimumDpValue(e.target.value)} type="number" min="0" step="0.01" className={input} /></label>
-            <label className={label}><span className="mb-1.5 block">Ketentuan komisi</span><select value={commissionMode} onChange={(e) => setCommissionMode(e.target.value)} className={input}><option value="OFF">Komisi OFF</option><option value="PERCENTAGE">Persentase</option><option value="PER_ROOM">Per kamar</option></select></label>
-            <label className={label}><span className="mb-1.5 block">Tarif komisi (%)</span><input value={commissionRate} onChange={(e) => setCommissionRate(e.target.value)} type="number" min="0" step="0.01" className={input} /></label>
-            <label className={label}><span className="mb-1.5 block">Nominal per kamar</span><input value={perRoomAmount} onChange={(e) => setPerRoomAmount(e.target.value)} type="number" min="0" className={input} /></label>
+    <Kerangka judul="Minimum DP & Komisi" keterangan="Pengaturan keuangan Owner Baturaden 25 Homestay.">
+      <SubPengaturan>
+        <section className="panel-mewah mx-auto max-w-2xl p-5 sm:p-7" aria-labelledby="judul-minimum-dp">
+          <div className="mb-5 flex items-start gap-3">
+            <span className="ikon-bulat flex size-11 shrink-0 items-center justify-center text-gold"><Settings2 size={22} aria-hidden="true" /></span>
+            <div>
+              <h1 id="judul-minimum-dp" className="font-serif text-xl font-bold">Minimum DP & Komisi</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Ketentuan pembayaran awal reservasi dan perhitungan komisi karyawan.</p>
+            </div>
           </div>
-          <Button className="mt-4 w-full" disabled={busy} onClick={() => void run(async () => {
-            const first = await rpc('set_finance_settings', { _minimum_dp_mode: minimumDpMode, _minimum_dp_value: angka(minimumDpValue) });
-            if (first.error) return { error: first.error };
-            const second = await rpc('set_finance_commission_config', { _mode: commissionMode, _rate: angka(commissionRate), _per_room_amount: angka(perRoomAmount) });
-            return { error: second.error, partial: Boolean(second.error) };
-          }, 'Minimum DP dan komisi berhasil disimpan')}>Simpan Konfigurasi</Button>
-        </section>
-        <section className="panel-mewah p-5">
-          <div className="mb-4 flex items-center gap-3"><span className="ikon-bulat h-10 w-10 text-gold"><Landmark size={20} aria-hidden="true" /></span><h2 className="font-serif text-xl">Rekening Owner untuk Transfer</h2></div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className={label}><span className="mb-1.5 block">Bank</span><input value={bankName} onChange={(e) => setBankName(e.target.value)} className={input} /></label>
-            <label className={label}><span className="mb-1.5 block">Nama pemilik</span><input value={accountName} onChange={(e) => setAccountName(e.target.value)} className={input} /></label>
-            <label className={label}><span className="mb-1.5 block">Nomor rekening</span><input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} className={input} /></label>
+          {(financeSettings.loading || commissionConfigs.loading) && <p role="status" className="mb-3 text-sm">Memuat pengaturan keuangan…</p>}
+          {(financeSettings.error || commissionConfigs.error) && <p role="alert" className="mb-3 text-sm text-destructive">{financeSettings.error || commissionConfigs.error}</p>}
+          {message && <p role="status" className="mb-4 rounded-lg border border-gold/30 bg-background/60 p-3 text-sm">{message}</p>}
+          <div className="space-y-4">
+            <label className="block text-sm font-semibold">Ketentuan minimum DP
+              <select value={minimumDpMode} onChange={e => setMinimumDpMode(e.target.value)} className="mt-1.5 h-11 w-full rounded-lg border border-input bg-background/70 px-3 text-sm">
+                <option value="AMOUNT">Minimum nominal</option><option value="PERCENTAGE">Minimum persentase</option>
+              </select>
+            </label>
+            <label className="block text-sm font-semibold">Nilai minimum DP {minimumDpMode === 'PERCENTAGE' ? '(%)' : '(Rp)'}
+              <input value={minimumDpValue} onChange={e => setMinimumDpValue(e.target.value)} type="number" min="0" step={minimumDpMode === 'PERCENTAGE' ? '0.01' : '1'} className="mt-1.5 h-11 w-full rounded-lg border border-input bg-background/70 px-3 text-sm" />
+            </label>
+            <div className="h-px bg-gold/20" />
+            <label className="block text-sm font-semibold">Ketentuan komisi
+              <select value={commissionMode} onChange={e => setCommissionMode(e.target.value)} className="mt-1.5 h-11 w-full rounded-lg border border-input bg-background/70 px-3 text-sm">
+                <option value="OFF">Komisi OFF</option><option value="PERCENTAGE">Persentase</option><option value="PER_ROOM">Per kamar</option>
+              </select>
+            </label>
+            {commissionMode === 'PERCENTAGE' && <label className="block text-sm font-semibold">Tarif komisi (%)
+              <input value={commissionRate} onChange={e => setCommissionRate(e.target.value)} type="number" min="0" max="100" step="0.01" className="mt-1.5 h-11 w-full rounded-lg border border-input bg-background/70 px-3 text-sm" />
+            </label>}
+            {commissionMode === 'PER_ROOM' && <label className="block text-sm font-semibold">Nominal komisi per kamar (Rp)
+              <input value={perRoomAmount} onChange={e => setPerRoomAmount(e.target.value)} type="number" min="0" step="1" className="mt-1.5 h-11 w-full rounded-lg border border-input bg-background/70 px-3 text-sm" />
+            </label>}
+            <p className="flex items-start gap-2 text-xs text-muted-foreground"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-gold" />Perubahan mengikuti aturan backend resmi dan tidak mengubah transaksi yang telah ditutup.</p>
+            <Button className="w-full" disabled={busy || financeSettings.loading || commissionConfigs.loading || !!financeSettings.error || !!commissionConfigs.error} onClick={() => void run(async () => {
+              const dp = Number(minimumDpValue);
+              const rate = Number(commissionRate);
+              const roomAmount = Number(perRoomAmount);
+              if (!Number.isFinite(dp) || dp < 0 || (minimumDpMode === 'PERCENTAGE' && dp > 100)) return { error: { message: 'Nilai DP tidak valid.' } };
+              if (commissionMode === 'PERCENTAGE' && (!Number.isFinite(rate) || rate < 0 || rate > 100)) return { error: { message: 'Persentase komisi harus 0–100.' } };
+              if (commissionMode === 'PER_ROOM' && (!Number.isFinite(roomAmount) || roomAmount < 0)) return { error: { message: 'Nominal per kamar tidak valid.' } };
+              const first = await rpc('set_finance_settings', { _minimum_dp_mode: minimumDpMode, _minimum_dp_value: dp });
+              if (first.error) return { error: first.error };
+              const second = await rpc('set_finance_commission_config', { _mode: commissionMode, _rate: angka(commissionRate), _per_room_amount: angka(perRoomAmount) });
+              return { error: second.error, partial: Boolean(second.error) };
+            }, 'Minimum DP dan komisi berhasil disimpan')}>
+              {busy ? 'Menyimpan…' : 'Simpan Konfigurasi'}
+            </Button>
           </div>
-          <Button className="mt-4 w-full" disabled={busy} onClick={() => void run(async () => {
-            const { error } = await rpc('upsert_finance_bank_account', { _id: null, _bank_name: bankName, _account_name: accountName, _account_number: accountNumber, _logo_key: '', _active: true });
-            return { error };
-          }, 'Rekening Owner berhasil ditambahkan')}>Tambah Rekening</Button>
-          <ul className="mt-3 space-y-2 text-sm">{banks.rows.filter((bank) => bank.active).map((bank) => <li key={bank.id} className="rounded-md bg-secondary px-3 py-2">{bank.bank_name} · {bank.account_name} · {bank.account_number}</li>)}</ul>
         </section>
-      </div>
-    </SubPengaturan></Kerangka>
+      </SubPengaturan>
+    </Kerangka>
   );
 }
