@@ -32,7 +32,13 @@ export function PesanTemplateKonfirmasi({ transactionId, pdfReady }: {
       if (response.error) throw new Error('Template resmi belum dapat diakses. Periksa izin dan aktivasi Owner.');
       const template = response.data?.[0]?.body;
       if (!template) throw new Error('Owner belum mengaktifkan template untuk jenis pesan ini.');
-      setMessage(renderConfirmationTemplate(kind, template, document));
+      const rendered = renderConfirmationTemplate(kind, template, document);
+      const latest = await loadPaymentConfirmation(transactionId, supabase);
+      if (latest.transactionId !== transactionId || latest.ledgerRevision !== document.ledgerRevision ||
+          latest.transactionStatus !== document.transactionStatus || latest.guest.phone !== document.guest.phone) {
+        throw new Error('Data pembayaran atau hak akses berubah; muat ulang dokumen sebelum membuat pesan.');
+      }
+      setMessage(rendered);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Pesan konfirmasi gagal dibuat.');
     } finally { setBusy(false); }
