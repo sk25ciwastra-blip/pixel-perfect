@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
-import { Building2, Package, BedDouble, CreditCard, Percent, KeyRound, ChevronRight, Receipt, Wallet, LayoutGrid, MessageSquareText } from "lucide-react";
+import { Building2, Package, BedDouble, Percent, KeyRound, ChevronRight, Receipt, Wallet, LayoutGrid, MessageSquareText } from "lucide-react";
 import { Kerangka } from "@/components/kerangka";
 import { usePeran } from "@/lib/peran";
 import { meta } from "@/lib/meta";
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/pengaturan")({
   component: HalamanPengaturan,
 });
 
-type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan" | "/pengaturan-template-whatsapp" | "/pengaturan-profil-homestay" | "/pengaturan-manajemen-kamar" | "/pengaturan-rekening-owner" | "/pengaturan-metode-pembayaran";
+type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan" | "/pengaturan-template-whatsapp" | "/pengaturan-profil-homestay" | "/pengaturan-manajemen-kamar" | "/pengaturan-rekening-owner";
 type Item = { ikon: LucideIcon; label: string; ket: string; ke?: Ke };
 
 const kelompok: { judul: string; item: Item[] }[] = [
@@ -22,7 +22,6 @@ const kelompok: { judul: string; item: Item[] }[] = [
     { ikon: MessageSquareText, label: "Template WhatsApp", ket: "Pesan resmi per fitur; khusus Owner.", ke: "/pengaturan-template-whatsapp" },
   ]},
   { judul: "Keuangan", item: [
-    { ikon: CreditCard, label: "Metode Pembayaran", ket: "Cash, QRIS, dan Transfer.", ke: "/pengaturan-metode-pembayaran" },
     { ikon: Receipt, label: "Daftar Pengeluaran", ket: "Jenis dan keperluan pengeluaran.", ke: "/daftar-pengeluaran" },
     { ikon: Percent, label: "Minimum DP & Komisi", ket: "Ketentuan DP dan komisi.", ke: "/pengaturan-keuangan" },
     { ikon: Wallet, label: "Rekening Owner", ket: "Rekening tujuan transfer.", ke: "/pengaturan-rekening-owner" },
