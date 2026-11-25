@@ -156,7 +156,7 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ### Pekerjaan implementasi empat Template WhatsApp — 26 November 2026
 
-**Status saat pencatatan:** **KODE DALAM BRANCH / PR BELUM DIMERGE / UAT BELUM**. Jangan menganggap versi baru sudah ACTIVE, tombol berfungsi LIVE, atau SQL telah diaktifkan.
+**Status historis ketika PR #179 disiapkan:** kode semula di branch / PR belum di-merge. **PEMBARUAN 26 NOV: PR #179 TELAH MERGED ke `main` (commit `be3eedd6f1437d65399e36bfca03731dba6685ac`), source Lovable tersinkron; 16/16 CI PASS.** **UAT browser / publish versi baru / aktivasi template baru belum PASS.** SQL overtime belum dijalankan dan template versi ACTIVE lama tetap terjaga.
 
 - **Permintaan Owner:** tepat empat pilihan dalam **Pengaturan → Template WhatsApp**: (1) Konfirmasi Reservasi *sebelum pembayaran*, (2) Pengingat Booking 30 menit sebelum Check-in, (3) Pengingat Waktu Habis pada batas Check-out dengan toleransi 15 menit, (4) Pemberitahuan Overtime setelah batas toleransi, mengarahkan tamu ke admin untuk konfirmasi Rp50.000/jam atau perpanjangan. Pengiriman tetap **manual**.
 - **Jenis internal kompatibel:** pilihan Konfirmasi Reservasi tetap memakai `PENAWARAN_RESERVASI`, **tidak** memakai `KONFIRMASI_BOOKING`. Jenis Konfirmasi Booking dan Konfirmasi Pembayaran historis tetap disimpan dalam kode/database, tetapi tidak tampil sebagai pilihan utama di Pengaturan.
@@ -165,6 +165,26 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 - **SQL PENDING** `supabase/pending/20261126_whatsapp_overtime_notice_kind.sql` dibuat untuk migrasi additive jenis dan RPC yang diperlukan, tetapi **TIDAK DIEKSEKUSI KE CLOUD**. Membutuhkan audit baseline/role, rollback, dan izin Owner terpisah. Tidak ada data dihapus atau di-seed.
 - **QA gate berikutnya:** TypeScript/build, tes kind/placeholder, role + batas waktu 15 menit, perizinan Owner vs Receptionist/HK/Training, dan status LIVE setelah Lovable publish. PR merge/publish/aktivasi Cloud adalah keputusan terpisah.
 - **Jangan menutup UI-26-07** (Pengaturan semua fungsi) hanya karena subhalaman Template telah diperbarui.
+
+---
+
+### Audit READ-ONLY setelah PR #179 MERGED — 26 November 2026
+
+**Bukti langsung:** GitHub merge `be3eedd6f1437d65399e36bfca03731dba6685ac` berada pada source Lovable; project Lovable berstatus `needs_attention / out_of_credits`. Pemeriksaan web pada URL preview Pengaturan Template gagal diakses, sehingga **UAT VISUAL BELUM TERBUKTI** dan flag `is_published=true` **tidak** berarti commit baru dipublish.
+
+| Pemeriksaan | Status faktual |
+| --- | --- |
+| Source empat tab di `src/routes/pengaturan-template-whatsapp.tsx` | **PASS verifikasi kode**: Konfirmasi Reservasi (jenis internal `PENAWARAN_RESERVASI`), Pengingat Booking, Pengingat Waktu Habis, Pemberitahuan Overtime |
+| GitHub PR #179 | **MERGED, 16/16 CI PASS**; bukan hasil UAT visual |
+| GitHub `main` → source Lovable | **SYNC PASS** pada `be3eedd`; build/publish versi terbaru belum terverifikasi |
+| Versi LIVE `ACTIVE` | Empat jenis lama `PENAWARAN_RESERVASI`, `KONFIRMASI_BOOKING`, `PENGINGAT_BOOKING_30_MENIT`, `PENGINGAT_WAKTU_HABIS` masing-masing **v1** |
+| Overtime kind di constraint database LIVE | **BELUM ADA** (`PEMBERITAHUAN_OVERTIME` ditolak oleh constraint lama); Cloud SQL belum diubah |
+| Overtime RPC | Fungsi read/save reminder masih whitelist **dua** jenis lama; opsi Overtime di UI sengaja **MENUNGGU BACKEND**, tidak dapat simpan atau kirim |
+| Draf Konfirmasi Reservasi baru | Disediakan dalam kode tetapi **belum ACTIVE**. Owner harus meninjau dan memilih **Gunakan Draf Revisi (Belum Disimpan)** sebelum menyimpan versi melalui RPC resmi |
+| Browser Owner/Receptionist | **BELUM UAT**: tidak ada akses login interaktif dari pemeriksaan ini; jangan klaim sudah tampil di LIVE |
+| Biaya/pembayaran/publish | **TIDAK DIUBAH**; Rp50.000/jam tetap hanya naskah pemberitahuan yang akan dikonfirmasi admin |
+
+**Gate tindakan berikutnya:** akses browser Owner untuk UAT *tanpa membuat transaksi*, atau tinjau kesiapan migrasi Overtime **read-only**, rollback, dan kontrol hak akses. **Jangan jalankan SQL pending atau aktifkan template Overtime tanpa izin Owner terpisah.** Template Konfirmasi Reservasi tidak boleh menyatakan pembayaran diterima/Booking resmi.
 
 ---
 
