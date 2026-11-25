@@ -1,0 +1,26 @@
+name: B25 Offer Dashboard KPI and Modal Draft
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - src/routes/index.tsx
+      - src/components/reservation-offer-queue.tsx
+      - src/components/formulir-pemesanan.tsx
+      - scripts/offer-dashboard-modal-contract.test.ts
+      - .github/workflows/b25-offer-dashboard-modal.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dashboard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/offer-dashboard-modal-contract.test.ts
+      - run: bun run build
+      - run: bunx tsc --noEmit
