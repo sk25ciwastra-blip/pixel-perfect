@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
-import { BedDouble, Pencil, Plus, ShieldAlert, DoorOpen, CheckCircle2, CircleOff, Layers3 } from 'lucide-react';
+import { BedDouble, Pencil, Plus, ShieldAlert, DoorOpen, CheckCircle2, Layers3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
