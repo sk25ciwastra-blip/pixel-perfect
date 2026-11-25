@@ -7,6 +7,9 @@ on:
       - src/components/reservation-offer-queue.tsx
       - src/components/formulir-pemesanan.tsx
       - scripts/offer-dashboard-modal-contract.test.ts
+      - scripts/reservation-card-contract.test.ts
+      - src/lib/reservation-card.ts
+      - public/assets/qris-resmi-baturaden25.png
       - scripts/issue-140-release-gate-readonly.sql
       - scripts/issue-140-release-gate-readonly.test.ts
       - scripts/issue-140-migration-order-contract.test.ts
@@ -34,6 +37,6 @@ jobs:
           persist-credentials: false
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun test scripts/offer-dashboard-modal-contract.test.ts scripts/issue-140-release-gate-readonly.test.ts scripts/issue-140-migration-order-contract.test.ts scripts/issue-140-catalog-compatibility-readonly.test.ts scripts/issue-140-validate-staging-export.test.ts scripts/issue-140-verify-clone-parity.test.ts
+      - run: bun test scripts/offer-dashboard-modal-contract.test.ts scripts/reservation-card-contract.test.ts scripts/issue-140-release-gate-readonly.test.ts scripts/issue-140-migration-order-contract.test.ts scripts/issue-140-catalog-compatibility-readonly.test.ts scripts/issue-140-validate-staging-export.test.ts scripts/issue-140-verify-clone-parity.test.ts
       - run: bun run build
       - run: bunx tsc --noEmit
