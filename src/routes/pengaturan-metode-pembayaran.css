@@ -1,0 +1,33 @@
+/* Scoped payment-method settings contrast repair. No global theme or financial UI changes. */
+.pm-owner-page .pm-owner-row {
+  background: #fffdf7;
+  border: 1px solid #dac8ab;
+  color: #25211c;
+  box-shadow: 0 2px 7px -6px rgba(22, 17, 10, .3);
+}
+.pm-owner-page .pm-owner-row .pm-owner-name { color: #27221b; font-weight: 700; }
+.pm-owner-page .pm-owner-row .pm-owner-note { color: #62584b; line-height: 1.6; }
+.pm-owner-page .pm-owner-row .pm-owner-icon {
+  background: linear-gradient(135deg, #211e1a, #100f0e);
+  border: 1px solid #a7803a;
+  color: #eac57c;
+}
+.pm-owner-page .pm-owner-row .pm-owner-icon svg { color: #eac57c; }
+.pm-owner-page .pm-owner-label {
+  background: #f7f0e2;
+  border: 1px solid #d0b78d;
+  color: #675027;
+  font-weight: 700;
+}
+.pm-owner-page .pm-owner-info {
+  background: #fffaf0;
+  border: 1px solid #d9c49f;
+  color: #30291e;
+}
+.pm-owner-page .pm-owner-info p { color: #4f4638; }
+.pm-owner-page .pm-owner-info .pm-owner-info-title { color: #2d281f; }
+.pm-owner-page .pm-owner-footnote { color: #5f5445; }
+@media (max-width: 520px) {
+  .pm-owner-page .pm-owner-row { flex-wrap: wrap; }
+  .pm-owner-page .pm-owner-label { margin-left: 52px; }
+}
