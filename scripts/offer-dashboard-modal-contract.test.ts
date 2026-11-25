@@ -76,7 +76,8 @@ test('Kartu Reservasi is downloaded as JPG using official QRIS without auto-send
   expect(card).toContain('WhatsApp');
   expect(card).toContain('DP');
   expect(card).toContain('LUNAS');
-  expect(card).toContain('INI BUKAN BUKTI BOOKING RESMI');
+  expect(card).toContain('Ini bukan bukti bahwa booking telah dilakukan.');
+  expect(card).toContain('Reservasi baru tercatat setelah pembayaran kami terima.');
   expect(card).not.toContain("supabase.rpc(");
   expect(queue).toContain('URL.revokeObjectURL(objectUrl)');
   expect(queue).toContain('Tombol WhatsApp tidak melampirkan gambar secara otomatis.');
