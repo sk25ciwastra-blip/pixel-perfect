@@ -21,6 +21,7 @@ import {
   type CombinedPaymentComponent,
 } from '@/lib/combined-payments';
 import { featureFlags } from '@/lib/feature-flags';
+import { isBookingRescheduleWindowClosed, isNewBookingCheckInTooNear } from '@/lib/booking-reschedule-window';
 import { choosePaymentMethods, amountAfterPaymentSwitch } from '@/lib/payment-method-choice';
 import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 import { DialogCheckInBerhasil } from '@/components/konfirmasi-pembayaran';
@@ -153,9 +154,7 @@ const {
   const adminBookingIsFuture = Boolean(adminBooking?.scheduled_check_in &&
     Date.parse(adminBooking.scheduled_check_in) > sekarang);
   // UX preflight mirrors the authoritative server cutoff; the RPC rechecks at write time.
-  const adminRescheduleWindowClosed = !adminBooking?.scheduled_check_in ||
-    !Number.isFinite(Date.parse(adminBooking.scheduled_check_in)) ||
-    sekarang > Date.parse(adminBooking.scheduled_check_in) - 2 * 60 * 60 * 1000;
+  const adminRescheduleWindowClosed = isBookingRescheduleWindowClosed(adminBooking?.scheduled_check_in, sekarang);
 
   function openAdminBooking(transactionId: string) {
     if (!canManageBooking || adminBusy) return;
@@ -193,10 +192,7 @@ const {
     let proposedTime: string | undefined;
     if (adminAction === 'reschedule') {
       // Always use a fresh clock before the RPC; never trust stale timer or disabled button.
-      const cutoff = adminBooking.scheduled_check_in
-        ? Date.parse(adminBooking.scheduled_check_in) - 2 * 60 * 60 * 1000
-        : NaN;
-      if (!Number.isFinite(cutoff) || Date.now() > cutoff) {
+      if (isBookingRescheduleWindowClosed(adminBooking.scheduled_check_in, Date.now())) {
         setAdminError('Batas perubahan jadwal sudah lewat: maksimal 2 jam sebelum Check-in lama.');
         return;
       }
@@ -205,7 +201,7 @@ const {
         setAdminError('Isi tanggal dan jam baru dalam WIB.');
         return;
       }
-      if (candidate.getTime() < Date.now() + 2 * 60 * 60 * 1000) {
+      if (isNewBookingCheckInTooNear(candidate.getTime(), Date.now())) {
         setAdminError('Jadwal baru harus minimal 2 jam dari waktu sekarang.');
         return;
       }
