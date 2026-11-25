@@ -8,6 +8,8 @@ import { useTable, useTransaksiOperasional, type Guest } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
+import { OfferHistory } from '@/components/reservation-offer-queue';
+import { canPreviewBookingQuote } from '@/lib/booking-quote';
 import { openWhatsApp } from '@/lib/whatsapp';
 import { DetailTransaksi } from '@/components/detail-transaksi';
 import '@/components/tamu.css';
@@ -58,7 +60,8 @@ function IkonWhatsApp({ className = "size-5" }: { className?: string }) {
 }
 
 function HalamanTamu() {
-  const { posisiKode } = usePeran();
+  const { posisiKode, masuk } = usePeran();
+  const canReadOffers = canPreviewBookingQuote('booking', posisiKode, masuk);
   const readOnly = posisiKode === 'inspector';
   const { rows, loading, error, refresh } = useTable('guests');
   const transactions = useTransaksiOperasional();
@@ -79,7 +82,7 @@ function HalamanTamu() {
   const [saving, setSaving] = useState(false);
   const [detailTamu, setDetailTamu] = useState<Guest | null>(null);
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
-  const [tabDetail, setTabDetail] = useState<'kunjungan' | 'transaksi' | 'booking' | 'catatan'>('kunjungan');
+  const [tabDetail, setTabDetail] = useState<'kunjungan' | 'transaksi' | 'booking' | 'catatan' | 'penawaran'>('kunjungan');
   const detailTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     setTabDetail('kunjungan');
@@ -272,9 +275,10 @@ function HalamanTamu() {
                 <button type="button" role="tab" aria-selected={tabDetail === 'kunjungan'} data-aktif={tabDetail === 'kunjungan'} className="dt-tab" onClick={() => setTabDetail('kunjungan')}><Clock aria-hidden="true" />Riwayat Kunjungan ({kunjunganList.length})</button>
                 <button type="button" role="tab" aria-selected={tabDetail === 'transaksi'} data-aktif={tabDetail === 'transaksi'} className="dt-tab" onClick={() => setTabDetail('transaksi')}><Layers aria-hidden="true" />Riwayat Transaksi</button>
                 <button type="button" role="tab" aria-selected={tabDetail === 'booking'} data-aktif={tabDetail === 'booking'} className="dt-tab" onClick={() => setTabDetail('booking')}><CalendarDays aria-hidden="true" />Riwayat Booking</button>
+                {canReadOffers && <button type="button" role="tab" aria-selected={tabDetail === 'penawaran'} data-aktif={tabDetail === 'penawaran'} className="dt-tab" onClick={() => setTabDetail('penawaran')}><CalendarDays aria-hidden="true" />Riwayat Penawaran</button>}
                 <button type="button" role="tab" aria-selected={tabDetail === 'catatan'} data-aktif={tabDetail === 'catatan'} className="dt-tab" onClick={() => setTabDetail('catatan')}><NotebookPen aria-hidden="true" />Catatan</button>
               </div>
-              {tabDetail === 'catatan' ? <>
+              {tabDetail === 'penawaran' && canReadOffers ? <OfferHistory key={detail.id} guest={detail.id} /> : tabDetail === 'catatan' ? <>
                 {notes.error && <p className="dt-kosong">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
                 {daftarCatatan.length ? <ul className="dt-catatan-list">{daftarCatatan.map(note => <li key={note.id} className="dt-catatan-item"><p>{note.body}</p><p className="dt-catatan-meta">{pembuatCatatan(note.author_role, note.author_name)} · {note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</p></li>)}</ul> : !notes.error && <p className="dt-kosong">Belum ada catatan tamu</p>}
               </> : <>
