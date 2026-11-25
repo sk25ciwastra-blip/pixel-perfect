@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.whatsapp_template_versions (
   revision integer NOT NULL CHECK (revision > 0),
   body text NOT NULL CHECK (
     char_length(body) BETWEEN 1 AND 4000
-    AND body !~ '[[:cntrl:]]'
+    AND replace(body, chr(10), '') !~ '[[:cntrl:]]'
   ),
   status text NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','SUPERSEDED')),
   created_by uuid NOT NULL REFERENCES auth.users(id),
@@ -66,6 +66,9 @@ DECLARE
   _next integer;
   _new_id uuid;
   _prev uuid;
+  _token text;
+  _allowed text[];
+  _remaining text;
 BEGIN
   IF _actor IS NULL OR NOT public.has_role(_actor, 'owner'::public.app_role) THEN
     RAISE EXCEPTION 'Hanya Owner dapat mengubah template WhatsApp' USING ERRCODE = '42501';
@@ -76,16 +79,37 @@ BEGIN
     RAISE EXCEPTION 'Jenis template tidak dikenal';
   END IF;
   IF _body IS NULL OR length(btrim(_body)) = 0 OR length(_body) > 4000
-    OR _body ~ '[[:cntrl:]]' THEN
+    OR replace(_body, chr(10), '') ~ '[[:cntrl:]]' THEN
     RAISE EXCEPTION 'Isi template tidak valid';
   END IF;
-  -- Do not allow raw malformed placeholders. Client enforces per-kind
-  -- token whitelist; server also must verify that every bracket token is allowed.
-  IF _body ~ '\\[[^]]*\\]' AND (
-    _body ~ '\\[[^A-Z0-9_]' OR _body ~ '\\[[A-Z0-9_]*[^A-Z0-9_]\\]'
-  ) THEN
+  -- Whitelist enforced on the server; client validation alone is insufficient.
+  _allowed := CASE _kind
+    WHEN 'PENAWARAN_RESERVASI' THEN ARRAY[
+      'NAMA_TAMU','TIPE_KAMAR','NOMOR_KAMAR','PAKET','CHECKIN_WIB',
+      'CHECKOUT_WIB','JUMLAH_TAMU','HARGA_KAMAR','BIAYA_TAMBAHAN',
+      'TOTAL_TAGIHAN','DP_MINIMUM','DP_PERSEN']
+    WHEN 'KONFIRMASI_BOOKING' THEN ARRAY[
+      'NAMA_TAMU','NOMOR_TRANSAKSI','TIPE_KAMAR','NOMOR_KAMAR',
+      'PAKET','CHECKIN_WIB','CHECKOUT_WIB','JUMLAH_TAMU',
+      'TOTAL_TAGIHAN','DP_DITERIMA','SISA_TAGIHAN','STATUS_PEMBAYARAN']
+    ELSE ARRAY[
+      'NAMA_TAMU','NOMOR_TRANSAKSI','TOTAL_TAGIHAN',
+      'TOTAL_DIBAYAR_BERSIH','SISA_TAGIHAN','STATUS_PEMBAYARAN']
+  END;
+  _remaining := regexp_replace(_body, '\[[A-Z][A-Z0-9_]*\]', '', 'g');
+  IF _remaining ~ '[\[\]]' THEN
     RAISE EXCEPTION 'Format variabel tidak valid';
   END IF;
+  IF NOT (_body ~ '\[[A-Z][A-Z0-9_]*\]') THEN
+    RAISE EXCEPTION 'Minimal satu variabel resmi diperlukan';
+  END IF;
+  FOR _token IN
+    SELECT m[1] FROM regexp_matches(_body, '\[([A-Z][A-Z0-9_]*)\]', 'g') AS m
+  LOOP
+    IF NOT (_token = ANY(_allowed)) THEN
+      RAISE EXCEPTION 'Variabel tidak diizinkan untuk jenis template';
+    END IF;
+  END LOOP;
   -- Serialize edits even for a kind with zero rows.
   PERFORM pg_catalog.pg_advisory_xact_lock(
     pg_catalog.hashtextextended('whatsapp_template:' || _kind, 0)
@@ -113,8 +137,7 @@ GRANT EXECUTE ON FUNCTION public.owner_save_whatsapp_template(text,text) TO auth
 COMMIT;
 
 -- Release gate:
--- 1. Review against LIVE schema; validate server-side full token whitelist
---    before activation (current draft validation alone is NOT sufficient).
+-- 1. Review against LIVE schema and independently test server-side token whitelist.
 -- 2. Test anon/employee/HK/Training denial and Owner concurrent revisions.
 -- 3. Implement authenticated controlled read for staff only after review.
 -- 4. No table delete, no data seeding, and no automatic message sending.
