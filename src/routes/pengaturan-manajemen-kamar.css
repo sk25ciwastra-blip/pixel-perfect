@@ -1,0 +1,164 @@
+/* Baturaden 25 Homestay — Manajemen Kamar, konsep awal khusus halaman Owner.
+   Scoped: tidak mengubah halaman Tipe Kamar, Status Kamar, atau background global. */
+.mk-page {
+  --mk-paper: #fbf8f1;
+  --mk-paper-soft: #f4eee3;
+  --mk-ink: #22201e;
+  --mk-muted: #71685c;
+  --mk-gold: #b99249;
+  --mk-border: rgba(144, 111, 61, .26);
+  max-width: 1180px;
+  margin-inline: auto;
+}
+.mk-page .mk-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(113deg, #fcf9f3, #f5ecdc) !important;
+  border: 1px solid var(--mk-border);
+  color: var(--mk-ink);
+}
+.mk-page .mk-hero::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  right: -65px;
+  top: -95px;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  border: 42px solid rgba(185, 146, 73, .09);
+}
+.mk-page .mk-hero > * { position: relative; z-index: 1; }
+.mk-page .mk-eyebrow { color: #967039; }
+.mk-page .mk-hero-title { color: #22201e; letter-spacing: -.025em; }
+.mk-page .mk-hero p.text-muted-foreground { color: #73695c; max-width: 470px; }
+.mk-page .mk-add-button {
+  min-height: 42px;
+  background: #201e1b;
+  border: 1px solid #9c793d;
+  color: #f8e3b9;
+  border-radius: 10px;
+  box-shadow: 0 5px 13px -7px rgba(0,0,0,.65);
+}
+.mk-page .mk-add-button:hover { background: #35302a; }
+.mk-page .mk-stat {
+  color: var(--mk-ink);
+  background: linear-gradient(145deg, #fffcf6, #f2ebdf);
+  border: 1px solid var(--mk-border);
+  box-shadow: 0 3px 12px -8px rgba(0,0,0,.32), inset 0 1px 0 #fff;
+}
+.mk-page .mk-stat-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--mk-muted); }
+.mk-page .mk-stat-heading svg { color: #9b7841; }
+.mk-page .mk-stat p.font-serif { color: #28231d; font-variant-numeric: tabular-nums; }
+.mk-page .mk-list {
+  color: var(--mk-ink);
+  background: var(--mk-paper);
+  border: 1px solid var(--mk-border);
+  box-shadow: 0 11px 26px -18px rgba(0,0,0,.55), inset 0 1px 0 white;
+}
+.mk-page .mk-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--mk-border);
+  background: linear-gradient(110deg, #fdfaf3, #f5eddf);
+}
+.mk-page .mk-section-kicker { font-size: 10px; font-weight: 800; letter-spacing: .2em; color: #9a743b; }
+.mk-page .mk-list-heading h3 { font-family: "Playfair Display", Georgia, serif; font-size: 20px; font-weight: 700; margin-top: 4px; }
+.mk-page .mk-count { border: 1px solid rgba(139, 107, 59, .3); background: #fffaf0; border-radius: 999px; padding: 6px 12px; color: #64543e; font-size: 12px; white-space: nowrap; }
+.mk-page .mk-table { color: var(--mk-ink); border-collapse: separate; border-spacing: 0; }
+.mk-page .mk-table thead { background: #ede4d5; color: #5e5346; }
+.mk-page .mk-table th { font-weight: 700; white-space: nowrap; }
+.mk-page .mk-table tr:not(:last-child) td { border-bottom: 1px solid rgba(153, 119, 72, .17); }
+.mk-page .mk-table tbody tr:hover { background: #f7f0e4; }
+.mk-page .mk-table td { vertical-align: middle; color: #40392f; }
+.mk-page .mk-room-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #302923, #151514);
+  color: #f1d18e;
+  font-weight: 800;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid #8c6a39;
+  box-shadow: 0 2px 5px rgba(0,0,0,.22);
+}
+.mk-page .mk-condition, .mk-page .mk-activation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 750;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.mk-page .mk-condition-ready { background: #e3f2e7; border-color: #bddbc4; color: #276c3b; }
+.mk-page .mk-condition-occupied { background: #fbe3e0; border-color: #edbcb7; color: #983c30; }
+.mk-page .mk-condition-dirty { background: #fbeddb; border-color: #e9cfaa; color: #81551c; }
+.mk-page .mk-condition-cleaning { background: #e0eefa; border-color: #bdd6ed; color: #285f89; }
+.mk-page .mk-activation { background: #f5f1ea; border-color: #d9cdba; color: #685b4a; }
+.mk-page .mk-activation > span { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.mk-page .mk-activation-on { color: #2e7044; }
+.mk-page .mk-activation-off { color: #876b55; }
+.mk-page .mk-actions button {
+  height: 33px;
+  font-size: 12px;
+  padding-inline: 10px;
+  border: 1px solid #d7c5a8;
+  color: #3b332a;
+  background: #fffcf6;
+  border-radius: 8px;
+}
+.mk-page .mk-actions button:hover { background: #eee2d1; border-color: #ab8c5b; }
+.mk-page .mk-button-status { min-width: 103px; }
+.mk-page .mk-editor { color: var(--mk-ink); background: linear-gradient(155deg, #fffaf2, #f3eadc); }
+.mk-page .mk-editor input, .mk-page .mk-editor select { color: var(--mk-ink); background: #fffdf8; }
+.mk-page :is(button, input, select):focus-visible { outline: 2px solid #ac7e34; outline-offset: 2px; }
+
+@media (max-width: 767px) {
+  .mk-page .mk-hero { padding: 19px; }
+  .mk-page .mk-hero-title { font-size: 23px; }
+  .mk-page .mk-add-button { width: 100%; justify-content: center; }
+  .mk-page .mk-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .mk-page .mk-stat { padding: 11px 9px; border-radius: 11px; }
+  .mk-page .mk-stat-heading { font-size: 10px; align-items: flex-start; }
+  .mk-page .mk-stat-heading svg { display: none; }
+  .mk-page .mk-stat p.font-serif { font-size: 21px; }
+  .mk-page .mk-list-heading { padding: 16px; }
+  .mk-page .mk-table-wrapper { overflow-x: visible; }
+  .mk-page .mk-table { min-width: 0; display: block; width: 100%; }
+  .mk-page .mk-table thead { display: none; }
+  .mk-page .mk-table tbody { display: grid; gap: 10px; padding: 12px; }
+  .mk-page .mk-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 12px 8px;
+    padding: 14px;
+    border: 1px solid rgba(153,119,72,.25) !important;
+    border-radius: 12px;
+    background: #fffcf7;
+    box-shadow: 0 4px 12px -10px rgba(0,0,0,.3);
+  }
+  .mk-page .mk-table tbody td { border: 0 !important; padding: 0; font-size: 12px; min-width: 0; }
+  .mk-page .mk-table tbody td:nth-child(1) { grid-column: 1; grid-row: 1; }
+  .mk-page .mk-table tbody td:nth-child(2) { grid-column: 2; grid-row: 1; font-weight: 700; text-align: right; }
+  .mk-page .mk-table tbody td:nth-child(3)::before { content: "Lantai  ·  "; font-size: 11px; color: #786d60; font-weight: 500; }
+  .mk-page .mk-table tbody td:nth-child(4) { justify-self: end; }
+  .mk-page .mk-table tbody td:nth-child(5) { grid-column: 1 / -1; }
+  .mk-page .mk-table tbody td:nth-child(6) { grid-column: 1 / -1; }
+  .mk-page .mk-actions { justify-content: stretch; }
+  .mk-page .mk-actions button { flex: 1; min-width: 0; }
+  .mk-page .mk-table tbody tr:has(td[colspan]) { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk-page *, .mk-page *::before, .mk-page *::after { transition: none !important; }
+}
