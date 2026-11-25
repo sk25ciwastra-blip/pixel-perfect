@@ -31,7 +31,9 @@ describe('Poin4 Owner-approved initial quote', () => {
     expect(source).toContain("list.find(item => item.status === 'ACTIVE')?.body ?? initialApprovedDraft[selectedKind]");
     expect(source).toContain("const draftSuggestion = backendReady && !active && Boolean(initialApprovedDraft[kind]);");
     expect(source).toContain("if (!owner || !backendReady || busy || unchanged || validation.length) return;");
-    expect(source).toContain("supabase.rpc('owner_save_whatsapp_template'");
+    expect(source).toContain("reminderKind ? 'owner_save_whatsapp_reminder_template' : 'owner_save_whatsapp_template'");
+    expect(source).toContain("const { error: saveError } = await rpc(");
+    expect(source).toContain("onClick={() => void save()}");
     expect(source).not.toContain("useEffect(() => { void save()");
   });
 });
