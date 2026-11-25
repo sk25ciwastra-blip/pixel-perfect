@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
@@ -39,26 +39,33 @@ function PengaturanTemplateWhatsApp() {
   const [loading, setLoading] = useState(false);
   const [backendReady, setBackendReady] = useState(false);
   const [error, setError] = useState('');
+  const readGeneration = useRef(0);
 
   async function reload(selectedKind: WhatsAppTemplateKind) {
     if (!owner) return;
+    const request = ++readGeneration.current;
     setLoading(true); setError(''); setBackendReady(false);
     try {
       const { data, error: readError } = await supabase.from('whatsapp_template_versions')
         .select('id,kind,revision,body,status,created_at')
         .eq('kind', selectedKind).order('revision', { ascending: false });
       if (readError) throw readError;
+      if (request !== readGeneration.current) return;
       const list = (data ?? []) as Version[];
       setVersions(list);
       setBody(list.find(item => item.status === 'ACTIVE')?.body ?? '');
       setBackendReady(true);
     } catch {
+      if (request !== readGeneration.current) return;
       setVersions([]); setBody('');
       setError('Penyimpanan template WhatsApp belum tersedia atau akses ditolak. SQL pending belum boleh dianggap aktif.');
-    } finally { setLoading(false); }
+    } finally { if (request === readGeneration.current) setLoading(false); }
   }
 
-  useEffect(() => { if (owner) void reload(kind); else { setVersions([]); setBody(''); setBackendReady(false); } }, [owner, kind]);
+  useEffect(() => {
+    if (owner) void reload(kind);
+    else { ++readGeneration.current; setVersions([]); setBody(''); setBackendReady(false); }
+  }, [owner, kind]);
   const validation = validateWhatsAppTemplate(kind, body);
   const active = versions.find(item => item.status === 'ACTIVE');
   const unchanged = body === (active?.body ?? '');
@@ -88,7 +95,7 @@ function PengaturanTemplateWhatsApp() {
             <h2 className="font-serif text-xl">Jenis Template</h2>
             <div className="mt-3 flex flex-wrap gap-2">
               {kinds.map(item => <Button key={item.key} type="button" variant={kind === item.key ? 'default' : 'outline'}
-                disabled={busy} onClick={() => setKind(item.key)}>{item.title}</Button>)}
+                disabled={busy} onClick={() => { ++readGeneration.current; setBackendReady(false); setKind(item.key); }}>{item.title}</Button>)}
             </div>
             <p className="mt-3 text-sm text-muted-foreground">{kinds.find(item => item.key === kind)?.description}</p>
           </section>
