@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Building2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
@@ -98,6 +99,7 @@ function HalamanProfilHomestay() {
       setPhone(row.phone);
       setWhatsapp(row.whatsapp);
       setNotice('Profil Homestay berhasil disimpan.');
+      toast.success('Profil Homestay berhasil disimpan.');
     } catch {
       setError('Hasil penyimpanan belum dapat dipastikan. Periksa kembali sebelum mengulangi.');
     } finally {
