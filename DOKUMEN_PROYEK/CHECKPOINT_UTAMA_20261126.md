@@ -154,6 +154,20 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ---
 
+### Pekerjaan implementasi empat Template WhatsApp — 26 November 2026
+
+**Status saat pencatatan:** **KODE DALAM BRANCH / PR BELUM DIMERGE / UAT BELUM**. Jangan menganggap versi baru sudah ACTIVE, tombol berfungsi LIVE, atau SQL telah diaktifkan.
+
+- **Permintaan Owner:** tepat empat pilihan dalam **Pengaturan → Template WhatsApp**: (1) Konfirmasi Reservasi *sebelum pembayaran*, (2) Pengingat Booking 30 menit sebelum Check-in, (3) Pengingat Waktu Habis pada batas Check-out dengan toleransi 15 menit, (4) Pemberitahuan Overtime setelah batas toleransi, mengarahkan tamu ke admin untuk konfirmasi Rp50.000/jam atau perpanjangan. Pengiriman tetap **manual**.
+- **Jenis internal kompatibel:** pilihan Konfirmasi Reservasi tetap memakai `PENAWARAN_RESERVASI`, **tidak** memakai `KONFIRMASI_BOOKING`. Jenis Konfirmasi Booking dan Konfirmasi Pembayaran historis tetap disimpan dalam kode/database, tetapi tidak tampil sebagai pilihan utama di Pengaturan.
+- **Draf teks Konfirmasi Reservasi yang benar** disiapkan sebagai pilihan **Gunakan Draf Revisi (Belum Disimpan)**. Tidak mengubah isi ACTIVE v1 secara diam-diam. Belum ada TRX, belum pembayaran diterima, kamar belum terkunci. Lihat [DRAF_4_TEMPLATE_WHATSAPP_OWNER_20261126.md](DRAF_4_TEMPLATE_WHATSAPP_OWNER_20261126.md).
+- **Pemberitahuan Overtime** adalah jenis baru `PEMBERITAHUAN_OVERTIME`. Hanya pratinjau dan **MENUNGGU BACKEND** pada Cloud yang belum mendukung; penyimpanan dinonaktifkan jika RPC tidak menerima jenis tersebut. Pengingat di Dashboard hanya ditampilkan jika RPC membaca versi **ACTIVE** yang berizin. Fungsinya *pemberitahuan manual*, bukan kalkulasi otomatis atau mutasi finance.
+- **SQL PENDING** `supabase/pending/20261126_whatsapp_overtime_notice_kind.sql` dibuat untuk migrasi additive jenis dan RPC yang diperlukan, tetapi **TIDAK DIEKSEKUSI KE CLOUD**. Membutuhkan audit baseline/role, rollback, dan izin Owner terpisah. Tidak ada data dihapus atau di-seed.
+- **QA gate berikutnya:** TypeScript/build, tes kind/placeholder, role + batas waktu 15 menit, perizinan Owner vs Receptionist/HK/Training, dan status LIVE setelah Lovable publish. PR merge/publish/aktivasi Cloud adalah keputusan terpisah.
+- **Jangan menutup UI-26-07** (Pengaturan semua fungsi) hanya karena subhalaman Template telah diperbarui.
+
+---
+
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
 1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.
