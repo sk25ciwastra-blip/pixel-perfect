@@ -1,0 +1,26 @@
+name: B25 WhatsApp Template Core Focused Gate
+
+on:
+  push:
+    branches:
+      - feat/whatsapp-template-core-20261125
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install pinned dependencies
+        run: bun install --frozen-lockfile
+      - name: Pure template regression
+        run: bun test scripts/whatsapp-template-core.test.ts
+      - name: Build and generate route types
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
