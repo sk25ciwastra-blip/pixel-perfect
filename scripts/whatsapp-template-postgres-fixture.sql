@@ -91,23 +91,23 @@ BEGIN
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
 END $$;
 SELECT set_config('request.jwt.claim.training', 'none', false);
-DO $
+DO $$
 DECLARE n integer;
 BEGIN
  SELECT count(*) INTO n FROM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
  IF n<>1 THEN RAISE EXCEPTION 'FAIL: active receptionist cannot read active template'; END IF;
-END $;
+END $$;
 SELECT set_config('request.jwt.claim.training', 'restricted', false);
-DO $
+DO $$
 BEGIN
  BEGIN
   PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
   RAISE EXCEPTION 'FAIL: trainee read template';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
-END $;
+END $$;
 SELECT set_config('request.jwt.claim.training', 'none', false);
 SELECT set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', false);
-DO $
+DO $$
 DECLARE n integer;
 BEGIN
  SELECT count(*) INTO n FROM public.whatsapp_template_versions;
@@ -121,24 +121,24 @@ UPDATE public.employees SET active=false
  WHERE user_id='10000000-0000-0000-0000-000000000002';
 SET ROLE authenticated;
 SELECT set_config('request.jwt.claim.training', 'none', false);
-DO $
+DO $$
 BEGIN
  BEGIN
   PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
   RAISE EXCEPTION 'FAIL: inactive receptionist read template';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
-END $;
+END $$;
 RESET ROLE;
 UPDATE public.employees SET active=true, position='housekeeping'
  WHERE user_id='10000000-0000-0000-0000-000000000002';
 SET ROLE authenticated;
-DO $
+DO $$
 BEGIN
  BEGIN
   PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
   RAISE EXCEPTION 'FAIL: housekeeping read template';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
-END $;
+END $$;
 RESET ROLE;
 SELECT set_config('request.jwt.claim.sub', '', false);
 SET ROLE anon;
