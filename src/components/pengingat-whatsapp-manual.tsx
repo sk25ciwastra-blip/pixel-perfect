@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { rpc } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
 import { manualReminderEligibility, reminderTimeWib, type ReminderCandidate } from '@/lib/whatsapp-manual-reminders';
 import { renderWhatsAppTemplate } from '@/lib/whatsapp-template-core';
@@ -58,7 +59,7 @@ export function ManualWhatsAppReminders({ transactions, guests, rooms, roomTypes
       if (guestError || !guest || !guest.phone || !guest.full_name) {
         throw new Error('Nomor WhatsApp atau identitas tamu belum tersedia.');
       }
-      const { data: templates, error: templateError } = await supabase.rpc(
+      const { data: templates, error: templateError } = await rpc(
         'read_active_whatsapp_reminder_template', { _kind: kind },
       );
       const active = templates?.[0];
