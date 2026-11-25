@@ -119,6 +119,15 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ---
 
+### Catatan audit Pengaturan → Template WhatsApp (26 November 2026)
+
+- Review **READ-ONLY** pada LIVE membuktikan empat template resmi mempunyai versi `ACTIVE v1`: Penawaran Reservasi, Konfirmasi Booking, Pengingat Booking 30 Menit, dan Pengingat Waktu Habis. Keempatnya **tidak dihapus** karena jalur Reservasi, PDF konfirmasi dan pengingat manual memakainya.
+- Jenis kompatibilitas lama `KONFIRMASI_PEMBAYARAN` **tidak punya versi ACTIVE LIVE** tetapi masih direferensikan dari pendamping PDF historis. Tetap tersembunyi dari empat pilihan resmi dan **belum dihapus** dari schema/validator sampai ketergantungan lama dievaluasi. Tidak ada migrasi data atau perubahan teks template.
+- Perbaikan terbatas pada **[PR #176](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/176)**: informasi status aktif/versi, keterangan penggunaan manual, indikator memuat/error, hitung karakter, keamanan klik tab terpilih, dan umpan balik simpan ketika reload gagal; tes kontrak baru. **Jangan menganggap PR di-merge atau UAT PASS hanya berdasarkan catatan ini**; cek status PR dan source `main` terbaru.
+- Item desain besar **UI-26-07 Pengaturan semua fungsi** tetap **BELUM SELESAI** sampai seluruh bagian direview; perbaikan subhalaman Template tidak otomatis menutup seluruh item.
+
+---
+
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
 1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.

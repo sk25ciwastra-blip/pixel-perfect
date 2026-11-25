@@ -55,7 +55,7 @@ function PengaturanTemplateWhatsApp() {
   const readGeneration = useRef(0);
 
   async function reload(selectedKind: WhatsAppTemplateKind) {
-    if (!owner) return;
+    if (!owner) return false;
     const request = ++readGeneration.current;
     setLoading(true); setError(''); setBackendReady(false);
     try {
@@ -63,15 +63,17 @@ function PengaturanTemplateWhatsApp() {
         .select('id,kind,revision,body,status,created_at')
         .eq('kind', selectedKind).order('revision', { ascending: false });
       if (readError) throw readError;
-      if (request !== readGeneration.current) return;
+      if (request !== readGeneration.current) return false;
       const list = (data ?? []) as Version[];
       setVersions(list);
       setBody(list.find(item => item.status === 'ACTIVE')?.body ?? initialApprovedDraft[selectedKind]);
       setBackendReady(true);
+      return true;
     } catch {
-      if (request !== readGeneration.current) return;
+      if (request !== readGeneration.current) return false;
       setVersions([]); setBody('');
-      setError('Penyimpanan template WhatsApp belum tersedia atau akses ditolak. SQL pending belum boleh dianggap aktif.');
+      setError('Template WhatsApp gagal dimuat atau akses ditolak. Tidak ada data yang diubah.');
+      return false;
     } finally { if (request === readGeneration.current) setLoading(false); }
   }
 
@@ -83,6 +85,7 @@ function PengaturanTemplateWhatsApp() {
   const active = versions.find(item => item.status === 'ACTIVE');
   const unchanged = body === (active?.body ?? '');
   const draftSuggestion = backendReady && !active && Boolean(initialApprovedDraft[kind]);
+  const selectedTemplate = kinds.find(item => item.key === kind)!;
 
   async function save() {
     if (!owner || !backendReady || busy || unchanged || validation.length) return;
@@ -94,8 +97,9 @@ function PengaturanTemplateWhatsApp() {
         { _kind: kind, _body: body },
       );
       if (saveError) throw saveError;
-      await reload(kind);
-      toast.success('Template baru berhasil disimpan dengan riwayat versi.');
+      const refreshed = await reload(kind);
+      if (refreshed) toast.success(`Template ${selectedTemplate.title} berhasil disimpan sebagai versi aktif.`);
+      else toast.warning('Template berhasil disimpan, tetapi daftar versi belum dapat dimuat ulang. Periksa kembali sebelum digunakan.');
     } catch {
       setError('Template belum dapat disimpan. Periksa akses Owner dan status migrasi, lalu muat ulang sebelum mencoba.');
       toast.error('Penyimpanan template gagal');
@@ -108,19 +112,34 @@ function PengaturanTemplateWhatsApp() {
         : !owner ? <p className="panel-mewah p-5">Halaman ini khusus Owner.</p>
         : <div className="space-y-5">
           <section className="panel-mewah p-5">
-            <h2 className="font-serif text-xl">Jenis Template</h2>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {kinds.map(item => <Button key={item.key} type="button" variant={kind === item.key ? 'default' : 'outline'}
-                disabled={busy} onClick={() => { ++readGeneration.current; setBackendReady(false); setKind(item.key); }}>{item.title}</Button>)}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-serif text-xl">4 Template WhatsApp Resmi</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Template ini terhubung ke Reservasi, konfirmasi Booking, dan pengingat manual. Tidak ada pengiriman otomatis.</p>
+              </div>
+              <span className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold-light">Khusus Owner</span>
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">{kinds.find(item => item.key === kind)?.description}</p>
+            <div role="group" aria-label="Pilih template WhatsApp resmi" className="mt-3 flex flex-wrap gap-2">
+              {kinds.map(item => <Button key={item.key} type="button" variant={kind === item.key ? 'default' : 'outline'}
+                aria-pressed={kind === item.key} disabled={busy} onClick={() => { if (kind === item.key) return; ++readGeneration.current; setBackendReady(false); setKind(item.key); }}>{item.title}</Button>)}
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-gold/25 bg-background/40 px-3 py-2.5">
+              <span className="text-sm font-semibold">{selectedTemplate.title}</span>
+              <span role="status" className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${backendReady && active ? 'border-emerald-600/30 bg-emerald-600/10 text-emerald-700 dark:text-emerald-300' : 'border-gold/30 bg-gold/10 text-muted-foreground'}`}>
+                {loading ? 'Memeriksa versi…' : !backendReady ? 'Belum terverifikasi' : active ? `AKTIF · Versi ${active.revision}` : 'BELUM AKTIF'}
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">{selectedTemplate.description}</p>
           </section>
           <section className="panel-mewah space-y-3 p-5">
             <h2 className="font-serif text-xl">Isi Pesan</h2>
             {draftSuggestion && <p role="status" className="rounded-lg border border-gold/30 p-3 text-sm">Teks template yang sudah disetujui Owner telah disiapkan otomatis. Ini masih draf, belum aktif untuk karyawan. Tinjau lalu tekan Simpan Versi Baru agar tersimpan atas akun Owner dan tercatat dalam riwayat.</p>}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             {loading ? <p>Memuat template…</p> : <>
-              <label htmlFor="wa-template-body" className="text-sm">Teks WhatsApp (maksimal 4.000 karakter)</label>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="wa-template-body" className="text-sm font-medium">Teks WhatsApp</label>
+                <span className="text-xs text-muted-foreground">{body.length.toLocaleString('id-ID')} / 4.000 karakter</span>
+              </div>
               <textarea id="wa-template-body" className="min-h-60 w-full rounded-lg border border-input bg-background p-3 text-sm"
                 value={body} onChange={event => setBody(event.target.value)}
                 maxLength={4000} disabled={!backendReady || busy} />
@@ -133,7 +152,7 @@ function PengaturanTemplateWhatsApp() {
               <div className="flex flex-wrap gap-2">
                 <Button type="button" disabled={!backendReady || busy || unchanged || validation.length > 0}
                   onClick={() => void save()}>{busy ? 'Menyimpan…' : 'Simpan Versi Baru'}</Button>
-                <Button type="button" variant="outline" disabled={busy} onClick={() => void reload(kind)}>Muat Ulang</Button>
+                <Button type="button" variant="outline" disabled={busy || loading} onClick={() => void reload(kind)}>Muat Ulang</Button>
               </div>
               <p className="text-xs text-muted-foreground">
                 Mengubah template tidak mengirim WhatsApp atau membuat Booking/pembayaran. Pesan baru diterapkan setelah Owner menyimpan versi aktif.
@@ -142,7 +161,9 @@ function PengaturanTemplateWhatsApp() {
           </section>
           <section className="panel-mewah p-5">
             <h2 className="font-serif text-xl">Riwayat Versi</h2>
-            {!versions.length ? <p className="mt-2 text-sm text-muted-foreground">Belum ada versi tersimpan.</p>
+            {loading ? <p className="mt-2 text-sm text-muted-foreground">Memuat riwayat versi…</p>
+              : !backendReady ? <p className="mt-2 text-sm text-muted-foreground">Riwayat belum dapat diverifikasi. Muat ulang ketika koneksi tersedia.</p>
+              : !versions.length ? <p className="mt-2 text-sm text-muted-foreground">Belum ada versi tersimpan. Draf belum aktif untuk petugas.</p>
               : <ul className="mt-3 space-y-2 text-sm">
                 {versions.map(version => <li key={version.id} className="rounded-lg bg-secondary p-3">
                   Versi {version.revision} · {version.status === 'ACTIVE' ? 'Aktif' : 'Riwayat'}
