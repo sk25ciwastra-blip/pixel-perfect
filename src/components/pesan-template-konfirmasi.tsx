@@ -62,10 +62,11 @@ export function PesanTemplateKonfirmasi({ transactionId, pdfReady, expectedLedge
         throw new Error('Data pembayaran berubah sejak PDF diunduh. Unduh PDF dan buat preview terbaru.');
       }
       const active = await supabase.rpc('read_active_whatsapp_template', { _kind: kind });
-      if (active.error || active.data?.[0]?.revision !== previewVersion) {
+      const activeTemplate = active.data?.[0];
+      if (active.error || !activeTemplate || activeTemplate.revision !== previewVersion) {
         throw new Error('Template WhatsApp telah berubah. Buat preview baru.');
       }
-      const currentMessage = renderConfirmationTemplate(kind, active.data[0].body, latest);
+      const currentMessage = renderConfirmationTemplate(kind, activeTemplate.body, latest);
       if (currentMessage !== message) throw new Error('Isi pesan resmi berubah. Buat preview baru.');
       await navigator.clipboard.writeText(message);
       setCopied(true);
