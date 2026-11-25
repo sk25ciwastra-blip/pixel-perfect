@@ -32,11 +32,11 @@ export type OfferPage = { rows: Offer[]; count: number; failed_count: number | n
 export const offerQueryKey = ['reservation-offers'] as const;
 
 export const offerStatus: Record<Offer['status'], string> = {
-  DRAFT: 'Belum ditandai dikirim',
-  SENT: 'Ditandai dikirim · Menunggu DP',
-  CONVERTED: 'Booking resmi',
-  FAILED_UNAVAILABLE: 'Kamar tidak tersedia',
-  EXPIRED_SCHEDULE: 'Jadwal sudah lewat',
+  DRAFT: 'Menunggu kirim instruksi',
+  SENT: 'Menunggu pembayaran',
+  CONVERTED: 'Booking resmi · TRX terbit',
+  FAILED_UNAVAILABLE: 'Reservasi gagal · Kamar terpesan',
+  EXPIRED_SCHEDULE: 'Reservasi gagal · Jadwal lewat',
   CANCELLED: 'Dibatalkan',
 };
 

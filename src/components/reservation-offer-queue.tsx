@@ -23,11 +23,11 @@ function PageActions({ page, count, setPage }: { page: number; count: number; se
 export function OfferHistory({ guest }: { guest: string }) {
   const [page, setPage] = useState(0);
   const history = useQuery({ queryKey: [...offerQueryKey, guest, page], queryFn: () => readOffers(page, guest) });
-  if (history.isPending) return <p role="status">Memuat riwayat penawaran…</p>;
-  if (history.isError) return <p role="alert">Riwayat penawaran gagal dimuat.</p>;
+  if (history.isPending) return <p role="status">Memuat riwayat reservasi…</p>;
+  if (history.isError) return <p role="alert">Riwayat reservasi gagal dimuat.</p>;
   return <div className="space-y-3 py-3 text-sm">
-    <p>{history.data.count} penawaran · {history.data.failed_count ?? 0} gagal karena kamar tidak tersedia</p>
-    {!history.data.rows.length && <p>Belum ada penawaran pada halaman ini.</p>}
+    <p>{history.data.count} reservasi · {history.data.failed_count ?? 0} gagal karena kamar tidak tersedia</p>
+    {!history.data.rows.length && <p>Belum ada riwayat reservasi pada halaman ini.</p>}
     <ul className="divide-y divide-border">
       {history.data.rows.map(item => <li key={item.id} className="space-y-1 py-2">
         <p><strong>{offerStatus[item.status]}</strong> · {offerWib.format(new Date(item.created_at))} WIB</p>
@@ -77,13 +77,13 @@ export function OfferQueue({ selected, select, owner, conversionAllowed, convert
       type="button"
       className="panel-mewah group relative flex min-w-0 flex-row items-center gap-2.5 overflow-hidden border border-gold/30 bg-gradient-to-br from-[#fffaf0] via-[#fffdf8] to-[#f4e9d5] px-3.5 py-3.5 text-left shadow-[0_8px_20px_rgba(33,24,13,.09)] transition-all duration-200 hover:-translate-y-0.5 hover:border-gold/70 hover:shadow-[0_12px_28px_rgba(33,24,13,.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold dark:from-[#29241c] dark:via-[#29251f] dark:to-[#332a1e]"
       aria-haspopup="dialog"
-      aria-label="Buka daftar Penawaran Menunggu"
+      aria-label="Buka Antrean Reservasi Menunggu Pembayaran"
       onClick={openList}
     >
       <span aria-hidden="true" className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-gold/[0.07] blur-2xl" />
       <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-[#c5a268]/35 bg-[#2c241b] text-[#ecd19c] shadow-md"><FileText className="size-6" strokeWidth={1.5} aria-hidden="true" /></span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[0.75rem] font-semibold uppercase tracking-[.06em] leading-tight text-[#4e4030] dark:text-[#e5cda2]">Penawaran Menunggu</span>
+        <span className="block text-[0.75rem] font-semibold uppercase tracking-[.06em] leading-tight text-[#4e4030] dark:text-[#e5cda2]">Reservasi Menunggu</span>
         <span className="mt-1.5 block truncate text-[1.7rem] font-bold leading-none tabular-nums text-[#2d2419] dark:text-[#fff0d5]">{list.isSuccess ? list.data.count : '—'}</span>
         <span className="mt-1.5 block text-[11px] leading-snug text-gold-light">{list.isError ? 'Gagal memuat · klik untuk mencoba lagi' : 'perlu tindak lanjut'}</span>
       </span>
@@ -92,13 +92,13 @@ export function OfferQueue({ selected, select, owner, conversionAllowed, convert
 
     <Dialog open={listOpen && !selected} onOpenChange={open => { if (!open) setListOpen(false); }}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-1.25rem)] max-w-4xl overflow-y-auto rounded-[22px] border border-[#deca9f] bg-[#fffaf0] text-[#2c251b] shadow-[0_22px_60px_rgba(22,17,12,.26)]">
-        <div className="rounded-xl bg-[#292119] px-4 py-4 text-[#fff5e5]"><p className="mb-1 text-[10px] font-semibold uppercase tracking-[.16em] text-[#dabc7e]">Baturaden 25 Homestay · Operasional</p><DialogTitle className="font-serif text-xl">Penawaran Menunggu</DialogTitle></div>
-        <DialogDescription className="text-[var(--premium-ink)]">Daftar penawaran yang perlu ditindaklanjuti. Penawaran belum mengunci kamar dan belum menjadi Booking resmi.</DialogDescription>
-        {list.isPending && <p role="status" className="py-6 text-sm">Memuat penawaran…</p>}
-        {list.isError && <p role="alert" className="py-3 text-sm">Daftar penawaran gagal dimuat. <button type="button" className="font-semibold underline" onClick={() => void list.refetch()}>Coba lagi</button></p>}
+        <div className="rounded-xl bg-[#292119] px-4 py-4 text-[#fff5e5]"><p className="mb-1 text-[10px] font-semibold uppercase tracking-[.16em] text-[#dabc7e]">Baturaden 25 Homestay · Operasional</p><DialogTitle className="font-serif text-xl">Reservasi Menunggu</DialogTitle></div>
+        <DialogDescription className="text-[var(--premium-ink)]">Antrean permintaan reservasi yang belum menjadi Booking resmi. Kamar tetap tersedia hingga pembayaran diverifikasi.</DialogDescription>
+        {list.isPending && <p role="status" className="py-6 text-sm">Memuat reservasi…</p>}
+        {list.isError && <p role="alert" className="py-3 text-sm">Daftar reservasi gagal dimuat. <button type="button" className="font-semibold underline" onClick={() => void list.refetch()}>Coba lagi</button></p>}
         {list.isSuccess && <>
-          <p className="text-xs">{list.data.count} penawaran aktif</p>
-          {!list.data.rows.length && <p className="rounded-xl border border-[var(--premium-line)] p-5 text-center text-sm">Belum ada penawaran yang menunggu.</p>}
+          <p className="text-xs">{list.data.count} reservasi menunggu pembayaran</p>
+          {!list.data.rows.length && <p className="rounded-xl border border-[var(--premium-line)] p-5 text-center text-sm">Tidak ada reservasi yang menunggu pembayaran.</p>}
           {list.data.rows.length > 0 && <div className="overflow-x-auto rounded-xl border border-[var(--premium-line)]">
             <table className="w-full min-w-[630px] table-fixed border-collapse text-left text-xs">
               <thead className="bg-[#302619] text-[#fff4d5]"><tr>
@@ -125,7 +125,7 @@ export function OfferQueue({ selected, select, owner, conversionAllowed, convert
         </>}
         <div className="flex flex-wrap justify-end gap-2 border-t border-[#d8cab1] pt-4">
           <Button type="button" variant="outline" onClick={() => setListOpen(false)}>Tutup</Button>
-          {list.isSuccess && list.data.count > 5 && <Button type="button" onClick={() => { setShowAll(true); setPage(0); }}>Lihat Semua Penawaran</Button>}
+          {list.isSuccess && list.data.count > 5 && <Button type="button" onClick={() => { setShowAll(true); setPage(0); }}>Lihat Semua Reservasi</Button>}
         </div>
       </DialogContent>
     </Dialog>
@@ -151,29 +151,29 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
     setBusy(true);
     try {
       const { data, error } = await supabase.rpc('transition_reservation_offer', { _id: id, _action: action });
-      if (error || !data) throw new Error(error?.message ?? 'Status penawaran belum dapat dikonfirmasi.');
+      if (error || !data) throw new Error(error?.message ?? 'Status reservasi belum dapat dikonfirmasi.');
       const result = data as unknown as Offer;
       if (action === 'sent' && result.status === 'SENT') toast.success('Ditandai sudah dikirim oleh petugas.');
-      else if (action === 'cancel' && result.status === 'CANCELLED') { toast.success('Penawaran dibatalkan.'); close(); }
-      else { toast.error(result.reason ?? 'Penawaran tidak lagi aktif.'); close(); }
+      else if (action === 'cancel' && result.status === 'CANCELLED') { toast.success('Reservasi dibatalkan.'); close(); }
+      else { toast.error(result.reason ?? 'Reservasi tidak lagi aktif.'); close(); }
       void client.invalidateQueries({ queryKey: offerQueryKey });
     } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : 'Gagal memperbarui penawaran.');
+      toast.error(failure instanceof Error ? failure.message : 'Gagal memperbarui reservasi.');
     } finally { setBusy(false); }
   }
   return <Dialog open onOpenChange={open => { if (!open) close(); }}>
     <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-1.25rem)] max-w-xl overflow-y-auto rounded-[22px] border border-[#deca9f] bg-[#fffaf0] text-[#2c251b] shadow-[0_22px_60px_rgba(22,17,12,.26)]">
-      <div className="rounded-xl bg-[#292119] px-4 py-4 text-[#fff5e5]"><p className="mb-1 text-[10px] font-semibold uppercase tracking-[.16em] text-[#dabc7e]">Baturaden 25 Homestay</p><DialogTitle className="font-serif text-xl">Detail Penawaran</DialogTitle></div>
-      <DialogDescription className="text-[var(--premium-ink)]">Penawaran tidak menahan kamar. Tandai dikirim hanya setelah mengirim pesan di WhatsApp.</DialogDescription>
-      {detail.isPending && <p role="status">Memuat penawaran…</p>}
-      {detail.isError && <p role="alert">Detail penawaran gagal dimuat. <button type="button" className="underline" onClick={() => void detail.refetch()}>Coba lagi</button></p>}
-      {detail.isSuccess && !item && <p>Penawaran tidak lagi aktif. Lihat Riwayat Penawaran di Detail Tamu.</p>}
+      <div className="rounded-xl bg-[#292119] px-4 py-4 text-[#fff5e5]"><p className="mb-1 text-[10px] font-semibold uppercase tracking-[.16em] text-[#dabc7e]">Baturaden 25 Homestay</p><DialogTitle className="font-serif text-xl">Detail Reservasi</DialogTitle></div>
+      <DialogDescription className="text-[var(--premium-ink)]">Permintaan ini belum mengunci kamar. Kirim rincian harga dan instruksi pembayaran melalui WhatsApp sebelum menandai terkirim.</DialogDescription>
+      {detail.isPending && <p role="status">Memuat reservasi…</p>}
+      {detail.isError && <p role="alert">Detail reservasi gagal dimuat. <button type="button" className="underline" onClick={() => void detail.refetch()}>Coba lagi</button></p>}
+      {detail.isSuccess && !item && <p>Reservasi tidak lagi aktif. Lihat Riwayat Reservasi di Detail Tamu.</p>}
       {item && <>
         <div className="space-y-3 rounded-xl border border-[#e4d1af] bg-[#fffdf8] p-4 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="font-serif text-lg">{item.guest_name}</strong><span className="rounded-full border border-[#dfc48d] bg-[#fff2d5] px-2 py-1 text-[11px] font-semibold">{offerStatus[item.status]}</span></div><p className="text-[#514131]"><span className="mr-2 inline-block rounded-md bg-[#30251b] px-2 py-1 font-bold text-[#f6db9e]">{item.room_number}</span>{item.room_type} · {item.package_name}</p><p className="text-xs text-[#685640]"><Slot offer={item} /></p><div className="grid grid-cols-2 gap-2 border-t border-[#e9d9bb] pt-3"><p><span className="block text-xs text-[#826c50]">Total Tagihan</span><strong>{rupiah(item.total)}</strong></p><p><span className="block text-xs text-[#826c50]">Minimum DP</span><strong>{rupiah(item.minimum_dp)}</strong></p></div></div>
-        {draft ? <textarea aria-label="Pesan penawaran" readOnly value={draft.message} className="h-44 w-full min-w-0 rounded-xl border border-[#e3cda8] bg-[#fffdf8] p-3 text-sm leading-relaxed text-[#3b3024] shadow-inner" />
+        {draft ? <textarea aria-label="Pesan rincian reservasi" readOnly value={draft.message} className="h-44 w-full min-w-0 rounded-xl border border-[#e3cda8] bg-[#fffdf8] p-3 text-sm leading-relaxed text-[#3b3024] shadow-inner" />
           : <p role="alert">Pesan tidak dapat dibuat dari data tamu saat ini.</p>}
         <div className="space-y-3 border-t border-[#e3d0af] pt-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#6f5738]">Kirim penawaran ke tamu</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#6f5738]">Kirim instruksi pembayaran</p>
           <div className="flex flex-wrap gap-2">
             {draft?.url && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={draft.url} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />{item.status === 'SENT' ? 'Buka Ulang WhatsApp' : 'Buka WhatsApp'}</a></Button>}
             {draft && <Button type="button" variant="outline" className="min-h-10 border-[#c9b48d] bg-[#fffdf8] px-4 text-[#493723] hover:bg-[#f1e3c9] hover:text-[#302316]" onClick={async () => {
@@ -182,9 +182,9 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
             }}><Copy aria-hidden="true" />Salin Pesan</Button>}
             {item.status === 'DRAFT' && <Button type="button" variant="outline" className="min-h-10 border-[#bd8c39] bg-[#e6b75f] px-4 text-[#30200c] hover:bg-[#d6a246] hover:text-[#30200c]" disabled={busy} onClick={() => void transition('sent')}><CheckCheck aria-hidden="true" />Sudah Dikirim</Button>}
           </div>
-          <p className="text-xs leading-relaxed text-[#7c6545]">Status hanya berubah setelah petugas menekan “Sudah Dikirim”. Membuka WhatsApp tidak mengirim pesan otomatis.</p>
+          <p className="text-xs leading-relaxed text-[#7c6545]">Status hanya berubah setelah petugas menekan “Sudah Dikirim”. Lampirkan QRIS resmi secara manual di WhatsApp. Membuka WhatsApp tidak mengirim pesan otomatis.</p>
           {(canConvert || owner) && <div className="flex flex-wrap items-center gap-2 border-t border-[#e3d0af] pt-3">
-            {canConvert && <Button type="button" variant="outline" className="min-h-10 border-[#54422c] bg-[#30271d] px-4 text-[#f8deb0] hover:bg-[#483521] hover:text-[#fff1d5]" disabled={busy} onClick={() => convert(item)}><CreditCard aria-hidden="true" />Konfirmasi Pembayaran & Booking</Button>}
+            {canConvert && <Button type="button" variant="outline" className="min-h-10 border-[#54422c] bg-[#30271d] px-4 text-[#f8deb0] hover:bg-[#483521] hover:text-[#fff1d5]" disabled={busy} onClick={() => convert(item)}><CreditCard aria-hidden="true" />Telah Dibayar · Verifikasi</Button>}
             {owner && <Button type="button" variant="outline" className={confirmCancel ? 'min-h-10 border-[#a92e28] bg-[#ac302b] px-4 text-white hover:bg-[#8e251f] hover:text-white' : 'min-h-10 border-[#d9b9ae] bg-[#fff9f4] px-4 text-[#973b2d] hover:bg-[#fce9e4] hover:text-[#872d22]'} disabled={busy} onClick={() => {
               if (confirmCancel) void transition('cancel'); else setConfirmCancel(true);
             }}><XCircle aria-hidden="true" />{confirmCancel ? 'Ya, batalkan penawaran' : 'Batalkan'}</Button>}
