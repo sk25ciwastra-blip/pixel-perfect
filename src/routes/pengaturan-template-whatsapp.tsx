@@ -15,6 +15,8 @@ import { meta } from '@/lib/meta';
 import { OWNER_APPROVED_QUOTE_TEMPLATE } from '@/lib/whatsapp-template-approved';
 import { OWNER_APPROVED_BOOKING_CONFIRMATION, OWNER_APPROVED_PAYMENT_CONFIRMATION } from '@/lib/whatsapp-template-confirmations-approved';
 import { OWNER_APPROVED_BOOKING_30_MIN_REMINDER, OWNER_APPROVED_STAY_END_REMINDER } from '@/lib/whatsapp-template-reminders-approved';
+import { OWNER_REVISED_UNPAID_RESERVATION_DRAFT } from '@/lib/whatsapp-template-reservation-draft';
+import { OWNER_OVERTIME_NOTIFICATION_DRAFT } from '@/lib/whatsapp-template-overtime-draft';
 
 export const Route = createFileRoute('/pengaturan-template-whatsapp')({
   head: () => meta('Template WhatsApp', 'Pengaturan template pesan khusus Owner Baturaden 25 Homestay.'),
@@ -26,10 +28,10 @@ type Version = {
   status: string; created_at: string;
 };
 const kinds: { key: WhatsAppTemplateKind; title: string; description: string }[] = [
-  { key: 'PENAWARAN_RESERVASI', title: 'Penawaran Reservasi', description: 'Sebelum DP diverifikasi; bukan Booking resmi dan tidak boleh memuat nomor TRX.' },
-  { key: 'KONFIRMASI_BOOKING', title: 'Konfirmasi Booking', description: 'Setelah Booking resmi dengan nomor transaksi yang telah tersimpan.' },
-  { key: 'PENGINGAT_BOOKING_30_MENIT', title: 'Pengingat Booking (30 menit)', description: 'Muncul saat tersisa 30 menit menuju Check-in; Receptionist mengirim WhatsApp secara manual.' },
-  { key: 'PENGINGAT_WAKTU_HABIS', title: 'Pengingat Waktu Habis', description: 'Muncul ketika waktu menginap berakhir; sampaikan toleransi 15 menit, tanpa otomatis menagih overtime.' },
+  { key: 'PENAWARAN_RESERVASI', title: 'Konfirmasi Reservasi', description: 'Rincian permintaan sebelum pembayaran: belum ada TRX, kamar belum terkunci, dan belum menjadi Booking resmi.' },
+  { key: 'PENGINGAT_BOOKING_30_MENIT', title: 'Pengingat Booking', description: 'Tampil 30 menit sebelum Check-in resmi; Receptionist mengirim pesan secara manual.' },
+  { key: 'PENGINGAT_WAKTU_HABIS', title: 'Pengingat Waktu Habis', description: 'Tampil ketika batas Check-out tiba; sampaikan toleransi 15 menit, tanpa otomatis menagih overtime.' },
+  { key: 'PEMBERITAHUAN_OVERTIME', title: 'Pemberitahuan Overtime', description: 'Setelah toleransi 15 menit, hubungi admin untuk konfirmasi Rp50.000/jam atau perpanjangan. Tidak membuat charge otomatis.' },
 ];
 const initialApprovedDraft: Record<WhatsAppTemplateKind, string> = {
   PENAWARAN_RESERVASI: OWNER_APPROVED_QUOTE_TEMPLATE,
@@ -38,6 +40,7 @@ const initialApprovedDraft: Record<WhatsAppTemplateKind, string> = {
   KONFIRMASI_PEMBAYARAN: OWNER_APPROVED_PAYMENT_CONFIRMATION,
   PENGINGAT_BOOKING_30_MENIT: OWNER_APPROVED_BOOKING_30_MIN_REMINDER,
   PENGINGAT_WAKTU_HABIS: OWNER_APPROVED_STAY_END_REMINDER,
+  PEMBERITAHUAN_OVERTIME: OWNER_OVERTIME_NOTIFICATION_DRAFT,
 };
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) + ' WIB';
@@ -59,6 +62,21 @@ function PengaturanTemplateWhatsApp() {
     const request = ++readGeneration.current;
     setLoading(true); setError(''); setBackendReady(false);
     try {
+      if (selectedKind === 'PEMBERITAHUAN_OVERTIME') {
+        // The Cloud's existing reminder RPC cannot read this kind yet.
+        // Gate editing through its real authorization/allowlist, not a
+        // frontend flag or an optimistic empty list from the table.
+        const { error: capabilityError } = await rpc(
+          'read_active_whatsapp_reminder_template', { _kind: selectedKind },
+        );
+        if (request !== readGeneration.current) return false;
+        if (capabilityError) {
+          setVersions([]);
+          setBody(OWNER_OVERTIME_NOTIFICATION_DRAFT);
+          setError('Pemberitahuan Overtime belum aktif di Cloud. Teks hanya pratinjau dan tidak dapat disimpan atau dikirim hingga backend resmi disetujui.');
+          return false;
+        }
+      }
       const { data, error: readError } = await supabase.from('whatsapp_template_versions')
         .select('id,kind,revision,body,status,created_at')
         .eq('kind', selectedKind).order('revision', { ascending: false });
@@ -91,7 +109,7 @@ function PengaturanTemplateWhatsApp() {
     if (!owner || !backendReady || busy || unchanged || validation.length) return;
     setBusy(true); setError('');
     try {
-      const reminderKind = kind === 'PENGINGAT_BOOKING_30_MENIT' || kind === 'PENGINGAT_WAKTU_HABIS';
+      const reminderKind = kind === 'PENGINGAT_BOOKING_30_MENIT' || kind === 'PENGINGAT_WAKTU_HABIS' || kind === 'PEMBERITAHUAN_OVERTIME';
       const { error: saveError } = await rpc(
         reminderKind ? 'owner_save_whatsapp_reminder_template' : 'owner_save_whatsapp_template',
         { _kind: kind, _body: body },
@@ -115,7 +133,7 @@ function PengaturanTemplateWhatsApp() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="font-serif text-xl">4 Template WhatsApp Resmi</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Template ini terhubung ke Reservasi, konfirmasi Booking, dan pengingat manual. Tidak ada pengiriman otomatis.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Empat pesan yang diminta Owner: rincian reservasi belum dibayar, dua pengingat, dan pemberitahuan overtime. Pengiriman tetap manual.</p>
               </div>
               <span className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold-light">Khusus Owner</span>
             </div>
@@ -126,14 +144,22 @@ function PengaturanTemplateWhatsApp() {
             <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-gold/25 bg-background/40 px-3 py-2.5">
               <span className="text-sm font-semibold">{selectedTemplate.title}</span>
               <span role="status" className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${backendReady && active ? 'border-emerald-600/30 bg-emerald-600/10 text-emerald-700 dark:text-emerald-300' : 'border-gold/30 bg-gold/10 text-muted-foreground'}`}>
-                {loading ? 'Memeriksa versi…' : !backendReady ? 'Belum terverifikasi' : active ? `AKTIF · Versi ${active.revision}` : 'BELUM AKTIF'}
+                {loading ? 'Memeriksa versi…' : kind === 'PEMBERITAHUAN_OVERTIME' && !backendReady ? 'MENUNGGU BACKEND' : !backendReady ? 'Belum terverifikasi' : active ? `AKTIF · Versi ${active.revision}` : 'BELUM AKTIF'}
               </span>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">{selectedTemplate.description}</p>
           </section>
           <section className="panel-mewah space-y-3 p-5">
             <h2 className="font-serif text-xl">Isi Pesan</h2>
-            {draftSuggestion && <p role="status" className="rounded-lg border border-gold/30 p-3 text-sm">Teks template yang sudah disetujui Owner telah disiapkan otomatis. Ini masih draf, belum aktif untuk karyawan. Tinjau lalu tekan Simpan Versi Baru agar tersimpan atas akun Owner dan tercatat dalam riwayat.</p>}
+            {draftSuggestion && <p role="status" className="rounded-lg border border-gold/30 p-3 text-sm">Teks contoh telah disiapkan, tetapi belum menjadi versi ACTIVE. Owner harus meninjau dan menyimpannya melalui proses resmi.</p>}
+            {kind === 'PENAWARAN_RESERVASI' && <div className="rounded-lg border border-gold/30 bg-background/40 p-3">
+              <p className="mb-2 text-sm">Draf revisi Konfirmasi Reservasi mengikuti rincian permintaan sebelum pembayaran. Versi ACTIVE lama tidak akan berubah sampai Owner memilih draf dan menyimpannya.</p>
+              <Button type="button" size="sm" variant="outline"
+                disabled={!backendReady || busy || loading || body === OWNER_REVISED_UNPAID_RESERVATION_DRAFT}
+                onClick={() => setBody(OWNER_REVISED_UNPAID_RESERVATION_DRAFT)}>
+                Gunakan Draf Revisi (Belum Disimpan)
+              </Button>
+            </div>}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             {loading ? <p>Memuat template…</p> : <>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -155,7 +181,7 @@ function PengaturanTemplateWhatsApp() {
                 <Button type="button" variant="outline" disabled={busy || loading} onClick={() => void reload(kind)}>Muat Ulang</Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Mengubah template tidak mengirim WhatsApp atau membuat Booking/pembayaran. Pesan baru diterapkan setelah Owner menyimpan versi aktif.
+                Mengubah template tidak mengirim WhatsApp, mengunci kamar, membuat Booking, ataupun menagih overtime. Pesan baru diterapkan setelah Owner menyimpan versi aktif.
               </p>
             </>}
           </section>
