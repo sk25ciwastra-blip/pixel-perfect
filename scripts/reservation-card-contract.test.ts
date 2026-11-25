@@ -68,3 +68,17 @@ test('Approved staff illustrations load from the official QRIS artwork', () => {
     expect(photo.subarray(8, 12).toString()).toBe('WEBP');
   }
 });
+
+
+test('approved navy/gold visual anatomy keeps an unpaid warning, never a paid checkmark', () => {
+  const source = readFileSync('src/lib/reservation-card.ts', 'utf8');
+  expect(source).toContain("text(ctx, 'QRIS'");
+  expect(source).toContain("text(ctx, 'Pembayaran Reservasi'");
+  expect(source).toContain("panelTitle(ctx, 'PILIHAN PEMBAYARAN'");
+  expect(source).toContain("text(ctx, 'atau'");
+  expect(source).toContain('Shield is decorative; never render a paid/confirmed tick');
+  expect(source).toContain('Ini bukan bukti bahwa booking telah dilakukan.');
+  expect(source).toContain('Reservasi baru tercatat setelah pembayaran kami terima.');
+  expect(source).toContain("ctx.imageSmoothingEnabled = false");
+  expect(source).not.toContain("text(ctx, '✓'");
+});
