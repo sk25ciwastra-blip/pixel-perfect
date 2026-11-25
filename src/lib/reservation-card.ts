@@ -128,7 +128,13 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   const bg = ctx.createLinearGradient(0, 0, W, H);
   bg.addColorStop(0, '#081932'); bg.addColorStop(.56, '#18345a'); bg.addColorStop(1, '#071830');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#f5c75f'; ctx.lineWidth = 16; ctx.strokeRect(10, 10, W - 20, H - 20);
+  const frame = ctx.createLinearGradient(0, 0, W, H);
+  frame.addColorStop(0, '#f8d57c'); frame.addColorStop(.48, '#c58b25'); frame.addColorStop(1, '#ffdd83');
+  ctx.strokeStyle = frame; ctx.lineWidth = 16; ctx.strokeRect(10, 10, W - 20, H - 20);
+  ctx.strokeStyle = 'rgba(255,244,195,.7)'; ctx.lineWidth = 2; ctx.strokeRect(25, 25, W - 50, H - 50);
+  const halo = ctx.createRadialGradient(W / 2, 340, 60, W / 2, 340, 600);
+  halo.addColorStop(0, 'rgba(242,181,81,.16)'); halo.addColorStop(1, 'rgba(242,181,81,0)');
+  ctx.fillStyle = halo; ctx.fillRect(0, 0, W, 790);
   // Warm gold ribbons frame the navy header.
   ctx.strokeStyle = '#f2c760'; ctx.lineWidth = 11;
   ctx.beginPath(); ctx.moveTo(0, 132); ctx.bezierCurveTo(210, 44, 740, 235, 1122, 92); ctx.stroke();
@@ -141,10 +147,15 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   const ratio = Math.min(470 / logo.width, 125 / logo.height);
   const lw = logo.width * ratio, lh = logo.height * ratio;
   ctx.drawImage(logo, (W - lw) / 2, 21, lw, lh);
+  ctx.textAlign = 'left';
+  text(ctx, 'QRIS', 129, 196, 62, '#ffffff', 800, 212);
+  line(ctx, 350, 148, 350, 213, '#ffcf66', 5);
+  text(ctx, 'Pembayaran Reservasi', 396, 195, 46, '#ffe0a0', 800, 680);
   ctx.textAlign = 'center';
-  text(ctx, 'PEMBAYARAN RESERVASI', W / 2, 196, 45, '#ffe0a0', 800);
-  text(ctx, 'Scan menggunakan aplikasi pembayaran berlogo QRIS', W / 2, 239, 22, '#fff0d5', 500);
+  text(ctx, 'Scan untuk pembayaran resmi', 732, 236, 24, '#fff0d5', 500);
+  ctx.save(); ctx.shadowColor = 'rgba(245,183,67,.36)'; ctx.shadowBlur = 24;
   round(ctx, 291, 261, 540, 490, 30, cream, '#d9a843');
+  ctx.restore();
   text(ctx, 'BATURADEN 25 HOMESTAY', W / 2, 310, 29, ink, 800);
   text(ctx, 'NMID: ID1025390108054', W / 2, 347, 22, ink, 600);
   round(ctx, 353, 366, 416, 370, 15, '#ffffff', '#dca742');
@@ -153,8 +164,12 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   ctx.drawImage(qr, 382, 375, 354, 354);
   ctx.imageSmoothingEnabled = true;
 
-  // Cream reservation body.
-  round(ctx, 28, 773, 1066, 846, 38, cream, gold);
+  // Warm-white reservation body with the same navy/gold hierarchy as the approved poster.
+  const paper = ctx.createLinearGradient(0, 773, 0, 1619);
+  paper.addColorStop(0, '#fff8ed'); paper.addColorStop(.6, '#fffdf7'); paper.addColorStop(1, '#fff3dc');
+  ctx.save(); ctx.shadowColor = 'rgba(2,11,28,.38)'; ctx.shadowBlur = 30;
+  round(ctx, 28, 773, 1066, 846, 38, paper, gold);
+  ctx.restore();
   const head = ctx.createLinearGradient(249, 760, 849, 805);
   head.addColorStop(0, '#09223f'); head.addColorStop(1, '#163c67');
   round(ctx, 235, 758, 652, 64, 30, head, '#e6b85a');
@@ -190,6 +205,8 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   text(ctx, fields.checkOutTime, 586, detailTop + 230, 23, ink, 700, 462);
 
   const payTop = detailTop + 244;
+  round(ctx, 44, payTop + 51, 478, 172, 21, '#fffdf8', '#dfbd7e');
+  round(ctx, 542, payTop + 51, 527, 172, 21, '#fffdf8', '#dfbd7e');
   panelTitle(ctx, 'RINCIAN PEMBAYARAN', 54, payTop, 458);
   panelTitle(ctx, 'PILIHAN PEMBAYARAN', 556, payTop, 510);
   text(ctx, 'Harga kamar', 72, payTop + 89, 24, ink);
@@ -212,10 +229,25 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   ctx.textAlign = 'left';
 
   const warnY = payTop + 228;
-  round(ctx, 67, warnY, 988, 89, 30, navy, '#e9bd64');
+  const warningFill = ctx.createLinearGradient(67, warnY, 1055, warnY + 89);
+  warningFill.addColorStop(0, '#071a34'); warningFill.addColorStop(.55, '#0e2b4c'); warningFill.addColorStop(1, '#071a34');
+  round(ctx, 67, warnY, 988, 89, 30, warningFill, '#e9bd64');
+  // Shield is decorative; never render a paid/confirmed tick on an unpaid reservation.
+  ctx.save();
+  ctx.strokeStyle = '#ffd16f'; ctx.lineWidth = 5; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(185, warnY + 12);
+  ctx.lineTo(222, warnY + 25);
+  ctx.lineTo(217, warnY + 55);
+  ctx.quadraticCurveTo(213, warnY + 67, 185, warnY + 79);
+  ctx.quadraticCurveTo(157, warnY + 67, 153, warnY + 55);
+  ctx.lineTo(148, warnY + 25); ctx.closePath(); ctx.stroke();
+  ctx.textAlign = 'center'; text(ctx, '!', 185, warnY + 61, 41, '#ffd16f', 800);
+  ctx.restore();
+  line(ctx, 268, warnY + 12, 268, warnY + 76, '#e9bd64', 3);
   ctx.textAlign = 'center';
-  text(ctx, 'INI BUKAN BUKTI BOOKING RESMI', W / 2, warnY + 36, 29, '#fff4d7', 800);
-  text(ctx, 'Booking dikonfirmasi setelah pembayaran kami terima dan diverifikasi.', W / 2, warnY + 68, 22, '#f7c65f', 600);
+  text(ctx, 'Ini bukan bukti bahwa booking telah dilakukan.', 651, warnY + 36, 26, '#fff4d7', 800, 727);
+  text(ctx, 'Reservasi baru tercatat setelah pembayaran kami terima.', 651, warnY + 68, 23, '#f7c65f', 700, 727);
   ctx.textAlign = 'left';
 }
 
