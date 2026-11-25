@@ -1,0 +1,25 @@
+name: B25 Owner Payment Methods Contrast
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - src/routes/pengaturan-metode-pembayaran.tsx
+      - src/routes/pengaturan-metode-pembayaran.css
+      - scripts/owner-payment-method-contrast.test.ts
+      - .github/workflows/b25-owner-payment-method-contrast.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contrast:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/owner-payment-method-contrast.test.ts
+      - run: bun run build
+      - run: bunx tsc --noEmit
