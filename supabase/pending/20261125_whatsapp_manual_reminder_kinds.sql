@@ -61,11 +61,11 @@ BEGIN
       'NAMA_TAMU','NOMOR_TRANSAKSI','TIPE_KAMAR','NOMOR_KAMAR','CHECKIN_WIB']
     ELSE ARRAY['NAMA_TAMU','NOMOR_TRANSAKSI','NOMOR_KAMAR','BATAS_CHECKOUT_WIB']
   END;
-  remaining := regexp_replace(_body,'\\[[A-Z][A-Z0-9_]*\\]','','g');
-  IF remaining ~ '[\\[\\]]' OR NOT (_body ~ '\\[[A-Z][A-Z0-9_]*\\]') THEN
+  remaining := regexp_replace(_body,'\[[A-Z][A-Z0-9_]*\]','','g');
+  IF remaining ~ '[\[\]]' OR NOT (_body ~ '\[[A-Z][A-Z0-9_]*\]') THEN
     RAISE EXCEPTION 'Variabel pengingat tidak valid';
   END IF;
-  FOR token IN SELECT hit[1] FROM regexp_matches(_body,'\\[([A-Z][A-Z0-9_]*)\\]','g') AS hits(hit) LOOP
+  FOR token IN SELECT hit[1] FROM regexp_matches(_body,'\[([A-Z][A-Z0-9_]*)\]','g') AS hits(hit) LOOP
     IF NOT (token=ANY(allowed)) THEN RAISE EXCEPTION 'Variabel tidak diizinkan'; END IF;
   END LOOP;
   PERFORM pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended('whatsapp_template:'||_kind,0));
