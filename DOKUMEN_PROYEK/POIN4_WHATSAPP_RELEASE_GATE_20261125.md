@@ -97,7 +97,7 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 ## Addendum uji dump/restore sintetis (bukan backup LIVE) — 25 November 2026
 
 - 🟢 KODE: `scripts/whatsapp-template-synthetic-restore.sh` ditambahkan untuk menjalankan fixture PostgreSQL 17, membuat **dump sintetis** dengan `pg_dump -Fc`, melakukan `pg_restore` ke database **sementara baru** dan memeriksa dua versi template, satu versi aktif, tiga audit row, fungsi RPC serta flag RLS.
-- 🔴 VERIFIKASI: hasil CI untuk skrip dump/restore baru harus dinilai berdasarkan run commit terakhir; jangan klaim PASS sebelum run berhasil.
+- 🟢 PASS TERBUKTI: GitHub Actions [run #45523664772](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/45523664772) **SUCCESS** pada commit `7e02f6da776dd33c32b8ab2eadb2dad2c57d48ba`: fixture izin/versi, arsip sintetis `pg_dump`, pemulihan ke database dummy baru dengan `pg_restore`, pemeriksaan struktur dan audit, tes Bun, build, serta TypeScript. Pengujian hanya menggunakan data dummy.
 - 🔴 BATAS: `--no-owner --no-acl` sengaja tidak membuktikan pemulihan privilege/RLS policy/keutuhan Auth/Storage. Data fixture hanya dummy, **tidak berisi data tamu atau backup LIVE**.
 - 🔴 BACKUP LIVE: arsip segar dan restore penuh ke Supabase-compatible isolated environment tetap merupakan **syarat terpisah** sebelum migrasi, tidak dapat digantikan oleh uji sintetis.
 
