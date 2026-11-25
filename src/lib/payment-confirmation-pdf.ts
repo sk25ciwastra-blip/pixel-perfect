@@ -1,3 +1,4 @@
+import { confirmationFilename } from './payment-confirmation-filename';
 import { LineCapStyle, PDFDocument, StandardFonts, degrees, rgb, setCharacterSpacing } from 'pdf-lib';
 import type { PDFFont, PDFPage } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
@@ -274,12 +275,12 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
 }
 
 /** Local Blob download, no upload/public URL, print dialog or receipt/finance RPC. */
-export function downloadConfirmationBytes(bytes: Uint8Array, transactionNumber: string) {
+export function downloadConfirmationBytes(bytes: Uint8Array, data: PaymentConfirmation) {
   const blob = new Blob([new Uint8Array(bytes).buffer], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `Payment-Confirmation-${transactionNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+  anchor.download = confirmationFilename(data, 'pdf';
   document.body.appendChild(anchor);
   try { anchor.click(); } finally { anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); }
 }
