@@ -27,7 +27,9 @@ describe('Poin4 Owner-approved initial quote', () => {
   });
   it('only preloads for absent active quote, never overwrites an existing Owner version or auto-saves', () => {
     const source = readFileSync('src/routes/pengaturan-template-whatsapp.tsx', 'utf8');
-    expect(source).toContain("list.find(item => item.status === 'ACTIVE')?.body ?? (selectedKind === 'PENAWARAN_RESERVASI' ? OWNER_APPROVED_QUOTE_TEMPLATE : '')");
+    expect(source).toContain("PENAWARAN_RESERVASI: OWNER_APPROVED_QUOTE_TEMPLATE");
+    expect(source).toContain("list.find(item => item.status === 'ACTIVE')?.body ?? initialApprovedDraft[selectedKind]");
+    expect(source).toContain("const draftSuggestion = backendReady && !active && Boolean(initialApprovedDraft[kind]);");
     expect(source).toContain("if (!owner || !backendReady || busy || unchanged || validation.length) return;");
     expect(source).toContain("supabase.rpc('owner_save_whatsapp_template'");
     expect(source).not.toContain("useEffect(() => { void save()");
