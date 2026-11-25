@@ -1,0 +1,30 @@
+name: B25 Poin6 Rooms and Owner Profile
+on:
+  push:
+    branches:
+      - feat/poin6-room-profile-current-main-20261125
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile-and-room:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Install pinned deps
+        run: bun install --frozen-lockfile
+      - name: Poin6 contract
+        run: node --test scripts/poin6-room-profile-current.test.mjs
+      - name: Build
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
