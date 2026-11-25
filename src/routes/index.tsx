@@ -567,11 +567,11 @@ function Ringkasan() {
     if (tersimpan > 0) setTarget(tersimpan);
   }, []);
 
-  const [modal, setModal] = useState<"check_in" | "booking" | "pengeluaran" | "offer" | null>(null);
+  const [modal, setModal] = useState<"check_in" | "pengeluaran" | "offer" | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
   const [convertOffer, setConvertOffer] = useState<OfferDetail | null>(null);
   const canQuote = canPreviewBookingQuote("booking", posisiKode, masuk);
-  // KPI Penawaran hanya untuk peran yang memiliki akses penawaran.
+  // Reservasi menunggu pembayaran memakai RPC reservation_offers yang sudah aman di LIVE.
   // Jumlah Perlu Tindakan memakai indikator checklist yang sudah ada, bukan data baru.
   const statistik: Kpi[] = canQuote ? [
     {
@@ -687,10 +687,9 @@ function Ringkasan() {
             <section className="panel-mewah min-w-0 p-4" aria-labelledby="judul-aksi-cepat">
               <h2 id="judul-aksi-cepat" className="flex items-center gap-3 text-sm font-semibold tracking-[0.2em] text-gold"><BellRing className="size-5" strokeWidth={1.6} aria-hidden="true" />AKSI CEPAT<span className="h-px flex-1 bg-gradient-to-r from-gold/50 to-transparent" aria-hidden="true" /></h2>
               {bolehAksiTransaksi ? (
-                <div className={`mt-4 grid gap-1.5 ${canQuote ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"}`}>
+                <div className="mt-4 grid grid-cols-3 gap-1.5">
                   <TombolAksi ikon={LogIn} judul="CHECK-IN" utama rapat={canQuote} onClick={() => setModal("check_in")} />
-                  <TombolAksi ikon={CalendarPlus} judul="RESERVASI" rapat={canQuote} onClick={() => setModal("booking")} />
-                  {canQuote && <TombolAksi ikon={FileText} judul="PENAWARAN" rapat onClick={() => setModal("offer")} />}
+                  {canQuote && <TombolAksi ikon={CalendarPlus} judul="RESERVASI" rapat onClick={() => setModal("offer")} />}
                   <TombolAksi ikon={ReceiptText} judul="EXPENSE" rapat={canQuote} onClick={() => setModal("pengeluaran")} />
                 </div>
               ) : (
@@ -979,7 +978,6 @@ function Ringkasan() {
         />
       )}
       {modal === "check_in" && <FormulirPemesanan mode="check_in" onClose={() => setModal(null)} onSaved={refreshSemua} />}
-      {modal === "booking" && <FormulirPemesanan mode="booking" onClose={() => setModal(null)} onSaved={refreshSemua} />}
       {canQuote && modal === "offer" && <FormulirPemesanan mode="offer" onClose={() => setModal(null)} onSaved={refreshSemua}
         onOfferSaved={offer => {
           setModal(null);
