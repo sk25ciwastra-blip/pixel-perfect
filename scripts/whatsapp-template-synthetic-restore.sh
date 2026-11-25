@@ -22,6 +22,9 @@ fi
 docker exec "$container" pg_dump -U postgres -d postgres -Fc \
   -n public -n auth -f /tmp/b25_synthetic_whatsapp.backup
 docker exec "$container" createdb -U postgres b25_whatsapp_restore_test
+# A new PostgreSQL DB already has an empty public schema; the dump owns its
+# public schema definition. Remove it ONLY from the named synthetic test DB.
+psql "$RESTORE_URI" -v ON_ERROR_STOP=1 -c 'DROP SCHEMA public CASCADE'
 docker exec "$container" pg_restore -U postgres -d b25_whatsapp_restore_test \
   --exit-on-error --no-owner --no-acl /tmp/b25_synthetic_whatsapp.backup
 docker exec "$container" rm -f /tmp/b25_synthetic_whatsapp.backup
