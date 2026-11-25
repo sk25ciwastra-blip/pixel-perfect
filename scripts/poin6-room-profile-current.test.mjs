@@ -1,0 +1,37 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const menu=readFileSync('src/routes/pengaturan.tsx','utf8');
+const page=readFileSync('src/routes/pengaturan-profil-homestay.tsx','utf8');
+const sql=readFileSync('supabase/pending/20261125_b25_homestay_profile_owner_only.sql','utf8');
+test('existing room CRUD linked, do not duplicate room admin or change payment',()=>{
+ assert.match(menu,/label: "Manajemen Kamar"[^\n]*ke: "\/tipe-kamar"/);
+ assert.match(menu,/label: "Profil Homestay"[^\n]*ke: "\/pengaturan-profil-homestay"/);
+ assert.match(menu,/label: "Template WhatsApp"[^\n]*ke: "\/pengaturan-template-whatsapp"/);
+ assert.match(menu,/label: "Metode Pembayaran"[^\n]*"Cash, QRIS, dan Transfer."/);
+ assert.match(menu,/peran === "owner" \? kelompok/);
+});
+test('profile page is Owner only and cannot fake success if backend is absent',()=>{
+ assert.match(page,/if \(!owner\)/);
+ assert.match(page,/b25_read_homestay_profile/);
+ assert.match(page,/b25_save_homestay_profile/);
+ assert.match(page,/if \(!owner \|\| !profil \|\| loading \|\| saving\) return/);
+ assert.match(page,/disabled=\{!profil \|\| saving \|\| loading\}/);
+ assert.doesNotMatch(page,/\.from\(/);
+});
+test('SQL is isolated with RLS, role guard, read only for authenticated, Owner-only save and audit',()=>{
+ assert.match(sql,/CREATE TABLE public\.b25_homestay_profile\(/);
+ assert.equal((sql.match(/^COMMIT;/gm)||[]).length,1,'migration must be a single transaction');
+ assert.equal((sql.match(/^CREATE FUNCTION public\.b25_save_homestay_profile/gm)||[]).length,1,'only one Owner-save procedure');
+ assert.equal((sql.match(/^CREATE TABLE public\.b25_homestay_profile\(/gm)||[]).length,1,'only one profile table');
+ assert.ok(!sql.slice(sql.indexOf('-- POSTCHECK')).includes('\n END;'),'no code may exist after migration COMMIT');
+ assert.match(sql,/CREATE TABLE public\.b25_homestay_profile_audit\(/);
+ assert.equal((sql.match(/ENABLE ROW LEVEL SECURITY/g)||[]).length,2);
+ assert.match(sql,/public\.has_role\(actor,'owner'::public\.app_role\)/);
+ assert.match(sql,/public\.finance_training_is_restricted\(actor\)/);
+ assert.match(sql,/INSERT INTO public\.b25_homestay_profile_audit/);
+ assert.match(sql,/REVOKE ALL ON public\.b25_homestay_profile, public\.b25_homestay_profile_audit FROM PUBLIC, anon, authenticated/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.b25_save_homestay_profile\(text,text,text,text\) TO authenticated/);
+ assert.match(sql,/clean_phone !~ '\^\[\+\]\?/);
+ assert.doesNotMatch(sql.replace(/^--.*$/gm, ''),/DELETE FROM|TRUNCATE|DROP TABLE/);
+});

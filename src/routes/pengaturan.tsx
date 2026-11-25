@@ -10,15 +10,15 @@ export const Route = createFileRoute("/pengaturan")({
   component: HalamanPengaturan,
 });
 
-type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan" | "/pengaturan-template-whatsapp";
+type Ke = "/tipe-kamar" | "/paket" | "/daftar-pengeluaran" | "/pengaturan-keuangan" | "/pengaturan-keamanan" | "/pengaturan-template-whatsapp" | "/pengaturan-profil-homestay";
 type Item = { ikon: LucideIcon; label: string; ket: string; ke?: Ke };
 
 const kelompok: { judul: string; item: Item[] }[] = [
   { judul: "Operasional", item: [
-    { ikon: LayoutGrid, label: "Manajemen Kamar", ket: "Administrasi data kamar homestay." },
+    { ikon: LayoutGrid, label: "Manajemen Kamar", ket: "Tambah, ubah, dan aktif/nonaktif kamar.", ke: "/tipe-kamar" },
     { ikon: BedDouble, label: "Tipe Kamar", ket: "Jenis kamar yang tersedia.", ke: "/tipe-kamar" },
     { ikon: Package, label: "Paket & Harga", ket: "Durasi paket dan tarif kamar.", ke: "/paket" },
-    { ikon: Building2, label: "Profil Homestay", ket: "Nama, alamat, dan kontak." },
+    { ikon: Building2, label: "Profil Homestay", ket: "Nama, alamat, dan kontak.", ke: "/pengaturan-profil-homestay" },
     { ikon: MessageSquareText, label: "Template WhatsApp", ket: "Pesan resmi per fitur; khusus Owner.", ke: "/pengaturan-template-whatsapp" },
   ]},
   { judul: "Keuangan", item: [
