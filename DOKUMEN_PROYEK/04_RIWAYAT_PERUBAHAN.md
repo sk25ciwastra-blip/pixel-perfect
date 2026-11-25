@@ -152,3 +152,10 @@ Backup attempt RIW-041: host Session Pooler Staging dapat dicapai, tetapi `psql`
 - **Keputusan:** Owner menyebut 13 revisi UI yang akan dikerjakan di Lovable: (1) popup/tombol Aksi Cepat Penawaran, (2) popup hasil berhasil/gagal semua fitur dengan pengecualian Check-in & Reservasi, (3) histori Booking, (4) grafik Dashboard, (5) warna tabel Transaksi, (6) hilangkan agenda Dashboard status kamar dan perpanjang panel kamar, (7) Pengaturan semua fungsi, (8) Bantu Sesi Aktif, (9) popup Logout, (10) kartu Reservasi, (11) popup konfirmasi hapus, (12) popup Check-out Dashboard, (13) Form Reservasi.
 - **Status:** **BACKLOG DESAIN / BELUM REVISI**, tanpa implementasi ataupun UAT dari pencatatan ini. Nomor resmi untuk pelacakan: `UI-26-01` sampai `UI-26-13`; lihat [Checkpoint Utama §6A](CHECKPOINT_UTAMA_20261126.md#6a-addendum-owner--13-revisi-desain-lovable-26-november-2026).
 - **Batas:** jangan menghidupkan jalur Penawaran terpisah yang sudah diganti Reservasi Satu Pintu, jangan mengganti pop-up berhasil Check-in/Reservasi yang dikecualikan, jangan memodifikasi business logic/SQL/keuangan, tidak ada publish atau reset data. Keputusan layout/transaksi sebelumnya dan PASS UAT historis tetap berlaku.
+
+#### Koreksi Owner — UI-26-01 dicabut (26 November 2026)
+
+- Owner menyatakan poin nomor 1 **popup dan tombol form Aksi Cepat Penawaran** sebelumnya seharusnya tidak disertakan. Karena itu **UI-26-01 DICABUT** dari backlog desain Lovable aktif; bukan pekerjaan tertunda dan tidak perlu dikerjakan.
+- **Tersisa 12 revisi desain aktif**, dengan ID tetap `UI-26-02` sampai `UI-26-13` agar identitas tugas dan riwayat PR #174 tidak berubah. Tidak ada penggantian nomor atau penggunaan ulang ID yang sudah dibatalkan.
+- Daftar awal berisi 13 item dipertahankan di paragraf historis di atas sebagai jejak permintaan semula, sedangkan **status operasional terbaru** adalah 12 item aktif di [Checkpoint Utama §6A](CHECKPOINT_UTAMA_20261126.md#6a-addendum-owner--12-revisi-desain-lovable-aktif-26-november-2026).
+- Koreksi ini **hanya dokumentasi**: tidak mengubah alur Reservasi Satu Pintu, UI Lovable, transaksi, database, publish, atau data.
