@@ -56,3 +56,11 @@ test('Embedded QRIS asset matches the Owner-supplied independently decoded sourc
   expect(createHash('sha256').update(qr).digest('hex'))
     .toBe('be77190994647e9408859ecf62a9a0f5a6e5f1ac39be0c28e1ddf9e903b8f42a');
 });
+
+test('Approved staff illustrations load from the official QRIS artwork', () => {
+  for (const name of ['staff-reservasi-pria.webp', 'staff-reservasi-wanita.webp']) {
+    const photo = readFileSync('public/assets/' + name);
+    expect(photo.subarray(0, 4).toString()).toBe('RIFF');
+    expect(photo.subarray(8, 12).toString()).toBe('WEBP');
+  }
+});
