@@ -27,7 +27,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { bookingPhoneInput, canonicalIndonesianWhatsApp, findSameGuest, suggestGuests, type GuestSearchRow } from '@/lib/guest-search';
-import { offerQueryKey, offerWibFields, type OfferDetail } from '@/lib/reservation-offers';
+import { offerQueryKey, offerWibFields, type Offer, type OfferDetail } from '@/lib/reservation-offers';
 
 type Mode = 'booking' | 'check_in' | 'offer';
 type DayMode = 'weekday' | 'weekend';
