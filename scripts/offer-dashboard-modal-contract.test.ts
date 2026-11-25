@@ -79,5 +79,5 @@ test('Kartu Reservasi is downloaded as JPG using official QRIS without auto-send
   expect(card).toContain('INI BUKAN BUKTI BOOKING RESMI');
   expect(card).not.toContain("supabase.rpc(");
   expect(queue).toContain('URL.revokeObjectURL(objectUrl)');
-  expect(queue).toContain('Membuka WhatsApp tidak mengirim pesan otomatis.');
+  expect(queue).toContain('Tombol WhatsApp tidak melampirkan gambar secara otomatis.');
 });
