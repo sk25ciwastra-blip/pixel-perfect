@@ -23,6 +23,16 @@
 
 **Batas bukti:** CI Postgres sintetis hanya membuktikan migrasi/rollback pada fixture terisolasi. CI tidak membuktikan backup LIVE bisa dipulihkan, seluruh schema di Cloud kompatibel, atau perilaku browser Owner/Receptionist.
 
+## Hasil uji PostgreSQL 17 sintetis (CI, 26 November 2026)
+
+**PASS — GitHub Actions run `45724403589`, job `139590467572`**, nama workflow `B25 Poin4 Overtime WhatsApp Migration Rollback Gate`. Log job telah dibaca dan mengonfirmasi secara eksplisit:
+
+1. **PASS:** migrasi additive serta tes akses Owner, Receptionist, HK, Training, dan anon dalam DB sintetis.
+2. **PASS:** rollback dengan riwayat template Overtime gagal aman (`STOP: overtime history exists`) dan membiarkan versi/audit utuh.
+3. **PASS:** rollback saat belum ada histori Overtime mengembalikan constraint/RPC lama sambil mempertahankan template lama yang ACTIVE dan catatan audit.
+
+**Batas klaim:** hanya PostgreSQL 17 sintetis, **bukan** UAT autentikasi LIVE atau bukti restore backup Cloud. Tidak ada SQL Cloud, pembayaran, atau publish yang dilakukan. Persetujuan Owner terpisah tetap wajib sebelum migrasi LIVE.
+
 ## Urutan gate sebelum Cloud (belum dijalankan)
 
 1. Review dan periksa kembali source/DDL/ACL target LIVE pada hari aktivasi. Bandingkan dengan baseline yang diuji, termasuk dependency/kind constraint dan owner/training guard.
