@@ -104,7 +104,7 @@ begin
     -- rather than widening the allowlist for guest-writing functions.
     if writer.signature =
        'public.create_reservation(text, uuid, uuid, text, text, text, numeric, text, text, timestamp with time zone)' then
-      if writer.prosrc ~* 'insert[[:space:]]+into[[:space:]]+(public\\.)?guests([[:space:]]|\\()'
+      if writer.prosrc ~* 'insert[[:space:]]+into[[:space:]]+(public\.)?guests([[:space:]]|\()'
         or not writer.prosecdef
         or writer.proowner is distinct from (select oid from pg_roles where rolname = current_user)
         or sha256(convert_to(pg_get_functiondef(writer.oid), 'UTF8')) is distinct from
