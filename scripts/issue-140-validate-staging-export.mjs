@@ -68,5 +68,5 @@ async function main() {
 }
 
 if (process.argv[1] && /issue-140-validate-staging-export\.mjs$/.test(process.argv[1])) {
-  main().catch(error => { process.stderr.write('BLOCKED: export package unavailable or malformed ('+error.code ?? 'error'+')\n'); process.exitCode=2; });
+  main().catch(error => { process.stderr.write('BLOCKED: export package unavailable or malformed (' + (error.code ?? 'error') + ')\n'); process.exitCode=2; });
 }
