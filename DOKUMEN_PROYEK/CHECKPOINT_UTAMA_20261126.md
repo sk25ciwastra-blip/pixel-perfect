@@ -142,6 +142,16 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ---
 
+### Revisi redaksi Konfirmasi Reservasi — 26 November 2026
+
+Owner mengoreksi **Template 1 (Konfirmasi Reservasi)** agar mengikuti susunan **Rincian Penawaran Reservasi** sebelumnya, tetapi kini memuat **pemesanan resmi yang sudah dikonfirmasi**, dengan rincian tipe/nomor kamar, paket, jadwal Check-in/Check-out, jumlah tamu, **harga kamar, biaya tambahan, total tagihan, pembayaran telah diterima, sisa tagihan dan status pembayaran**.
+
+- Teks draf yang direvisi tersimpan di [DRAF_4_TEMPLATE_WHATSAPP_OWNER_20261126.md](DRAF_4_TEMPLATE_WHATSAPP_OWNER_20261126.md#1-konfirmasi-reservasi--draf-revisi-owner-26-november-2026).
+- Tiga token tambahan untuk jenis backend `KONFIRMASI_BOOKING` adalah `HARGA_KAMAR`, `BIAYA_TAMBAHAN`, `TOTAL_DIBAYAR_BERSIH`. **Belum tersedia di allowlist/renderer Booking saat koreksi dibuat**. Harus berasal dari catatan harga dan ledger resmi yang tervalidasi; jangan mengarang pembayaran atau memakai nilai DP bruto setelah refund.
+- **Status: DRAF REDAKSI / BELUM DIIMPLEMENTASI / BELUM ACTIVE.** Tiga template lain tidak diubah. Tidak ada persetujuan SQL Cloud, write pembayaran, atau publish Lovable.
+
+---
+
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
 1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.
