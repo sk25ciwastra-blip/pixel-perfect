@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { rupiah } from '@/lib/data-contoh';
 import { supabase } from '@/integrations/supabase/client';
 import { offerQueryKey, offerStatus, offerWib, readOffer, readOffers, type Offer, type OfferDetail } from '@/lib/reservation-offers';
-import { makeReservationCardJpg, reservationCardFilename, RESERVATION_CARD_CAPTION } from '@/lib/reservation-card';
+import { makeReservationCardJpg, reservationCardFilename } from '@/lib/reservation-card';
+import { ReservationWhatsAppMessage } from '@/components/reservation-whatsapp-message';
 import { whatsAppReservationRecipient, whatsAppReservationWebUrl } from '@/lib/whatsapp';
 
 function Slot({ offer }: { offer: Offer }) {
@@ -200,6 +201,7 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
       {detail.isSuccess && !item && <p>Reservasi tidak lagi aktif. Lihat Riwayat Reservasi di Detail Tamu.</p>}
       {item && <>
         <div className="space-y-3 rounded-xl border border-[#e4d1af] bg-[#fffdf8] p-4 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="font-serif text-lg">{item.guest_name}</strong><span className="rounded-full border border-[#dfc48d] bg-[#fff2d5] px-2 py-1 text-[11px] font-semibold">{offerStatus[item.status]}</span></div><p className="text-[#514131]"><span className="mr-2 inline-block rounded-md bg-[#30251b] px-2 py-1 font-bold text-[#f6db9e]">{item.room_number}</span>{item.room_type} · {item.package_name}</p><p className="text-xs text-[#685640]"><Slot offer={item} /></p><div className="grid grid-cols-2 gap-2 border-t border-[#e9d9bb] pt-3"><p><span className="block text-xs text-[#826c50]">Total Tagihan</span><strong>{rupiah(item.total)}</strong></p><p><span className="block text-xs text-[#826c50]">Minimum DP</span><strong>{rupiah(item.minimum_dp)}</strong></p></div></div>
+        <ReservationWhatsAppMessage offer={item} cardReady={Boolean(card?.url)} />
         <section aria-label="Preview Kartu Reservasi QRIS" className="space-y-2">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#6f5738]"><ImageIcon aria-hidden="true" className="size-4" /> Kartu Reservasi & Pembayaran</p>
           {card?.error && <div role="alert" className="space-y-2 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
@@ -215,21 +217,23 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
           <div className="flex flex-wrap gap-2">
             {card?.url && <Button asChild variant="outline" className="min-h-10 border-[#bf933e] bg-[#f3d590] px-4 text-[#332411] hover:bg-[#e9c270] hover:text-[#332411]"><a href={card.url} download={reservationCardFilename(item)}><Download aria-hidden="true" />Unduh Kartu JPG</a></Button>}
             {card?.url && webChatUrl && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={webChatUrl} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Buka WhatsApp Web</a></Button>}
-            {card?.url && recipient && <Button type="button" variant="outline" className="min-h-10 border-[#c0a46b] bg-[#fffdf8] px-4 text-[#4b391d] hover:bg-[#f7edd6]" onClick={() => void copyWhatsAppValue(RESERVATION_CARD_CAPTION, 'Caption')}><Copy aria-hidden="true" />Salin Caption</Button>}
+            {card?.url && webChatUrl && <Button type="button" variant="outline" className="min-h-10 border-[#c0a46b] bg-[#fffdf8] px-4 text-[#4b391d] hover:bg-[#f7edd6]" onClick={() => void copyWhatsAppValue(webChatUrl, 'Link chat WhatsApp')}><Copy aria-hidden="true" />Salin Link Chat</Button>}
+            {card?.url && recipient && <Button type="button" variant="outline" className="min-h-10 border-[#c0a46b] bg-[#fffdf8] px-4 text-[#4b391d] hover:bg-[#f7edd6]" onClick={() => void copyWhatsAppValue(recipient, 'Nomor WhatsApp')}><Copy aria-hidden="true" />Salin Nomor</Button>}
             {item.status === 'DRAFT' && <Button type="button" variant="outline" className="min-h-10 border-[#bd8c39] bg-[#e6b75f] px-4 text-[#30200c] hover:bg-[#d6a246] hover:text-[#30200c]" disabled={busy || !card?.url} onClick={() => void transition('sent')}><CheckCheck aria-hidden="true" />Sudah Dikirim</Button>}
           </div>
           {card?.url && !webChatUrl && <p role="alert" className="text-xs text-red-800">Nomor WhatsApp tujuan belum valid. Periksa nomor tamu sebelum mengirim kartu.</p>}
           {card?.url && recipient && <details className="rounded-lg border border-[#e1cb9f] bg-[#fffdf8] p-3 text-xs text-[#6a5031]">
             <summary className="cursor-pointer font-semibold">Jika WhatsApp gagal membuka nomor tujuan</summary>
-            <p className="mt-2">Jika tombol Buka WhatsApp Web tidak bekerja, buka WhatsApp Web di tab browser biasa, lalu cari nomor berikut. Tempel caption setelah chat terbuka.</p>
+            <p className="mt-2">Jika tombol hanya membuka beranda WhatsApp, gunakan Salin Nomor untuk mencari chat tamu, atau pilih Salin Link Chat dan tempel di tab baru Edge (Ctrl+T, Ctrl+V, Enter). Setelah chat terbuka, tempel pesan resmi dari bagian template di atas.</p>
+            {webChatUrl && <p className="mt-2 break-all select-all font-mono text-[11px] text-[#322715]">{webChatUrl}</p>}
             <p className="mt-2 select-all font-mono text-sm font-semibold text-[#322715]">{recipient}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Button type="button" size="sm" variant="outline" onClick={() => void copyWhatsAppValue(recipient, 'Nomor WhatsApp')}><Copy aria-hidden="true" className="mr-1 size-4" />Salin Nomor</Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => void copyWhatsAppValue(RESERVATION_CARD_CAPTION, 'Caption')}><Copy aria-hidden="true" className="mr-1 size-4" />Salin Caption</Button>
+              {webChatUrl && <Button type="button" size="sm" variant="outline" onClick={() => void copyWhatsAppValue(webChatUrl, 'Link chat WhatsApp')}><Copy aria-hidden="true" className="mr-1 size-4" />Salin Link Chat</Button>}
             </div>
-            <p className="mt-2 select-all text-[#493721]">{RESERVATION_CARD_CAPTION}</p>
+            <p className="mt-2 text-[#493721]">Salin isi template resmi pada panel di atas. Lampirkan kartu JPG secara manual.</p>
           </details>}
-          <p className="text-xs leading-relaxed text-[#7c6545]"><strong>Urutan kirim:</strong> unduh JPG, buka chat nomor tamu melalui WhatsApp Web, klik <strong>Salin Caption</strong> lalu tempel ke chat, lampirkan file JPG, kirim manual, kemudian tandai <strong>Sudah Dikirim</strong>. Tidak ada pesan atau gambar yang terkirim otomatis.</p>
+          <p className="text-xs leading-relaxed text-[#7c6545]"><strong>Urutan kirim:</strong> periksa template resmi, unduh JPG, salin pesan dan nomor tujuan, buka chat tamu di WhatsApp Desktop/Web, tempel pesan, lampirkan JPG, kirim manual, kemudian tandai <strong>Sudah Dikirim</strong>. Tidak ada pesan atau gambar yang terkirim otomatis.</p>
           {(canConvert || owner) && <div className="flex flex-wrap items-center gap-2 border-t border-[#e3d0af] pt-3">
             {canConvert && <Button type="button" variant="outline" className="min-h-10 border-[#54422c] bg-[#30271d] px-4 text-[#f8deb0] hover:bg-[#483521] hover:text-[#fff1d5]" disabled={busy} onClick={() => convert(item)}><CreditCard aria-hidden="true" />Telah Dibayar · Verifikasi</Button>}
             {owner && <Button type="button" variant="outline" className={confirmCancel ? 'min-h-10 border-[#a92e28] bg-[#ac302b] px-4 text-white hover:bg-[#8e251f] hover:text-white' : 'min-h-10 border-[#d9b9ae] bg-[#fff9f4] px-4 text-[#973b2d] hover:bg-[#fce9e4] hover:text-[#872d22]'} disabled={busy} onClick={() => {

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const dashboard = readFileSync('src/routes/index.tsx', 'utf8');
 const queue = readFileSync('src/components/reservation-offer-queue.tsx', 'utf8');
 const booking = readFileSync('src/components/formulir-pemesanan.tsx', 'utf8');
+const reservationMessage = readFileSync('src/components/reservation-whatsapp-message.tsx', 'utf8');
 
 test('Aksi Cepat has one RESERVASI entry, never duplicate PENAWARAN or paid Booking', () => {
   const start = dashboard.indexOf('{/* KPI + Aksi Cepat */}');
@@ -44,8 +45,8 @@ test('Lihat detail leads to verified official Booking flow, never auto converts'
   expect(queue).toContain('Unduh Kartu JPG');
   expect(queue).toContain('makeReservationCardJpg(item)');
   expect(queue).toContain('download={reservationCardFilename(item)}');
-  expect(queue).toContain('RESERVATION_CARD_CAPTION');
-  expect(queue).toContain('lampirkan file JPG');
+  expect(queue).toContain('<ReservationWhatsAppMessage offer={item} cardReady={Boolean(card?.url)} />');
+  expect(queue).toContain('lampirkan JPG');
   expect(queue).not.toContain('<textarea aria-label="Pesan rincian reservasi"');
 });
 test('dashboard continues using real room occupancy and housekeeping action indicator', () => {
@@ -89,7 +90,7 @@ test('Saving a reservation opens its QRIS card preview, never the old auto-Whats
   expect(booking).not.toContain('offerWhatsApp(item)');
   expect(dashboard).toContain('setSelectedOffer(offer.id)');
   expect(queue).toContain('makeReservationCardJpg(item)');
-  expect(queue).toContain('RESERVATION_CARD_CAPTION');
+  expect(reservationMessage).toContain("'PENAWARAN_RESERVASI'");
 });
 
 test('QRIS download and WhatsApp stay disabled until JPG is ready; preview supports retry', () => {
@@ -100,13 +101,37 @@ test('QRIS download and WhatsApp stay disabled until JPG is ready; preview suppo
   expect(queue).toContain("card?.url && webChatUrl && <Button asChild");
   expect(queue).toContain('<a href={webChatUrl} target="_blank" rel="noopener noreferrer">');
   expect(queue).toContain("Buka WhatsApp Web");
+  expect(queue).toContain("Salin Link Chat");
+  expect(queue).toContain("copyWhatsAppValue(webChatUrl, 'Link chat WhatsApp')");
+  expect(queue).toContain("{webChatUrl && <p className=");
+  expect(queue).toContain("Ctrl+T");
+  expect(queue).toContain("Ctrl+V");
   expect(queue).toContain("Salin Nomor");
-  expect(queue).toContain("Salin Caption");
-  expect(queue).toContain("copyWhatsAppValue(RESERVATION_CARD_CAPTION, 'Caption')");
+  expect(queue).toContain("Salin Nomor");
+  expect(reservationMessage).toContain("Salin Pesan");
+  expect(reservationMessage).toContain("Preview Template WhatsApp Reservasi");
+  expect(reservationMessage).toContain("read_active_whatsapp_template");
+  expect(reservationMessage).toContain("pendingReservationMessageFingerprint");
   expect(queue).toContain("card?.url && !webChatUrl");
   expect(queue).toContain("disabled={busy || !card?.url}");
   expect(queue).toContain("Coba Buat Ulang Kartu");
   expect(queue).toContain("setCardRetry(value => value + 1)");
   expect(queue).toContain("}, [item?.id, cardRetry])");
   expect(queue).toContain("URL.revokeObjectURL(objectUrl)");
+});
+
+test('Staff sees only the ACTIVE official template and copies manually without sending a payment or message', () => {
+  const builder = readFileSync('src/lib/reservation-whatsapp-message.ts', 'utf8');
+  expect(reservationMessage).toContain("queryFn: readActiveReservationTemplate");
+  expect(reservationMessage).toContain("supabase.rpc('read_active_whatsapp_template'");
+  expect(reservationMessage).toContain("renderPendingReservationMessage(offer, active.data.body)");
+  expect(reservationMessage).toContain("readOffer(offer.id)");
+  expect(reservationMessage).toContain("readActiveReservationTemplate()");
+  expect(reservationMessage).toContain("await navigator.clipboard.writeText(message)");
+  expect(reservationMessage).toContain("disabled={busy || !cardReady}");
+  expect(reservationMessage).not.toContain("transition_reservation_offer");
+  expect(reservationMessage).not.toContain("window.open(");
+  expect(builder).toContain("renderWhatsAppTemplate('PENAWARAN_RESERVASI'");
+  expect(builder).not.toContain("supabase.rpc(");
+  expect(builder).not.toContain("window.open(");
 });
