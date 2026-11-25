@@ -104,7 +104,7 @@ BEGIN
     RAISE EXCEPTION 'Minimal satu variabel resmi diperlukan';
   END IF;
   FOR _token IN
-    SELECT m[1] FROM regexp_matches(_body, '\[([A-Z][A-Z0-9_]*)\]', 'g') AS m
+    SELECT hit[1] FROM regexp_matches(_body, '\[([A-Z][A-Z0-9_]*)\]', 'g') AS hits(hit)
   LOOP
     IF NOT (_token = ANY(_allowed)) THEN
       RAISE EXCEPTION 'Variabel tidak diizinkan untuk jenis template';
