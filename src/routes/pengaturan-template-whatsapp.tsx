@@ -11,6 +11,7 @@ import {
   type WhatsAppTemplateKind,
 } from '@/lib/whatsapp-template-core';
 import { meta } from '@/lib/meta';
+import { OWNER_APPROVED_QUOTE_TEMPLATE } from '@/lib/whatsapp-template-approved';
 
 export const Route = createFileRoute('/pengaturan-template-whatsapp')({
   head: () => meta('Template WhatsApp', 'Pengaturan template pesan khusus Owner Baturaden 25 Homestay.'),
@@ -53,7 +54,7 @@ function PengaturanTemplateWhatsApp() {
       if (request !== readGeneration.current) return;
       const list = (data ?? []) as Version[];
       setVersions(list);
-      setBody(list.find(item => item.status === 'ACTIVE')?.body ?? '');
+      setBody(list.find(item => item.status === 'ACTIVE')?.body ?? (selectedKind === 'PENAWARAN_RESERVASI' ? OWNER_APPROVED_QUOTE_TEMPLATE : ''));
       setBackendReady(true);
     } catch {
       if (request !== readGeneration.current) return;
@@ -69,6 +70,7 @@ function PengaturanTemplateWhatsApp() {
   const validation = validateWhatsAppTemplate(kind, body);
   const active = versions.find(item => item.status === 'ACTIVE');
   const unchanged = body === (active?.body ?? '');
+  const draftSuggestion = backendReady && kind === 'PENAWARAN_RESERVASI' && !active;
 
   async function save() {
     if (!owner || !backendReady || busy || unchanged || validation.length) return;
@@ -101,6 +103,7 @@ function PengaturanTemplateWhatsApp() {
           </section>
           <section className="panel-mewah space-y-3 p-5">
             <h2 className="font-serif text-xl">Isi Pesan</h2>
+            {draftSuggestion && <p role="status" className="rounded-lg border border-gold/30 p-3 text-sm">Teks penawaran yang sudah disetujui Owner telah disiapkan otomatis. Ini masih draf, belum aktif untuk karyawan. Tinjau lalu tekan Simpan Versi Baru agar tersimpan atas akun Owner dan tercatat dalam riwayat.</p>}
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             {loading ? <p>Memuat template…</p> : <>
               <label htmlFor="wa-template-body" className="text-sm">Teks WhatsApp (maksimal 4.000 karakter)</label>
@@ -119,7 +122,7 @@ function PengaturanTemplateWhatsApp() {
                 <Button type="button" variant="outline" disabled={busy} onClick={() => void reload(kind)}>Muat Ulang</Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Mengubah template tidak mengirim WhatsApp atau membuat Booking/pembayaran. Integrasi pengiriman operasional belum diaktifkan.
+                Mengubah template tidak mengirim WhatsApp atau membuat Booking/pembayaran. Pesan hanya diterapkan setelah Owner menyimpan versi aktif. Mengubah template tidak mengirim WhatsApp atau membuat transaksi.
               </p>
             </>}
           </section>
