@@ -80,7 +80,7 @@ test('Kartu Reservasi is downloaded as JPG using official QRIS without auto-send
   expect(card).toContain('Reservasi baru tercatat setelah pembayaran kami terima.');
   expect(card).not.toContain("supabase.rpc(");
   expect(queue).toContain('URL.revokeObjectURL(objectUrl)');
-  expect(queue).toContain('Tombol WhatsApp tidak melampirkan gambar secara otomatis.');
+  expect(queue).toContain('Tidak ada pesan atau gambar yang terkirim otomatis.');
 });
 
 test('Saving a reservation opens its QRIS card preview, never the old auto-WhatsApp text flow', () => {
