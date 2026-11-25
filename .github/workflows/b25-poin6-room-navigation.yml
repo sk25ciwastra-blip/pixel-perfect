@@ -1,0 +1,40 @@
+name: B25 Poin6 room management navigation
+on:
+  push:
+    branches:
+      - fix/poin6-room-management-navigation-20261125
+    paths:
+      - src/routes/pengaturan.tsx
+      - scripts/poin6-room-navigation.test.mjs
+      - .github/workflows/b25-poin6-room-navigation.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/routes/pengaturan.tsx
+      - scripts/poin6-room-navigation.test.mjs
+      - .github/workflows/b25-poin6-room-navigation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  room-management-navigation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Poin6 source contract
+        run: node --test scripts/poin6-room-navigation.test.mjs
+      - name: Install locked dependencies
+        run: npm install --ignore-scripts --no-save --no-package-lock --no-audit --no-fund
+      - name: Build route types without publishing
+        run: npm run build
+      - name: TypeScript
+        run: npx tsc --noEmit
