@@ -1,0 +1,29 @@
+import { test, expect } from 'bun:test';
+import { readFileSync } from 'node:fs';
+const src=(path:string)=>readFileSync(path,'utf8');
+const menu=src('src/routes/pengaturan.tsx');
+const dp=src('src/routes/pengaturan-keuangan.tsx');
+const bank=src('src/routes/pengaturan-rekening-owner.tsx');
+const payment=src('src/routes/pengaturan-metode-pembayaran.tsx');
+test('three separate menu routes',()=>{
+ expect(menu).toMatch(/label: "Minimum DP & Komisi"[^\n]*ke: "\/pengaturan-keuangan"/);
+ expect(menu).toMatch(/label: "Rekening Owner"[^\n]*ke: "\/pengaturan-rekening-owner"/);
+ expect(menu).toMatch(/label: "Metode Pembayaran"[^\n]*ke: "\/pengaturan-metode-pembayaran"/);
+ expect(bank).toContain("createFileRoute('/pengaturan-rekening-owner')");
+ expect(payment).toContain("createFileRoute('/pengaturan-metode-pembayaran')");
+});
+test('Owner only, banking separate from DP RPCs',()=>{
+ expect(bank).toContain("posisiKode === 'owner'");
+ expect(dp).toContain("posisiKode === 'owner'");
+ expect(payment).toContain("posisiKode === 'owner'");
+ expect(bank).toContain("upsert_finance_bank_account");
+ expect(bank).not.toContain("set_finance_settings");
+ expect(dp).toContain("set_finance_settings");
+ expect(dp).toContain("set_finance_commission_config");
+ expect(dp).not.toContain("upsert_finance_bank_account");
+});
+test('payment methods display supported channels without fake persistence',()=>{
+ for(const method of ['Cash','QRIS','Transfer'])expect(payment).toContain(method);
+ expect(payment).not.toContain("upsert_finance_bank_account");
+ expect(payment).not.toContain("supabase.from(");
+});

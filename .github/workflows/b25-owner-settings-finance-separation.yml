@@ -1,0 +1,27 @@
+name: B25 Owner Settings Separate Finance and Payments
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - src/routes/pengaturan.tsx
+      - src/routes/pengaturan-keuangan.tsx
+      - src/routes/pengaturan-rekening-owner.tsx
+      - src/routes/pengaturan-metode-pembayaran.tsx
+      - scripts/owner-settings-finance-separation.test.ts
+      - .github/workflows/b25-owner-settings-finance-separation.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  settings:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/owner-settings-finance-separation.test.ts
+      - run: bun run build
+      - run: bunx tsc --noEmit
