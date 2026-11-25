@@ -35,6 +35,11 @@ describe('Poin 4/7 WhatsApp templates (no DB or send effects)', () => {
       NAMA_TAMU: 'A\nB', NOMOR_TRANSAKSI: 'BTRDTRX-000027',
     })).toThrow();
   });
+  it('matches SQL: multiline LF allowed, CR disallowed in saved template', () => {
+    expect(validateWhatsAppTemplate('PENAWARAN_RESERVASI', 'Halo [NAMA_TAMU]\\nTerima kasih')).toEqual([]);
+    expect(validateWhatsAppTemplate('PENAWARAN_RESERVASI', 'Halo [NAMA_TAMU]\\rTerima kasih')).not.toEqual([]);
+    expect(validateWhatsAppTemplate('PENAWARAN_RESERVASI', 'Halo [NAMA_TAMU]\\r\\nTerima kasih')).not.toEqual([]);
+  });
   it('keeps Unicode guest names readable', () => {
     expect(renderWhatsAppTemplate('PENAWARAN_RESERVASI', 'Halo [NAMA_TAMU]', {
       NAMA_TAMU: 'Dewi 🌸',
