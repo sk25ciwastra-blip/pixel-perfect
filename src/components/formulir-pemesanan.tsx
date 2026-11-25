@@ -27,7 +27,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { bookingPhoneInput, canonicalIndonesianWhatsApp, findSameGuest, suggestGuests, type GuestSearchRow } from '@/lib/guest-search';
-import { offerQueryKey, offerWhatsApp, offerWibFields, type Offer, type OfferDetail } from '@/lib/reservation-offers';
+import { offerQueryKey, offerWibFields, type OfferDetail } from '@/lib/reservation-offers';
 
 type Mode = 'booking' | 'check_in' | 'offer';
 type DayMode = 'weekday' | 'weekend';
@@ -330,11 +330,6 @@ export function FormulirPemesanan({
     };
     const key = JSON.stringify(data);
     if (offerRequest.current?.key !== key) offerRequest.current = { key, id: crypto.randomUUID() };
-    let tab: Window | null = null;
-    try {
-      tab = window.open('about:blank', '_blank');
-      if (tab) tab.opener = null;
-    } catch { tab?.close(); tab = null; }
     pending.current = true;
     setSaving(true);
     try {
@@ -343,19 +338,12 @@ export function FormulirPemesanan({
       const item = response.data as unknown as OfferDetail;
       void client.invalidateQueries({ queryKey: offerQueryKey });
       if (item.status !== 'DRAFT' && item.status !== 'SENT') {
-        tab?.close();
         toast.error(item.reason ?? 'Reservasi tidak lagi aktif. Lihat Riwayat Reservasi di Detail Tamu.');
       } else {
-        try {
-          const { url } = offerWhatsApp(item);
-          if (tab && url) tab.location.replace(url);
-          else tab?.close();
-        } catch { tab?.close(); tab = null; }
-        toast.success('Reservasi masuk antrean menunggu pembayaran. Kirim instruksi pembayaran melalui WhatsApp.');
+        toast.success('Reservasi tersimpan. Periksa kartu QRIS, unduh JPG, lalu kirim melalui WhatsApp secara manual.');
+        onOfferSaved?.(item);
       }
-      onOfferSaved?.(item);
     } catch (failure) {
-      tab?.close();
       setError(failure instanceof Error ? failure.message : 'Penyimpanan belum dapat dikonfirmasi. Coba lagi.');
     } finally {
       pending.current = false;
@@ -615,7 +603,7 @@ export function FormulirPemesanan({
             {!isOffer && isTraining && <p className="ci-notice">Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.</p>}
             {!isOffer && selectedPrice > 0 && <p className="ci-notice">{activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.' : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.' : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}</p>}
             {error && <p role="alert" className="ci-notice text-destructive">{error}</p>}
-            <footer className="ci-footer"><p className="ci-reminder"><Info />{isOffer ? 'Kirim rincian harga dan lampiran QRIS resmi secara manual. Nomor TRX belum diterbitkan.' : 'Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan'}</p><div className={isOffer ? 'ci-footer-actions max-w-full flex-wrap' : 'ci-footer-actions'}><Button type="button" variant="outline" disabled={saving} onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || (isOffer ? quoteLoading : dataLoading) || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : isOffer ? 'Simpan Reservasi & Buka WhatsApp' : offer ? 'Verifikasi Pembayaran & Terbitkan TRX' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
+            <footer className="ci-footer"><p className="ci-reminder"><Info />{isOffer ? 'Kirim rincian harga dan lampiran QRIS resmi secara manual. Nomor TRX belum diterbitkan.' : 'Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan'}</p><div className={isOffer ? 'ci-footer-actions max-w-full flex-wrap' : 'ci-footer-actions'}><Button type="button" variant="outline" disabled={saving} onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || (isOffer ? quoteLoading : dataLoading) || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : isOffer ? 'Simpan Reservasi & Lihat Kartu' : offer ? 'Verifikasi Pembayaran & Terbitkan TRX' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
           </form>
         )}
       </div>
