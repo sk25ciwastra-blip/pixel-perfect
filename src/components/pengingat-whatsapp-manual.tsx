@@ -59,7 +59,7 @@ export function ManualWhatsAppReminders({ transactions, guests, rooms, roomTypes
         throw new Error('Nomor WhatsApp atau identitas tamu belum tersedia.');
       }
       const { data: templates, error: templateError } = await supabase.rpc(
-        'read_active_whatsapp_template', { _kind: kind },
+        'read_active_whatsapp_reminder_template', { _kind: kind },
       );
       const active = templates?.[0];
       if (templateError || !active?.body) {
