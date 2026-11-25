@@ -20,11 +20,12 @@ describe('Owner Poin4 manual WhatsApp trigger contract',()=>{
     expect(manualReminderEligibility(booking,at('2026-11-26T09:59:59.999+07:00'))).toBe('PENGINGAT_BOOKING_30_MENIT');
     expect(manualReminderEligibility(booking,at('2026-11-26T10:00:00+07:00'))).toBeNull();
   });
-  it('Expired stay alert starts at ends_at; 15 min is a message window only, not charging',()=>{
+  it('Expired stay alert changes from grace reminder to overtime notice at exactly 15 min, without billing',()=>{
     expect(manualReminderEligibility(stay,at('2026-11-26T11:59:59.999+07:00'))).toBeNull();
     expect(manualReminderEligibility(stay,at('2026-11-26T12:00:00+07:00'))).toBe('PENGINGAT_WAKTU_HABIS');
     expect(manualReminderEligibility(stay,at('2026-11-26T12:14:59.999+07:00'))).toBe('PENGINGAT_WAKTU_HABIS');
-    expect(manualReminderEligibility(stay,at('2026-11-26T12:15:00+07:00'))).toBeNull();
+    expect(manualReminderEligibility(stay,at('2026-11-26T12:15:00+07:00'))).toBe('PEMBERITAHUAN_OVERTIME');
+    expect(manualReminderEligibility(stay,at('2026-11-26T12:16:00+07:00'))).toBe('PEMBERITAHUAN_OVERTIME');
   });
   it('Missing times, cancelled/checked-out, invalid clock and converted Booking do not alert',()=>{
     expect(manualReminderEligibility({...booking,status:'cancelled'},at('2026-11-26T09:45:00+07:00'))).toBeNull();
@@ -46,6 +47,8 @@ describe('Owner Poin4 manual WhatsApp trigger contract',()=>{
     expect(ui).toContain("'read_active_whatsapp_reminder_template'");
     expect(ui).toContain("window.open('about:blank', '_blank')");
     expect(ui).not.toContain('sendWhatsAppAutomatically');
+    expect(ui).toContain("'read_active_whatsapp_reminder_template', { _kind: 'PEMBERITAHUAN_OVERTIME' }");
+    expect(ui).toContain("if (kind === 'PEMBERITAHUAN_OVERTIME' && !overtimeTemplate.data) return [];");
     const sql=readFileSync('supabase/pending/20261125_whatsapp_manual_reminder_kinds.sql','utf8');
     expect(sql).toContain("emp.position::text='receptionist'");
     expect(sql).toContain('finance_training_current_user_is_restricted');
