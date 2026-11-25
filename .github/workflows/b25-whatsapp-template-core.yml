@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - feat/whatsapp-template-core-20261125
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/lib/whatsapp-template-core.ts'
+      - 'scripts/whatsapp-template-core.test.ts'
+      - 'src/routes/pengaturan-template-whatsapp.tsx'
+      - 'src/integrations/supabase/types.ts'
+      - '.github/workflows/b25-whatsapp-template-core.yml'
   workflow_dispatch:
 
 permissions:
