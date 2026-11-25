@@ -145,6 +145,7 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const item = detail.isSuccess ? detail.data : null;
   const [card, setCard] = useState<{ url: string; error: string } | null>(null);
+  const [cardRetry, setCardRetry] = useState(0);
   // One immutable JPG per detail popup. Polling status never changes the image or its QRIS.
   useEffect(() => {
     if (!item) return;
@@ -161,7 +162,7 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
     // The reservation snapshot remains constant within the current detail popup.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item?.id]);
+  }, [item?.id, cardRetry]);
   async function transition(action: 'sent' | 'cancel') {
     if (busy) return;
     setBusy(true);
@@ -188,7 +189,10 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
         <div className="space-y-3 rounded-xl border border-[#e4d1af] bg-[#fffdf8] p-4 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="font-serif text-lg">{item.guest_name}</strong><span className="rounded-full border border-[#dfc48d] bg-[#fff2d5] px-2 py-1 text-[11px] font-semibold">{offerStatus[item.status]}</span></div><p className="text-[#514131]"><span className="mr-2 inline-block rounded-md bg-[#30251b] px-2 py-1 font-bold text-[#f6db9e]">{item.room_number}</span>{item.room_type} · {item.package_name}</p><p className="text-xs text-[#685640]"><Slot offer={item} /></p><div className="grid grid-cols-2 gap-2 border-t border-[#e9d9bb] pt-3"><p><span className="block text-xs text-[#826c50]">Total Tagihan</span><strong>{rupiah(item.total)}</strong></p><p><span className="block text-xs text-[#826c50]">Minimum DP</span><strong>{rupiah(item.minimum_dp)}</strong></p></div></div>
         <section aria-label="Preview Kartu Reservasi QRIS" className="space-y-2">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#6f5738]"><ImageIcon aria-hidden="true" className="size-4" /> Kartu Reservasi & Pembayaran</p>
-          {card?.error && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">{card.error}</p>}
+          {card?.error && <div role="alert" className="space-y-2 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+            <p>{card.error} Kartu belum siap dikirim ke tamu.</p>
+            <Button type="button" variant="outline" size="sm" className="border-red-400 bg-white text-red-800 hover:bg-red-100" onClick={() => setCardRetry(value => value + 1)}>Coba Buat Ulang Kartu</Button>
+          </div>
           {!card && <p role="status" className="rounded-xl border border-[#e3cda8] bg-[#fffdf8] p-8 text-center text-sm">Membuat kartu reservasi dengan QRIS resmi…</p>}
           {card?.url && <img src={card.url} alt={`Kartu reservasi ${item.guest_name}, kamar ${item.room_number}, QRIS Baturaden 25 Homestay`} className="mx-auto max-h-[56vh] w-auto max-w-full rounded-xl border border-[#d9b573] object-contain shadow-[0_8px_25px_rgba(23,17,8,0.18)]" />}
           <p className="text-xs leading-relaxed text-[#765c3a]">Kartu ini belum menjadi bukti Booking resmi. Data diambil dari reservasi yang tersimpan; pembayaran masih harus diverifikasi.</p>
@@ -197,7 +201,7 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
           <p className="text-xs font-semibold uppercase tracking-wide text-[#6f5738]">Kirim kartu reservasi & QRIS</p>
           <div className="flex flex-wrap gap-2">
             {card?.url && <Button asChild variant="outline" className="min-h-10 border-[#bf933e] bg-[#f3d590] px-4 text-[#332411] hover:bg-[#e9c270] hover:text-[#332411]"><a href={card.url} download={reservationCardFilename(item)}><Download aria-hidden="true" />Unduh Kartu JPG</a></Button>}
-            {whatsAppDraftUrl(item.phone, RESERVATION_CARD_CAPTION) && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={whatsAppDraftUrl(item.phone, RESERVATION_CARD_CAPTION)} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Buka WhatsApp</a></Button>}
+            {card?.url && whatsAppDraftUrl(item.phone, RESERVATION_CARD_CAPTION) && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={whatsAppDraftUrl(item.phone, RESERVATION_CARD_CAPTION)} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Buka WhatsApp</a></Button>}
             {item.status === 'DRAFT' && <Button type="button" variant="outline" className="min-h-10 border-[#bd8c39] bg-[#e6b75f] px-4 text-[#30200c] hover:bg-[#d6a246] hover:text-[#30200c]" disabled={busy || !card?.url} onClick={() => void transition('sent')}><CheckCheck aria-hidden="true" />Sudah Dikirim</Button>}
           </div>
           <p className="text-xs leading-relaxed text-[#7c6545]"><strong>Urutan kirim:</strong> unduh JPG, buka WhatsApp dengan caption singkat, lampirkan file JPG, kirim manual, lalu tandai <strong>Sudah Dikirim</strong>. Tombol WhatsApp tidak melampirkan gambar secara otomatis.</p>
