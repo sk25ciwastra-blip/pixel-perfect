@@ -27,7 +27,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { bookingPhoneInput, canonicalIndonesianWhatsApp, findSameGuest, suggestGuests, type GuestSearchRow } from '@/lib/guest-search';
-import { offerQueryKey, offerWhatsApp, offerWibFields, type Offer, type OfferDetail } from '@/lib/reservation-offers';
+import { offerQueryKey, offerWibFields, type Offer, type OfferDetail } from '@/lib/reservation-offers';
 
 type Mode = 'booking' | 'check_in' | 'offer';
 type DayMode = 'weekday' | 'weekend';
@@ -330,32 +330,20 @@ export function FormulirPemesanan({
     };
     const key = JSON.stringify(data);
     if (offerRequest.current?.key !== key) offerRequest.current = { key, id: crypto.randomUUID() };
-    let tab: Window | null = null;
-    try {
-      tab = window.open('about:blank', '_blank');
-      if (tab) tab.opener = null;
-    } catch { tab?.close(); tab = null; }
     pending.current = true;
     setSaving(true);
     try {
       const response = await supabase.rpc('create_reservation_offer', { ...data, _id: offerRequest.current.id });
-      if (response.error || !response.data) throw new Error(response.error?.message ?? 'Penawaran belum dapat dikonfirmasi.');
+      if (response.error || !response.data) throw new Error(response.error?.message ?? 'Permintaan reservasi belum dapat disimpan.');
       const item = response.data as unknown as OfferDetail;
       void client.invalidateQueries({ queryKey: offerQueryKey });
       if (item.status !== 'DRAFT' && item.status !== 'SENT') {
-        tab?.close();
-        toast.error(item.reason ?? 'Penawaran tidak lagi aktif. Lihat Riwayat Penawaran di Detail Tamu.');
+        toast.error(item.reason ?? 'Reservasi tidak lagi aktif. Lihat Riwayat Reservasi di Detail Tamu.');
       } else {
-        try {
-          const { url } = offerWhatsApp(item);
-          if (tab && url) tab.location.replace(url);
-          else tab?.close();
-        } catch { tab?.close(); tab = null; }
-        toast.success('Penawaran tersimpan. Kirim manual atau buka kembali dari antrean.');
+        toast.success('Reservasi tersimpan. Periksa kartu QRIS, unduh JPG, lalu kirim melalui WhatsApp secara manual.');
+        onOfferSaved?.(item);
       }
-      onOfferSaved?.(item);
     } catch (failure) {
-      tab?.close();
       setError(failure instanceof Error ? failure.message : 'Penyimpanan belum dapat dikonfirmasi. Coba lagi.');
     } finally {
       pending.current = false;
@@ -432,14 +420,14 @@ export function FormulirPemesanan({
         const result = data as unknown as Offer;
         void client.invalidateQueries({ queryKey: offerQueryKey });
         if (result.status !== 'CONVERTED' || !result.transaction_number) {
-          setError(result.reason ?? 'Penawaran tidak lagi aktif.');
+          setError(result.reason ?? 'Reservasi tidak lagi aktif.');
           return;
         }
         setSavedNumber(result.transaction_number);
         toast.success('Booking resmi berhasil disimpan.');
         void onSaved().catch(() => toast.error('Booking tersimpan. Muat ulang untuk memperbarui tampilan.'));
       } catch (failure) {
-        setError(failure instanceof Error ? failure.message : 'Booking belum dapat dikonfirmasi. Coba lagi dengan penawaran yang sama.');
+        setError(failure instanceof Error ? failure.message : 'Booking belum dapat dikonfirmasi. Coba lagi dengan reservasi yang sama.');
       } finally {
         pending.current = false;
         setSaving(false);
@@ -496,7 +484,7 @@ export function FormulirPemesanan({
     await onSaved();
   }
 
-  const judul = isOffer ? 'Buat Penawaran' : mode === 'booking' ? 'Form Booking' : 'Form Check-in Langsung';
+  const judul = isOffer ? 'Buat Reservasi' : mode === 'booking' ? 'Verifikasi Pembayaran' : 'Form Check-in Langsung';
 
   function kirimStruk() {
     const pesan = [
@@ -525,8 +513,8 @@ export function FormulirPemesanan({
         className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${savedNumber ? 'max-w-sm' : isOffer ? 'checkin-reference border-[#c7aa75] bg-[#fffaf0] text-[#2a2119] shadow-[0_24px_65px_rgba(15,12,9,0.3)]' : 'checkin-reference'}`}
       >
         {!savedNumber ? <div className="ci-header">
-          <p>{isOffer ? 'BATURADEN 25 HOMESTAY / PENAWARAN RESERVASI' : 'OPERASIONAL / TRANSAKSI BARU'}</p>
-          <div className="ci-header-title"><h2>{isOffer ? 'Buat Penawaran' : mode === 'booking' ? 'Reservasi' : 'Check-in Langsung'}</h2><span className={isOffer ? 'ci-header-id rounded-full border border-[#d7bc85] bg-[#f8eaca] px-3 py-1 text-[#6a4c24]' : 'ci-header-id'}>{isOffer ? 'Belum mengunci kamar' : 'ID otomatis setelah disimpan'}</span></div>
+          <p>{isOffer ? 'BATURADEN 25 HOMESTAY / PERMINTAAN RESERVASI' : 'OPERASIONAL / TRANSAKSI BARU'}</p>
+          <div className="ci-header-title"><h2>{isOffer ? 'Buat Reservasi' : mode === 'booking' ? 'Reservasi' : 'Check-in Langsung'}</h2><span className={isOffer ? 'ci-header-id rounded-full border border-[#d7bc85] bg-[#f8eaca] px-3 py-1 text-[#6a4c24]' : 'ci-header-id'}>{isOffer ? 'Belum mengunci kamar' : 'ID otomatis setelah disimpan'}</span></div>
           <Button type="button" variant="ghost" size="icon" aria-label="Tutup" disabled={saving} onClick={onClose}><X /></Button>
         </div> : <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold">{savedNumber && mode === 'check_in' ? 'Check-in Berhasil' : judul}</h2>
@@ -535,7 +523,7 @@ export function FormulirPemesanan({
           </Button>
         </div>}
 
-        {isOffer && <div className="mb-4 rounded-xl border border-[#dec99f] bg-[#fff5df] px-4 py-3 text-xs leading-relaxed text-[#624d2c]"><strong className="block text-sm text-[#36291a]">Penawaran sebelum Booking</strong>Kamar tetap tersedia untuk tamu lain hingga Booking dikonfirmasi. Penawaran disimpan dahulu, kemudian pesan WhatsApp dikirim secara manual.</div>}
+        {isOffer && <div className="mb-4 rounded-xl border border-[#dec99f] bg-[#fff5df] px-4 py-3 text-xs leading-relaxed text-[#624d2c]"><strong className="block text-sm text-[#36291a]">Reservasi menunggu pembayaran</strong>Kamar belum terkunci sebelum pembayaran berhasil diverifikasi. Setelah disimpan, kirim rincian harga dan QRIS resmi secara manual melalui WhatsApp.</div>}
 
         {savedNumber ? (
           <div>
@@ -604,12 +592,10 @@ export function FormulirPemesanan({
               <input type="checkbox" checked={paymentVerified} onChange={event => setPaymentVerified(event.target.checked)} />
               Saya sudah memverifikasi pembayaran yang benar-benar diterima.
             </label>}
-            {isOffer && <div className="rounded-2xl border border-[#ddc69b] bg-[#fffdf7] p-4 shadow-[0_4px_18px_rgba(40,30,13,0.07)]" aria-label="Ringkasan Penawaran"><p className="mb-3 text-[11px] font-bold uppercase tracking-[.12em] text-[#8c6a38]">Ringkasan Penawaran</p><div className="grid grid-cols-2 gap-3"><div><p className="text-xs text-[#7b6748]">Total Tagihan</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 ? rupiah(total) : '—'}</strong></div><div className="border-l border-[#e6d5b4] pl-3"><p className="text-xs text-[#7b6748]">Minimum DP</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 && quoteMinimumDp !== null ? rupiah(Math.ceil(quoteMinimumDp)) : '—'}</strong></div></div><p className="mt-3 border-t border-[#e7d7b7] pt-3 text-xs text-[#705b3d]">Nilai mengikuti tarif dan pengaturan DP resmi. Belum ada pembayaran yang dicatat.</p></div>}
+            {isOffer && <div className="rounded-2xl border border-[#ddc69b] bg-[#fffdf7] p-4 shadow-[0_4px_18px_rgba(40,30,13,0.07)]" aria-label="Ringkasan Reservasi"><p className="mb-3 text-[11px] font-bold uppercase tracking-[.12em] text-[#8c6a38]">Ringkasan Reservasi</p><div className="grid grid-cols-2 gap-3"><div><p className="text-xs text-[#7b6748]">Total Tagihan</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 ? rupiah(total) : '—'}</strong></div><div className="border-l border-[#e6d5b4] pl-3"><p className="text-xs text-[#7b6748]">Minimum DP</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 && quoteMinimumDp !== null ? rupiah(Math.ceil(quoteMinimumDp)) : '—'}</strong></div></div><p className="mt-3 border-t border-[#e7d7b7] pt-3 text-xs text-[#705b3d]">Nilai mengikuti tarif dan minimum DP resmi. Reservasi masuk antrean hingga pembayaran diverifikasi.</p></div>}
             {showQuote && !isOffer && !saving && <BookingQuote
               key={JSON.stringify([quoteDraft, roomId, packageId, quoteDayReady, quoteLoading, quoteLoadError])}
               draft={quoteDraft}
-              roomId={roomId}
-              packageId={packageId}
               dayReady={quoteDayReady}
               loading={quoteLoading}
               loadError={quoteLoadError}
@@ -617,7 +603,7 @@ export function FormulirPemesanan({
             {!isOffer && isTraining && <p className="ci-notice">Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.</p>}
             {!isOffer && selectedPrice > 0 && <p className="ci-notice">{activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.' : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.' : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}</p>}
             {error && <p role="alert" className="ci-notice text-destructive">{error}</p>}
-            <footer className="ci-footer"><p className="ci-reminder"><Info />{isOffer ? 'Periksa data dan harga. Pesan WhatsApp hanya terkirim setelah petugas menekan Kirim di WhatsApp.' : 'Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan'}</p><div className={isOffer ? 'ci-footer-actions max-w-full flex-wrap' : 'ci-footer-actions'}><Button type="button" variant="outline" disabled={saving} onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || (isOffer ? quoteLoading : dataLoading) || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : isOffer ? 'Simpan Penawaran & Buka WhatsApp' : offer ? 'Konfirmasi Pembayaran & Booking' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
+            <footer className="ci-footer"><p className="ci-reminder"><Info />{isOffer ? 'Kirim rincian harga dan lampiran QRIS resmi secara manual. Nomor TRX belum diterbitkan.' : 'Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan'}</p><div className={isOffer ? 'ci-footer-actions max-w-full flex-wrap' : 'ci-footer-actions'}><Button type="button" variant="outline" disabled={saving} onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || (isOffer ? quoteLoading : dataLoading) || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : isOffer ? 'Simpan Reservasi & Lihat Kartu' : offer ? 'Verifikasi Pembayaran & Terbitkan TRX' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
           </form>
         )}
       </div>

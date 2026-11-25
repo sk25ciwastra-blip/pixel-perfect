@@ -275,7 +275,7 @@ function HalamanTamu() {
                 <button type="button" role="tab" aria-selected={tabDetail === 'kunjungan'} data-aktif={tabDetail === 'kunjungan'} className="dt-tab" onClick={() => setTabDetail('kunjungan')}><Clock aria-hidden="true" />Riwayat Kunjungan ({kunjunganList.length})</button>
                 <button type="button" role="tab" aria-selected={tabDetail === 'transaksi'} data-aktif={tabDetail === 'transaksi'} className="dt-tab" onClick={() => setTabDetail('transaksi')}><Layers aria-hidden="true" />Riwayat Transaksi</button>
                 <button type="button" role="tab" aria-selected={tabDetail === 'booking'} data-aktif={tabDetail === 'booking'} className="dt-tab" onClick={() => setTabDetail('booking')}><CalendarDays aria-hidden="true" />Riwayat Booking</button>
-                {canReadOffers && <button type="button" role="tab" aria-selected={tabDetail === 'penawaran'} data-aktif={tabDetail === 'penawaran'} className="dt-tab" onClick={() => setTabDetail('penawaran')}><CalendarDays aria-hidden="true" />Riwayat Penawaran</button>}
+                {canReadOffers && <button type="button" role="tab" aria-selected={tabDetail === 'penawaran'} data-aktif={tabDetail === 'penawaran'} className="dt-tab" onClick={() => setTabDetail('penawaran')}><CalendarDays aria-hidden="true" />Riwayat Reservasi</button>}
                 <button type="button" role="tab" aria-selected={tabDetail === 'catatan'} data-aktif={tabDetail === 'catatan'} className="dt-tab" onClick={() => setTabDetail('catatan')}><NotebookPen aria-hidden="true" />Catatan</button>
               </div>
               {tabDetail === 'penawaran' && canReadOffers ? <OfferHistory key={detail.id} guest={detail.id} /> : tabDetail === 'catatan' ? <>
