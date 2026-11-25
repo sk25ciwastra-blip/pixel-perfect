@@ -522,11 +522,11 @@ export function FormulirPemesanan({
         role="dialog"
         aria-modal="true"
         aria-label={judul}
-        className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${savedNumber ? 'max-w-sm' : 'checkin-reference'}`}
+        className={`max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl border border-gold/20 bg-background p-5 shadow-lembut ${savedNumber ? 'max-w-sm' : isOffer ? 'checkin-reference border-[#c7aa75] bg-[#fffaf0] text-[#2a2119] shadow-[0_24px_65px_rgba(15,12,9,0.3)]' : 'checkin-reference'}`}
       >
         {!savedNumber ? <div className="ci-header">
-          <p>OPERASIONAL / TRANSAKSI BARU</p>
-          <div className="ci-header-title"><h2>{isOffer ? 'Buat Penawaran' : mode === 'booking' ? 'Reservasi' : 'Check-in Langsung'}</h2><span className="ci-header-id">{isOffer ? 'Penawaran tidak menahan kamar' : 'ID otomatis setelah disimpan'}</span></div>
+          <p>{isOffer ? 'BATURADEN 25 HOMESTAY / PENAWARAN RESERVASI' : 'OPERASIONAL / TRANSAKSI BARU'}</p>
+          <div className="ci-header-title"><h2>{isOffer ? 'Buat Penawaran' : mode === 'booking' ? 'Reservasi' : 'Check-in Langsung'}</h2><span className={isOffer ? 'ci-header-id rounded-full border border-[#d7bc85] bg-[#f8eaca] px-3 py-1 text-[#6a4c24]' : 'ci-header-id'}>{isOffer ? 'Belum mengunci kamar' : 'ID otomatis setelah disimpan'}</span></div>
           <Button type="button" variant="ghost" size="icon" aria-label="Tutup" disabled={saving} onClick={onClose}><X /></Button>
         </div> : <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold">{savedNumber && mode === 'check_in' ? 'Check-in Berhasil' : judul}</h2>
@@ -534,6 +534,8 @@ export function FormulirPemesanan({
             <X className="h-4 w-4" />
           </Button>
         </div>}
+
+        {isOffer && <div className="mb-4 rounded-xl border border-[#dec99f] bg-[#fff5df] px-4 py-3 text-xs leading-relaxed text-[#624d2c]"><strong className="block text-sm text-[#36291a]">Penawaran sebelum Booking</strong>Kamar tetap tersedia untuk tamu lain hingga Booking dikonfirmasi. Penawaran disimpan dahulu, kemudian pesan WhatsApp dikirim secara manual.</div>}
 
         {savedNumber ? (
           <div>
@@ -602,9 +604,7 @@ export function FormulirPemesanan({
               <input type="checkbox" checked={paymentVerified} onChange={event => setPaymentVerified(event.target.checked)} />
               Saya sudah memverifikasi pembayaran yang benar-benar diterima.
             </label>}
-            {isOffer && <p className="ci-notice">Total {quoteDayReady && selectedPrice > 0 ? rupiah(total) : '—'}
-              {' · '}Minimum DP {quoteDayReady && selectedPrice > 0 && quoteMinimumDp !== null ? rupiah(Math.ceil(quoteMinimumDp)) : '—'}
-            </p>}
+            {isOffer && <div className="rounded-2xl border border-[#ddc69b] bg-[#fffdf7] p-4 shadow-[0_4px_18px_rgba(40,30,13,0.07)]" aria-label="Ringkasan Penawaran"><p className="mb-3 text-[11px] font-bold uppercase tracking-[.12em] text-[#8c6a38]">Ringkasan Penawaran</p><div className="grid grid-cols-2 gap-3"><div><p className="text-xs text-[#7b6748]">Total Tagihan</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 ? rupiah(total) : '—'}</strong></div><div className="border-l border-[#e6d5b4] pl-3"><p className="text-xs text-[#7b6748]">Minimum DP</p><strong className="mt-1 block font-serif text-lg tabular-nums text-[#33271a]">{quoteDayReady && selectedPrice > 0 && quoteMinimumDp !== null ? rupiah(Math.ceil(quoteMinimumDp)) : '—'}</strong></div></div><p className="mt-3 border-t border-[#e7d7b7] pt-3 text-xs text-[#705b3d]">Nilai mengikuti tarif dan pengaturan DP resmi. Belum ada pembayaran yang dicatat.</p></div>}
             {showQuote && !isOffer && !saving && <BookingQuote
               key={JSON.stringify([quoteDraft, roomId, packageId, quoteDayReady, quoteLoading, quoteLoadError])}
               draft={quoteDraft}
@@ -617,7 +617,7 @@ export function FormulirPemesanan({
             {!isOffer && isTraining && <p className="ci-notice">Training {trainingStatus === 'ACTIVE' ? 'aktif' : 'menunggu validasi'}: transaksi memakai sesi kas Owner/Supervisor yang ditugaskan.</p>}
             {!isOffer && selectedPrice > 0 && <p className="ci-notice">{activeSession ? 'Sesi kas aktif terhubung otomatis ke pembayaran.' : needsAssistedContext ? 'Sesi bantuan belum ditentukan. Buka halaman Keuangan untuk memilih konteks sesi aktif.' : 'Belum ada sesi kas aktif. Buka sesi sebelum mencatat pembayaran.'}</p>}
             {error && <p role="alert" className="ci-notice text-destructive">{error}</p>}
-            <footer className="ci-footer"><p className="ci-reminder"><Info />Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan</p><div className={isOffer ? 'ci-footer-actions max-w-full flex-wrap' : 'ci-footer-actions'}><Button type="button" variant="outline" disabled={saving} onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || (isOffer ? quoteLoading : dataLoading) || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : isOffer ? 'Simpan Penawaran & Buka WhatsApp' : offer ? 'Konfirmasi Pembayaran & Booking' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
+            <footer className="ci-footer"><p className="ci-reminder"><Info />{isOffer ? 'Periksa data dan harga. Pesan WhatsApp hanya terkirim setelah petugas menekan Kirim di WhatsApp.' : 'Pastikan paket yang dipilih telah sesuai dengan waktu yang dibutuhkan'}</p><div className={isOffer ? 'ci-footer-actions max-w-full flex-wrap' : 'ci-footer-actions'}><Button type="button" variant="outline" disabled={saving} onClick={onClose}>Batal</Button><Button type="submit" disabled={saving || (isOffer ? quoteLoading : dataLoading) || selectedRoomUnavailable}>{saving ? 'Menyimpan…' : isOffer ? 'Simpan Penawaran & Buka WhatsApp' : offer ? 'Konfirmasi Pembayaran & Booking' : mode === 'booking' ? 'Booking' : 'Check-in'}</Button></div></footer>
           </form>
         )}
       </div>
