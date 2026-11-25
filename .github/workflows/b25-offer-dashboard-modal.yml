@@ -7,6 +7,8 @@ on:
       - src/components/reservation-offer-queue.tsx
       - src/components/formulir-pemesanan.tsx
       - scripts/offer-dashboard-modal-contract.test.ts
+      - scripts/issue-140-release-gate-readonly.sql
+      - scripts/issue-140-release-gate-readonly.test.ts
       - .github/workflows/b25-offer-dashboard-modal.yml
   workflow_dispatch:
 permissions:
@@ -21,6 +23,6 @@ jobs:
           persist-credentials: false
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun test scripts/offer-dashboard-modal-contract.test.ts
+      - run: bun test scripts/offer-dashboard-modal-contract.test.ts scripts/issue-140-release-gate-readonly.test.ts
       - run: bun run build
       - run: bunx tsc --noEmit
