@@ -24,7 +24,7 @@ export type WhatsAppTemplateValues = Record<string, string | number | null | und
 const MAX_TEMPLATE_LENGTH = 4000;
 const MAX_VALUE_LENGTH = 300;
 const TOKEN = /\[([A-Z][A-Z0-9_]*)\]/g;
-const FORBIDDEN_CONTROLS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+const FORBIDDEN_CONTROLS = /[\u0000-\u0008\u000B-\u000D\u000E-\u001F\u007F]/;
 const forbiddenValue = /[\r\n\u2028\u2029\u0000-\u001F\u007F]/;
 
 export function validateWhatsAppTemplate(kind: WhatsAppTemplateKind, template: string): string[] {
