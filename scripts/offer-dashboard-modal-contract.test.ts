@@ -80,7 +80,7 @@ test('Kartu Reservasi is downloaded as JPG using official QRIS without auto-send
   expect(card).toContain('Reservasi baru tercatat setelah pembayaran kami terima.');
   expect(card).not.toContain("supabase.rpc(");
   expect(queue).toContain('URL.revokeObjectURL(objectUrl)');
-  expect(queue).toContain('Tombol WhatsApp tidak melampirkan gambar secara otomatis.');
+  expect(queue).toContain('Tidak ada pesan atau gambar yang terkirim otomatis.');
 });
 
 test('Saving a reservation opens its QRIS card preview, never the old auto-WhatsApp text flow', () => {
@@ -94,10 +94,16 @@ test('Saving a reservation opens its QRIS card preview, never the old auto-Whats
 
 test('QRIS download and WhatsApp stay disabled until JPG is ready; preview supports retry', () => {
   expect(queue).toContain("card?.url && <Button asChild");
-  expect(queue).toContain("const chatUrl = item ? whatsAppReservationChatUrl(item.phone, RESERVATION_CARD_CAPTION) : undefined;");
-  expect(queue).toContain("card?.url && chatUrl && <Button asChild");
-  expect(queue).toContain('<a href={chatUrl} target="_blank" rel="noopener noreferrer">');
-  expect(queue).toContain("card?.url && !chatUrl");
+  expect(queue).toContain("const webChatUrl = item ? whatsAppReservationWebUrl(item.phone) : undefined;");
+  expect(queue).not.toContain("whatsAppReservationChatUrl(item.phone");
+  expect(queue).not.toContain("whatsAppReservationWebUrl(item.phone, RESERVATION_CARD_CAPTION)");
+  expect(queue).toContain("card?.url && webChatUrl && <Button asChild");
+  expect(queue).toContain('<a href={webChatUrl} target="_blank" rel="noopener noreferrer">');
+  expect(queue).toContain("Buka WhatsApp Web");
+  expect(queue).toContain("Salin Nomor");
+  expect(queue).toContain("Salin Caption");
+  expect(queue).toContain("copyWhatsAppValue(RESERVATION_CARD_CAPTION, 'Caption')");
+  expect(queue).toContain("card?.url && !webChatUrl");
   expect(queue).toContain("disabled={busy || !card?.url}");
   expect(queue).toContain("Coba Buat Ulang Kartu");
   expect(queue).toContain("setCardRetry(value => value + 1)");
