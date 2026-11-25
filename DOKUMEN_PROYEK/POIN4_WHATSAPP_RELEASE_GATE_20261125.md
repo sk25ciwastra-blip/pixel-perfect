@@ -161,6 +161,20 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 
 **Keamanan:** backup ZIP/.backup tidak diunggah ke GitHub/CI, tidak ada SQL DML/DDL pada Cloud. Laporan JSON tanpa data tamu/keuangan hanya boleh dibagikan sebagai metadata.
 
+## Addendum perbandingan tabel dan runner restore privat — 25 November 2026
+
+**Audit metadata lanjutan (25 Nov):**
+- 🟢 Inventaris nama `CREATE TABLE public.*` di arsip backup Owner dihitung dari ZIP privat: **45 nama unik**.
+- 🟢 `SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'` melalui Lovable LIVE: **45 nama**.
+- 🟢 **Kedua set nama cocok tepat:** 0 tabel hilang dalam arsip dan 0 tabel berlebih. Ini meningkatkan bukti terhadap pemeriksaan jumlah saja, **tetapi belum membuktikan kesesuaian definisi tiap kolom, seluruh data, atau restore nyata**.
+
+**Pemulihan nyata masih BLOCKED pada lingkungan ChatGPT saat ini:** `pg_restore`, `psql`, `initdb`, `pg_ctl`, `postgres`, dan Docker tidak tersedia; repositori paket apt tidak berhasil diakses sehingga tidak ada PostgreSQL lokal kompatibel untuk memulihkan backup. Jangan melakukan restore ke Supabase staging/LIVE sebagai pengganti.
+
+**Alat pendamping privat dibuat:** `B25_Restore_20261125_Windows_Isolated_PG18.py` (lampiran percakapan Owner, bukan file `.backup` di GitHub). Berbasis runner Windows terisolasi yang sudah ada, diperbarui untuk arsip `pixel-perfect-homestay-hub_261125.backup.zip` dengan SHA `e50c1823b62bbd25786cf03b12508ef989bebeb176cf4f526e262086b5c234f2`, 1.014.628 byte, membutuhkan satu toolchain PostgreSQL **18**. Inisialisasi cluster BARU sementara hanya loopback 127.0.0.1, password SCRAM acak, menghapus schema `public` **hanya dalam database dummy baru** untuk menghindari bentrok restore, menjalankan `pg_restore --single-transaction --exit-on-error --no-owner --no-acl`, membandingkan fingerprint 45/113/45/61/119/53/87, menghentikan cluster lokal, serta mengeluarkan JSON status tanpa data pribadi.
+- 🟢 Alat **lulus kompilasi Python dan pemeriksaan --help**; belum ada eksekusi restore di Windows, jadi **bukan PASS restore**.
+- 🔴 Bila arsip gagal restore karena ketergantungan Auth/Storage Supabase, **STOP** dan laporkan error tanpa mengubah Cloud.
+- 🔴 Bahkan jika uji lokal ini PASS, pemulihan Auth login, berkas Storage, ACL role, dan cutover Cloud masih perlu pembuktian tersendiri.
+
 ## Release gates (all required, sequential)
 1. 🟢 Identify correct Lovable LIVE project and database (done via connector); 🔴 approved change window still pending.
 2. 🟢 Execute **only read-only** structural preflight on LIVE (done); 🔴 independent final security review still pending.
