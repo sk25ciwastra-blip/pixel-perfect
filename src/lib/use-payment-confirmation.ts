@@ -37,7 +37,7 @@ export function usePaymentConfirmation() {
       const fonts = Object.fromEntries(fontEntries) as unknown as Parameters<typeof generatePaymentConfirmationPdf>[2];
       const bytes = await generatePaymentConfirmationPdf(data, new Uint8Array(await response.arrayBuffer()), fonts);
       if (!active.current) throw new Error('Sesi berubah; unduhan dibatalkan.');
-      return () => downloadConfirmationBytes(bytes, data.transactionNumber);
+      return () => downloadConfirmationBytes(bytes, data);
     },
     downloadJpg: async (data) => {
       const { CONFIRMATION_LOGO, CONFIRMATION_FONTS, generatePaymentConfirmationPdf } = await import('./payment-confirmation-pdf');
@@ -53,7 +53,7 @@ export function usePaymentConfirmation() {
       const bytes = await generatePaymentConfirmationPdf(data, new Uint8Array(await response.arrayBuffer()), fonts);
       const jpg = await confirmationPdfToJpg(bytes);
       if (!active.current) throw new Error('Sesi berubah; unduhan dibatalkan.');
-      return () => downloadConfirmationJpg(jpg, data.transactionNumber);
+      return () => downloadConfirmationJpg(jpg, data);
     },
     reserveWhatsApp: reserveConfirmationWhatsAppWindow,
     thermalEnabled: () => featureFlags.receipt58mm,
