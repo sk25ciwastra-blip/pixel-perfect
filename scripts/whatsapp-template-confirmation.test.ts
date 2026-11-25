@@ -46,6 +46,16 @@ describe('Poin4 WhatsApp confirmed financial values', () => {
     expect(String(values.TOTAL_DIBAYAR_BERSIH).replaceAll('\u00a0', ' ')).toBe('Rp 90.000');
     expect(String(values.SISA_TAGIHAN).replaceAll('\u00a0', ' ')).toBe('Rp 30.000');
   });
+  it('does not claim refunded gross DP as net DP received', () => {
+    const withRefund = { ...document, totals: { ...document.totals,
+      refunded: 30000, grossPaid: 60000, netPaid: 30000, remaining: 90000 } } as PaymentConfirmation;
+    const values = confirmationTemplateValues('KONFIRMASI_BOOKING', withRefund);
+    expect(values.DP_DITERIMA).toBeNull();
+    expect(() => renderConfirmationTemplate('KONFIRMASI_BOOKING',
+      'DP netto [DP_DITERIMA]', withRefund)).toThrow();
+    expect(renderConfirmationTemplate('KONFIRMASI_BOOKING',
+      'Sisa [SISA_TAGIHAN]', withRefund)).toContain('90.000');
+  });
   it('never describes walk-in as Booking confirmed', () => {
     const walkin = { ...document, times: { ...document.times,
       scheduledCheckIn: 'Not available', scheduledCheckOut: 'Not available' } } as PaymentConfirmation;
