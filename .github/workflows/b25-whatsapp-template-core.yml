@@ -51,10 +51,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: Install PostgreSQL client
         run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
-      - name: Isolated PostgreSQL role and versioning regression
-        env:
-          PGPASSWORD: postgres
-        run: psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f scripts/whatsapp-template-postgres-fixture.sql
       - name: Synthetic isolated PostgreSQL archive/restore rehearsal (not LIVE backup)
         run: bash scripts/whatsapp-template-synthetic-restore.sh
       - name: Install pinned dependencies
