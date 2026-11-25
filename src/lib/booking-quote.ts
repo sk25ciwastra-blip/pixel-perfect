@@ -102,5 +102,19 @@ export function formatBookingQuote(draft: BookingQuoteDraft, schedule: { schedul
     'Terima kasih telah memilih *Baturaden 25 Homestay*.',
     'Kami menantikan kedatangan Kakak! ✨',
   ].join('\n');
-  return { message, phone: normalizeWhatsAppNumber(draft.phone) };
+  const templateValues = {
+    NAMA_TAMU: singleLine(draft.name),
+    TIPE_KAMAR: singleLine(draft.roomType),
+    NOMOR_KAMAR: singleLine(draft.roomNumber),
+    PAKET: packageLabel,
+    CHECKIN_WIB: wib(start),
+    CHECKOUT_WIB: wib(end),
+    JUMLAH_TAMU: String(draft.guestCount),
+    HARGA_KAMAR: rupiah(draft.roomPrice),
+    BIAYA_TAMBAHAN: rupiah(draft.extraCharge),
+    TOTAL_TAGIHAN: rupiah(draft.total),
+    DP_MINIMUM: rupiah(draft.minimumDp!),
+    DP_PERSEN: draft.dpMode === 'PERCENTAGE' ? String(draft.dpValue) + '%' : null,
+  };
+  return { message, phone: normalizeWhatsAppNumber(draft.phone), templateValues };
 }

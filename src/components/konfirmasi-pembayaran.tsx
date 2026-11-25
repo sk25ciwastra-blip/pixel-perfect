@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PesanTemplateKonfirmasi } from '@/components/pesan-template-konfirmasi';
 import { CheckCircle2, Download, Printer, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -11,15 +12,16 @@ const wib = (v: string | null) => v ? new Intl.DateTimeFormat('id-ID', { timeZon
 export function AksiPdfStruk({ hook, transactionId, ringkas = false }: { hook: Hook; transactionId: string; ringkas?: boolean }) {
   const [busy, setBusy] = useState<'' | 'pdf' | 'jpg' | 'wa'>('');
   const [unduh, setUnduh] = useState(false);
+  const [ledgerRevisiPdf, setLedgerRevisiPdf] = useState('');
   const [pesan, setPesan] = useState('');
   if (!hook.pdfAvailable) return <p className="rounded-lg border border-gold/25 px-3 py-2 text-xs text-muted-foreground">PDF untuk Owner, Supervisor aktif, dan Receptionist aktif; Training tidak diizinkan. Cetak Struk/Selesai tetap tersedia.</p>;
   const jalankan = async (jenis: 'pdf' | 'jpg' | 'wa') => {
     if (busy) return; setBusy(jenis); setPesan('');
     try {
-      if (jenis === 'pdf') { await hook.download(transactionId); setUnduh(true); setPesan('PDF dibuat. Periksa folder unduhan perangkat.'); }
+      if (jenis === 'pdf') { const data = await hook.download(transactionId); setLedgerRevisiPdf(data.ledgerRevision); setUnduh(true); setPesan('PDF dibuat. Periksa folder unduhan perangkat.'); }
       else if (jenis === 'jpg') { await hook.downloadJpg(transactionId); setPesan('JPG dibuat. Periksa folder unduhan perangkat.'); }
       else await hook.openWhatsApp(transactionId);
-    } catch (e) { if (jenis === 'pdf') setUnduh(false); setPesan(e instanceof Error ? e.message : 'Gagal.'); }
+    } catch (e) { if (jenis === 'pdf') { setUnduh(false); setLedgerRevisiPdf(''); } setPesan(e instanceof Error ? e.message : 'Gagal.'); }
     finally { setBusy(''); }
   };
   return (
@@ -33,6 +35,7 @@ export function AksiPdfStruk({ hook, transactionId, ringkas = false }: { hook: H
         )}
       </div>
       <p className="text-[11px] text-muted-foreground">{ringkas ? 'Unduh bukti pembayaran dalam format PDF atau JPG, lalu bagikan kepada tamu melalui WhatsApp.' : 'Lampirkan PDF secara manual. Belum otomatis terkirim.'}</p>
+      {unduh && ledgerRevisiPdf && <PesanTemplateKonfirmasi transactionId={transactionId} pdfReady={unduh} expectedLedgerRevision={ledgerRevisiPdf} />}
       {pesan && <p role="status" className="text-xs text-foreground/90">{pesan}</p>}
     </div>
   );

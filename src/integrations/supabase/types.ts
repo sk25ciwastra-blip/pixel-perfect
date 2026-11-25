@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      whatsapp_template_versions: {
+        Row: {
+          id: string
+          kind: string
+          revision: number
+          body: string
+          status: string
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          kind: string
+          revision: number
+          body: string
+          status?: string
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          kind?: string
+          revision?: number
+          body?: string
+          status?: string
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_template_audit: {
+        Row: {
+          id: number
+          version_id: string
+          kind: string
+          action: string
+          actor_id: string
+          recorded_at: string
+        }
+        Insert: {
+          id?: number
+          version_id: string
+          kind: string
+          action: string
+          actor_id: string
+          recorded_at?: string
+        }
+        Update: {
+          id?: number
+          version_id?: string
+          kind?: string
+          action?: string
+          actor_id?: string
+          recorded_at?: string
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action: string
@@ -1966,6 +2023,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      owner_save_whatsapp_template: {
+        Args: { _kind: string; _body: string }
+        Returns: string
+      }
+      read_active_whatsapp_template: {
+        Args: { _kind: string }
+        Returns: { kind: string; revision: number; body: string }[]
+      }
       get_booking_quote_minimum_dp: {
         Args: never
         Returns: { minimum_dp_mode: string; minimum_dp_value: number }[]
