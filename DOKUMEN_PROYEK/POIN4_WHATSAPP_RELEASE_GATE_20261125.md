@@ -125,6 +125,20 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 - 🔴 **Prasyarat Owner/ops untuk langkah berikutnya:** backup LIVE terbaru melalui saluran privat dan bukti restorasi **isolated** sesuai handoff 19/21 Nov; jangan kirim dump berisi tamu/Auth/keuangan ke GitHub/CI publik.
 - 🔴 Migrasi SQL, merge, deploy, publish, UAT LIVE tetap HOLD sampai gerbang bukti backup dan persetujuan eksplisit terlewati.
 
+## Instruksi operasional ekspor backup PRIVAT (tanpa migrasi) — 25 November 2026
+
+**Akses target:** Lovable project [Pixel Perfect Homestay Hub](https://lovable.dev/projects/017f6e78-15f2-4d07-a38c-87cb185279bf), bukan Supabase staging. Connector Lovable yang tersedia **tidak menyediakan action export/download backup**, sehingga pengunduhan harus dilakukan oleh Owner dari UI akun Lovable; tidak boleh diganti dengan menyalin data sensitif via SQL/chat/GitHub.
+
+**Langkah Owner minimal yang aman:**
+1. Di proyek Lovable, buka **More → Database → Manage → Settings** (pada UI lama bisa berada di Cloud → Overview → Advanced settings). Temukan **Export project data / Export data** dan pilih ekspor **Database**. Nama/lokasi mungkin berbeda di versi UI tertentu; jangan menekan tombol **Restore / Remove / Reset**.
+2. Unduh file `.backup` asli dari tautan ekspor atau bagian **Storage** privat milik proyek; jangan mengganti nama/mengekstrak/menyunting isinya. Simpan di folder **lokal privat di luar folder Git**, idealnya direktori terenkripsi.
+3. Jangan unggah `.backup` ke GitHub, workflow artifacts publik, email umum, atau chat. Cukup sampaikan **tanggal/waktu ekspor dan nama arsip** secara teks (tanpa isi data maupun kredensial); untuk proses restore lokal, path privat hanya diberikan ke runner yang benar-benar berjalan di PC privat.
+4. Pastikan ekspor menyertakan cakupan tabel dan Auth sesuai mekanisme penyedia, tetapi jangan menganggap itu menyertakan **file fisik Storage, secrets, atau kredensial**. Bukti pemulihan tabel, RLS/ACL, Auth dan Storage tetap diuji terpisah.
+
+**Versi alat:** Laporan 21 Nov menyebut backup 20 Nov dibuat oleh **pg_dump 18.7** dengan format arsip `PGDMP 1.16` dan kompresi Zstd. Skrip Windows lama `b25_restore_windows_portable.py` **dikunci ke hash/ukuran arsip 19 November dan toolchain PG17**; karena itu **jangan menggunakannya begitu saja untuk arsip baru**. Pilih toolchain `pg_restore` versi kompatibel dengan arsip yang benar-benar diterima dan PostgreSQL target *isolated*, lalu verifikasi TOC lebih dahulu. Uji restore tidak boleh menyentuh Cloud LIVE/staging.
+
+**Keputusan setelah ekspor:** arsip ditemukan ≠ validasi restore PASS. Migrasi tetap NO-GO hingga checksum, pembacaan TOC, pemulihan terisolasi, pembandingan fingerprint terbaru, dan persetujuan Owner yang terpisah terbukti.
+
 ## Release gates (all required, sequential)
 1. 🟢 Identify correct Lovable LIVE project and database (done via connector); 🔴 approved change window still pending.
 2. 🟢 Execute **only read-only** structural preflight on LIVE (done); 🔴 independent final security review still pending.
