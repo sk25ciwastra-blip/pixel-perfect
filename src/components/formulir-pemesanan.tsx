@@ -608,8 +608,6 @@ export function FormulirPemesanan({
             {showQuote && !isOffer && !saving && <BookingQuote
               key={JSON.stringify([quoteDraft, roomId, packageId, quoteDayReady, quoteLoading, quoteLoadError])}
               draft={quoteDraft}
-              roomId={roomId}
-              packageId={packageId}
               dayReady={quoteDayReady}
               loading={quoteLoading}
               loadError={quoteLoadError}
