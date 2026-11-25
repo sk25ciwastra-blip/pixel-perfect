@@ -12,6 +12,7 @@ on:
       - 'src/lib/booking-quote.ts'
       - 'src/components/booking-quote.tsx'
       - 'scripts/whatsapp-template-core.test.ts'
+      - 'scripts/whatsapp-template-booking.test.ts'
       - 'src/routes/pengaturan-template-whatsapp.tsx'
       - 'src/integrations/supabase/types.ts'
       - 'supabase/pending/20261125_whatsapp_templates_owner_only.sql'
@@ -52,7 +53,7 @@ jobs:
       - name: Install pinned dependencies
         run: bun install --frozen-lockfile
       - name: Pure template regression
-        run: bun test scripts/whatsapp-template-core.test.ts
+        run: bun test scripts/whatsapp-template-core.test.ts scripts/whatsapp-template-booking.test.ts
       - name: Build and generate route types
         run: bun run build
       - name: TypeScript
