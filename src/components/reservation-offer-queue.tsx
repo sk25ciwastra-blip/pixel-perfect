@@ -192,7 +192,7 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
           {card?.error && <div role="alert" className="space-y-2 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
             <p>{card.error} Kartu belum siap dikirim ke tamu.</p>
             <Button type="button" variant="outline" size="sm" className="border-red-400 bg-white text-red-800 hover:bg-red-100" onClick={() => setCardRetry(value => value + 1)}>Coba Buat Ulang Kartu</Button>
-          </div>
+          </div>}
           {!card && <p role="status" className="rounded-xl border border-[#e3cda8] bg-[#fffdf8] p-8 text-center text-sm">Membuat kartu reservasi dengan QRIS resmi…</p>}
           {card?.url && <img src={card.url} alt={`Kartu reservasi ${item.guest_name}, kamar ${item.room_number}, QRIS Baturaden 25 Homestay`} className="mx-auto max-h-[56vh] w-auto max-w-full rounded-xl border border-[#d9b573] object-contain shadow-[0_8px_25px_rgba(23,17,8,0.18)]" />}
           <p className="text-xs leading-relaxed text-[#765c3a]">Kartu ini belum menjadi bukti Booking resmi. Data diambil dari reservasi yang tersimpan; pembayaran masih harus diverifikasi.</p>
