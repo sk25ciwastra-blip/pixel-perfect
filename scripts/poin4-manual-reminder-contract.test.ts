@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { manualReminderEligibility, type ReminderCandidate } from '../src/lib/whatsapp-manual-reminders';
-import { validateWhatsAppTemplate } from '../src/lib/whatsapp-template-core';
+import { validateWhatsAppTemplate, renderWhatsAppTemplate } from '../src/lib/whatsapp-template-core';
+import { OWNER_APPROVED_BOOKING_30_MIN_REMINDER, OWNER_APPROVED_STAY_END_REMINDER } from '../src/lib/whatsapp-template-reminders-approved';
 
 const booking: ReminderCandidate = {
   id:'b',transaction_number:'BTRDTRX-000101',status:'booking',
@@ -50,5 +51,28 @@ describe('Owner Poin4 manual WhatsApp trigger contract',()=>{
     expect(sql).toContain('finance_training_current_user_is_restricted');
     expect(sql).toContain("DROP CONSTRAINT whatsapp_template_versions_kind_check");
     expect(sql).not.toContain('DELETE FROM public.whatsapp_template_versions');
+  });
+  it('both Owner-approved messages render with dynamic official transaction fields',()=>{
+    expect(validateWhatsAppTemplate('PENGINGAT_BOOKING_30_MENIT',OWNER_APPROVED_BOOKING_30_MIN_REMINDER)).toEqual([]);
+    expect(validateWhatsAppTemplate('PENGINGAT_WAKTU_HABIS',OWNER_APPROVED_STAY_END_REMINDER)).toEqual([]);
+    const b=renderWhatsAppTemplate('PENGINGAT_BOOKING_30_MENIT', OWNER_APPROVED_BOOKING_30_MIN_REMINDER,{
+      NAMA_TAMU:'Saipul',NOMOR_TRANSAKSI:'BTRDTRX-000101',TIPE_KAMAR:'Deluxe',NOMOR_KAMAR:'05',CHECKIN_WIB:'Kamis, 26 Nov 2026 • 10.00 WIB',
+    });
+    expect(b).toContain('dalam *30 menit lagi*');
+    expect(b).toContain('No. Kamar : 05');
+    expect(b).not.toContain('[NAMA_TAMU]');
+    const e=renderWhatsAppTemplate('PENGINGAT_WAKTU_HABIS', OWNER_APPROVED_STAY_END_REMINDER,{
+      NAMA_TAMU:'Saipul',NOMOR_TRANSAKSI:'BTRDTRX-000102',NOMOR_KAMAR:'05',BATAS_CHECKOUT_WIB:'Kamis, 26 Nov 2026 • 12.00 WIB',
+    });
+    expect(e).toContain('waktu toleransi 15 menit');
+    expect(e).not.toContain('Rp');
+    expect(e).not.toContain('[BATAS_CHECKOUT_WIB]');
+  });
+  it('Owner editor drafts both reminders only where ACTIVE version absent',()=>{
+    const ui=readFileSync('src/routes/pengaturan-template-whatsapp.tsx','utf8');
+    expect(ui).toContain("PENGINGAT_BOOKING_30_MENIT: OWNER_APPROVED_BOOKING_30_MIN_REMINDER");
+    expect(ui).toContain("PENGINGAT_WAKTU_HABIS: OWNER_APPROVED_STAY_END_REMINDER");
+    expect(ui).toContain("list.find(item => item.status === 'ACTIVE')?.body ?? initialApprovedDraft[selectedKind]");
+    expect(ui).toContain("owner_save_whatsapp_reminder_template");
   });
 });
