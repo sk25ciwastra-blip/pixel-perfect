@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { readOffer, type OfferDetail } from '@/lib/reservation-offers';
@@ -67,6 +68,7 @@ export function ReservationWhatsAppMessage({ offer, cardReady }: {
       }
       await navigator.clipboard.writeText(message);
       setCopyError('');
+      toast.success('Pesan reservasi berhasil disalin. Tempel ke WhatsApp dan lampirkan JPG secara manual.');
     } catch (failure) {
       setCopyError(failure instanceof Error ? failure.message : 'Gagal menyalin pesan.');
       void active.refetch();
