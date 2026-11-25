@@ -25,3 +25,15 @@ export function openWhatsApp(phone: string, message?: string) {
   const url = whatsAppDraftUrl(phone, message);
   if (url) window.open(url, '_blank', 'noopener,noreferrer');
 }
+
+/** Open a specific guest chat via the official click-to-chat endpoint.
+ * Keep the existing web.whatsapp.com helper unchanged for other workflows.
+ */
+export function whatsAppReservationChatUrl(phone: string, message?: string) {
+  if (!/^\+?[\d\s().-]+$/.test(phone.trim())) return undefined;
+  let number = normalizeWhatsAppNumber(phone);
+  // Some historical guest records omit the Indonesian country prefix.
+  if (/^8[1-9]\d{7,12}$/.test(number)) number = `62${number}`;
+  if (!/^62[1-9]\d{7,12}$/.test(number)) return undefined;
+  return `https://wa.me/${number}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
+}

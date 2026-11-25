@@ -94,7 +94,10 @@ test('Saving a reservation opens its QRIS card preview, never the old auto-Whats
 
 test('QRIS download and WhatsApp stay disabled until JPG is ready; preview supports retry', () => {
   expect(queue).toContain("card?.url && <Button asChild");
-  expect(queue).toContain("card?.url && whatsAppDraftUrl(item.phone, RESERVATION_CARD_CAPTION)");
+  expect(queue).toContain("const chatUrl = item ? whatsAppReservationChatUrl(item.phone, RESERVATION_CARD_CAPTION) : undefined;");
+  expect(queue).toContain("card?.url && chatUrl && <Button asChild");
+  expect(queue).toContain('<a href={chatUrl} target="_blank" rel="noopener noreferrer">');
+  expect(queue).toContain("card?.url && !chatUrl");
   expect(queue).toContain("disabled={busy || !card?.url}");
   expect(queue).toContain("Coba Buat Ulang Kartu");
   expect(queue).toContain("setCardRetry(value => value + 1)");

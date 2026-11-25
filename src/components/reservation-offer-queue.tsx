@@ -8,7 +8,7 @@ import { rupiah } from '@/lib/data-contoh';
 import { supabase } from '@/integrations/supabase/client';
 import { offerQueryKey, offerStatus, offerWib, readOffer, readOffers, type Offer, type OfferDetail } from '@/lib/reservation-offers';
 import { makeReservationCardJpg, reservationCardFilename, RESERVATION_CARD_CAPTION } from '@/lib/reservation-card';
-import { whatsAppDraftUrl } from '@/lib/whatsapp';
+import { whatsAppReservationChatUrl } from '@/lib/whatsapp';
 
 function Slot({ offer }: { offer: Offer }) {
   return <span>{offerWib.format(new Date(offer.scheduled_check_in))} – {offerWib.format(new Date(offer.scheduled_check_out))} WIB</span>;
@@ -144,6 +144,7 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
   const [busy, setBusy] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const item = detail.isSuccess ? detail.data : null;
+  const chatUrl = item ? whatsAppReservationChatUrl(item.phone, RESERVATION_CARD_CAPTION) : undefined;
   const [card, setCard] = useState<{ url: string; error: string } | null>(null);
   const [cardRetry, setCardRetry] = useState(0);
   // One immutable JPG per detail popup. Polling status never changes the image or its QRIS.
@@ -201,9 +202,10 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
           <p className="text-xs font-semibold uppercase tracking-wide text-[#6f5738]">Kirim kartu reservasi & QRIS</p>
           <div className="flex flex-wrap gap-2">
             {card?.url && <Button asChild variant="outline" className="min-h-10 border-[#bf933e] bg-[#f3d590] px-4 text-[#332411] hover:bg-[#e9c270] hover:text-[#332411]"><a href={card.url} download={reservationCardFilename(item)}><Download aria-hidden="true" />Unduh Kartu JPG</a></Button>}
-            {card?.url && whatsAppDraftUrl(item.phone, RESERVATION_CARD_CAPTION) && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={whatsAppDraftUrl(item.phone, RESERVATION_CARD_CAPTION)} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Buka WhatsApp</a></Button>}
+            {card?.url && chatUrl && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={chatUrl} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />Buka WhatsApp</a></Button>}
             {item.status === 'DRAFT' && <Button type="button" variant="outline" className="min-h-10 border-[#bd8c39] bg-[#e6b75f] px-4 text-[#30200c] hover:bg-[#d6a246] hover:text-[#30200c]" disabled={busy || !card?.url} onClick={() => void transition('sent')}><CheckCheck aria-hidden="true" />Sudah Dikirim</Button>}
           </div>
+          {card?.url && !chatUrl && <p role="alert" className="text-xs text-red-800">Nomor WhatsApp tujuan belum valid. Periksa nomor tamu sebelum mengirim kartu.</p>}
           <p className="text-xs leading-relaxed text-[#7c6545]"><strong>Urutan kirim:</strong> unduh JPG, buka WhatsApp dengan caption singkat, lampirkan file JPG, kirim manual, lalu tandai <strong>Sudah Dikirim</strong>. Tombol WhatsApp tidak melampirkan gambar secara otomatis.</p>
           {(canConvert || owner) && <div className="flex flex-wrap items-center gap-2 border-t border-[#e3d0af] pt-3">
             {canConvert && <Button type="button" variant="outline" className="min-h-10 border-[#54422c] bg-[#30271d] px-4 text-[#f8deb0] hover:bg-[#483521] hover:text-[#fff1d5]" disabled={busy} onClick={() => convert(item)}><CreditCard aria-hidden="true" />Telah Dibayar · Verifikasi</Button>}
