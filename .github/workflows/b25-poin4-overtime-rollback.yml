@@ -1,0 +1,41 @@
+name: B25 Poin4 Overtime WhatsApp Migration Rollback Gate
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'supabase/pending/20261126_whatsapp_overtime_notice_kind.sql'
+      - 'supabase/pending/20261126_whatsapp_overtime_notice_rollback.sql'
+      - 'scripts/whatsapp-overtime-rehearsal-bootstrap.sql'
+      - 'scripts/whatsapp-overtime-notice-roles.test.sql'
+      - 'scripts/whatsapp-overtime-migration-rehearsal.sh'
+      - '.github/workflows/b25-poin4-overtime-rollback.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-db-rehearsal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install PostgreSQL 17-compatible client
+        run: sudo apt-get update -qq && sudo apt-get install -y postgresql-client
+      - name: Synthetic Overtime migration, roles and guarded rollback
+        run: bash scripts/whatsapp-overtime-migration-rehearsal.sh
