@@ -1,5 +1,8 @@
 # Baturaden 25 Homestay V1.0 — Status Fitur
 
+> **CHECKPOINT TERKINI — 26 NOVEMBER 2026 (WIB):** baca [CHECKPOINT_UTAMA_20261126.md](CHECKPOINT_UTAMA_20261126.md) dan [PANDUAN_MULAI_OBROLAN_BARU.md](PANDUAN_MULAI_OBROLAN_BARU.md) sebelum memakai status historis di bawah. PR #167–#172 sudah MERGED; sketsa Daftar Transaksi, Form Reservasi, dan ActionResultDialog masih BELUM diimplementasikan. Tidak ada persetujuan publish/GO-LIVE baru. Dokumen lama di bawah dipertahankan sebagai riwayat.
+
+
 Checkpoint 12 November 2026: lihat [paket kesiapan lokal](PAKET_KESIAPAN_OPERASIONAL_LOKAL_2026-11-12.md).
 Integrasi frontend Extra Guest/gabungan, nominal check-in, detail snapshot dan
 receipt 58mm disiapkan lokal; TypeScript/build serta 15 skenario baru PASS mock.
