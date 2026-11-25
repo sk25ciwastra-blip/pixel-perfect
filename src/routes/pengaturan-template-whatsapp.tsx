@@ -121,7 +121,7 @@ function PengaturanTemplateWhatsApp() {
             </div>
             <div role="group" aria-label="Pilih template WhatsApp resmi" className="mt-3 flex flex-wrap gap-2">
               {kinds.map(item => <Button key={item.key} type="button" variant={kind === item.key ? 'default' : 'outline'}
-                aria-pressed={kind === item.key} disabled={busy} onClick={() => { ++readGeneration.current; setBackendReady(false); setKind(item.key); }}>{item.title}</Button>)}
+                aria-pressed={kind === item.key} disabled={busy} onClick={() => { if (kind === item.key) return; ++readGeneration.current; setBackendReady(false); setKind(item.key); }}>{item.title}</Button>)}
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-gold/25 bg-background/40 px-3 py-2.5">
               <span className="text-sm font-semibold">{selectedTemplate.title}</span>
