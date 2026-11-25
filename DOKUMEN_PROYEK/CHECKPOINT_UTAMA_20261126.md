@@ -194,7 +194,7 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 - **File pending yang ada:** `supabase/pending/20261126_whatsapp_overtime_notice_kind.sql`, **BELUM APPLY**.
 - **Tambahan pekerjaan persiapan:** file rollback konservatif `supabase/pending/20261126_whatsapp_overtime_notice_rollback.sql` dan pengujian Postgres 17 sintetis untuk role, migrasi dan rollback. **Rollback menolak jika ada versi/audit Overtime**; tidak pernah menghapus sejarah untuk memaksanya. Lihat [Gate Overtime WhatsApp](POIN4_OVERTIME_WHATSAPP_RELEASE_GATE_20261126.md).
-- **Status pengujian:** bergantung pada pemeriksaan CI PR pengaman ini; jangan klaim pengujian Postgres sintetis PASS sebelum hasilnya diverifikasi. Audit pembacaan metadata bukan UAT peran LIVE.
+- **Status pengujian:** **PASS PostgreSQL 17 sintetis**, GitHub Actions run `45724403589`, job `139590467572`; log membuktikan migrasi, pembatasan role, rollback aman saat ada histori, dan rollback berhasil saat belum ada histori. Audit metadata dan tes sintetis **bukan UAT peran LIVE** atau bukti restore backup Cloud. PR pengaman ini tetap perlu diperiksa status merge-nya.
 - **Gate:** Owner belum memberi persetujuan untuk menjalankan SQL Cloud, mengganti versi ACTIVE, atau publish. `NO-GO CLOUD` tetap berlaku sampai pengujian dan strategi pemulihan nyata tervalidasi.
 
 ---
