@@ -142,13 +142,15 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ---
 
-### Revisi redaksi Konfirmasi Reservasi — 26 November 2026
+### Koreksi Owner — Konfirmasi Reservasi sebelum pembayaran (26 November 2026)
 
-Owner mengoreksi **Template 1 (Konfirmasi Reservasi)** agar mengikuti susunan **Rincian Penawaran Reservasi** sebelumnya, tetapi kini memuat **pemesanan resmi yang sudah dikonfirmasi**, dengan rincian tipe/nomor kamar, paket, jadwal Check-in/Check-out, jumlah tamu, **harga kamar, biaya tambahan, total tagihan, pembayaran telah diterima, sisa tagihan dan status pembayaran**.
+**Keputusan Owner yang benar:** istilah **Konfirmasi Reservasi** pada empat pilihan Pengaturan adalah pesan *konfirmasi rincian permintaan reservasi* **SEBELUM pembayaran**, bukan Konfirmasi Booking berbayar. Format seperti penawaran lama: nama tamu, kamar, paket, jadwal Check-in/Check-out, harga kamar, biaya tambahan, total tagihan, **DP minimum 50% atau bayar lunas**, dan status **MENUNGGU PEMBAYARAN**. **Belum menerima uang, tidak boleh menampilkan TRX, dan kamar belum terkunci.** Pesan harus secara jelas mengatakan ini **bukan bukti Booking resmi**.
 
-- Teks draf yang direvisi tersimpan di [DRAF_4_TEMPLATE_WHATSAPP_OWNER_20261126.md](DRAF_4_TEMPLATE_WHATSAPP_OWNER_20261126.md#1-konfirmasi-reservasi--draf-revisi-owner-26-november-2026).
-- Tiga token tambahan untuk jenis backend `KONFIRMASI_BOOKING` adalah `HARGA_KAMAR`, `BIAYA_TAMBAHAN`, `TOTAL_DIBAYAR_BERSIH`. **Belum tersedia di allowlist/renderer Booking saat koreksi dibuat**. Harus berasal dari catatan harga dan ledger resmi yang tervalidasi; jangan mengarang pembayaran atau memakai nilai DP bruto setelah refund.
-- **Status: DRAF REDAKSI / BELUM DIIMPLEMENTASI / BELUM ACTIVE.** Tiga template lain tidak diubah. Tidak ada persetujuan SQL Cloud, write pembayaran, atau publish Lovable.
+- [Teks koreksi Template 1](DRAF_4_TEMPLATE_WHATSAPP_OWNER_20261126.md#1-konfirmasi-reservasi--draf-revisi-owner-26-november-2026) disusun sesuai permintaan Owner. **DRAF / BELUM ACTIVE / BELUM DIIMPLEMENTASI.**
+- **Pemetaan kode yang sesuai:** kind `PENAWARAN_RESERVASI` (nama internal kompatibilitas lama) tetap digunakan untuk rincian pra-pembayaran. Dalam Pengaturan, labelnya yang diubah menjadi **Konfirmasi Reservasi** ketika diimplementasikan. Token harga/DP sudah disediakan kind ini; jangan memakai `KONFIRMASI_BOOKING`, `DP_DITERIMA`, atau nominal pembayaran yang belum ada.
+- `KONFIRMASI_BOOKING` tetap berguna untuk Booking resmi *setelah* pembayaran terverifikasi, tetapi **bukan** Template 1 pra-pembayaran yang dimaksud Owner. Jangan hapus fungsi/riwayatnya tanpa audit terpisah.
+- Tiga template lainnya tidak diubah dalam koreksi ini. Tidak ada perubahan versi ACTIVE LIVE, SQL, pembayaran, atau publish; pembuatan notifikasi overtime tetap pekerjaan terpisah.
+- **Catatan koreksi:** penafsiran sebelumnya yang menyebut pembayaran telah diterima atau Booking resmi terbit pada Template 1 adalah **SALAH dan DIBATALKAN oleh Owner**. Jangan mengulangi kekeliruan tersebut di obrolan baru.
 
 ---
 
