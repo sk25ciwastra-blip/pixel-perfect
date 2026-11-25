@@ -2027,6 +2027,10 @@ export type Database = {
         Args: { _kind: string; _body: string }
         Returns: string
       }
+      read_active_whatsapp_template: {
+        Args: { _kind: string }
+        Returns: { kind: string; revision: number; body: string }[]
+      }
       get_booking_quote_minimum_dp: {
         Args: never
         Returns: { minimum_dp_mode: string; minimum_dp_value: number }[]
