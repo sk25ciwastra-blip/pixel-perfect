@@ -109,6 +109,13 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 - 🔴 **Larangan:** jangan memindahkan backup yang mungkin memuat data tamu/Auth/finansial ke repositori GitHub, artifacts CI publik, chat, atau target staging/LIVE.
 - **Bukti CI concurrency:** periksa GitHub Actions yang sesuai commit `e9da6dd9edd12c701d9dad36fa603249b30a980c`. Jangan menyatakan semua gate PASS sebelum job selesai.
 
+## Addendum verifikasi paritas validator — 25 November 2026
+
+- 🟢 KODE: `src/lib/whatsapp-template-core.ts` menyamakan larangan karakter kontrol CR dengan SQL `owner_save_whatsapp_template`. Line feed (LF) untuk paragraf pesan tetap diperbolehkan.
+- 🟢 KODE TES: `scripts/whatsapp-template-core.test.ts` menguji LF diterima serta CR dan CRLF ditolak; `scripts/whatsapp-template-postgres-fixture.sql` menolak CR dari Owner RPC server.
+- 🔴 CI: [Focused Gate #45526495442](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/45526495442) belum selesai saat pembaruan pertama. Jangan tandai PASS sebelum hasil workflow sukses.
+- 🔴 Backup LIVE: arsip terbaru tetap belum ditemukan melalui sumber yang terhubung; tidak ada bukti restore penuh. Tidak ada perubahan Cloud.
+
 ## Release gates (all required, sequential)
 1. 🟢 Identify correct Lovable LIVE project and database (done via connector); 🔴 approved change window still pending.
 2. 🟢 Execute **only read-only** structural preflight on LIVE (done); 🔴 independent final security review still pending.
