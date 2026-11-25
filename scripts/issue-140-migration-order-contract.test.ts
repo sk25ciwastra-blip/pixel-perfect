@@ -20,8 +20,8 @@ test('Source order: actual Training enforcement, quote-read, then offer queue', 
 });
 
 test('Offer conversion uses verified payment and official booking writer in one transaction', () => {
-  expect(offer.trimStart().toLowerCase()).toStartWith('begin;');
-  expect(offer.trimEnd().toLowerCase()).toEndWith('commit;');
+  expect(offer.trimStart().toLowerCase().startsWith('begin;')).toBe(true);
+  expect(offer.trimEnd().toLowerCase().endsWith('commit;')).toBe(true);
   expect(offer).toContain("_payment_verified is distinct from true");
   expect(offer).toContain("_amount < t.dp");
   expect(offer).toContain("finance_training_is_restricted(auth.uid())");
