@@ -1,0 +1,22 @@
+name: B25 Poin6 Profile Contact Hotfix
+on:
+  push:
+    branches:
+      - fix/poin6-profile-contact-validation-20261125
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  contact:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: node --test scripts/poin6-profile-phone-validation.test.mjs
+      - run: bun run build
+      - run: bunx tsc --noEmit

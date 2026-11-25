@@ -68,7 +68,7 @@ function HalamanProfilHomestay() {
     const cleanAddress = address.trim();
     const cleanPhone = phone.trim();
     const cleanWhatsapp = whatsapp.trim();
-    const validContact = (value: string) => value === '' || /^\\+?[0-9 ()-]{6,30}$/.test(value);
+    const validContact = (value: string) => value === '' || /^[+]?[0-9 ()-]{6,30}$/.test(value);
     if (cleanName.length < 3 || cleanName.length > 100 || cleanAddress.length > 500
       || !validContact(cleanPhone) || !validContact(cleanWhatsapp)) {
       setError('Periksa nama (3–100 karakter), alamat (maksimal 500), dan nomor kontak.');
