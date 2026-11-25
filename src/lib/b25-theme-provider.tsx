@@ -58,9 +58,9 @@ export function B25ThemeProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    document.documentElement.dataset.b25Theme = appearance;
+    document.documentElement.dataset['b25Theme'] = appearance;
     return () => {
-      delete document.documentElement.dataset.b25Theme;
+      delete document.documentElement.dataset['b25Theme'];
     };
   }, [appearance]);
 
