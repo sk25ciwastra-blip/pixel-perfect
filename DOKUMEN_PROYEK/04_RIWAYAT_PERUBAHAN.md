@@ -159,3 +159,11 @@ Backup attempt RIW-041: host Session Pooler Staging dapat dicapai, tetapi `psql`
 - **Tersisa 12 revisi desain aktif**, dengan ID tetap `UI-26-02` sampai `UI-26-13` agar identitas tugas dan riwayat PR #174 tidak berubah. Tidak ada penggantian nomor atau penggunaan ulang ID yang sudah dibatalkan.
 - Daftar awal berisi 13 item dipertahankan di paragraf historis di atas sebagai jejak permintaan semula, sedangkan **status operasional terbaru** adalah 12 item aktif di [Checkpoint Utama §6A](CHECKPOINT_UTAMA_20261126.md#6a-addendum-owner--12-revisi-desain-lovable-aktif-26-november-2026).
 - Koreksi ini **hanya dokumentasi**: tidak mengubah alur Reservasi Satu Pintu, UI Lovable, transaksi, database, publish, atau data.
+
+### Addendum PR #179 — empat template WhatsApp dan audit LIVE (26 November 2026)
+
+- **MERGED**: [PR #179](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/179), commit `be3eedd6f1437d65399e36bfca03731dba6685ac`, **16/16 CI PASS**; source Lovable tersinkron.
+- **Pilihan Pengaturan yang baru di source:** Konfirmasi Reservasi *pra-pembayaran*, Pengingat Booking, Pengingat Waktu Habis, dan Pemberitahuan Overtime. Konfirmasi Booking pascapembayaran tetap dipertahankan sebagai jenis internal historis. Tidak ada transaksi/booking baru dari perubahan ini.
+- **Pembacaan Cloud READ-ONLY:** empat jenis template lama masing-masing ACTIVE v1; `PEMBERITAHUAN_OVERTIME` **belum terdaftar** dalam constraint ataupun izin RPC, tidak memiliki versi ACTIVE. SQL `supabase/pending/20261126_whatsapp_overtime_notice_kind.sql` **BELUM DIAPPLY**. Tidak ada versi teks yang ditimpa.
+- **Visual UAT:** belum bisa diverifikasi; web preview tak dapat diakses, Lovable masih `out_of_credits`. Source sync bukan bukti deploy/publish versi terbaru.
+- **Gate selanjutnya:** review browser berbasis akun Owner tanpa transaksi, serta persetujuan terpisah sebelum aktivasi jenis Overtime di Cloud. Detail dan status terdapat pada [Checkpoint Utama 26 Nov](CHECKPOINT_UTAMA_20261126.md#audit-read-only-setelah-pr-179-merged--26-november-2026).
