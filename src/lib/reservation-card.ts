@@ -9,6 +9,8 @@ import type { OfferDetail } from '@/lib/reservation-offers';
  */
 export const RESERVATION_CARD_QRIS = '/assets/qris-resmi-baturaden25.png';
 export const RESERVATION_CARD_LOGO = '/assets/Logo_Resmi_BTRD25_Transparan.png';
+export const RESERVATION_STAFF_LEFT = '/assets/staff-reservasi-pria.webp';
+export const RESERVATION_STAFF_RIGHT = '/assets/staff-reservasi-wanita.webp';
 export const RESERVATION_CARD_CAPTION =
   'Halo Kak, berikut rincian reservasi dan QRIS pembayaran Baturaden 25 Homestay. 😊';
 
@@ -110,7 +112,7 @@ function fitAddress(ctx: CanvasRenderingContext2D, address: string, x: number, y
   return result.length;
 }
 
-function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: HTMLImageElement, logo: HTMLImageElement) {
+function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: HTMLImageElement, logo: HTMLImageElement, staffLeft: HTMLImageElement, staffRight: HTMLImageElement) {
   const W = 1122;
   const H = 1710;
   const navy = '#071a34', gold = '#d6a342', cream = '#fff9ed', ink = '#0c1b34';
@@ -122,6 +124,9 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   ctx.strokeStyle = '#f2c760'; ctx.lineWidth = 11;
   ctx.beginPath(); ctx.moveTo(0, 132); ctx.bezierCurveTo(210, 44, 740, 235, 1122, 92); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(0, 1653); ctx.bezierCurveTo(360, 1731, 710, 1571, 1122, 1653); ctx.stroke();
+  // Character cut-outs are taken from the Owner's official QRIS artwork, not newly invented faces.
+  ctx.drawImage(staffLeft, 10, 324, 280, 430);
+  ctx.drawImage(staffRight, 829, 324, 282, 430);
 
   // Actual project logo (not a generated facsimile).
   const ratio = Math.min(470 / logo.width, 125 / logo.height);
@@ -205,13 +210,16 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
 
 export async function makeReservationCardJpg(offer: OfferDetail): Promise<Blob> {
   const fields = reservationCardFields(offer);
-  const [qr, logo] = await Promise.all([loadImage(RESERVATION_CARD_QRIS), loadImage(RESERVATION_CARD_LOGO)]);
+  const [qr, logo, staffLeft, staffRight] = await Promise.all([
+    loadImage(RESERVATION_CARD_QRIS), loadImage(RESERVATION_CARD_LOGO),
+    loadImage(RESERVATION_STAFF_LEFT), loadImage(RESERVATION_STAFF_RIGHT),
+  ]);
   const canvas = document.createElement('canvas');
   canvas.width = 1122;
   canvas.height = 1710;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Browser ini tidak mendukung pembuatan kartu reservasi.');
-  draw(ctx, fields, qr, logo);
+  draw(ctx, fields, qr, logo, staffLeft, staffRight);
   const result = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', .96));
   if (!result || result.type !== 'image/jpeg') throw new Error('Gagal membuat JPG reservasi.');
   return result;
