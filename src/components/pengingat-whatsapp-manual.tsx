@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { rpc } from '@/lib/data-live';
@@ -23,12 +24,32 @@ export function ManualWhatsAppReminders({ transactions, guests, rooms, roomTypes
   const allowed = siap && masuk && posisiKode === 'receptionist' && !training.is_training;
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const overtimeCandidate = allowed && transactions.some(t =>
+    manualReminderEligibility(t, nowMs) === 'PEMBERITAHUAN_OVERTIME',
+  );
+  // Never show a clickable overtime notification before the audited read RPC
+  // supports this kind AND the Owner has saved an ACTIVE template. If Cloud is
+  // still on the old schema, the other two reminders remain unaffected.
+  const overtimeTemplate = useQuery({
+    queryKey: ['manual-overtime-template-active'],
+    enabled: overtimeCandidate,
+    queryFn: async () => {
+      const { data, error: noticeError } = await rpc(
+        'read_active_whatsapp_reminder_template', { _kind: 'PEMBERITAHUAN_OVERTIME' },
+      );
+      return !noticeError && Boolean(data?.[0]?.body);
+    },
+    refetchOnWindowFocus: true,
+    refetchInterval: overtimeCandidate ? 30_000 : false,
+    staleTime: 0,
+  });
   const reminders = useMemo(
     () => allowed ? transactions.flatMap(t => {
       const kind = manualReminderEligibility(t, nowMs);
+      if (kind === 'PEMBERITAHUAN_OVERTIME' && !overtimeTemplate.data) return [];
       return kind ? [{ transaction: t, kind }] : [];
     }) : [],
-    [allowed, transactions, nowMs],
+    [allowed, transactions, nowMs, overtimeTemplate.data],
   );
 
   useEffect(() => { setError(''); }, [reminders.length]);
@@ -94,13 +115,13 @@ export function ManualWhatsAppReminders({ transactions, guests, rooms, roomTypes
 
   return <section aria-label="Pengingat WhatsApp manual" className="mb-4 rounded-xl border border-gold/30 bg-[#F7F6F3] p-4 text-[oklch(0.22_0.02_75)]">
     <h2 className="font-semibold">Pengingat WhatsApp · Tindakan Receptionist</h2>
-    <p className="mb-3 text-xs">Pengingat muncul sesuai waktu resmi. Tekan Kirim WhatsApp untuk membuka draf pesan; petugas tetap mengirimnya secara manual di WhatsApp. Tidak ada charge overtime otomatis.</p>
+    <p className="mb-3 text-xs">Pengingat dan pemberitahuan overtime muncul sesuai waktu resmi. Tekan Kirim WhatsApp untuk membuka draf pesan; petugas tetap mengirimnya secara manual. Tidak ada charge overtime otomatis.</p>
     <div className="space-y-2">
       {reminders.map(({transaction, kind}) => {
         const guest = guests.find(g => g.id === transaction.guest_id);
         return <div key={transaction.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gold/20 bg-white p-3">
           <div className="text-sm">
-            <strong>{kind === 'PENGINGAT_BOOKING_30_MENIT' ? 'Booking 30 menit lagi' : 'Waktu menginap habis · toleransi 15 menit'}</strong>
+            <strong>{kind === 'PENGINGAT_BOOKING_30_MENIT' ? 'Booking 30 menit lagi' : kind === 'PENGINGAT_WAKTU_HABIS' ? 'Waktu menginap habis · toleransi 15 menit' : 'Waktu overtime · konfirmasi admin'}</strong>
             <p>{transaction.transaction_number} · {guest?.full_name ?? 'Tamu'}</p>
           </div>
           <Button type="button" size="sm" disabled={busy !== null || !guest?.phone}

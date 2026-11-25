@@ -26,6 +26,11 @@ export const WHATSAPP_TEMPLATE_FIELDS = {
   PENGINGAT_WAKTU_HABIS: [
     'NAMA_TAMU', 'NOMOR_TRANSAKSI', 'NOMOR_KAMAR', 'BATAS_CHECKOUT_WIB',
   ],
+  // Draft-only until the Owner approves and migrates the separate audited
+  // reminder-kind RPC. No automatic charge calculation or WhatsApp sending.
+  PEMBERITAHUAN_OVERTIME: [
+    'NAMA_TAMU', 'NOMOR_TRANSAKSI', 'NOMOR_KAMAR', 'BATAS_CHECKOUT_WIB',
+  ],
 } as const;
 
 export type WhatsAppTemplateKind = keyof typeof WHATSAPP_TEMPLATE_FIELDS;
