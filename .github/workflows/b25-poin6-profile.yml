@@ -1,0 +1,42 @@
+name: B25 Poin6 Homestay Profile Draft Gate
+on:
+  push:
+    branches:
+      - feat/poin6-homestay-profile-20261125
+    paths:
+      - src/routes/pengaturan-profil-homestay.tsx
+      - src/routes/pengaturan.tsx
+      - scripts/poin6-homestay-profile-contract.test.mjs
+      - supabase/pending/20261125_b25_homestay_profile_owner_only.sql
+      - .github/workflows/b25-poin6-profile.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/routes/pengaturan-profil-homestay.tsx
+      - src/routes/pengaturan.tsx
+      - scripts/poin6-homestay-profile-contract.test.mjs
+      - supabase/pending/20261125_b25_homestay_profile_owner_only.sql
+      - .github/workflows/b25-poin6-profile.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Poin6 profile contract focused assertions
+        run: node --test scripts/poin6-homestay-profile-contract.test.mjs
+      - name: Install pinned dependencies
+        run: bun install --frozen-lockfile
+      - name: Build routes without deployment
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
