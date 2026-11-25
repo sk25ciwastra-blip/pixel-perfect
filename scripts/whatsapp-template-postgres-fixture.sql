@@ -153,24 +153,24 @@ RESET ROLE;
 UPDATE public.employees SET position='inspector'
  WHERE user_id='10000000-0000-0000-0000-000000000002';
 SET ROLE authenticated;
-DO $
+DO $$
 BEGIN
  BEGIN
   PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
   RAISE EXCEPTION 'FAIL: inspector read template';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
-END $;
+END $$;
 RESET ROLE;
 UPDATE public.employees SET position='investor'
  WHERE user_id='10000000-0000-0000-0000-000000000002';
 SET ROLE authenticated;
-DO $
+DO $$
 BEGIN
  BEGIN
   PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
   RAISE EXCEPTION 'FAIL: investor read template';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
-END $;
+END $$;
 RESET ROLE;
 SELECT set_config('request.jwt.claim.sub', '', false);
 SET ROLE anon;
