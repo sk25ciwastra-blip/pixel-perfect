@@ -42,7 +42,10 @@ export function confirmationTemplateValues(
       CHECKOUT_WIB: times.scheduledCheckOut,
       JUMLAH_TAMU: String(document.guests.total),
       TOTAL_TAGIHAN: confirmationMoney(totals.bill),
-      DP_DITERIMA: confirmationMoney(document.history
+      // Refund entries do not uniquely identify which DP payment they reverse.
+      // Never label gross DP as "received" after any refund; omit the token
+      // until a transaction-scoped net DP allocation can be verified.
+      DP_DITERIMA: totals.refunded > 0 ? null : confirmationMoney(document.history
         .filter(entry => entry.type === 'payment' && entry.kind === 'Deposit (DP)')
         .reduce((value, entry) => value + entry.amount, 0)),
       SISA_TAGIHAN: confirmationMoney(totals.remaining),
