@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 const menu=readFileSync('src/routes/pengaturan.tsx','utf8');
 const page=readFileSync('src/routes/pengaturan-profil-homestay.tsx','utf8');
+const roomManagement=readFileSync('src/routes/pengaturan-manajemen-kamar.tsx','utf8');
 const sql=readFileSync('supabase/pending/20261125_b25_homestay_profile_owner_only.sql','utf8');
-test('existing room CRUD linked, do not duplicate room admin or change payment',()=>{
- assert.match(menu,/label: "Manajemen Kamar"[^\n]*ke: "\/tipe-kamar"/);
+test('Owner room management has its own route; room types and payment settings remain intact',()=>{
+ assert.match(menu,/label: "Manajemen Kamar"[^\n]*ke: "\/pengaturan-manajemen-kamar"/);
+ assert.match(menu,/label: "Tipe Kamar"[^\n]*ke: "\/tipe-kamar"/);
+ assert.match(roomManagement,/createFileRoute\(\x27\/pengaturan-manajemen-kamar\x27\)/);
  assert.match(menu,/label: "Profil Homestay"[^\n]*ke: "\/pengaturan-profil-homestay"/);
  assert.match(menu,/label: "Template WhatsApp"[^\n]*ke: "\/pengaturan-template-whatsapp"/);
  assert.match(menu,/label: "Metode Pembayaran"[^\n]*"Cash, QRIS, dan Transfer."/);
