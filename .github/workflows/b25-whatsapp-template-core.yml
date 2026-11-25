@@ -9,6 +9,8 @@ on:
       - main
     paths:
       - 'src/lib/whatsapp-template-core.ts'
+      - 'src/lib/booking-quote.ts'
+      - 'src/components/booking-quote.tsx'
       - 'scripts/whatsapp-template-core.test.ts'
       - 'src/routes/pengaturan-template-whatsapp.tsx'
       - 'src/integrations/supabase/types.ts'
