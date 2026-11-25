@@ -21,6 +21,7 @@ import {
   type CombinedPaymentComponent,
 } from '@/lib/combined-payments';
 import { featureFlags } from '@/lib/feature-flags';
+import { isBookingRescheduleWindowClosed, isNewBookingCheckInTooNear } from '@/lib/booking-reschedule-window';
 import { choosePaymentMethods, amountAfterPaymentSwitch } from '@/lib/payment-method-choice';
 import { usePaymentConfirmation } from '@/lib/use-payment-confirmation';
 import { DialogCheckInBerhasil } from '@/components/konfirmasi-pembayaran';
@@ -153,6 +154,8 @@ const {
   const adminBooking = transactions.rows.find((item) => item.id === adminBookingId && item.status === 'booking');
   const adminBookingIsFuture = Boolean(adminBooking?.scheduled_check_in &&
     Date.parse(adminBooking.scheduled_check_in) > sekarang);
+  // UX preflight mirrors the authoritative server cutoff; the RPC rechecks at write time.
+  const adminRescheduleWindowClosed = isBookingRescheduleWindowClosed(adminBooking?.scheduled_check_in, sekarang);
 
   function openAdminBooking(transactionId: string) {
     if (!canManageBooking || adminBusy) return;
@@ -189,9 +192,18 @@ const {
     }
     let proposedTime: string | undefined;
     if (adminAction === 'reschedule') {
+      // Always use a fresh clock before the RPC; never trust stale timer or disabled button.
+      if (isBookingRescheduleWindowClosed(adminBooking.scheduled_check_in, Date.now())) {
+        setAdminError('Batas perubahan jadwal sudah lewat: maksimal 2 jam sebelum Check-in lama.');
+        return;
+      }
       const candidate = new Date(adminNewCheckIn + '+07:00');
       if (!adminNewCheckIn || !Number.isFinite(candidate.getTime())) {
         setAdminError('Isi tanggal dan jam baru dalam WIB.');
+        return;
+      }
+      if (isNewBookingCheckInTooNear(candidate.getTime(), Date.now())) {
+        setAdminError('Jadwal baru harus minimal 2 jam dari waktu sekarang.');
         return;
       }
       proposedTime = candidate.toISOString();
@@ -766,6 +778,11 @@ Terima kasih.`;
                 <input type="datetime-local" value={adminNewCheckIn} disabled={adminBusy} onChange={(e) => setAdminNewCheckIn(e.target.value)}
                   className="mt-1 block h-11 w-full rounded-lg border border-foreground/20 bg-white px-3" />
                 <span className="mt-1 block text-xs text-muted-foreground">Konfirmasi paling lambat 2 jam sebelum jadwal lama. Jadwal baru dihitung otomatis menurut paket; perubahan harga Weekday/Weekend akan ditolak.</span>
+                {adminRescheduleWindowClosed && (
+                  <span role="alert" className="mt-2 block text-xs font-semibold text-red-700">
+                    Batas perubahan jadwal Booking ini sudah lewat. Jadwal tidak dapat diubah.
+                  </span>
+                )}
               </label>
             )}
             <label className="block text-sm">
@@ -782,7 +799,7 @@ Terima kasih.`;
             {adminError && <p role="alert" className="text-sm font-medium text-red-700">{adminError}</p>}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" disabled={adminBusy} onClick={closeAdminBooking}>Tutup tanpa perubahan</Button>
-              <Button type="button" disabled={adminBusy || adminConfirmation !== adminBooking.transaction_number || adminReason.trim().length < 10 || (adminAction === 'cancel' && adminBookingIsFuture && !adminFutureAcknowledged)}
+              <Button type="button" disabled={adminBusy || adminConfirmation !== adminBooking.transaction_number || adminReason.trim().length < 10 || (adminAction === 'cancel' && adminBookingIsFuture && !adminFutureAcknowledged) || (adminAction === 'reschedule' && adminRescheduleWindowClosed)}
                 onClick={() => void applyAdminBooking()}>
                 {adminBusy ? 'Memproses…' : adminAction === 'cancel' ? 'Batalkan Booking' : 'Simpan Jadwal'}
               </Button>

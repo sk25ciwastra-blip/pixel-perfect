@@ -1,0 +1,40 @@
+name: B25 Poin5 Booking reschedule window gate
+on:
+  push:
+    branches:
+      - fix/booking-reschedule-window-poin5-20261125
+    paths:
+      - src/routes/booking.tsx
+      - src/lib/booking-reschedule-window.ts
+      - scripts/booking-reschedule-window.test.ts
+      - .github/workflows/b25-booking-reschedule-window.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - src/routes/booking.tsx
+      - src/lib/booking-reschedule-window.ts
+      - scripts/booking-reschedule-window.test.ts
+      - .github/workflows/b25-booking-reschedule-window.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  booking-reschedule-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Booking Poin5 exact boundary regressions
+        run: bun test scripts/booking-reschedule-window.test.ts
+      - name: Build routes without deploy
+        run: bun run build
+      - name: TypeScript
+        run: bunx tsc --noEmit
