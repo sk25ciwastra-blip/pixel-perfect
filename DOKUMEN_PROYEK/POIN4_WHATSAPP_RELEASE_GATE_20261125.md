@@ -62,6 +62,38 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 5. 🔴 Persetujuan Owner eksplisit untuk migrasi SQL perubahan, merge dan publikasi.
 6. 🔴 UAT nyata Owner/Receptionist/Supervisor/Housekeeping/Training dan kasus refund/ledger, tanpa transaksi keuangan baru tanpa izin.
 
+## Addendum gerbang backup dan restore — 25 November 2026, 08.04 WIB
+
+**Sumber baseline saat ini:** `Lovable.query_database` terhadap proyek LIVE yang telah diidentifikasi di atas, query katalog PostgreSQL **SELECT-only**. Ini bukan hasil uji restore.
+
+| Fingerprint skema public | LIVE 25 Nov (metadata SELECT) | Snapshot 19 Nov (dokumen handoff) |
+|---|---:|---:|
+| Base tables | **45** | 39 |
+| RLS enabled | **45** | 39 |
+| Functions | **113** | 97 |
+| Indexes | **119** | 101 |
+| Policies | **61** | 57 |
+| Triggers noninternal | **53** | 43 |
+| Foreign keys | **87** | 79 |
+
+**Catatan:** Pembanding 19 Nov adalah snapshot pada tanggal berbeda. Selisih ini tidak serta-merta menandakan kerusakan; artinya backup lama **tidak terbukti** mengembalikan kondisi LIVE yang terbaru. Arsip lain yang diverifikasi 21 Nov mempunyai 40 tabel public; pembandingan ke 45 tabel 25 Nov juga menunjukkan perlunya backup baru sebelum perubahan.
+
+**Bukti backup historis yang benar-benar tersedia di Library privat:**
+- `B25_RESTORE_ISOLATED_HANDOFF_20261119.md`: backup 19 Nov CRC dan SHA-256 lulus, tetapi restore di mesin pemeriksa tidak berjalan karena binari PostgreSQL tidak tersedia. Instruksi sebelumnya hanya mengizinkan restore uji **lokal terisolasi**, tanpa akses ke staging/LIVE.
+- `LAPORAN_VERIFIKASI_BACKUP_BATURADEN_25_HOMESTAY_20261121.md`: backup `pixel-perfect-homestay-hub_261120.backup` (932.519 byte; SHA-256 `1b59a846ac400088c07216eabcbed3c9e333b386aa55e64fae3e745e432253dc`), 88/88 frame Zstd terverifikasi dan inventaris 40 tabel public cocok pada saat ekspor. **Tidak ada pg_restore/full restore PASS**; Auth/Storage dan permission rollback tidak terbukti.
+- Skrip `b25_restore_isolated.py` **sudah ada di Library** dan tidak perlu dibuat ulang.
+- Arsip backup aktual **tidak terpasang dalam runtime pemeriksaan 25 Nov**; perintah `pg_restore`, `postgres`, dan `docker` juga tidak tersedia. Backup tidak boleh dikirim/ditaruh di GitHub karena memuat data tamu/keuangan/Auth.
+
+### Keputusan gerbang backup (25 Nov)
+- 🟢 SELESAI: Identifikasi lokasi laporan historis dan skrip restore yang sudah ada; tidak mengulang uji checksum lama.
+- 🟢 SELESAI: Fingerprint schema LIVE 25 Nov, metadata SELECT saja.
+- 🔴 BELUM: Validasi backup **segar** yang mencakup keadaan LIVE sebelum migrasi, termasuk waktu/cakupan dan checksum aslinya.
+- 🔴 BELUM: `pg_restore --list`/TOC dengan versi alat kompatibel; uji restore database Supabase-kompatibel **terisolasi** dengan perbandingan tabel/fungsi/RLS/ACL, serta protokol Auth dan Storage.
+- 🔴 BELUM: Bukti pemulihan/rollback dengan izin Owner; jangan mencobanya pada LIVE.
+- 🔴 NO-GO: apply SQL, merge, publish, deploy sampai bukti dan persetujuan terpisah dipenuhi.
+
+**Rute paling aman:** backup baru lewat mekanisme privat Lovable; cek checksum dan waktu; gunakan isolated restore yang sudah terdokumentasi dalam lingkungan Supabase-kompatibel; *jangan unggah dump ke repo/CI GitHub*. Setelah bukti restore memadai, tinjau dan minta persetujuan terpisah untuk migrasi empat objek WhatsApp.
+
 ## Release gates (all required, sequential)
 1. 🟢 Identify correct Lovable LIVE project and database (done via connector); 🔴 approved change window still pending.
 2. 🟢 Execute **only read-only** structural preflight on LIVE (done); 🔴 independent final security review still pending.
