@@ -607,8 +607,7 @@ Terima kasih.`;
                     </div>
                   ))}
 
-                  <div className="flex flex-col justify-center gap-1 border-gold/30 lg:border-l lg:px-4">
-                    <span aria-hidden className="hidden h-4 lg:block" />
+                  <div className="flex flex-col justify-center gap-1 border-gold/30 lg:self-stretch lg:border-l lg:px-4">
                     <span className={`flex h-[18px] w-fit items-center rounded-full px-2.5 text-[10px] font-semibold uppercase ${statusKelas}`}>{statusLabel}</span>
                     <p className="flex h-[18px] items-center gap-1.5 text-xs"><User className="size-3" />{kodePaket(packageItem?.name)}{packageItem?.duration_minutes ? ` · ${Math.round(packageItem.duration_minutes / 60)} Jam` : ''}</p>
                   </div>
