@@ -2,6 +2,7 @@ import { test, expect } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { reservationCardFields, reservationCardFilename, RESERVATION_CARD_CAPTION } from '../src/lib/reservation-card';
+import { whatsAppReservationChatUrl } from '../src/lib/whatsapp';
 import type { OfferDetail } from '../src/lib/reservation-offers';
 
 const pending = {
@@ -81,4 +82,19 @@ test('approved navy/gold visual anatomy keeps an unpaid warning, never a paid ch
   expect(source).toContain('Reservasi baru tercatat setelah pembayaran kami terima.');
   expect(source).toContain("ctx.imageSmoothingEnabled = false");
   expect(source).not.toContain("text(ctx, '✓'");
+});
+
+test('Reservation WhatsApp opens the intended Indonesian recipient with a short unsent caption', () => {
+  for (const phone of ['081234567890', '+6281234567890', '6281234567890', '81234567890', '08 1234-567890']) {
+    const href = whatsAppReservationChatUrl(phone, RESERVATION_CARD_CAPTION);
+    expect(href).toBeDefined();
+    const link = new URL(href!);
+    expect(link.origin).toBe('https://wa.me');
+    expect(link.pathname).toBe('/6281234567890');
+    expect(link.searchParams.get('text')).toBe(RESERVATION_CARD_CAPTION);
+  }
+  expect(whatsAppReservationChatUrl('081234567890')).toBe('https://wa.me/6281234567890');
+  for (const phone of ['0812', '', '0000000000', '62081234567890', '++6281234567890', '081234abc567']) {
+    expect(whatsAppReservationChatUrl(phone, 'halo')).toBeUndefined();
+  }
 });
