@@ -29,11 +29,23 @@ export function openWhatsApp(phone: string, message?: string) {
 /** Open a specific guest chat via the official click-to-chat endpoint.
  * Keep the existing web.whatsapp.com helper unchanged for other workflows.
  */
-export function whatsAppReservationChatUrl(phone: string, message?: string) {
+export function whatsAppReservationRecipient(phone: string): string | undefined {
   if (!/^\+?[\d\s().-]+$/.test(phone.trim())) return undefined;
   let number = normalizeWhatsAppNumber(phone);
   // Some historical guest records omit the Indonesian country prefix.
   if (/^8[1-9]\d{7,12}$/.test(number)) number = `62${number}`;
-  if (!/^62[1-9]\d{7,12}$/.test(number)) return undefined;
+  return /^62[1-9]\d{7,12}$/.test(number) ? number : undefined;
+}
+
+export function whatsAppReservationChatUrl(phone: string, message?: string) {
+  const number = whatsAppReservationRecipient(phone);
+  if (!number) return undefined;
   return `https://wa.me/${number}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
+}
+
+/** Desktop fallback: bypass wa.me → api.whatsapp.com redirect and enter WhatsApp Web directly. */
+export function whatsAppReservationWebUrl(phone: string, message?: string) {
+  const number = whatsAppReservationRecipient(phone);
+  if (!number) return undefined;
+  return `https://web.whatsapp.com/send?phone=${number}${message ? `&text=${encodeURIComponent(message)}` : ''}`;
 }
