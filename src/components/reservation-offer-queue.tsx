@@ -172,17 +172,23 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
         <div className="space-y-3 rounded-xl border border-[#e4d1af] bg-[#fffdf8] p-4 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="font-serif text-lg">{item.guest_name}</strong><span className="rounded-full border border-[#dfc48d] bg-[#fff2d5] px-2 py-1 text-[11px] font-semibold">{offerStatus[item.status]}</span></div><p className="text-[#514131]"><span className="mr-2 inline-block rounded-md bg-[#30251b] px-2 py-1 font-bold text-[#f6db9e]">{item.room_number}</span>{item.room_type} · {item.package_name}</p><p className="text-xs text-[#685640]"><Slot offer={item} /></p><div className="grid grid-cols-2 gap-2 border-t border-[#e9d9bb] pt-3"><p><span className="block text-xs text-[#826c50]">Total Tagihan</span><strong>{rupiah(item.total)}</strong></p><p><span className="block text-xs text-[#826c50]">Minimum DP</span><strong>{rupiah(item.minimum_dp)}</strong></p></div></div>
         {draft ? <textarea aria-label="Pesan penawaran" readOnly value={draft.message} className="h-44 w-full min-w-0 rounded-xl border border-[#e3cda8] bg-[#fffdf8] p-3 text-sm leading-relaxed text-[#3b3024] shadow-inner" />
           : <p role="alert">Pesan tidak dapat dibuat dari data tamu saat ini.</p>}
-        <div className="flex flex-wrap gap-2">
-          {draft?.url && <Button asChild variant="outline"><a href={draft.url} target="_blank" rel="noopener noreferrer">{item.status === 'SENT' ? 'Buka Ulang WhatsApp' : 'Buka WhatsApp'}</a></Button>}
-          {draft && <Button type="button" variant="outline" onClick={async () => {
-            try { await navigator.clipboard.writeText(draft.message); toast.success('Pesan disalin.'); }
-            catch { toast.error('Pilih dan salin teks di atas.'); }
-          }}>Salin Pesan</Button>}
-          {item.status === 'DRAFT' && <Button type="button" variant="outline" disabled={busy} onClick={() => void transition('sent')}>Sudah Dikirim</Button>}
-          {canConvert && <Button type="button" disabled={busy} onClick={() => convert(item)}>Konfirmasi Pembayaran & Booking</Button>}
-          {owner && <Button type="button" variant="outline" disabled={busy} onClick={() => {
-            if (confirmCancel) void transition('cancel'); else setConfirmCancel(true);
-          }}>{confirmCancel ? 'Ya, batalkan penawaran' : 'Batalkan'}</Button>}
+        <div className="space-y-3 border-t border-[#e3d0af] pt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#6f5738]">Kirim penawaran ke tamu</p>
+          <div className="flex flex-wrap gap-2">
+            {draft?.url && <Button asChild variant="outline" className="min-h-10 border-[#188347] bg-[#168844] px-4 text-white hover:border-[#126938] hover:bg-[#126938] hover:text-white"><a href={draft.url} target="_blank" rel="noopener noreferrer"><MessageCircle aria-hidden="true" />{item.status === 'SENT' ? 'Buka Ulang WhatsApp' : 'Buka WhatsApp'}</a></Button>}
+            {draft && <Button type="button" variant="outline" className="min-h-10 border-[#c9b48d] bg-[#fffdf8] px-4 text-[#493723] hover:bg-[#f1e3c9] hover:text-[#302316]" onClick={async () => {
+              try { await navigator.clipboard.writeText(draft.message); toast.success('Pesan disalin.'); }
+              catch { toast.error('Pilih dan salin teks di atas.'); }
+            }}><Copy aria-hidden="true" />Salin Pesan</Button>}
+            {item.status === 'DRAFT' && <Button type="button" variant="outline" className="min-h-10 border-[#bd8c39] bg-[#e6b75f] px-4 text-[#30200c] hover:bg-[#d6a246] hover:text-[#30200c]" disabled={busy} onClick={() => void transition('sent')}><CheckCheck aria-hidden="true" />Sudah Dikirim</Button>}
+          </div>
+          <p className="text-xs leading-relaxed text-[#7c6545]">Status hanya berubah setelah petugas menekan “Sudah Dikirim”. Membuka WhatsApp tidak mengirim pesan otomatis.</p>
+          {(canConvert || owner) && <div className="flex flex-wrap items-center gap-2 border-t border-[#e3d0af] pt-3">
+            {canConvert && <Button type="button" variant="outline" className="min-h-10 border-[#54422c] bg-[#30271d] px-4 text-[#f8deb0] hover:bg-[#483521] hover:text-[#fff1d5]" disabled={busy} onClick={() => convert(item)}><CreditCard aria-hidden="true" />Konfirmasi Pembayaran & Booking</Button>}
+            {owner && <Button type="button" variant="outline" className={confirmCancel ? 'min-h-10 border-[#a92e28] bg-[#ac302b] px-4 text-white hover:bg-[#8e251f] hover:text-white' : 'min-h-10 border-[#d9b9ae] bg-[#fff9f4] px-4 text-[#973b2d] hover:bg-[#fce9e4] hover:text-[#872d22]'} disabled={busy} onClick={() => {
+              if (confirmCancel) void transition('cancel'); else setConfirmCancel(true);
+            }}><XCircle aria-hidden="true" />{confirmCancel ? 'Ya, batalkan penawaran' : 'Batalkan'}</Button>}
+          </div>}
         </div>
       </>}
     </DialogContent>
