@@ -276,11 +276,12 @@ export async function generatePaymentConfirmationPdf(data: PaymentConfirmation, 
 
 /** Local Blob download, no upload/public URL, print dialog or receipt/finance RPC. */
 export function downloadConfirmationBytes(bytes: Uint8Array, data: PaymentConfirmation) {
+  const filename = confirmationFilename(data, 'pdf');
   const blob = new Blob([new Uint8Array(bytes).buffer], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = confirmationFilename(data, 'pdf');
+  anchor.download = filename;
   document.body.appendChild(anchor);
   try { anchor.click(); } finally { anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000); }
 }
