@@ -1,0 +1,27 @@
+name: B25 Poin4 Owner-approved quote prefill
+on:
+  push:
+    branches:
+      - fix/poin4-approved-quote-prefill-20261125
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quote-prefill:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Test approved quote prefill
+        run: bun test scripts/whatsapp-approved-quote-prefill.test.ts
+      - name: Build app
+        run: bun run build
+      - name: Typecheck
+        run: bunx tsc --noEmit
