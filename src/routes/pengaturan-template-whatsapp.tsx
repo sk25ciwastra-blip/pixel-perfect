@@ -117,7 +117,7 @@ function PengaturanTemplateWhatsApp() {
             <h2 className="font-serif text-xl">Isi Pesan</h2>
             {draftSuggestion && <p role="status" className="rounded-lg border border-gold/30 p-3 text-sm">Teks template yang sudah disetujui Owner telah disiapkan otomatis. Ini masih draf, belum aktif untuk karyawan. Tinjau lalu tekan Simpan Versi Baru agar tersimpan atas akun Owner dan tercatat dalam riwayat.</p>}
             {!active && backendReady && !initialApprovedDraft[kind] && <p role="note" className="rounded-lg border border-amber-500/30 p-3 text-sm">Teks pengingat belum disetujui Owner. Isi template setelah redaksi disetujui; tidak ada pengingat yang dikirim otomatis.</p>}
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             {loading ? <p>Memuat template…</p> : <>
               <label htmlFor="wa-template-body" className="text-sm">Teks WhatsApp (maksimal 4.000 karakter)</label>
               <textarea id="wa-template-body" className="min-h-60 w-full rounded-lg border border-input bg-background p-3 text-sm"
