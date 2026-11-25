@@ -528,6 +528,8 @@ BEGIN
   IF NOT FOUND OR selected_session.status <> 'OPEN'
      OR (
        selected_session.opened_by <> NEW.recorded_by
+       -- Keep the existing Owner/Supervisor Bantu Sesi Aktif exception.
+       AND NOT public.finance_is_owner_or_supervisor(NEW.recorded_by)
        AND NOT public.finance_training_context_matches_session(
          auth.uid(), selected_session.id
        )
