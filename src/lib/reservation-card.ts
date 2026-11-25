@@ -17,7 +17,8 @@ export const RESERVATION_CARD_CAPTION =
 export type ReservationCardFields = {
   name: string; address: string; phone: string; roomType: string;
   roomNumber: string; packageName: string; guestCount: number;
-  checkIn: string; checkOut: string; roomPrice: number;
+  checkIn: string; checkOut: string; checkInDate: string; checkInTime: string;
+  checkOutDate: string; checkOutTime: string; roomPrice: number;
   extraCharge: number; total: number; minimumDp: number;
   dpLabel: string;
 };
@@ -26,6 +27,12 @@ const wib = new Intl.DateTimeFormat('id-ID', {
   timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric',
   month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   hourCycle: 'h23',
+});
+const wibDate = new Intl.DateTimeFormat('id-ID', {
+  timeZone: 'Asia/Jakarta', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric',
+});
+const wibTime = new Intl.DateTimeFormat('id-ID', {
+  timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 });
 
 export function reservationCardFields(offer: OfferDetail): ReservationCardFields {
@@ -49,6 +56,8 @@ export function reservationCardFields(offer: OfferDetail): ReservationCardFields
     roomType: offer.room_type, roomNumber: offer.room_number, packageName: offer.package_name,
     guestCount: offer.guest_count,
     checkIn: `${wib.format(start)} WIB`, checkOut: `${wib.format(end)} WIB`,
+    checkInDate: wibDate.format(start), checkInTime: `${wibTime.format(start)} WIB`,
+    checkOutDate: wibDate.format(end), checkOutTime: `${wibTime.format(end)} WIB`,
     roomPrice: total - extraCharge, extraCharge, total, minimumDp, dpLabel: mode,
   };
 }
@@ -172,11 +181,13 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   text(ctx, fields.packageName, 300, detailTop + 165, 26, ink, 700, 245);
   text(ctx, 'Jumlah Tamu', 74, detailTop + 205, 23, ink);
   text(ctx, `${fields.guestCount} orang`, 300, detailTop + 205, 26, ink, 700);
-  line(ctx, 553, detailTop + 60, 553, detailTop + 223);
+  line(ctx, 553, detailTop + 60, 553, detailTop + 229);
   text(ctx, 'Check-in', 586, detailTop + 85, 24, ink, 800);
-  text(ctx, fields.checkIn, 586, detailTop + 121, 23, ink, 500, 462);
-  text(ctx, 'Check-out', 586, detailTop + 162, 24, ink, 800);
-  text(ctx, fields.checkOut, 586, detailTop + 198, 23, ink, 500, 462);
+  text(ctx, fields.checkInDate, 586, detailTop + 116, 22, ink, 500, 462);
+  text(ctx, fields.checkInTime, 586, detailTop + 143, 23, ink, 700, 462);
+  text(ctx, 'Check-out', 586, detailTop + 174, 24, ink, 800);
+  text(ctx, fields.checkOutDate, 586, detailTop + 202, 22, ink, 500, 462);
+  text(ctx, fields.checkOutTime, 586, detailTop + 230, 23, ink, 700, 462);
 
   const payTop = detailTop + 244;
   panelTitle(ctx, 'RINCIAN PEMBAYARAN', 54, payTop, 458);
@@ -204,7 +215,7 @@ function draw(ctx: CanvasRenderingContext2D, fields: ReservationCardFields, qr: 
   round(ctx, 67, warnY, 988, 89, 30, navy, '#e9bd64');
   ctx.textAlign = 'center';
   text(ctx, 'INI BUKAN BUKTI BOOKING RESMI', W / 2, warnY + 36, 29, '#fff4d7', 800);
-  text(ctx, 'Booking dikonfirmasi setelah pembayaran kami terima dan verifikasi.', W / 2, warnY + 68, 22, '#f7c65f', 600);
+  text(ctx, 'Booking dikonfirmasi setelah pembayaran kami terima dan diverifikasi.', W / 2, warnY + 68, 22, '#f7c65f', 600);
   ctx.textAlign = 'left';
 }
 
