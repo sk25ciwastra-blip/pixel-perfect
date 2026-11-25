@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { supabase } from '@/integrations/supabase/client';
 import { formatBookingQuote, validateBookingQuote, type BookingQuoteDraft } from '@/lib/booking-quote';
 import { rupiah } from '@/lib/data-contoh';
+import { renderWhatsAppTemplate } from '@/lib/whatsapp-template-core';
 import { whatsAppDraftUrl } from '@/lib/whatsapp';
 
 export function BookingQuote({ draft, roomId, packageId, dayReady, loading, loadError }: {
@@ -54,11 +55,28 @@ export function BookingQuote({ draft, roomId, packageId, dayReady, loading, load
       } else if (schedule.has_conflict) {
         setError('Jadwal kamar bentrok atau okupansi belum dapat dipastikan. Pilih kamar atau jadwal berbeda.');
       } else {
-        setPreview(formatBookingQuote(draft, schedule));
+        const base = formatBookingQuote(draft, schedule);
+        // A missing new RPC means the pending migration is not yet released:
+        // retain the existing verified Booking quote. Never bypass a real denial.
+        const { data: activeTemplates, error: templateError } = await supabase.rpc(
+          'read_active_whatsapp_template', { _kind: 'PENAWARAN_RESERVASI' },
+        );
+        if (templateError && templateError.code !== 'PGRST202') {
+          throw new Error('Template resmi belum dapat diperiksa. Hubungi Owner.');
+        }
+        const active = activeTemplates?.[0];
+        const message = active
+          ? renderWhatsAppTemplate('PENAWARAN_RESERVASI', active.body, base.templateValues)
+          : base.message;
+        setPreview({ ...base, message });
       }
     } catch (failure) {
-      setError(failure instanceof Error && failure.message.startsWith('Jadwal resmi paket')
-        ? failure.message : 'Penawaran gagal disiapkan. Coba lagi.');
+      setError(failure instanceof Error && (
+        failure.message.startsWith('Jadwal resmi paket') ||
+        failure.message.startsWith('Template resmi') ||
+        failure.message.startsWith('Data [') ||
+        failure.message.startsWith('Variabel [')
+      ) ? failure.message : 'Penawaran gagal disiapkan. Coba lagi.');
     } finally {
       requestActive.current = false;
       setBusy(false);
