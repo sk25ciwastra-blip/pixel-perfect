@@ -94,6 +94,13 @@ Migration history in staging covers an October 2026 baseline; this does **not** 
 
 **Rute paling aman:** backup baru lewat mekanisme privat Lovable; cek checksum dan waktu; gunakan isolated restore yang sudah terdokumentasi dalam lingkungan Supabase-kompatibel; *jangan unggah dump ke repo/CI GitHub*. Setelah bukti restore memadai, tinjau dan minta persetujuan terpisah untuk migrasi empat objek WhatsApp.
 
+## Addendum uji dump/restore sintetis (bukan backup LIVE) — 25 November 2026
+
+- 🟢 KODE: `scripts/whatsapp-template-synthetic-restore.sh` ditambahkan untuk menjalankan fixture PostgreSQL 17, membuat **dump sintetis** dengan `pg_dump -Fc`, melakukan `pg_restore` ke database **sementara baru** dan memeriksa dua versi template, satu versi aktif, tiga audit row, fungsi RPC serta flag RLS.
+- 🔴 VERIFIKASI: hasil CI untuk skrip dump/restore baru harus dinilai berdasarkan run commit terakhir; jangan klaim PASS sebelum run berhasil.
+- 🔴 BATAS: `--no-owner --no-acl` sengaja tidak membuktikan pemulihan privilege/RLS policy/keutuhan Auth/Storage. Data fixture hanya dummy, **tidak berisi data tamu atau backup LIVE**.
+- 🔴 BACKUP LIVE: arsip segar dan restore penuh ke Supabase-compatible isolated environment tetap merupakan **syarat terpisah** sebelum migrasi, tidak dapat digantikan oleh uji sintetis.
+
 ## Release gates (all required, sequential)
 1. 🟢 Identify correct Lovable LIVE project and database (done via connector); 🔴 approved change window still pending.
 2. 🟢 Execute **only read-only** structural preflight on LIVE (done); 🔴 independent final security review still pending.
