@@ -13,7 +13,9 @@
 
 **Batas waktu:** Nomor #4 baru pesan **pemberitahuan**; kode biaya, kebijakan overtime, charge event, atau pencatatan keuangan tidak boleh diubah oleh revisi redaksi template ini. Pengiriman tetap **manual**.
 
-## 1. Konfirmasi Reservasi
+## 1. Konfirmasi Reservasi — draf revisi Owner, 26 November 2026
+
+**Maksud Owner:** mengikuti struktur *Rincian Penawaran Reservasi* sebelumnya, tetapi menjadi bukti rincian pemesanan yang **sudah resmi tercatat setelah pembayaran diverifikasi**. Tamu harus dapat mengecek kamar, paket/jadwal, rincian harga, pembayaran yang telah diterima, serta sisa tagihan dalam satu pesan. Draf ini **belum disetujui sebagai teks ACTIVE**.
 
 ```text
 *BATURADEN 25 HOMESTAY*
@@ -21,29 +23,48 @@
 
 Halo Kak [NAMA_TAMU] 👋
 
-Terima kasih telah melakukan reservasi di *Baturaden 25 Homestay*. Kami informasikan bahwa reservasi Kakak telah berhasil dikonfirmasi.
+Terima kasih telah melakukan reservasi di *Baturaden 25 Homestay*.
+
+Kami informasikan bahwa pembayaran telah kami terima dan verifikasi. Berikut rincian pemesanan kamar Kakak yang telah resmi tercatat.
 
 *DETAIL RESERVASI*
-No. Transaksi: [NOMOR_TRANSAKSI]
-Tipe Kamar: [TIPE_KAMAR]
-No. Kamar: [NOMOR_KAMAR]
-Paket: [PAKET]
-Check-in: [CHECKIN_WIB]
-Check-out: [CHECKOUT_WIB]
-Jumlah Tamu: [JUMLAH_TAMU] orang
+No. Transaksi : [NOMOR_TRANSAKSI]
+Nama Tamu : [NAMA_TAMU]
+Tipe Kamar : [TIPE_KAMAR]
+No. Kamar : [NOMOR_KAMAR]
+Paket : [PAKET]
+Check-in : [CHECKIN_WIB]
+Check-out : [CHECKOUT_WIB]
+Jumlah Tamu : [JUMLAH_TAMU] Orang
+
+*RINCIAN HARGA*
+Harga Kamar : [HARGA_KAMAR]
+Biaya Tambahan : [BIAYA_TAMBAHAN]
+*Total Tagihan : [TOTAL_TAGIHAN]*
 
 *RINCIAN PEMBAYARAN*
-Total Tagihan: [TOTAL_TAGIHAN]
-Sisa Pembayaran: [SISA_TAGIHAN]
-Status Pembayaran: [STATUS_PEMBAYARAN]
+Pembayaran Diterima : [TOTAL_DIBAYAR_BERSIH]
+Sisa Pembayaran : [SISA_TAGIHAN]
+Status Pembayaran : [STATUS_PEMBAYARAN]
 
-Mohon simpan nomor transaksi dan bukti reservasi Kakak untuk memudahkan proses Check-in.
+*STATUS RESERVASI*
+✅ *RESERVASI TELAH DIKONFIRMASI*
 
-Kami menantikan kedatangan Kakak. Sampai bertemu! ✨
+Reservasi Kakak telah tercatat sesuai tipe kamar, paket, serta jadwal Check-in dan Check-out yang tertera di atas.
 
-*Baturaden 25 Homestay*
+Mohon simpan bukti reservasi ini dan tunjukkan kepada Receptionist saat Check-in.
+
+Apabila membutuhkan bantuan atau ingin mengajukan perubahan jadwal, silakan menghubungi admin kami.
+
+Terima kasih telah memilih *Baturaden 25 Homestay*.
+
+Kami menantikan kedatangan Kakak! ✨
+
+*BATURADEN 25 HOMESTAY*
 _Your Comfort, Our Priority._
 ```
+
+**Gate implementasi:** backend saat ini `KONFIRMASI_BOOKING` baru menyediakan `TOTAL_TAGIHAN`, `DP_DITERIMA`, `SISA_TAGIHAN`, `STATUS_PEMBAYARAN` dan detail kamar/jadwal; tiga token baru di rancangan ini (`HARGA_KAMAR`, `BIAYA_TAMBAHAN`, `TOTAL_DIBAYAR_BERSIH`) **belum terdaftar dalam allowlist `KONFIRMASI_BOOKING`**. Saat implementasi, hubungkan ke snapshot harga/transaksi dan net payment yang benar, termasuk guard refund; jangan gunakan data dummy atau membocorkan ledger. Jangan simpan teks ini ke versi ACTIVE sebelum renderer dan tes backend memvalidasi seluruh placeholder serta Owner menyetujui redaksi final.
 
 ## 2. Pengingat Booking — 30 Menit
 
