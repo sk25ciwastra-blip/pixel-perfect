@@ -188,6 +188,17 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ---
 
+### Audit lanjutan SQL Cloud dan rollback Overtime — 26 November 2026
+
+**Bukti read-only LIVE:** `whatsapp_template_versions` dan `whatsapp_template_audit` RLS aktif; `anon` tak dapat SELECT; `authenticated` tak memiliki INSERT/UPDATE langsung; RPC menyimpan pengingat hanya Owner dengan riwayat audit, pembaca menegakkan Receptionist aktif/non-Training. Keempat jenis ACTIVE v1 terpelihara. Jenis `PEMBERITAHUAN_OVERTIME` belum ada pada constraint LIVE maupun whitelist RPC.
+
+- **File pending yang ada:** `supabase/pending/20261126_whatsapp_overtime_notice_kind.sql`, **BELUM APPLY**.
+- **Tambahan pekerjaan persiapan:** file rollback konservatif `supabase/pending/20261126_whatsapp_overtime_notice_rollback.sql` dan pengujian Postgres 17 sintetis untuk role, migrasi dan rollback. **Rollback menolak jika ada versi/audit Overtime**; tidak pernah menghapus sejarah untuk memaksanya. Lihat [Gate Overtime WhatsApp](POIN4_OVERTIME_WHATSAPP_RELEASE_GATE_20261126.md).
+- **Status pengujian:** bergantung pada pemeriksaan CI PR pengaman ini; jangan klaim pengujian Postgres sintetis PASS sebelum hasilnya diverifikasi. Audit pembacaan metadata bukan UAT peran LIVE.
+- **Gate:** Owner belum memberi persetujuan untuk menjalankan SQL Cloud, mengganti versi ACTIVE, atau publish. `NO-GO CLOUD` tetap berlaku sampai pengujian dan strategi pemulihan nyata tervalidasi.
+
+---
+
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
 1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.
