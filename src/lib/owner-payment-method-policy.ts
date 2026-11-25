@@ -36,19 +36,19 @@ export function toPaymentCode(method: PaymentMethod): PaymentMethodCode {
 export function validateOwnerPaymentPolicy(value: unknown): OwnerPaymentMethodPolicy | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const input = value as Record<string, unknown>;
-  if (!Number.isSafeInteger(input.revision) || Number(input.revision) < 1) return null;
-  const methods = input.methods;
+  if (!Number.isSafeInteger(input['revision']) || Number(input['revision']) < 1) return null;
+  const methods = input['methods'];
   if (!methods || typeof methods !== 'object' || Array.isArray(methods)) return null;
   const flags = methods as Record<string, unknown>;
   if (Object.keys(flags).length !== ALL_CODES.length
     || ALL_CODES.some(code => typeof flags[code] !== 'boolean')) return null;
   if (!ALL_CODES.some(code => flags[code])) return null;
   return {
-    revision: Number(input.revision),
+    revision: Number(input['revision']),
     methods: {
-      CASH: flags.CASH as boolean,
-      QRIS: flags.QRIS as boolean,
-      TRANSFER: flags.TRANSFER as boolean,
+      CASH: flags['CASH'] as boolean,
+      QRIS: flags['QRIS'] as boolean,
+      TRANSFER: flags['TRANSFER'] as boolean,
     },
   };
 }
