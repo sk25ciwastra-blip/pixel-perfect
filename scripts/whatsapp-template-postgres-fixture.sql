@@ -22,9 +22,10 @@ CREATE TABLE public.user_roles (user_id uuid NOT NULL REFERENCES auth.users(id),
 INSERT INTO public.user_roles VALUES
  ('10000000-0000-0000-0000-000000000001', 'owner'),
  ('10000000-0000-0000-0000-000000000002', 'employee');
+CREATE TYPE public.employee_position AS ENUM ('receptionist','housekeeping','supervisor','inspector','investor');
 CREATE TABLE public.employees (
   user_id uuid NOT NULL REFERENCES auth.users(id),
-  position text NOT NULL,
+  position public.employee_position NOT NULL,
   active boolean NOT NULL DEFAULT true
 );
 INSERT INTO public.employees(user_id,position,active) VALUES
@@ -147,6 +148,29 @@ BEGIN
   RAISE EXCEPTION 'FAIL: housekeeping read template';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
 END $$;
+RESET ROLE;
+-- LIVE employee_position also includes inspector/investor; neither may read templates.
+UPDATE public.employees SET position='inspector'
+ WHERE user_id='10000000-0000-0000-0000-000000000002';
+SET ROLE authenticated;
+DO $
+BEGIN
+ BEGIN
+  PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
+  RAISE EXCEPTION 'FAIL: inspector read template';
+ EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $;
+RESET ROLE;
+UPDATE public.employees SET position='investor'
+ WHERE user_id='10000000-0000-0000-0000-000000000002';
+SET ROLE authenticated;
+DO $
+BEGIN
+ BEGIN
+  PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
+  RAISE EXCEPTION 'FAIL: investor read template';
+ EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $;
 RESET ROLE;
 SELECT set_config('request.jwt.claim.sub', '', false);
 SET ROLE anon;
