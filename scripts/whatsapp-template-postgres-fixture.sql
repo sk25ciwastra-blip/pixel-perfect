@@ -164,6 +164,6 @@ BEGIN
   PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
   RAISE EXCEPTION 'FAIL: missing Training guard allowed supervisor';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
-END $;
+END $$;
 RESET ROLE;
 SELECT 'PASS: isolated postgres versioning + owner/employee/anon guards, absent Training guard denied' AS result;
