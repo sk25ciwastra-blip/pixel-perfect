@@ -9,6 +9,15 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
+> [!IMPORTANT]
+> **HANDOFF WAJIB — 26 NOVEMBER 2026:** Sebelum perubahan kode/desain, baca
+> [panduan obrolan baru](DOKUMEN_PROYEK/PANDUAN_MULAI_OBROLAN_BARU.md)
+> dan [checkpoint utama](DOKUMEN_PROYEK/CHECKPOINT_UTAMA_20261126.md).
+> Status MERGED bukan berarti sudah publish atau UAT PASS. PR #167–#172 sudah
+> merged; desain tabel Transaksi, form Reservasi dan popup ActionResultDialog
+> belum diimplementasikan. Jangan mengulang UAT yang sudah PASS dan jangan
+> mengubah Cloud/Finance tanpa persetujuan Owner yang spesifik.
+
 - Tampilan operasional berbagi kerangka navigasi di `src/components/kerangka.tsx` dan metadata halaman di `src/lib/meta.ts`, agar setiap halaman konsisten di HP dan desktop.
 - Data contoh untuk revisi antarmuka tetap berada di `src/lib/data-contoh.ts`, agar harga dan waktu yang tampil tidak dianggap aturan bisnis atau hitung mundur nyata.
 - Identitas dan izin operasional berasal dari Lovable Cloud (`user_roles` terpisah dari `employees`), bukan penyimpanan browser; kebijakan data dan fungsi server memastikan hak akses tidak dapat dipalsukan.

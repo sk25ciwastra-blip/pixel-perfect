@@ -1,5 +1,11 @@
 # Pixel Perfect
 
+> **Baturaden 25 Homestay — checkpoint terbaru (26 November 2026):**
+> Mulai dari [PANDUAN_MULAI_OBROLAN_BARU.md](DOKUMEN_PROYEK/PANDUAN_MULAI_OBROLAN_BARU.md)
+> dan [CHECKPOINT_UTAMA_20261126.md](DOKUMEN_PROYEK/CHECKPOINT_UTAMA_20261126.md).
+> Riwayat lama tidak otomatis mencerminkan status terbaru. Jangan menganggap
+> source GitHub/Lovable yang sinkron berarti aplikasi telah dipublish atau lulus UAT.
+
 Implement exactly the screenshot and nothing else
 
 This project was built with [Lovable](https://lovable.dev).

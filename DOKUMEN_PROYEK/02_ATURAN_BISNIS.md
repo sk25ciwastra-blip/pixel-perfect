@@ -1,5 +1,8 @@
 # Baturaden 25 Homestay V1.0 — Aturan Bisnis
 
+> **CHECKPOINT TERKINI — 26 NOVEMBER 2026 (WIB):** baca [CHECKPOINT_UTAMA_20261126.md](CHECKPOINT_UTAMA_20261126.md) dan [PANDUAN_MULAI_OBROLAN_BARU.md](PANDUAN_MULAI_OBROLAN_BARU.md) sebelum memakai status historis di bawah. PR #167–#172 sudah MERGED; sketsa Daftar Transaksi, Form Reservasi, dan ActionResultDialog masih BELUM diimplementasikan. Tidak ada persetujuan publish/GO-LIVE baru. Dokumen lama di bawah dipertahankan sebagai riwayat.
+
+
 **Tanggal pencatatan dokumen:** 2026-10-13<br>
 **Sumber utama:** pernyataan Owner dalam konteks proyek, migrasi SQL lokal, verifikasi Staging yang dilaporkan, dan source aplikasi.<br>
 **Catatan:** tanggal keputusan formal ditulis `BELUM TERVERIFIKASI` bila tidak ada tanggal eksplisit.
