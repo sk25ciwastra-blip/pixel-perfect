@@ -21,6 +21,10 @@ test('profile page is Owner only and cannot fake success if backend is absent',(
 });
 test('SQL is isolated with RLS, role guard, read only for authenticated, Owner-only save and audit',()=>{
  assert.match(sql,/CREATE TABLE public\.b25_homestay_profile\(/);
+ assert.equal((sql.match(/^COMMIT;/gm)||[]).length,1,'migration must be a single transaction');
+ assert.equal((sql.match(/^CREATE FUNCTION public\.b25_save_homestay_profile/gm)||[]).length,1,'only one Owner-save procedure');
+ assert.equal((sql.match(/^CREATE TABLE public\.b25_homestay_profile\(/gm)||[]).length,1,'only one profile table');
+ assert.ok(!sql.slice(sql.indexOf('-- POSTCHECK')).includes('\n END;'),'no code may exist after migration COMMIT');
  assert.match(sql,/CREATE TABLE public\.b25_homestay_profile_audit\(/);
  assert.equal((sql.match(/ENABLE ROW LEVEL SECURITY/g)||[]).length,2);
  assert.match(sql,/public\.has_role\(actor,'owner'::public\.app_role\)/);
