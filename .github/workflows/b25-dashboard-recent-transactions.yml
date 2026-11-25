@@ -1,0 +1,25 @@
+name: B25 Dashboard Recent Transactions Alignment
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - src/routes/index.tsx
+      - src/components/dashboard-panel.css
+      - scripts/dashboard-recent-transactions-alignment.test.ts
+      - .github/workflows/b25-dashboard-recent-transactions.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visual-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/dashboard-recent-transactions-alignment.test.ts
+      - run: bun run build
+      - run: bunx tsc --noEmit

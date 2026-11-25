@@ -154,6 +154,81 @@
   }
 }
 
+
+/* Transaksi Terbaru: identical four-column alignment across income/expense rows.
+   Scoped to dashboard only; never changes amounts or transaction logic. */
+.db-transaksi-list .db-recent-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 84px 112px;
+  align-items: center;
+  column-gap: 8px;
+  min-width: 0;
+  min-height: 76px;
+}
+.db-recent-row .db-recent-icon { place-self: center; }
+.db-recent-row .db-recent-identity {
+  display: grid;
+  grid-template-rows: 19px 14px 20px;
+  align-content: center;
+  min-width: 0;
+}
+.db-recent-row .db-recent-identity > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.db-transaksi-list .db-recent-row .db-recent-identity button {
+  justify-self: start;
+  margin-top: 0;
+}
+.db-recent-row .db-recent-status {
+  min-width: 0;
+  min-height: 42px;
+  padding-left: 7px;
+  gap: 5px;
+}
+.db-recent-row .db-recent-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 73px;
+  height: 21px;
+  padding: 0 4px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.db-recent-row .db-recent-time {
+  font-size: 10px;
+  white-space: nowrap;
+  text-align: center;
+}
+.db-recent-row .db-recent-amount {
+  min-width: 0;
+  gap: 5px;
+  text-align: right;
+}
+.db-transaksi-list .db-recent-row .db-recent-amount > p {
+  font-size: 14px;
+  line-height: 21px;
+  letter-spacing: -0.025em;
+}
+.db-recent-row .db-recent-method {
+  justify-content: center;
+  min-height: 18px;
+  line-height: 1.2;
+}
+@media (max-width: 440px) {
+  .db-transaksi-list .db-recent-row {
+    grid-template-columns: 29px minmax(0, 1fr) 76px 98px;
+    column-gap: 6px;
+  }
+  .db-recent-row .db-recent-status { padding-left: 5px; }
+  .db-recent-row .db-recent-badge { width: 67px; font-size: 8px; }
+  .db-transaksi-list .db-recent-row .db-recent-amount > p { font-size: 12px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .db-panel-operasional *, .db-transaksi-list li {
     transition: none;
