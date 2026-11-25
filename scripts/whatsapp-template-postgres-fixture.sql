@@ -158,7 +158,7 @@ UPDATE public.employees SET active=true, position='supervisor'
  WHERE user_id='10000000-0000-0000-0000-000000000002';
 SET ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000002', false);
-DO $
+DO $$
 BEGIN
  BEGIN
   PERFORM public.read_active_whatsapp_template('PENAWARAN_RESERVASI');
