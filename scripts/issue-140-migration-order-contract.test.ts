@@ -38,3 +38,8 @@ test('Preflight is strictly catalog inspection, not a staging deployment permiss
   expect(preflight).toContain('finance_prepare_payment_trigger');
   expect(preflight).toContain('payments_transaction_state_guard_trigger');
 });
+
+test('Training payment guard preserves Owner/Supervisor Bantu Sesi Aktif alongside assigned Trainee', () => {
+  const body = training.match(/CREATE OR REPLACE FUNCTION public\.finance_prepare_payment\(\)[\s\S]*?\$function\$;/i)?.[0] ?? '';
+  expect(body).toMatch(/selected_session\.opened_by\s*<>\s*NEW\.recorded_by[\s\S]*?AND NOT public\.finance_is_owner_or_supervisor\(NEW\.recorded_by\)[\s\S]*?AND NOT public\.finance_training_context_matches_session\(/);
+});
