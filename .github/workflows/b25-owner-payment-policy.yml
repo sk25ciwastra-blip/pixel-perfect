@@ -1,0 +1,24 @@
+name: B25 Owner Payment Methods Policy Contract
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - src/lib/owner-payment-method-policy.ts
+      - scripts/owner-payment-method-policy.test.ts
+      - .github/workflows/b25-owner-payment-policy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test scripts/owner-payment-method-policy.test.ts
+      - run: bun run build
+      - run: bunx tsc --noEmit
