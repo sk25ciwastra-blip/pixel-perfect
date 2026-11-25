@@ -81,3 +81,12 @@ test('Kartu Reservasi is downloaded as JPG using official QRIS without auto-send
   expect(queue).toContain('URL.revokeObjectURL(objectUrl)');
   expect(queue).toContain('Tombol WhatsApp tidak melampirkan gambar secara otomatis.');
 });
+
+test('Saving a reservation opens its QRIS card preview, never the old auto-WhatsApp text flow', () => {
+  expect(booking).toContain('Simpan Reservasi & Lihat Kartu');
+  expect(booking).not.toContain("window.open('about:blank', '_blank')");
+  expect(booking).not.toContain('offerWhatsApp(item)');
+  expect(dashboard).toContain('setSelectedOffer(offer.id)');
+  expect(queue).toContain('makeReservationCardJpg(item)');
+  expect(queue).toContain('RESERVATION_CARD_CAPTION');
+});
