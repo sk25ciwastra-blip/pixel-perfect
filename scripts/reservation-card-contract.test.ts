@@ -1,0 +1,58 @@
+import { test, expect } from 'bun:test';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { reservationCardFields, reservationCardFilename, RESERVATION_CARD_CAPTION } from '../src/lib/reservation-card';
+import type { OfferDetail } from '../src/lib/reservation-offers';
+
+const pending = {
+  id: 'bcc96661-b33a-45ab-8d99-35368e6e8c0e',
+  guest_name: 'Saipul', address: 'Jl. Ciwastra, Bandung', phone: '081234567890',
+  phone_last4: '7890', room_id: 'room-uuid', package_id: 'package-uuid',
+  room_number: '05', room_type: 'Deluxe', package_name: 'Paket 2 Jam',
+  scheduled_check_in: '2026-11-27T10:10:00+07:00',
+  scheduled_check_out: '2026-11-27T12:10:00+07:00',
+  day_mode: 'weekend', guest_count: 2, total: 90_000, minimum_dp: 45_000,
+  minimum_dp_mode: 'PERCENTAGE', minimum_dp_value: 50,
+  status: 'DRAFT', created_at: '2026-11-26T00:00:00+07:00',
+  sent_marked_at: null, transaction_number: null, reason: null,
+} satisfies OfferDetail;
+
+test('Card uses stored reservation snapshot, 50 percent DP and WIB times', () => {
+  const card = reservationCardFields(pending);
+  expect(card.name).toBe('Saipul');
+  expect(card.address).toBe('Jl. Ciwastra, Bandung');
+  expect(card.phone).toBe('081234567890');
+  expect(card.roomNumber).toBe('05');
+  expect(card.roomPrice).toBe(90_000);
+  expect(card.extraCharge).toBe(0);
+  expect(card.total).toBe(90_000);
+  expect(card.minimumDp).toBe(45_000);
+  expect(card.dpLabel).toContain('50%');
+  expect(card.checkIn).toContain('10.10');
+  expect(card.checkOut).toContain('12.10');
+  expect(card.checkIn).toContain('WIB');
+  expect(reservationCardFilename(pending)).toBe('RESERVASI-Saipul-bcc96661.jpg');
+  expect(RESERVATION_CARD_CAPTION).toContain('Halo Kak');
+});
+
+test('Card separately shows room rate and extra-guest fee; does not invent payment', () => {
+  const card = reservationCardFields({ ...pending, guest_count: 3, total: 140_000, minimum_dp: 70_000 });
+  expect(card.roomPrice).toBe(90_000);
+  expect(card.extraCharge).toBe(50_000);
+  expect(card.total).toBe(140_000);
+  expect(card.minimumDp).toBe(70_000);
+});
+
+test('Card rejects contradictory snapshots and schedules', () => {
+  expect(() => reservationCardFields({ ...pending, minimum_dp: 95_000 })).toThrow();
+  expect(() => reservationCardFields({ ...pending, scheduled_check_out: pending.scheduled_check_in })).toThrow();
+  expect(() => reservationCardFields({ ...pending, address: '' })).toThrow();
+});
+
+test('Embedded QRIS asset matches the Owner-supplied independently decoded source', () => {
+  const qr = readFileSync('public/assets/qris-resmi-baturaden25.png');
+  expect(qr.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+  expect(qr.length).toBe(1590);
+  expect(createHash('sha256').update(qr).digest('hex'))
+    .toBe('be77190994647e9408859ecf62a9a0f5a6e5f1ac39be0c28e1ddf9e903b8f42a');
+});
