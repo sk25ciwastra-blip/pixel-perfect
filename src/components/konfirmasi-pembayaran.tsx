@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PesanTemplateKonfirmasi } from '@/components/pesan-template-konfirmasi';
 import { CheckCircle2, Download, Printer, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -33,6 +34,7 @@ export function AksiPdfStruk({ hook, transactionId, ringkas = false }: { hook: H
         )}
       </div>
       <p className="text-[11px] text-muted-foreground">{ringkas ? 'Unduh bukti pembayaran dalam format PDF atau JPG, lalu bagikan kepada tamu melalui WhatsApp.' : 'Lampirkan PDF secara manual. Belum otomatis terkirim.'}</p>
+      {unduh && <PesanTemplateKonfirmasi transactionId={transactionId} pdfReady={unduh} />}
       {pesan && <p role="status" className="text-xs text-foreground/90">{pesan}</p>}
     </div>
   );
