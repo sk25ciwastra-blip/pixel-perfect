@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChevronRight, FileText } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,13 @@ export function OfferQueue({ selected, select, owner, conversionAllowed, convert
 }) {
   const client = useQueryClient();
   const [page, setPage] = useState(0);
-  const list = useQuery({ queryKey: [...offerQueryKey, 'queue', page], queryFn: () => readOffers(page), refetchInterval: 5000 });
+  const [listOpen, setListOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const list = useQuery({
+    queryKey: [...offerQueryKey, 'queue', page],
+    queryFn: () => readOffers(page),
+    refetchInterval: 5000,
+  });
   useEffect(() => {
     const refresh = () => void client.invalidateQueries({ queryKey: offerQueryKey });
     const channel = supabase.channel('dashboard-reservation-offers')
@@ -59,29 +66,72 @@ export function OfferQueue({ selected, select, owner, conversionAllowed, convert
     return () => { void supabase.removeChannel(channel); };
   }, [client]);
 
-  return <section className="mt-4 rounded-xl border border-[var(--premium-line)] bg-[var(--success-paper)] p-4 text-[var(--premium-ink)]">
-    <details>
-      <summary className="cursor-pointer font-semibold">Antrean Penawaran{list.isSuccess ? ` (${list.data.count})` : ''}</summary>
-      {list.isPending && <p role="status" className="mt-2">Memuat antrean…</p>}
-      {list.isError && <p role="alert" className="mt-2">Antrean penawaran gagal dimuat. <button type="button" className="underline" onClick={() => void list.refetch()}>Coba lagi</button></p>}
-      {list.isSuccess && <div className="mt-2 space-y-2">
-        {!list.data.rows.length && <p className="text-sm">Tidak ada penawaran aktif pada halaman ini.</p>}
-        <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {list.data.rows.map(item => <li key={item.id}>
-            <button type="button" className="h-full w-full space-y-1 rounded-lg border border-[var(--premium-line)] p-3 text-left text-sm hover:bg-[var(--premium-highlight)]" onClick={() => select(item.id)}>
-              <span className="block break-words font-semibold">{item.guest_name} · ••••{item.phone_last4}</span>
-              <span className="block">Kamar {item.room_number} · {item.room_type} · {item.package_name}</span>
-              <span className="block"><Slot offer={item} /></span>
-              <span className="block">{rupiah(item.total)} · DP {rupiah(item.minimum_dp)}</span>
-              <span className="block">{offerStatus[item.status]}</span>
-            </button>
-          </li>)}
-        </ul>
-        <PageActions page={page} count={list.data.count} setPage={setPage} />
-      </div>}
-    </details>
+  function openList() {
+    setPage(0);
+    setShowAll(false);
+    setListOpen(true);
+  }
+
+  return <>
+    <button
+      type="button"
+      className="panel-mewah group relative flex min-w-0 flex-row items-center gap-2.5 overflow-hidden px-3.5 py-4 text-left transition hover:-translate-y-0.5 hover:border-gold/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+      aria-haspopup="dialog"
+      aria-label="Buka daftar Penawaran Menunggu"
+      onClick={openList}
+    >
+      <span aria-hidden="true" className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-gold/[0.07] blur-2xl" />
+      <span className="grid size-12 shrink-0 place-items-center rounded-xl border border-gold/25 bg-gold/10 text-gold"><FileText className="size-6" strokeWidth={1.5} aria-hidden="true" /></span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[0.8rem] leading-tight text-foreground/85">Penawaran Menunggu</span>
+        <span className="mt-1.5 block truncate text-[1.6rem] font-bold leading-none tabular-nums text-foreground">{list.isSuccess ? list.data.count : '—'}</span>
+        <span className="mt-1.5 block text-[11px] leading-snug text-gold-light">{list.isError ? 'Gagal memuat · klik untuk mencoba lagi' : 'perlu tindak lanjut'}</span>
+      </span>
+      <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-gold" />
+    </button>
+
+    <Dialog open={listOpen && !selected} onOpenChange={open => { if (!open) setListOpen(false); }}>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-4xl overflow-y-auto rounded-2xl border border-[var(--premium-line)] bg-[var(--success-paper)] text-[var(--premium-ink)]">
+        <DialogTitle className="font-serif text-xl">Penawaran Menunggu</DialogTitle>
+        <DialogDescription className="text-[var(--premium-ink)]">Daftar penawaran yang perlu ditindaklanjuti. Penawaran belum mengunci kamar dan belum menjadi Booking resmi.</DialogDescription>
+        {list.isPending && <p role="status" className="py-6 text-sm">Memuat penawaran…</p>}
+        {list.isError && <p role="alert" className="py-3 text-sm">Daftar penawaran gagal dimuat. <button type="button" className="font-semibold underline" onClick={() => void list.refetch()}>Coba lagi</button></p>}
+        {list.isSuccess && <>
+          <p className="text-xs">{list.data.count} penawaran aktif</p>
+          {!list.data.rows.length && <p className="rounded-xl border border-[var(--premium-line)] p-5 text-center text-sm">Belum ada penawaran yang menunggu.</p>}
+          {list.data.rows.length > 0 && <div className="overflow-x-auto rounded-xl border border-[var(--premium-line)]">
+            <table className="w-full min-w-[630px] table-fixed border-collapse text-left text-xs">
+              <thead className="bg-[#302619] text-[#fff4d5]"><tr>
+                <th className="w-[19%] px-3 py-3">Nama</th>
+                <th className="w-[15%] px-3 py-3">WA</th>
+                <th className="w-[22%] px-3 py-3">Kamar / Tipe</th>
+                <th className="w-[15%] px-3 py-3">Check-in</th>
+                <th className="w-[17%] px-3 py-3">Status</th>
+                <th className="w-[12%] px-3 py-3">Aksi</th>
+              </tr></thead>
+              <tbody className="divide-y divide-[#d8cab1]">
+                {(showAll ? list.data.rows : list.data.rows.slice(0, 5)).map(item => <tr key={item.id} className="bg-[#fffaf0] text-[#28231c]">
+                  <td className="break-words px-3 py-3 font-semibold">{item.guest_name}</td>
+                  <td className="px-3 py-3 tabular-nums">••••{item.phone_last4}</td>
+                  <td className="break-words px-3 py-3">{item.room_number} · {item.room_type}</td>
+                  <td className="px-3 py-3 tabular-nums">{offerWib.format(new Date(item.scheduled_check_in))} WIB</td>
+                  <td className="px-3 py-3">{offerStatus[item.status]}</td>
+                  <td className="px-3 py-3"><Button type="button" size="sm" className="h-8 px-3" onClick={() => { setListOpen(false); select(item.id); }}>Lihat</Button></td>
+                </tr>)}
+              </tbody>
+            </table>
+          </div>}
+          {showAll && <PageActions page={page} count={list.data.count} setPage={setPage} />}
+        </>}
+        <div className="flex flex-wrap justify-end gap-2 border-t border-[#d8cab1] pt-4">
+          <Button type="button" variant="outline" onClick={() => setListOpen(false)}>Tutup</Button>
+          {list.isSuccess && list.data.count > 5 && <Button type="button" onClick={() => { setShowAll(true); setPage(0); }}>Lihat Semua Penawaran</Button>}
+        </div>
+      </DialogContent>
+    </Dialog>
+
     {selected && <OfferDialog key={selected} id={selected} owner={owner} canConvert={conversionAllowed} close={() => select(null)} convert={convert} />}
-  </section>;
+  </>;
 }
 
 function OfferDialog({ id, owner, canConvert, close, convert }: {
@@ -131,7 +181,7 @@ function OfferDialog({ id, owner, canConvert, close, convert }: {
             catch { toast.error('Pilih dan salin teks di atas.'); }
           }}>Salin Pesan</Button>}
           {item.status === 'DRAFT' && <Button type="button" variant="outline" disabled={busy} onClick={() => void transition('sent')}>Sudah Dikirim</Button>}
-          {canConvert && <Button type="button" disabled={busy} onClick={() => convert(item)}>Konfirmasi Booking</Button>}
+          {canConvert && <Button type="button" disabled={busy} onClick={() => convert(item)}>Konfirmasi Pembayaran & Booking</Button>}
           {owner && <Button type="button" variant="outline" disabled={busy} onClick={() => {
             if (confirmCancel) void transition('cancel'); else setConfirmCancel(true);
           }}>{confirmCancel ? 'Ya, batalkan penawaran' : 'Batalkan'}</Button>}
