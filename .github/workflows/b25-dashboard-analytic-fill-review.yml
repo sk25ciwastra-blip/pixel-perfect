@@ -1,0 +1,28 @@
+name: B25 Dashboard Analytic Fill-Height Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/routes/index.tsx'
+      - 'src/components/dashboard-panel.css'
+      - 'scripts/dashboard-analytic-fill-contract.test.cjs'
+      - '.github/workflows/b25-dashboard-analytic-fill-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dashboard-analytic-layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify full-height analytic cards (source-only)
+        run: node scripts/dashboard-analytic-fill-contract.test.cjs

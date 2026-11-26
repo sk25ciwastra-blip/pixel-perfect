@@ -237,3 +237,68 @@
     transform: none;
   }
 }
+
+/* Dashboard analytics: three equal-height cards, content uses available
+   vertical space rather than leaving a fixed 128px plot at the top.
+   Styling only — does not change currency calculations, chart ticks or actions. */
+.db-analytic-grid {
+  align-items: stretch;
+}
+.db-analytic-panel {
+  min-width: 0;
+  min-height: 18.5rem;
+  container: db-analytic / inline-size;
+}
+.db-analytic-content {
+  min-width: 0;
+  justify-content: space-between;
+  gap: clamp(0.75rem, 1.2vw, 1.25rem);
+}
+.db-analytic-ring {
+  width: clamp(8rem, 12vw, 11.25rem);
+  aspect-ratio: 1 / 1;
+}
+.db-analytic-content > ul,
+.db-analytic-content > dl {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.db-income-chart {
+  min-height: 10rem;
+}
+.db-income-y-axis {
+  height: calc(100% - 1.5rem);
+  min-height: 7rem;
+}
+.db-income-plot {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+.db-income-bars {
+  flex: 1 1 auto;
+  min-height: 7rem;
+}
+
+/* At phone widths, avoid crowding the legend/targets beside a large ring.
+   The panels are allowed to grow naturally instead of clipping values. */
+/* The app's sidebar can make 3-column cards narrow even on desktop.
+   Query the card itself; don't infer space only from viewport width. */
+@container db-analytic (max-width: 360px) {
+  .db-analytic-content {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  .db-analytic-ring { width: clamp(7rem, 42cqw, 9.5rem); }
+  .db-analytic-content > ul,
+  .db-analytic-content > dl {
+    flex: 0 1 auto;
+    width: 100%;
+  }
+  .db-analytic-content > ul { font-size: 11px; }
+}
+
+@media (max-width: 420px) {
+  .db-analytic-panel { min-height: 17rem; }
+}

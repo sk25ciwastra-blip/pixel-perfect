@@ -927,13 +927,13 @@ function Ringkasan() {
 
 
           {/* Tiga modul analitik berjajar */}
-          <div className={`mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "xl:grid-cols-3" : ""}`}>
-            <section className="panel-mewah p-4" aria-labelledby="judul-komposisi">
+          <div className={`db-analytic-grid mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2 ${peran === "owner" ? "xl:grid-cols-3" : ""}`}>
+            <section className="panel-mewah db-analytic-panel flex min-w-0 flex-col p-4" aria-labelledby="judul-komposisi">
               <JudulModul id="judul-komposisi" ikon={CircleDollarSign} judul="Pendapatan Hari Ini" sub="Komposisi berdasarkan metode pembayaran" aksi={peran === "owner" ? <Link to="/keuangan" className="shrink-0 text-xs font-semibold text-gold hover:text-gold-light">Lihat Detail ›</Link> : undefined} />
               <Donat data={komposisi} totalPemasukan={totalPemasukanHariIni} />
             </section>
 
-            <section className="panel-mewah p-4" aria-labelledby="judul-grafik">
+            <section className="panel-mewah db-analytic-panel flex min-w-0 flex-col p-4" aria-labelledby="judul-grafik">
               <JudulModul id="judul-grafik" ikon={BarChart3} judul="Grafik Pendapatan" sub={`Perbandingan pendapatan ${modeGrafik === "harian" ? "per hari" : modeGrafik === "mingguan" ? "per minggu" : "per bulan"}`} aksi={peran === "owner" ? <Link to="/laporan" search={{ bagian: "pendapatan" } as never} className="shrink-0 text-xs font-semibold text-gold hover:text-gold-light">Lihat Detail ›</Link> : undefined} />
               <div className="mt-3 grid grid-cols-3 gap-1.5 rounded-xl border border-gold/20 bg-navy-deep/70 p-1 text-xs font-semibold" role="tablist">
                 {(["harian", "mingguan", "bulanan"] as ModeGrafik[]).map((m) => (
@@ -1153,8 +1153,8 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
   const keliling = 2 * Math.PI * r;
   let offset = 0;
   return (
-    <div className="mt-4 flex flex-row items-center gap-4">
-      <div className="relative size-32 shrink-0">
+    <div className="db-analytic-content mt-4 flex min-w-0 flex-1 flex-row items-center gap-4">
+      <div className="db-analytic-ring relative shrink-0">
         <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.25)]">
           <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="18" />
           {total > 0 && data.map((d) => {
@@ -1190,16 +1190,16 @@ function Donat({ data, totalPemasukan }: { data: { label: string; warna: string;
 
 function Grafik({ data, ticks }: { data: { label: string; nilai: number }[]; ticks: number[] }) {
   return (
-    <div className="mt-4 grid grid-cols-[auto_1fr] gap-3">
-      <div className="relative h-28 w-8 text-right text-[11px] text-muted-foreground">
+    <div className="db-income-chart mt-4 grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)] gap-3">
+      <div className="db-income-y-axis relative w-8 text-right text-[11px] text-muted-foreground">
         {ticks.map((t, i) => (
           <span key={t} className="absolute right-0" style={{ bottom: `calc(${(i / (ticks.length - 1)) * 100}% - 0.5rem)` }}>
             {labelJuta(t)}
           </span>
         ))}
       </div>
-      <div>
-        <div className="relative flex h-28 items-end gap-2 sm:gap-3">
+      <div className="db-income-plot min-w-0">
+        <div className="db-income-bars relative flex items-end gap-2 sm:gap-3">
           {ticks.map((t, i) => (
             <span key={t} className="absolute inset-x-0 border-t border-dashed border-gold/15" style={{ bottom: `${(i / (ticks.length - 1)) * 100}%` }} aria-hidden="true" />
           ))}
@@ -1229,7 +1229,7 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
   const keliling = 2 * Math.PI * r;
   const isi = Math.min(100, persen) / 100 * keliling;
   return (
-    <section className="panel-mewah p-4" aria-labelledby="judul-target">
+    <section className="panel-mewah db-analytic-panel flex min-w-0 flex-col p-4" aria-labelledby="judul-target">
       <JudulModul
         id="judul-target"
         ikon={Target}
@@ -1250,8 +1250,8 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
           <button type="submit" className="emas-isi rounded-xl px-4 text-sm font-bold">Simpan</button>
         </form>
       )}
-      <div className="mt-4 flex flex-row items-center gap-4">
-        <div className="relative size-32 shrink-0">
+      <div className="db-analytic-content mt-4 flex min-w-0 flex-1 flex-row items-center gap-4">
+        <div className="db-analytic-ring relative shrink-0">
           <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.3)]">
             <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="11" />
             {isi > 0 && <circle cx="70" cy="70" r={r} fill="none" stroke="var(--gold)" strokeWidth="11" strokeLinecap="round" strokeDasharray={`${isi} ${keliling}`} className="transition-all duration-700" />}
