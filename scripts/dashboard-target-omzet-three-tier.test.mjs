@@ -82,6 +82,8 @@ test("Target form is a Dialog, not an inline full-width form", () => {
   const component = source.split("function TargetOmzet(")[1]?.split("function FormulirPengeluaran(")[0];
   assert.ok(component);
   assert.ok(component.includes('<Dialog open={ubah} onOpenChange={setUbah}>'));
+  assert.ok(component.includes('max-h-[90dvh]'));
+  assert.ok(component.includes('overflow-y-auto'));
   assert.ok(component.includes('DialogTitle className="font-serif text-xl text-gold-light">Atur Target Omzet Bulanan'));
   assert.ok(component.includes("01 · Realisasi"));
   assert.ok(component.includes("02 · Standard Operasional"));
