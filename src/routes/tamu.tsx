@@ -80,6 +80,7 @@ function HalamanTamu() {
   const [nama, setNama] = useState('');
   const [alamat, setAlamat] = useState('');
   const [telepon, setTelepon] = useState('');
+  const [email, setEmail] = useState('');
   const [catatan, setCatatan] = useState('');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -126,7 +127,7 @@ function HalamanTamu() {
 
   function edit(t?: Guest, hanyaCatatan = false) {
     setCatatanSaja(hanyaCatatan); setNoteType('umum');
-    setEditing(t ?? null); setNama((t?.full_name ?? '').toLocaleUpperCase('id-ID')); setAlamat(t?.address ?? ''); setTelepon(formatGuestWhatsAppInput(t?.phone ?? ''));
+    setEditing(t ?? null); setNama((t?.full_name ?? '').toLocaleUpperCase('id-ID')); setAlamat(t?.address ?? ''); setTelepon(formatGuestWhatsAppInput(t?.phone ?? '')); setEmail(t?.email ?? '');
     setCatatan(''); setMessage(''); setOpen(true);
   }
   function tutup() { setDetailTamu(null); setOpen(false); setEditing(null); setMessage(''); }
@@ -136,11 +137,15 @@ function HalamanTamu() {
     const cleanName = formatGuestName(nama);
     const cleanAddress = formatGuestAddress(alamat);
     const cleanPhone = formatGuestWhatsAppInput(telepon);
+    const cleanEmail = email.trim();
     const match = !catatanSaja && rows.find(t =>
       t.id !== editing?.id && guestWhatsAppCanonical(t.phone) === guestWhatsAppCanonical(cleanPhone));
     if (!catatanSaja && match) { setMessage(`Nomor sudah tercatat atas nama ${match.full_name}. Gunakan data tamu tersebut.`); return; }
     if (!catatanSaja && (!cleanName || !cleanAddress)) { setMessage('Nama dan alamat tamu wajib diisi.'); return; }
     if (!catatanSaja && !isValidGuestWhatsApp(cleanPhone)) { setMessage('Nomor WhatsApp harus diawali 08 atau +62 dengan jumlah digit yang valid.'); return; }
+    if (!catatanSaja && cleanEmail && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail) || cleanEmail.length > 254)) {
+      setMessage('Format email belum valid.'); return;
+    }
     if (editing && !catatanSaja && (history.loading || history.error)) {
       setMessage('Histori perubahan belum dapat diakses. Perbarui diblokir agar perubahan tidak terjadi tanpa audit.'); return;
     }
@@ -158,10 +163,10 @@ function HalamanTamu() {
         return;
       }
       const payload = {
-        full_name: cleanName, address: cleanAddress, phone: cleanPhone,
+        full_name: cleanName, address: cleanAddress, phone: cleanPhone, email: cleanEmail || null,
         ...(!editing ? { notes: catatan.trim() } : {}),
       };
-      if (editing && editing.full_name === cleanName && editing.address === cleanAddress && editing.phone === cleanPhone) {
+      if (editing && editing.full_name === cleanName && editing.address === cleanAddress && editing.phone === cleanPhone && (editing.email ?? '') === cleanEmail) {
         setMessage('Tidak ada perubahan profil untuk disimpan.'); return;
       }
       // Optimistic lock prevents overwriting a concurrent edit from another
@@ -282,6 +287,7 @@ function HalamanTamu() {
                 {!catatanSaja && <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block min-w-0 text-base" htmlFor="tamu-nama"><span className="font-medium text-gold-light">Nama lengkap</span><input id="tamu-nama" required autoComplete="name" value={nama} onChange={e => setNama(e.target.value.toLocaleUpperCase('id-ID'))} onBlur={() => setNama(formatGuestName(nama))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                   <label className="block min-w-0 text-base" htmlFor="tamu-whatsapp"><span className="font-medium text-gold-light">Nomor HP/WhatsApp</span><input id="tamu-whatsapp" required type="tel" inputMode="tel" autoComplete="tel" value={telepon} onChange={e => setTelepon(formatGuestWhatsAppInput(e.target.value))} onBlur={() => setTelepon(formatGuestWhatsAppInput(telepon))} placeholder="08... atau +62..." className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                  <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-email"><span className="font-medium text-gold-light">Email (opsional)</span><input id="tamu-email" type="email" autoCapitalize="none" autoComplete="email" maxLength={254} value={email} onChange={e => setEmail(e.target.value)} placeholder="nama@email.com" className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                   <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-alamat"><span className="font-medium text-gold-light">Alamat</span><input id="tamu-alamat" required autoCapitalize="words" autoComplete="street-address" value={alamat} onChange={e => setAlamat(capitalizeLiveText(e.target.value, 'words'))} onBlur={() => setAlamat(formatGuestAddress(alamat))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                 </div>}
                 {!editing && <label className="block text-base"><span className="font-medium text-gold-light">Catatan Awal (Opsional)</span><textarea maxLength={500} value={catatan} onChange={e => setCatatan(e.target.value)} className="mt-2 min-h-28 w-full rounded-lg border border-input bg-navy-deep/50 px-3 py-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>}
@@ -311,6 +317,7 @@ function HalamanTamu() {
                   <div><dt>No. HP / WhatsApp</dt><dd><span className="dt-telepon-inline"><IkonWhatsApp className="size-[17px]" />{detail.phone}</span></dd></div>
                   <div><dt>Tercatat Sejak</dt><dd>{tanggalPendekWib(detail.created_at)}</dd></div>
                   <div><dt>Pembaruan Terakhir</dt><dd>{tanggalPendekWib(detail.updated_at)}</dd></div>
+                  <div><dt>Email</dt><dd>{detail.email ? <a href={`mailto:${detail.email}`} className="underline underline-offset-2">{detail.email}</a> : 'Belum dicatat'}</dd></div>
                   <div><dt>Alamat</dt><dd>{detail.address || '—'}</dd></div>
                   <div><dt>Catatan Terakhir</dt><dd>{catatanTerakhir}</dd></div>
                   <div><dt>Catatan Perhatian</dt><dd>{peringatanTerbaru?.body ?? 'Belum dicatat'}</dd></div>
