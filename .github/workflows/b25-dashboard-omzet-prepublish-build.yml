@@ -24,7 +24,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: Install dependencies without lifecycle scripts
         run: bun install --frozen-lockfile --ignore-scripts
-      - name: Typecheck source, no Cloud access
-        run: bunx tsc --noEmit
-      - name: Build production assets (no publish or deploy)
+      - name: Build production assets and regenerate TanStack route types (no publish)
         run: bun run build
+      - name: Typecheck generated routes and source, no Cloud access
+        run: bunx tsc --noEmit
