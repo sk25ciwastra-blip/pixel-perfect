@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Building2 } from 'lucide-react';
 import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
+import { matchesHomestayProfileReadback } from '@/lib/homestay-profile-readback';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
@@ -101,15 +102,33 @@ function HalamanProfilHomestay() {
         setActionResult({ kind: 'error', title: 'Periksa kembali perubahan profil', description: detail });
         return;
       }
+      // Always show the actual data returned by the read RPC. Never leave
+      // the form looking as though an unverified change is now persisted.
       setProfil(row);
       setName(row.business_name);
       setAddress(row.address);
       setPhone(row.phone);
       setWhatsapp(row.whatsapp);
+      const matchesRequest = matchesHomestayProfileReadback({
+        business_name: cleanName,
+        address: cleanAddress,
+        phone: cleanPhone,
+        whatsapp: cleanWhatsapp,
+      }, row);
+      if (!matchesRequest) {
+        const detail = 'Profil terbaru berhasil dibaca, tetapi ada nilai yang tidak sesuai dengan perubahan yang dikirim. Formulir telah mengikuti data terakhir dari sistem. Periksa sebelum menyimpan ulang.';
+        setError(detail);
+        setActionResult({
+          kind: 'error',
+          title: 'Periksa kembali perubahan profil',
+          description: detail,
+        });
+        return;
+      }
       setActionResult({
         kind: 'success',
         title: 'Profil Homestay berhasil disimpan',
-        description: 'Perubahan nama usaha, alamat, dan kontak resmi telah disimpan dan data terbaru berhasil dimuat.',
+        description: 'Nama usaha, alamat, telepon, dan WhatsApp resmi yang dibaca ulang sesuai dengan perubahan Owner.',
       });
     } catch {
       const detail = writeAcknowledged

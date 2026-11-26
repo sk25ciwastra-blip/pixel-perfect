@@ -10,6 +10,9 @@ const source = fs.readFileSync(
 const dialog = fs.readFileSync(
   path.join(__dirname, '..', 'src/components/action-result-dialog.tsx'), 'utf8',
 );
+const comparator = fs.readFileSync(
+  path.join(__dirname, '..', 'src/lib/homestay-profile-readback.ts'), 'utf8',
+);
 const checks = [
   ['Uses reusable result dialog and one modal instance',
     source.includes('ActionResultDialog, type ActionResultState') &&
@@ -18,7 +21,7 @@ const checks = [
     source.includes("siap && posisiKode === 'owner' && !training.is_training") &&
     source.includes('if (!owner || !profil || loading || saving) return;')],
   ['Retains original write and read RPCs, one write only',
-    (source.match(/rpc\('b25_save_homestay_profile'/g) || []).length === 1 &&
+    (source.split("rpc('b25_save_homestay_profile'").length - 1) === 1 &&
     (source.match(/rpc\('b25_read_homestay_profile'/g) || []).length === 2],
   ['Rejects invalid name, address, or contact before RPC',
     source.includes('cleanName.length < 3') &&
@@ -41,6 +44,23 @@ const checks = [
     source.includes('value={phone}') && source.includes('value={whatsapp}') &&
     source.includes('maxLength={100}') && source.includes('maxLength={500}') &&
     source.includes('maxLength={30}')],
+  ['Readback verifies all four submitted fields before showing success',
+    source.includes('const matchesRequest = matchesHomestayProfileReadback({') &&
+    source.indexOf('if (!matchesRequest) {') <
+      source.indexOf("title: 'Profil Homestay berhasil disimpan'") &&
+    comparator.includes('stored.business_name === requested.business_name') &&
+    comparator.includes('stored.address === requested.address') &&
+    comparator.includes('stored.phone === requested.phone') &&
+    comparator.includes('stored.whatsapp === requested.whatsapp')],
+  ['Mismatch is not success and the form shows the latest stored profile',
+    source.includes('if (!matchesRequest) {') &&
+    source.includes('Formulir telah mengikuti data terakhir dari sistem.') &&
+    source.indexOf('setName(row.business_name);', source.indexOf("const latest = await rpc('b25_read_homestay_profile');")) <
+      source.indexOf('if (!matchesRequest) {')],
+  ['No extra writes or sensitive data in the mismatch message',
+    (source.split("rpc('b25_save_homestay_profile'").length - 1) === 1 &&
+    !source.includes('console.log(cleanPhone)') &&
+    !source.includes('console.log(cleanWhatsapp)')],
   ['Dialog is dismissible with a Tutup button, without a top X',
     dialog.includes('AlertDialogPrimitive.Cancel asChild') &&
     dialog.includes('Tutup') && !dialog.includes('DialogPrimitive.Close')],
