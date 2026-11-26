@@ -15,6 +15,7 @@ import { DetailTransaksi } from '@/components/detail-transaksi';
 import '@/components/tamu.css';
 import '@/components/detail-tamu.css';
 import { empatDigitWA, kunjunganTamu, urutTamu } from '@/lib/tamu-tampilan';
+import { formatGuestName, formatGuestAddress, formatGuestWhatsAppInput, guestWhatsAppCanonical, isValidGuestWhatsApp } from '@/lib/guest-entry-format';
 
 export const Route = createFileRoute('/tamu')({
   head: () => meta('Daftar Tamu', 'Data tamu dan pencarian nama atau nomor HP Baturaden 25 Homestay.'),
@@ -113,20 +114,25 @@ function HalamanTamu() {
 
   function edit(t?: Guest, hanyaCatatan = false) {
     setCatatanSaja(hanyaCatatan);
-    setEditing(t ?? null); setNama(t?.full_name ?? ''); setAlamat(t?.address ?? ''); setTelepon(t?.phone ?? '');
+    setEditing(t ?? null); setNama((t?.full_name ?? '').toLocaleUpperCase('id-ID')); setAlamat(t?.address ?? ''); setTelepon(formatGuestWhatsAppInput(t?.phone ?? ''));
     setCatatan(''); setMessage(''); setOpen(true);
   }
   function tutup() { setDetailTamu(null); setOpen(false); setEditing(null); setMessage(''); }
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (saving || readOnly) return;
-    const match = rows.find(t => t.phone === telepon.trim() && t.id !== editing?.id);
+    const cleanName = formatGuestName(nama);
+    const cleanAddress = formatGuestAddress(alamat);
+    const cleanPhone = formatGuestWhatsAppInput(telepon);
+    const match = !catatanSaja && rows.find(t =>
+      t.id !== editing?.id && guestWhatsAppCanonical(t.phone) === guestWhatsAppCanonical(cleanPhone));
     if (!catatanSaja && match) { setMessage(`Nomor sudah tercatat atas nama ${match.full_name}. Gunakan data tamu tersebut.`); return; }
-    if (!catatanSaja && !/^[0-9+]{8,16}$/.test(telepon.trim())) { setMessage('Nomor HP harus 8–16 digit.'); return; }
+    if (!catatanSaja && (!cleanName || !cleanAddress)) { setMessage('Nama dan alamat tamu wajib diisi.'); return; }
+    if (!catatanSaja && !isValidGuestWhatsApp(cleanPhone)) { setMessage('Nomor WhatsApp harus diawali 08 atau +62 dengan jumlah digit yang valid.'); return; }
     if (catatan.trim() && (notes.loading || notes.error)) { setMessage('Riwayat catatan belum dapat diakses. Kosongkan catatan baru untuk menyimpan data tamu saja.'); return; }
     setSaving(true); setMessage('');
     try {
-      const payload = { full_name: nama.trim(), address: alamat.trim(), phone: telepon.trim(), ...(!editing ? { notes: catatan.trim() } : catatan.trim() ? { notes: catatan.trim() } : {}) };
+      const payload = { full_name: cleanName, address: cleanAddress, phone: cleanPhone, ...(!editing ? { notes: catatan.trim() } : catatan.trim() ? { notes: catatan.trim() } : {}) };
       const result = editing ? await supabase.from('guests').update(catatanSaja ? { notes: catatan.trim() } : payload).eq('id', editing.id).select().single() : await supabase.from('guests').insert(payload).select().single();
       if (result.error) setMessage(result.error.code === '23505' ? 'Nomor HP sudah tercatat. Gunakan data tamu tersebut.' : result.error.message);
       else { if (detailTamu && result.data) setDetailTamu(result.data); setOpen(false); setEditing(null); await Promise.all([refresh(), notes.refresh()]); }
@@ -146,12 +152,13 @@ function HalamanTamu() {
       {error && <p role="alert" className="mt-4 text-base text-destructive">{error}</p>}
       <div className="tabel-tamu-premium mt-6 w-full min-w-0 overflow-hidden rounded-lg border border-[var(--premium-line)] bg-[var(--premium-paper)] p-2 text-[var(--premium-ink)] shadow-lembut [--muted-foreground:var(--premium-muted)] [--gold:var(--gold-krem)] [--gold-light:var(--gold-krem)] [--siap-foreground:var(--premium-success)] [--border:var(--premium-line)] [--accent:var(--premium-highlight)] [--accent-foreground:var(--premium-ink)] sm:p-3">
         <div className="max-w-full overflow-x-auto">
-          <table className="w-full min-w-[780px] table-fixed border-separate border-spacing-0 text-center text-base [&_th]:text-[13px]">
-            <colgroup><col className="w-[6%]" /><col className="w-[28%]" /><col className="w-[18%]" /><col className="w-[15%]" /><col className="w-[16%]" /><col className="w-[17%]" /></colgroup>
+          <table className="w-full min-w-[1050px] table-fixed border-separate border-spacing-0 text-center text-base [&_th]:text-[13px]">
+            <colgroup><col className="w-[5%]" /><col className="w-[19%]" /><col className="w-[22%]" /><col className="w-[16%]" /><col className="w-[11%]" /><col className="w-[13%]" /><col className="w-[14%]" /></colgroup>
             <thead className="whitespace-nowrap bg-[var(--premium-highlight)] text-[13px] font-semibold text-gold"><tr>
               <th className="border-b border-gold/20 px-3 py-3 normal-case">No.</th>
               <th className="pemisah-kolom border-b border-gold/20 px-4 py-3"><Button variant="ghost" size="sm" className="h-9 px-3 text-[13px] text-gold" onClick={() => setUrutan('nama')}>NAMA TAMU</Button></th>
-              <th className="pemisah-kolom border-b border-gold/20 px-5 py-3">WHATSAPP</th>
+              <th className="pemisah-kolom border-b border-gold/20 px-3 py-3">ALAMAT</th>
+              <th className="pemisah-kolom border-b border-gold/20 px-3 py-3">WHATSAPP</th>
               <th aria-sort={urutan === 'nama' ? 'none' : urutan === 'terbanyak' ? 'descending' : 'ascending'} className="pemisah-kolom border-b border-gold/20 px-4 py-3"><Button variant="ghost" size="sm" className="h-9 gap-1.5 px-2 text-[13px] text-gold" onClick={() => setUrutan(urutan === 'terbanyak' ? 'tersedikit' : 'terbanyak')}>KUNJUNGAN<ArrowDownUp className="size-4 shrink-0" /></Button></th>
               <th className="pemisah-kolom border-b border-gold/20 px-5 py-3">STATUS</th>
               <th className="border-b border-gold/20 px-5 py-3">AKSI</th>
@@ -159,7 +166,8 @@ function HalamanTamu() {
             <tbody>{hasil.map((t, index) => <tr key={t.id} className="h-14 transition-colors hover:bg-gold/[0.04]">
               <td className="border-b border-border/60 px-2 py-3 text-sm tabular-nums text-muted-foreground">{index + 1}</td>
               <td className="pemisah-kolom border-b border-border/60 px-4 py-3 text-left font-semibold"><span className="block truncate" title={t.full_name}>{t.full_name}</span></td>
-              <td className="pemisah-kolom whitespace-nowrap border-b border-border/60 px-4 py-3 font-mono text-base tabular-nums">xxxx{empatDigitWA(t.phone)}</td>
+              <td className="pemisah-kolom border-b border-border/60 px-3 py-3 text-left"><span className="block truncate" title={t.address || 'Alamat belum tercatat'}>{t.address?.trim() || '—'}</span></td>
+              <td className="pemisah-kolom whitespace-nowrap border-b border-border/60 px-3 py-3 font-mono text-base tabular-nums">xxxx{empatDigitWA(t.phone)}</td>
               <td className="pemisah-kolom border-b border-border/60 px-4 py-3 tabular-nums">{transactions.loading ? '—' : jumlahKunjungan(t.id)}</td>
               <td className="pemisah-kolom border-b border-border/60 px-2 py-3"><span className="tamu-status-pill text-xs text-muted-foreground" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span></td>
               <td className="border-b border-border/60 px-2 py-2"><div className="tamu-aksi flex justify-center gap-0">
@@ -231,7 +239,11 @@ function HalamanTamu() {
               </footer>
             </form> : open && !readOnly ? <form onSubmit={save}>
               <div className="space-y-5 p-5 sm:p-7">
-                {!catatanSaja && <div className="grid gap-4 sm:grid-cols-2">{([['Nama lengkap', nama, setNama], ['Nomor HP/WhatsApp', telepon, setTelepon], ['Alamat', alamat, setAlamat]] as const).map(([label, value, setter]) => <label key={label} className={`block min-w-0 text-base ${label === 'Alamat' ? 'sm:col-span-2' : ''}`}><span className="font-medium text-gold-light">{label}</span><input required value={value} onChange={e => setter(e.target.value)} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>)}</div>}
+                {!catatanSaja && <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block min-w-0 text-base" htmlFor="tamu-nama"><span className="font-medium text-gold-light">Nama lengkap</span><input id="tamu-nama" required autoComplete="name" value={nama} onChange={e => setNama(e.target.value.toLocaleUpperCase('id-ID'))} onBlur={() => setNama(formatGuestName(nama))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                  <label className="block min-w-0 text-base" htmlFor="tamu-whatsapp"><span className="font-medium text-gold-light">Nomor HP/WhatsApp</span><input id="tamu-whatsapp" required type="tel" inputMode="tel" autoComplete="tel" value={telepon} onChange={e => setTelepon(formatGuestWhatsAppInput(e.target.value))} onBlur={() => setTelepon(formatGuestWhatsAppInput(telepon))} placeholder="08... atau +62..." className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                  <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-alamat"><span className="font-medium text-gold-light">Alamat</span><input id="tamu-alamat" required autoComplete="street-address" value={alamat} onChange={e => setAlamat(e.target.value)} onBlur={() => setAlamat(formatGuestAddress(alamat))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                </div>}
                 <label className="block text-base"><span className="font-medium text-gold-light">{editing ? 'Tambah Catatan' : 'Catatan'}</span><textarea required={catatanSaja} autoFocus={catatanSaja} value={catatan} onChange={e => setCatatan(e.target.value)} className="mt-2 min-h-28 w-full rounded-lg border border-input bg-navy-deep/50 px-3 py-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                 {notes.error && <p className="text-sm text-muted-foreground">Riwayat catatan belum tersedia. Data lama tetap dipertahankan.</p>}
                 {message && <p role="alert" className="text-base text-destructive">{message}</p>}
