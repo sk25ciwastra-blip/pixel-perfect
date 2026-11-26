@@ -17,6 +17,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PeranProvider } from "../lib/peran";
 import { Opening } from "../components/opening";
+import { installLiveAutoCapitalization } from "../lib/live-auto-capitalization";
 import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
@@ -139,6 +140,10 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Covers all operational screens and Radix portals, including raw <input>
+  // controls not rendered through the shared Input component.
+  useEffect(() => installLiveAutoCapitalization(document), []);
 
   return (
     <QueryClientProvider client={queryClient}>
