@@ -22,8 +22,8 @@ const checks = [
     page.includes("{t.address?.trim() || '—'}") &&
     page.includes("title={t.address || 'Alamat belum tercatat'}")],
   ['Visits remain emphasized in column five; WhatsApp uses a lighter weight in column four',
-    css.includes('.tabel-tamu-premium tbody tr td:nth-child(4) {\\n  font-size: 14px;\\n  font-weight: 500;\\n}') &&
-    css.includes('.tabel-tamu-premium tbody tr td:nth-child(5) {\\n  font-size: 15px;\\n  font-weight: 600;\\n}')],
+    css.includes('.tabel-tamu-premium tbody tr td:nth-child(4) {\n  font-size: 14px;\n  font-weight: 500;\n}') &&
+    css.includes('.tabel-tamu-premium tbody tr td:nth-child(5) {\n  font-size: 15px;\n  font-weight: 600;\n}')],
   ['Guest name uppercases during typing and trims on blur',
     page.includes("onChange={e => setNama(e.target.value.toLocaleUpperCase('id-ID'))}") &&
     page.includes('onBlur={() => setNama(formatGuestName(nama))}')],
