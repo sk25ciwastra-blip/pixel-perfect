@@ -3,7 +3,7 @@ import { SubPengaturan } from '@/components/pengaturan-sub';
 import { useEffect, useState } from 'react';
 import { Settings2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { rpc, useTable } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
@@ -26,7 +26,7 @@ function HalamanPengaturanKeuangan() {
   const commissionConfigs = useTable('finance_commission_configs', isOwner);
   const financeSettings = useTable('finance_settings', isOwner);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
+  const [actionResult, setActionResult] = useState<ActionResultState | null>(null);
   const [minimumDpMode, setMinimumDpMode] = useState('AMOUNT');
   const [minimumDpValue, setMinimumDpValue] = useState('0');
   const [commissionMode, setCommissionMode] = useState('PERCENTAGE');
@@ -41,30 +41,65 @@ function HalamanPengaturanKeuangan() {
   }, [commissionConfigs.rows, financeSettings.rows]);
 
   async function run(
-    action: () => Promise<{ error?: { message: string } | null; partial?: boolean }>,
+    action: () => Promise<{ error?: { message: string } | null; partial?: boolean; validationError?: string }>,
     successLabel: string,
   ) {
-    if (busy) return;
-    setBusy(true); setMessage('');
+    if (!isOwner || busy) return;
+    setBusy(true);
+    setActionResult(null);
     try {
+      // The two existing RPC calls are deliberately not treated as atomic.
+      // We must not claim full success if only the first (minimum DP) was accepted.
       const result = await action();
       if (result.error) {
-        const detail = result.partial
-          ? `Minimum DP berhasil disimpan, tetapi komisi gagal diperbarui: ${result.error.message}`
-          : result.error.message;
-        setMessage(detail);
-        if (result.partial) toast.warning('Sebagian perubahan berhasil', { description: detail });
-        else toast.error('Perubahan gagal disimpan', { description: detail });
-        if (result.partial) await Promise.allSettled([commissionConfigs.refresh(), financeSettings.refresh()]);
+        if (result.partial) {
+          const reread = await Promise.allSettled([
+            financeSettings.refresh({ throwOnError: true }),
+            commissionConfigs.refresh({ throwOnError: true }),
+          ]);
+          const readFailed = reread.some(item => item.status === 'rejected');
+          setActionResult({
+            kind: 'error',
+            title: 'Konfigurasi tersimpan sebagian',
+            description: readFailed
+              ? 'Minimum DP sudah diterima sistem, tetapi pembaruan komisi bermasalah dan data terbaru belum dapat diperiksa. Periksa kedua pengaturan sebelum menyimpan ulang.'
+              : 'Minimum DP berhasil disimpan, tetapi komisi belum berhasil diperbarui. Periksa kedua pengaturan sebelum mengulangi penyimpanan.',
+          });
+        } else {
+          setActionResult({
+            kind: 'error',
+            title: result.validationError ? 'Nilai pengaturan belum valid' : 'Konfigurasi belum dapat disimpan',
+            description: result.validationError ??
+              'Sistem belum dapat mengonfirmasi penyimpanan Minimum DP. Periksa pengaturan yang berlaku sebelum mencoba kembali.',
+          });
+        }
         return;
       }
-      setMessage(successLabel);
-      toast.success(successLabel);
-      await Promise.allSettled([commissionConfigs.refresh(), financeSettings.refresh()]);
-    } catch (failure) {
-      const detail = failure instanceof Error ? failure.message : 'Terjadi gangguan. Periksa data sebelum mencoba lagi.';
-      setMessage(detail);
-      toast.error('Hasil penyimpanan belum dapat dipastikan', { description: detail });
+
+      // A backend acknowledgement alone cannot prove what is currently readable.
+      const reread = await Promise.allSettled([
+        financeSettings.refresh({ throwOnError: true }),
+        commissionConfigs.refresh({ throwOnError: true }),
+      ]);
+      if (reread.some(item => item.status === 'rejected')) {
+        setActionResult({
+          kind: 'error',
+          title: 'Periksa kembali konfigurasi',
+          description: 'Kedua penyimpanan diterima sistem, tetapi hasil terbaru belum dapat dibaca sepenuhnya. Periksa Minimum DP dan komisi sebelum menyimpan ulang.',
+        });
+        return;
+      }
+      setActionResult({
+        kind: 'success',
+        title: successLabel,
+        description: 'Pengaturan Minimum DP dan komisi telah disimpan, dan data terbaru berhasil dimuat ulang.',
+      });
+    } catch {
+      setActionResult({
+        kind: 'error',
+        title: 'Hasil penyimpanan belum dapat dipastikan',
+        description: 'Terjadi gangguan saat memproses konfigurasi. Sebagian perubahan mungkin sudah tersimpan. Periksa Minimum DP dan komisi sebelum mencoba kembali.',
+      });
     } finally {
       setBusy(false);
     }
@@ -87,7 +122,6 @@ function HalamanPengaturanKeuangan() {
           </div>
           {(financeSettings.loading || commissionConfigs.loading) && <p role="status" className="mb-3 text-sm">Memuat pengaturan keuangan…</p>}
           {(financeSettings.error || commissionConfigs.error) && <p role="alert" className="mb-3 text-sm text-destructive">{financeSettings.error || commissionConfigs.error}</p>}
-          {message && <p role="status" className="mb-4 rounded-lg border border-gold/30 bg-background/60 p-3 text-sm">{message}</p>}
           <div className="space-y-4">
             <label className="block text-sm font-semibold">Ketentuan minimum DP
               <select value={minimumDpMode} onChange={e => setMinimumDpMode(e.target.value)} className="mt-1.5 h-11 w-full rounded-lg border border-input bg-background/70 px-3 text-sm">
@@ -114,9 +148,9 @@ function HalamanPengaturanKeuangan() {
               const dp = Number(minimumDpValue);
               const rate = Number(commissionRate);
               const roomAmount = Number(perRoomAmount);
-              if (!Number.isFinite(dp) || dp < 0 || (minimumDpMode === 'PERCENTAGE' && dp > 100)) return { error: { message: 'Nilai DP tidak valid.' } };
-              if (commissionMode === 'PERCENTAGE' && (!Number.isFinite(rate) || rate < 0 || rate > 100)) return { error: { message: 'Persentase komisi harus 0–100.' } };
-              if (commissionMode === 'PER_ROOM' && (!Number.isFinite(roomAmount) || roomAmount < 0)) return { error: { message: 'Nominal per kamar tidak valid.' } };
+              if (!Number.isFinite(dp) || dp < 0 || (minimumDpMode === 'PERCENTAGE' && dp > 100)) return { error: { message: 'Nilai DP tidak valid.' }, validationError: 'Nilai DP tidak valid.' };
+              if (commissionMode === 'PERCENTAGE' && (!Number.isFinite(rate) || rate < 0 || rate > 100)) return { error: { message: 'Persentase komisi harus 0–100.' }, validationError: 'Persentase komisi harus 0–100.' };
+              if (commissionMode === 'PER_ROOM' && (!Number.isFinite(roomAmount) || roomAmount < 0)) return { error: { message: 'Nominal per kamar tidak valid.' }, validationError: 'Nominal per kamar tidak valid.' };
               const first = await rpc('set_finance_settings', { _minimum_dp_mode: minimumDpMode, _minimum_dp_value: dp });
               if (first.error) return { error: first.error };
               const second = await rpc('set_finance_commission_config', { _mode: commissionMode, _rate: angka(commissionRate), _per_room_amount: angka(perRoomAmount) });
@@ -126,6 +160,7 @@ function HalamanPengaturanKeuangan() {
             </Button>
           </div>
         </section>
+        <ActionResultDialog result={actionResult} onClose={() => setActionResult(null)} />
       </SubPengaturan>
     </Kerangka>
   );
