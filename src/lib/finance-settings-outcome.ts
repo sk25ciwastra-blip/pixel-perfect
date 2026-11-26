@@ -20,6 +20,7 @@ type FinanceOutcomeOptions = {
   refreshFinance: () => Promise<unknown>;
   refreshCommission: () => Promise<unknown>;
   successLabel: string;
+  verifyPersisted: () => Promise<boolean>;
 };
 
 async function rereadFinanceSettings(options: FinanceOutcomeOptions): Promise<boolean> {
@@ -61,10 +62,20 @@ export async function resolveFinanceSettingsOutcome(options: FinanceOutcomeOptio
         description: 'Kedua penyimpanan diterima sistem, tetapi hasil terbaru belum dapat dibaca sepenuhnya. Periksa Minimum DP dan komisi sebelum menyimpan ulang.',
       };
     }
+    // Refresh success alone does not establish the persisted values match
+    // what Owner requested. Verify independent fresh reads before claiming success.
+    const persistedMatches = await options.verifyPersisted();
+    if (!persistedMatches) {
+      return {
+        kind: 'error',
+        title: 'Periksa kembali konfigurasi',
+        description: 'Data terbaru berhasil dibaca, tetapi Minimum DP atau komisi belum cocok dengan nilai yang disimpan. Periksa pengaturan sebelum mencoba kembali.',
+      };
+    }
     return {
       kind: 'success',
       title: options.successLabel,
-      description: 'Pengaturan Minimum DP dan komisi telah disimpan, dan data terbaru berhasil dimuat ulang.',
+      description: 'Pengaturan Minimum DP dan komisi telah disimpan dan nilai yang dibaca ulang sesuai dengan perubahan Owner.',
     };
   } catch {
     return {
