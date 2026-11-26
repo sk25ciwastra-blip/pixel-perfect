@@ -209,6 +209,17 @@ Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih se
 
 ---
 
+### Persiapan runner restore privat untuk backup LIVE terbaru — 26 November 2026
+
+**Bukti terbaru dari READ-ONLY:** 51 tabel publik LIVE, 123 fungsi, 51 tabel RLS, 63 kebijakan, 134 indeks, 55 trigger, 95 foreign key. Metadata saja tersimpan di [snapshot katalog](B25_LIVE_CATALOG_SNAPSHOT_20261126.json), **bukan** data tamu atau dump. Backup 25 November berisi 45 tabel; enam tambahan belum dicakup. Tidak ada ekspor LIVE baru sesudah 25 Nov yang dapat diakses melalui connector.
+
+- **File alat baru dalam branch/PR review:** `scripts/b25_restore_private_windows_pg18.py`, dapat menerima nama ZIP/cek SHA baru; hanya restore ke cluster Windows PostgreSQL 18 sementara `127.0.0.1` dan dapat memeriksa TOC/nama tabel dahulu.
+- **Panduan tindakan privat:** [PANDUAN_RESTORE_PRIVAT_PG18_BACKUP_TERBARU_20261126.md](PANDUAN_RESTORE_PRIVAT_PG18_BACKUP_TERBARU_20261126.md), menjelaskan `inspect` sebelum `restore`, hash ZIP independen, pembatasan no-ACL/no-owner, dan larangan memakai Staging/LIVE.
+- **Tes:** hanya tes Python ZIP *synthetic* dan pemeriksaan CI; **jangan klaim full restore** sampai arsip LIVE baru dipulihkan secara privat pada mesin lokal.
+- **Release gate masih:** **NO-GO SQL CLOUD OVERTIME**, backup segar mencakup seluruh skema terkini + uji restore terisolasi + audit role/ACL/Auth/Storage + persetujuan Owner Cloud khusus. Jangan mengulang tes Postgres sintetis PR #181 yang sudah PASS.
+
+---
+
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
 1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.
