@@ -55,7 +55,7 @@ try {
       assert.equal(await popup.locator('span.text-emerald-700').count(), 1, 'Success icon must be green');
       assert.equal(await page.getByTestId('modal-state').innerText(), 'success');
       const background = await popup.evaluate(el => getComputedStyle(el).backgroundColor);
-      assert.match(background, /250,\\s*245,\\s*233/, 'Popup must use warm cream background');
+      assert.match(background, /250,\s*245,\s*233/, 'Popup must use warm cream background');
       const bounds = await popup.boundingBox();
       assert.ok(bounds, 'Popup must have a visible bounding box');
       assert.ok(bounds.x >= -2 && bounds.x + bounds.width <= viewport.width + 2,
