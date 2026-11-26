@@ -577,3 +577,20 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Bukti testing:** head `c2c7e834d31c019056bf39b734badf5160f76f08` mencapai **17/17 workflow GitHub Actions SUCCESS** (0 failed/pending). Workflow khusus `B25 Live Auto Capitalization — Forms Review` lulus: (a) 12/12 tes formatter pure, 7 source guard dan regresi guest entry, (b) build seluruh aplikasi dan TypeScript, (c) **Chromium desktop 1280×800 dan mobile 375×812 nyata PASS** pada React-controlled inputs untuk pengetikan karakter pertama, paste alamat multi kata, catatan, update state React, caret tengah, dan field teknis tidak berubah. Browser QA hanya simulasi localhost tanpa Cloud/SQL; bukti log screenshot sebagai artifact GitHub Actions, bukan UAT LIVE.
 
 **Lovable:** sesaat sesudah merge, metadata source project masih menunjuk commit checkpoint sebelumnya `72d9306` dan status `needs_attention / out_of_credits`; source sync mungkin terlambat. Status `is_published=true` tidak membuktikan aplikasi publik sudah memakai commit baru. Tidak ada publish Lovable dari pekerjaan ini. **UAT visual LIVE tetap PENDING** sampai commit yang benar tersedia/dipublikasikan dan Owner membuktikan perilaku. Tidak ada data tamu asli atau operasional yang diubah.
+
+
+---
+
+### Addendum Detail Tamu PR #206 — audit masih HOLD SQL Cloud (26 November 2026)
+
+**Permintaan Owner (berdasarkan screenshot):** Detail Tamu harus memiliki tombol **Perbarui** dan histori perubahan profil (alamat, nomor WhatsApp, nama, dan petugas/waktu), serta seluruh informasi di detail mesti berdasarkan data nyata dan tindakan yang berfungsi.
+
+**Implementasi kode disiapkan:** [PR #206](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/206) status **DRAFT / BELUM MERGED** pada head `30c42041314fb65e226f1fccd611317c57744799`. Kode UI menambah Perbarui, tab Riwayat Perubahan dengan old/new/aktor/WIB, category notes Umum/Preferensi/Perhatian/Lainnya, alamat & WA/email nyata, WhatsApp action, status kunjungan dari data Booking/Check-in/Checkout, total transaksi sebagai jumlah, preferensi berdasarkan kunjungan, Booking yang sudah selesai tetap dalam riwayat, dan Check-out hanya dari waktu aktual. Desain premium cream–gold dipertahankan.
+
+**Bukti QA:** **19/19 GitHub Actions SUCCESS** (0 failed/pending), termasuk build/TypeScript, tes source+pure UI, regresi Guest Entry/Live Auto Capital, dan migrasi/triggers/RLS/RPC dites menggunakan PostgreSQL 16 **ephemeral lokal GitHub**; tidak ada data tamu LIVE yang dimodifikasi. Pengaman edit optimistik membandingkan `updated_at`; edit profil tidak dilakukan bila histori belum siap.
+
+**SQL baru yang belum diterapkan:** `supabase/migrations/20261126190000_guest_profile_history_notes.sql` membuat kolom email opsional `guests.email`, tabel `guest_profile_history` dengan kebijakan SELECT/RLS mengikuti izin tamu dan penulisan hanya oleh trigger, serta `guest_notes.note_type` dan RPC `b25_add_guest_categorized_note` terotorisasi. Histori mulai merekam **perubahan yang terjadi setelah migrasi**, bukan riwayat masa lalu yang nilainya tidak diketahui. Query read-only LOVABLE LIVE membuktikan seluruh komponen skema baru **belum ada** saat checkpoint ini.
+
+**KEPUTUSAN GATE:** sesuai aturan Owner lama, **jangan apply SQL Cloud atau merge/publish perubahan yang bergantung pada skema sebelum izin SQL khusus dan preflight/backup**. Tombol Perbarui sengaja disabled ketika histori gagal dimuat. Lovable masih `needs_attention/out_of_credits`, source proyek masih commit lama `08dac72`, dan fakta `is_published=true` bukan bukti kode PR ini tayang. UAT visual + integrasi LIVE tetap **BELUM PASS**.
+
+**Langkah berikut:** minta izin Owner untuk aktivasi **migrasi SQL khusus histori dan kategori catatan Tamu**; setelah persetujuan, pastikan preflight/backup dan rollback, apply terbatas, verifikasi guard/RLS, baru merge PR #206 dan lanjut publish/UAT saat Lovable dapat dipakai. Tidak mengubah transaksi, sesi kas, DP, komisi, tarif, atau Overtime.
