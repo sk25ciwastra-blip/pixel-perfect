@@ -514,3 +514,23 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Bukti setelah reset dari query LIVE:** **0/4 profil tamu target tersisa; 0/3 transaksi target; 0 pembayaran/refund target; 0/2 sesi kas FINAL target; 0 setoran, pengeluaran, audit closing, alokasi sesi, guest notes, idempotency, booking events serta riwayat HK target.** Ketiga trigger khusus terverifikasi `tgenabled='O'` (aktif). Backup privat tetap **37 row / 17 tabel**, akses `anon` dan `authenticated` ke schema = false. Total database operasional sesudah reset: **9 tamu lainnya, 0 transaksi, 0 pembayaran, 0 sesi kas**. Angka ini bukan jaminan seluruh data lain adalah data asli; hanya empat tamu yang disebut Owner yang diproses.
 
 **Status:** **DONE — data demo yang diminta telah dibersihkan dan diverifikasi di tabel operasional LIVE**. Ini reset data UAT, bukan pengujian popup UI-26-02 dan **bukan** izin publish Lovable/merge PR/aktivasi SQL Overtime. Owner dapat menyegarkan halaman Daftar Tamu dan mulai menginput tamu asli. Sesi kas operasional baru perlu dibuka sesuai prosedur ketika mulai menerima pembayaran. Backup privat perlu keputusan retensi/penghapusan terpisah setelah verifikasi operasional.
+
+
+---
+
+### Addendum Daftar Tamu — Kolom Alamat & Format Input PR #202 MERGED (26 November 2026 WIB)
+
+**Instruksi Owner:** Owner meminta ChatGPT langsung memperbaiki kode pada GitHub dari dua screenshot Daftar Tamu dan Popup Tambah Tamu, bukan hanya memberi instruksi ke Codex/Lovable. [PR #202](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/202) **MERGED** (squash) ke `main`, commit `36ce46ed660624719c4cb79189f9f49311afa05a`.
+
+**Lingkup implementasi** (kode saja):
+- Tabel `src/routes/tamu.tsx` berisi **7 kolom**: No. | Nama Tamu | **Alamat** | WhatsApp | Kunjungan | Status | Aksi. Alamat adalah data `guests.address` existing, fallback `—`; teks panjang ditruncate dengan tooltip. Lebar kolom dan CSS penekanan angka Kunjungan diperbaiki pada `src/components/tamu.css`.
+- Popup **Tambah/Edit Tamu**: nama otomatis uppercase saat mengetik, blur, dan disimpan. Alamat diberi kapital awal kata pada blur dan saat disimpan; spasi berulang dirapikan, RT/RW tetap uppercase.
+- Input WA otomatis membersihkan spasi, tanda hubung, kurung, dan titik saat mengetik/paste/blur/save. `+62 856-5980-8499`, `+62 856 5980 8499` menjadi `+6285659808499`; `0856 5980 8499` menjadi `085659808499`; awalan `08` tidak diam-diam dikonversi ke `+62`. Input `628...` tanpa plus juga diterima dan dirapikan menjadi `+628...`.
+- Pemeriksaan duplikat didasarkan pada nomor kanonik agar dua format `+62` dan `08` dipahami sebagai nomor yang sama. Validasi format dan digit berjalan sebelum insert/update. Jalur tambah catatan saja **tetap hanya mengubah catatan**, tidak mengubah identitas. Tidak ada pembaruan massal tamu lama maupun perubahan normalisasi WhatsApp global.
+- Helper baru `src/lib/guest-entry-format.ts`, test runtime `scripts/guest-entry-format.test.ts`, test source UI `scripts/guest-entry-ui-contract.test.cjs`, workflow `B25 Guest Entry Format and Address Column Review`.
+
+**Bukti kode:** 16/16 workflow GitHub Actions SUCCESS di head PR `719c9a4ea33bb3d851da2b1c24092e9a4f7f8fde`, termasuk tes input sintetis, struktur UI, full-app build dan TypeScript. **PASS CI bukan bukti UAT visual**.
+
+**Lovable:** metadata source project sudah tersinkron pada commit merge `36ce46e`, tetapi proyek masih `needs_attention / out_of_credits`. `is_published=true` **tidak membuktikan** bahwa perubahan terbaru sudah tampil di aplikasi yang dipublikasikan. Tidak dilakukan publish/deploy dan tidak ada perubahan data tamu LIVE, SQL Cloud, kamar, transaksi, harga, pembayaran, atau Overtime oleh perbaikan ini.
+
+**UAT berikutnya:** setelah tersedia build yang benar, Owner dapat melihat kolom Alamat dan mengetes format input Tambah/Edit dengan data tamu **asli ketika memang akan disimpan**, tanpa membuat atau menghapus record demo semata demi UAT. Pertahankan status UAT visual **BELUM PASS** sampai ada bukti.
