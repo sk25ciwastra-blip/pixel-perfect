@@ -303,7 +303,7 @@ function HalamanTamu() {
                 <span className="dt-avatar"><UserRound aria-hidden="true" /></span>
                 <div className="dt-identitas">
                   <h3>{detail.full_name.toUpperCase()} · {empatDigitWA(detail.phone)}</h3>
-                  <p className="dt-telepon"><IkonWhatsApp className="size-[19px]" />{detail.phone}</p>
+                  <button type="button" className="dt-telepon" disabled={readOnly} onClick={() => openWhatsApp(detail.phone)} aria-label={`Hubungi ${detail.full_name} melalui WhatsApp`} title="Buka WhatsApp tamu"><IkonWhatsApp className="size-[19px]" />{detail.phone}</button>
                   <span className="dt-pill-status" title="Dihitung dari Booking dan Check-in/Check-out yang tercatat">{transactions.loading ? 'Memuat status…' : transactions.error ? 'Status belum dapat dimuat' : statusTamu}</span>
                 </div>
                 <div className="dt-statistik">
@@ -316,7 +316,7 @@ function HalamanTamu() {
                 <h3 className="dt-bagian-judul"><Info aria-hidden="true" />Informasi Tamu</h3>
                 <dl className="dt-info-grid">
                   <div><dt>Nama Lengkap</dt><dd>{detail.full_name.toUpperCase()}</dd></div>
-                  <div><dt>No. HP / WhatsApp</dt><dd><span className="dt-telepon-inline"><IkonWhatsApp className="size-[17px]" />{detail.phone}</span></dd></div>
+                  <div><dt>No. HP / WhatsApp</dt><dd><button type="button" className="dt-telepon-inline" disabled={readOnly} onClick={() => openWhatsApp(detail.phone)} aria-label={`Kirim WhatsApp ke ${detail.full_name}`} title="Buka WhatsApp"><IkonWhatsApp className="size-[17px]" />{detail.phone}</button></dd></div>
                   <div><dt>Tercatat Sejak</dt><dd>{tanggalPendekWib(detail.created_at)}</dd></div>
                   <div><dt>Pembaruan Terakhir</dt><dd>{tanggalPendekWib(detail.updated_at)}</dd></div>
                   <div><dt>Email</dt><dd>{detail.email ? <a href={`mailto:${detail.email}`} className="underline underline-offset-2">{detail.email}</a> : 'Belum dicatat'}</dd></div>
