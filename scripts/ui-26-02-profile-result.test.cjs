@@ -58,7 +58,7 @@ const checks = [
     source.indexOf('setName(row.business_name);', source.indexOf("const latest = await rpc('b25_read_homestay_profile');")) <
       source.indexOf('if (!matchesRequest) {')],
   ['No extra writes or sensitive data in the mismatch message',
-    (source.match(/rpc\\('b25_save_homestay_profile'/g) || []).length === 1 &&
+    (source.split("rpc('b25_save_homestay_profile'").length - 1) === 1 &&
     !source.includes('console.log(cleanPhone)') &&
     !source.includes('console.log(cleanWhatsapp)')],
   ['Dialog is dismissible with a Tutup button, without a top X',
