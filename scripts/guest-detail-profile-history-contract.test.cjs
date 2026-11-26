@@ -62,7 +62,7 @@ const checks=[
     schema.includes('ENABLE ROW LEVEL SECURITY') &&
     schema.includes('GRANT SELECT ON public.guest_profile_history TO authenticated') &&
     schema.includes('REVOKE ALL ON public.guest_profile_history FROM PUBLIC, anon, authenticated') &&
-    schema.includes('REFERENCES public.guests(id) ON DELETE CASCADE') &&
+    schema.includes('REFERENCES public.guests(id) ON DELETE RESTRICT') &&
     schema.includes('guest_profile_history_read')],
   ['Audit old/new capture performed in DB trigger, not JS guesses',
     schema.includes('AFTER UPDATE OF full_name, address, phone, email') &&
