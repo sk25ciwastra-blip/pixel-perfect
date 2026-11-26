@@ -119,6 +119,20 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ---
 
+### Koreksi UI-26-06 — Panel kamar ketika daftar berisi (26 November 2026)
+
+**Owner masih melaporkan area yang disebut "Agenda" pada panel Status Kamar setelah PR #186.** Foto terbaru yang tersedia dalam percakapan adalah kartu Target Omzet, bukan screenshot baru Status Kamar; **belum dapat dipastikan ada widget Agenda terpisah yang benar-benar dirender.** Pemeriksaan source menunjukkan **tidak ada label/komponen Agenda dalam `src/`**. Jangan menebak nama komponen atau menghapus pengingat operasional.
+
+Temuan source terverifikasi: PR #186 hanya memperpanjang **empty state**. Jalur **daftar berisi** masih memakai `max-h-[400px]` pada pembungkus tabel di `src/routes/index.tsx`, sehingga tidak mengisi ruang panel setinggi kartu di sebelahnya. Koreksi UI saat ini:
+- `db-room-status-table` menjadi `flex-1` di panel yang sudah `flex-col`, menghapus cap kaku 400px dan tetap menjaga scroll untuk daftar panjang.
+- Batas panjang viewport dipakai agar baris kamar banyak tidak memanjangkan halaman berlebihan; footer enam status tetap di bawah.
+- Teks empty state PR #186, indikator, hitung status, pengingat booking/overtime, tombol WhatsApp/Check-out serta data transaksi **tidak disentuh**.
+- Source/CI hanya dapat membuktikan kontrak layout; **tidak membuktikan widget Agenda benar-benar hilang dari build Owner.** Jika label atau elemen Agenda masih ada setelah versi UI terbaru dimuat, minta screenshot **yang memperlihatkan panel Status Kamar lengkap** agar bisa mengidentifikasi sumbernya. Jangan menutup UI-26-06 sebagai UAT visual PASS sampai bukti ada.
+
+**Status:** koreksi kode/tabel dalam PR review, tidak ada publish Lovable, SQL Cloud, atau mutasi keuangan.
+
+---
+
 ### Tambahan UI-26-06 — Dashboard Status Kamar (26 November 2026)
 
 Berdasarkan screenshot Owner: saat daftar kamar terisi/booking kosong, kotak empty state terlalu pendek sementara ruang bawah panel masih luas. Owner menghendaki kotak memanjang hingga mendekati enam indikator bawah, dengan teks yang sesuai dan tanpa Agenda.
