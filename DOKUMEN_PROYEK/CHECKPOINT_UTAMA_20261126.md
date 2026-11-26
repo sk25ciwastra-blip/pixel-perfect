@@ -288,3 +288,19 @@ Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih se
 **Lovable:** source setelah merge terverifikasi tersinkron ke `23d700b`, tetapi proyek masih `needs_attention / out_of_credits`. Status `is_published=true` tidak membuktikan kode baru sudah tersedia di LIVE; **tidak ada deploy/publish oleh pekerjaan ini**. **UI-26-02 status PARTIAL — code merged / UAT visual belum PASS; penerapan ke fitur lain tetap bertahap.** Popup hasil Check-in/Booking/Reservasi dan konfirmasi hapus/refund tidak diubah.
 
 **Gate tetap berlaku:** NO-GO SQL Cloud Overtime karena backup/restore, tidak ada perubahan tarif, transaksi, data rekening LIVE, feature flags, role, atau aktivasi template tanpa persetujuan spesifik. 
+
+
+---
+
+### Addendum UI-26-02 tahap 2 — Profil Homestay, PR #192 MERGED (26 November 2026 WIB)
+
+**Persetujuan Owner:** pada percakapan Owner menyetujui secara eksplisit merge [PR #192](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/192) ke GitHub `main`. Merge **berhasil** (squash) dengan commit `a30c8311c33d386cb06cf5ed3fdf515727202d68`. Lingkup hanya integrasi `ActionResultDialog` pada `src/routes/pengaturan-profil-homestay.tsx`, kontrak uji `scripts/ui-26-02-profile-result.test.cjs`, dan update workflow `.github/workflows/b25-ui26-action-result-review.yml`. Komponen popup reusable dari PR #191 **tidak diubah**.
+
+- **Pesan berhasil:** sesudah `b25_save_homestay_profile` berhasil dan `b25_read_homestay_profile` mengembalikan profil terbaru. Hasil yang belum pasti tidak dilaporkan sebagai sukses; tidak menyarankan pengulangan penulisan sembarangan.
+- **Fungsi/role:** Owner saja; validasi nama, alamat, nomor, nama RPC dan pembacaan profil tetap. Toast sukses dan notice inline duplikat pada Profil Homestay diganti dengan satu dialog hasil.
+- **Bukti kode/CI:** head PR `bc1e9ab075c0a094565c4cd28ee3027a2f8195b9` memiliki **16/16 workflow SUCCESS**, termasuk UI26-02 source guards, whole-app build/TypeScript dan regressi profil.
+- **Lovable source:** tersinkron ke commit merge `a30c831` saat pemeriksaan. Namun status tetap `needs_attention / out_of_credits`; *source sync* bukan bukti preview/publish. Tidak dilakukan deploy/publish.
+- **UAT visual & status:** **BELUM UAT visual** Profil Homestay dan Rekening Owner menggunakan versi baru. UI-26-02 **PARTIAL (dua halaman telah MERGED)**, bukan seluruh aplikasi. UAT berikutnya lakukan di preview yang benar tanpa mengganti data profil/rekening LIVE untuk tes. Konfirmasi sebelum hapus/refund, serta popup Check-in/Booking/Reservasi tetap tidak tersentuh.
+- **Batas mutasi:** tidak ada SQL Cloud, keuangan, tarif, data profil asli, ataupun migrasi/feature flags. Gate backup/restore dan keputusan NO-GO SQL Overtime tetap.
+
+**Tindak lanjut:** setelah preview dapat dibangun, verifikasi modal kedua halaman (sukses/gagal/close/role) secara aman; kemudian pilih satu subfitur Pengaturan lain untuk penerapan bertahap setelah meninjau handler, tanpa mengulang tes PASS.
