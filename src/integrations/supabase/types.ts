@@ -951,6 +951,7 @@ export type Database = {
       guests: {
         Row: {
           address: string
+          email: string | null
           created_at: string
           full_name: string
           id: string
@@ -960,6 +961,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          email?: string | null
           created_at?: string
           full_name: string
           id?: string
@@ -969,6 +971,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          email?: string | null
           created_at?: string
           full_name?: string
           id?: string
