@@ -381,3 +381,24 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Status UI-26-02:** **PARTIAL** (implementasi kode di `main` untuk lima subfitur: Rekening Owner, Profil Homestay, Manajemen Kamar, Minimum DP & Komisi, Template WhatsApp). Bukti PASS visual yang telah disampaikan Owner hanyalah popup sukses **Tambah Rekening** dan popup sukses **Minimum DP & Komisi**; varian gagal/hasil parsial dan popup tiga subfitur lain belum UAT visual. Tidak ada perubahan SQL Cloud, data template atau pengaturan LIVE, finance, transaksi, tarif, hak akses, atau publish.
 
 **Gate berikutnya:** Verifikasi popup lima subfitur pada build yang dapat dibuktikan tanpa memutasi template/finance/kamar LIVE hanya demi UAT. Pertahankan NO-GO migrasi Overtime hingga approval dan bukti backup/restore cukup.
+
+
+---
+
+### Addendum UI-26-02 tahap 6 — Pengumuman Owner, PR #196 MERGED (26 November 2026 WIB)
+
+**Keputusan Owner:** Owner menyetujui secara eksplisit merge [PR #196](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/196) di percakapan pada 26 November 2026. Merge **berhasil** dengan squash commit `1955bb7075d7bc9280be64626a9600c6af0b8461`.
+
+**Lingkup:** Pengumuman Owner `src/components/papan-informasi.tsx` menggunakan `ActionResultDialog` untuk **Tambah/Ubah/Hapus Pengumuman**. Hasil sukses mensyaratkan write ID dari Supabase lalu refresh yang membuktikan ID dan teks tersimpan, atau ID sudah hilang sesudah delete. Jika refresh gagal, stale, atau perubahan belum dapat diperiksa, popup secara eksplisit meminta verifikasi dan tidak mengklaim sukses. **Konfirmasi `window.confirm('Hapus pengumuman ini?')` sebelum DELETE tetap ada.** Tidak diubah aturan edit Owner, akses baca staf, batas karakter, atau rotasi.
+
+**Inventaris:** dokumen baru `DOKUMEN_PROYEK/UI26_02_INVENTARIS_POPUP_20261126.md` membedakan hasil aksi, dialog konfirmasi sebelum tindakan, dan struk/receipt transaksi. Popup Booking, Check-in, refund, closing, Housekeeping, popup kamar terisi dan toast penyalinan WhatsApp **tidak diganti secara massal**. Tes kontrak `scripts/ui-26-02-announcement-result.test.cjs` dan workflow `B25 UI26-02 Action Result Dialog Review` telah diperluas.
+
+**Bukti kode/CI:** pada head PR `dea918e3433b7e1ab8274b7cfb4d315f93b0670c`, seluruh **16/16 GitHub Actions SUCCESS** (termasuk tes UI26-02 tahap 1–6, whole-app build dan TypeScript). Ini **PASS kode/CI**, bukan bukti popup pengumuman sudah diuji di browser.
+
+**Lovable:** source tersinkron dengan commit merge `1955bb7`, tetapi proyek masih `needs_attention / out_of_credits`. `is_published=true` tidak membuktikan versi terbaru sudah terpublikasi. **Tidak ada publish/deploy** dalam pekerjaan ini.
+
+**Status UI-26-02: PARTIAL** — enam modul kode MERGED (Rekening Owner, Profil Homestay, Manajemen Kamar, Minimum DP & Komisi, Template WhatsApp, Kelola Pengumuman). Bukti UAT visual Owner **hanya** varian sukses Tambah Rekening dan varian sukses Minimum DP & Komisi. Varian gagal, hasil tidak pasti, popup pengumuman dan modul lain belum terverifikasi secara visual.
+
+**Batas mutasi:** Tidak ada SQL Cloud, data Pengumuman nyata, pembayaran, transaksi, tarif, konfigurasi keuangan, Template ACTIVE, atau aktivasi Overtime. Gate backup/restore tetap **NO-GO**.
+
+**Lanjutan:** setelah preview/build yang benar dapat diuji, lakukan UAT visual dan klik tombol Tutup tanpa memutasi data LIVE semata untuk pengujian. Jangan mengulang bukti PASS yang sudah ada.
