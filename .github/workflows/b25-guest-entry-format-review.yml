@@ -1,0 +1,43 @@
+name: B25 Guest Entry Format and Address Column Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/routes/tamu.tsx'
+      - 'src/components/tamu.css'
+      - 'src/lib/guest-entry-format.ts'
+      - 'scripts/guest-entry-format.test.ts'
+      - 'scripts/guest-entry-ui-contract.test.cjs'
+      - '.github/workflows/b25-guest-entry-format-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  guest-entry-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: node scripts/guest-entry-ui-contract.test.cjs
+      - run: bun scripts/guest-entry-format.test.ts
+
+  whole-app-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run build
+      - run: bunx tsc --noEmit
