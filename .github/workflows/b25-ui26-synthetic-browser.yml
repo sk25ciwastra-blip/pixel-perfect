@@ -1,0 +1,61 @@
+name: B25 UI26-02 Synthetic Browser UAT
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/action-result-dialog.tsx'
+      - 'src/components/ui/button.tsx'
+      - 'scripts/ui26-browser-harness.tsx'
+      - 'scripts/ui26-browser-vite.config.mjs'
+      - 'scripts/ui26-browser-smoke.mjs'
+      - 'qa/ui26-popup.html'
+      - '.github/workflows/b25-ui26-synthetic-browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-synthetic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install application dependencies (no app scripts)
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Install isolated Playwright browser tooling
+        run: |
+          mkdir -p /tmp/b25-playwright
+          npm install --prefix /tmp/b25-playwright --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          /tmp/b25-playwright/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Start synthetic-only local Vite server
+        run: |
+          bunx vite --config scripts/ui26-browser-vite.config.mjs --host 127.0.0.1 --port 4187 --strictPort > /tmp/b25-ui26-vite.log 2>&1 &
+          echo $! > /tmp/b25-ui26-vite.pid
+
+      - name: Test actual dialog interaction at desktop and mobile viewport
+        env:
+          B25_PLAYWRIGHT_MODULE: /tmp/b25-playwright/node_modules/playwright/index.mjs
+          B25_UI26_ORIGIN: http://127.0.0.1:4187
+        run: node scripts/ui26-browser-smoke.mjs
+
+      - name: Upload synthetic screenshots and Vite logs for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b25-ui26-synthetic-browser-evidence
+          path: |
+            test-results/ui26-browser/
+            /tmp/b25-ui26-vite.log
+          if-no-files-found: warn
+          retention-days: 7
