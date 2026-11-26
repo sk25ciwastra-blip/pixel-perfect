@@ -16,6 +16,7 @@ import '@/components/tamu.css';
 import '@/components/detail-tamu.css';
 import { empatDigitWA, kunjunganTamu, urutTamu } from '@/lib/tamu-tampilan';
 import { formatGuestName, formatGuestAddress, formatGuestWhatsAppInput, guestWhatsAppCanonical, isValidGuestWhatsApp } from '@/lib/guest-entry-format';
+import { capitalizeLiveText } from '@/lib/live-auto-capitalization';
 
 export const Route = createFileRoute('/tamu')({
   head: () => meta('Daftar Tamu', 'Data tamu dan pencarian nama atau nomor HP Baturaden 25 Homestay.'),
@@ -242,7 +243,7 @@ function HalamanTamu() {
                 {!catatanSaja && <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block min-w-0 text-base" htmlFor="tamu-nama"><span className="font-medium text-gold-light">Nama lengkap</span><input id="tamu-nama" required autoComplete="name" value={nama} onChange={e => setNama(e.target.value.toLocaleUpperCase('id-ID'))} onBlur={() => setNama(formatGuestName(nama))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                   <label className="block min-w-0 text-base" htmlFor="tamu-whatsapp"><span className="font-medium text-gold-light">Nomor HP/WhatsApp</span><input id="tamu-whatsapp" required type="tel" inputMode="tel" autoComplete="tel" value={telepon} onChange={e => setTelepon(formatGuestWhatsAppInput(e.target.value))} onBlur={() => setTelepon(formatGuestWhatsAppInput(telepon))} placeholder="08... atau +62..." className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
-                  <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-alamat"><span className="font-medium text-gold-light">Alamat</span><input id="tamu-alamat" required autoComplete="street-address" value={alamat} onChange={e => setAlamat(e.target.value)} onBlur={() => setAlamat(formatGuestAddress(alamat))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                  <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-alamat"><span className="font-medium text-gold-light">Alamat</span><input id="tamu-alamat" required autoCapitalize="words" autoComplete="street-address" value={alamat} onChange={e => setAlamat(capitalizeLiveText(e.target.value, 'words'))} onBlur={() => setAlamat(formatGuestAddress(alamat))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                 </div>}
                 <label className="block text-base"><span className="font-medium text-gold-light">{editing ? 'Tambah Catatan' : 'Catatan'}</span><textarea required={catatanSaja} autoFocus={catatanSaja} value={catatan} onChange={e => setCatatan(e.target.value)} className="mt-2 min-h-28 w-full rounded-lg border border-input bg-navy-deep/50 px-3 py-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                 {notes.error && <p className="text-sm text-muted-foreground">Riwayat catatan belum tersedia. Data lama tetap dipertahankan.</p>}
