@@ -33,6 +33,11 @@ test('CSS supplies elastic plot height',
   css.includes('flex: 1 1 auto;') &&
   css.includes('.db-analytic-ring {') &&
   css.includes('aspect-ratio: 1 / 1;'));
+test('responsive layout follows each narrow card, including with a desktop sidebar',
+  css.includes('container: db-analytic / inline-size;') &&
+  css.includes('@container db-analytic (max-width: 360px)') &&
+  css.includes('flex-direction: column;') &&
+  css.includes('width: 100%;'));
 test('responsive layout preserves narrow mobile displays',
   css.includes('@media (max-width: 420px)'));
 test('chart modes and monetary data sources are unchanged',
