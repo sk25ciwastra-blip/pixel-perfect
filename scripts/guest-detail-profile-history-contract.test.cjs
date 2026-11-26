@@ -49,6 +49,11 @@ const checks=[
   ['Genuine Email field editable and mailto works',
     detail.includes('type="email"') && detail.includes('detail.email ? <a href=') &&
     detail.includes('email: cleanEmail || null') && types.includes('email: string | null')],
+  ['WhatsApp numbers are functional buttons, but read-only roles cannot initiate contact',
+    detail.includes('onClick={() => openWhatsApp(detail.phone)}') &&
+    detail.includes('aria-label={`Hubungi ${detail.full_name} melalui WhatsApp`}') &&
+    detail.includes('disabled={readOnly}') &&
+    styles.includes('button.dt-telepon:focus-visible')],
   ['Favorite details only use actual visits',
     detail.includes('guestVisitOnly(riwayat)') &&
     detail.includes('guestAverageGroupSize(riwayat)') &&
