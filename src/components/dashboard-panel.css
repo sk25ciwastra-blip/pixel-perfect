@@ -303,6 +303,16 @@
   .db-analytic-panel { min-height: 17rem; }
 }
 
+/* Populated list also grows toward the bottom status indicators.
+   Previously its fixed max-h-[400px] left an unused band inside a tall card.
+   Keep very long lists internally scrollable rather than making every row
+   extend the dashboard indefinitely. */
+.db-room-status-table {
+  min-height: 13rem;
+  max-height: min(70dvh, 42rem);
+  overscroll-behavior: contain;
+}
+
 /* Dashboard Status Kamar: full-height empty state with fixed bottom legend. */
 .db-room-status-panel {
   /* Keep the room-status panel useful even when no transactions are listed. */
