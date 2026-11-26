@@ -31,6 +31,8 @@ import {
 import { BellRing } from "lucide-react";
 import { Kerangka, MenuProfil } from "@/components/kerangka";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { bacaTargetOmzet, KUNCI_TARGET_TAHAPAN, progresOmzetBonus, validasiTargetOmzet, zonaTargetOmzet, type TargetOmzetTahapan } from "@/lib/target-omzet";
 import panorama from "@/assets/panorama-kota-malam.png.asset.json";
 import { FormulirPemesanan } from "@/components/formulir-pemesanan";
 import { OfferQueue } from "@/components/reservation-offer-queue";
@@ -562,11 +564,14 @@ function Ringkasan() {
   const omzetBulanIni = payments.rows
     .filter((p) => tanggalWib(p.created_at).slice(0, 7) === hariIni.slice(0, 7))
     .reduce((s, p) => s + Number(p.amount), 0);
-  const [target, setTarget] = useState(0);
+  const [target, setTarget] = useState<TargetOmzetTahapan>({ standard: 0, bonus: 0 });
+  const [targetLegacy, setTargetLegacy] = useState(false);
   useEffect(() => {
-    const tersimpan = Number(window.localStorage.getItem(KUNCI_TARGET) ?? 0);
-    if (tersimpan > 0) setTarget(tersimpan);
-  }, []);
+    if (peran !== "owner") return;
+    const saved = bacaTargetOmzet(window.localStorage);
+    setTarget({ standard: saved.standard, bonus: saved.bonus });
+    setTargetLegacy(saved.legacy);
+  }, [peran]);
 
   const [modal, setModal] = useState<"check_in" | "pengeluaran" | "offer" | null>(null);
   const [selectedOffer, setSelectedOffer] = useState<string | null>(null);
@@ -964,10 +969,18 @@ function Ringkasan() {
             {peran === "owner" && (
               <TargetOmzet
                 realisasi={omzetBulanIni}
-                target={target}
+                standard={target.standard}
+                bonus={target.bonus}
+                targetLegacy={targetLegacy}
                 onUbah={(nilai) => {
-                  setTarget(nilai);
-                  window.localStorage.setItem(KUNCI_TARGET, String(nilai));
+                  try {
+                    window.localStorage.setItem(KUNCI_TARGET_TAHAPAN, JSON.stringify(nilai));
+                    setTarget(nilai);
+                    setTargetLegacy(false);
+                    return true;
+                  } catch {
+                    return false;
+                  }
                 }}
               />
             )}
@@ -1055,8 +1068,6 @@ function RincianPengeluaran({ expense, operator, onClose }: {
     </div>
   );
 }
-
-const KUNCI_TARGET = "baturaden25.target_omzet_bulanan";
 
 type Kpi = {
   label: string;
@@ -1230,13 +1241,54 @@ function Grafik({ data, ticks }: { data: { label: string; nilai: number }[]; tic
   );
 }
 
-function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target: number; onUbah: (n: number) => void }) {
+function TargetOmzet({ realisasi, standard, bonus, targetLegacy, onUbah }: {
+  realisasi: number;
+  standard: number;
+  bonus: number;
+  targetLegacy: boolean;
+  onUbah: (target: TargetOmzetTahapan) => boolean;
+}) {
   const [ubah, setUbah] = useState(false);
-  const [isian, setIsian] = useState("");
-  const persen = target > 0 ? (realisasi / target) * 100 : 0;
+  const [isianStandard, setIsianStandard] = useState("");
+  const [isianBonus, setIsianBonus] = useState("");
+  const [pesan, setPesan] = useState("");
+  const zona = zonaTargetOmzet(realisasi, standard, bonus);
+  const progres = progresOmzetBonus(realisasi, standard, bonus);
+  const warna = zona === "merah" ? "#e76065"
+    : zona === "hijau" ? "#41bd87"
+    : zona === "biru" ? "#54aaf5" : "var(--gold)";
+  const labelStatus = zona === "merah" ? "Belum mencapai Standard"
+    : zona === "hijau" ? "Standard Operasional tercapai"
+    : zona === "biru" ? "Target Bonus tercapai"
+    : "Atur kedua batas target";
   const r = 58;
   const keliling = 2 * Math.PI * r;
-  const isi = Math.min(100, persen) / 100 * keliling;
+  const isi = progres / 100 * keliling;
+
+  function bukaPengaturan() {
+    setIsianStandard(standard > 0 ? String(standard) : "");
+    setIsianBonus(bonus > 0 ? String(bonus) : "");
+    setPesan("");
+    setUbah(true);
+  }
+
+  function simpan(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nilaiStandard = Number(isianStandard);
+    const nilaiBonus = Number(isianBonus);
+    const validasi = validasiTargetOmzet(nilaiStandard, nilaiBonus);
+    if (validasi) {
+      setPesan(validasi);
+      return;
+    }
+    if (!onUbah({ standard: nilaiStandard, bonus: nilaiBonus })) {
+      setPesan("Target gagal disimpan pada browser ini. Periksa izin penyimpanan dan coba lagi.");
+      return;
+    }
+    setPesan("");
+    setUbah(false);
+  }
+
   return (
     <section className="panel-mewah db-analytic-panel flex min-w-0 flex-col p-4" aria-labelledby="judul-target">
       <JudulModul
@@ -1245,39 +1297,108 @@ function TargetOmzet({ realisasi, target, onUbah }: { realisasi: number; target:
         judul="Target Omzet"
         sub="Realisasi omzet bulan ini"
         aksi={
-          <button type="button" onClick={() => { setIsian(target ? String(target) : ""); setUbah((v) => !v); }} className="shrink-0 rounded-lg border border-gold/30 px-3 py-1.5 text-xs font-semibold text-gold hover:border-gold/70">
-            {target > 0 ? "Ubah" : "Atur target"}
+          <button type="button" onClick={bukaPengaturan}
+            className="shrink-0 rounded-lg border border-gold/30 px-3 py-1.5 text-xs font-semibold text-gold hover:border-gold/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold">
+            Atur target
           </button>
         }
       />
-      {ubah && (
-        <form
-          className="mt-3 flex gap-2"
-          onSubmit={(e) => { e.preventDefault(); const n = Number(isian); if (n > 0) { onUbah(n); setUbah(false); } }}
-        >
-          <input type="number" min="1" value={isian} onChange={(e) => setIsian(e.target.value)} placeholder="Target (Rp)" className="h-10 min-w-0 flex-1 rounded-xl border border-input bg-background px-3 text-sm outline-none focus:border-primary" />
-          <button type="submit" className="emas-isi rounded-xl px-4 text-sm font-bold">Simpan</button>
-        </form>
-      )}
       <div className="db-analytic-content mt-4 flex min-w-0 flex-1 flex-row items-center gap-4">
         <div className="db-analytic-ring relative shrink-0">
-          <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.3)]">
+          <svg viewBox="0 0 140 140" className="size-full -rotate-90 drop-shadow-[0_0_14px_oklch(0.76_0.115_82/0.3)]" aria-hidden="true">
             <circle cx="70" cy="70" r={r} fill="none" stroke="var(--secondary)" strokeWidth="11" />
-            {isi > 0 && <circle cx="70" cy="70" r={r} fill="none" stroke="var(--gold)" strokeWidth="11" strokeLinecap="round" strokeDasharray={`${isi} ${keliling}`} className="transition-all duration-700" />}
+            {isi > 0 && <circle cx="70" cy="70" r={r} fill="none" stroke={warna} strokeWidth="11"
+              strokeLinecap="round" strokeDasharray={String(isi) + " " + String(keliling)} className="transition-all duration-700" />}
           </svg>
           <div className="absolute inset-0 grid place-items-center text-center">
             <div>
-              <p className="text-2xl font-bold tabular-nums text-gold-light">{target > 0 ? `${Math.round(persen)}%` : "—"}</p>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{target > 0 ? "tercapai" : "target belum diatur"}</p>
+              <p className="text-2xl font-bold tabular-nums" style={{ color: warna }}>
+                {zona === "belum_diatur" ? "—" : Math.round(progres) + "%"}
+              </p>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                {zona === "belum_diatur" ? "target belum diatur" : "dari target bonus"}
+              </p>
             </div>
           </div>
         </div>
-        <dl className="w-full min-w-0 space-y-2 text-sm">
-          <div className="flex items-center gap-3"><Flag className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Target bulan ini</dt><dd className="font-semibold">{target > 0 ? rupiah(target) : "Belum diatur"}</dd></div></div>
-          <div className="flex items-center gap-3"><BarChart3 className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Realisasi</dt><dd className="font-semibold text-gold-light">{rupiah(realisasi)}</dd></div></div>
-          {target > 0 && <div className="flex items-center gap-3"><Target className="size-4 shrink-0 text-gold" /><div><dt className="text-xs text-muted-foreground">Sisa target</dt><dd className="font-semibold">{rupiah(Math.max(0, target - realisasi))}</dd></div></div>}
+        <dl className="w-full min-w-0 space-y-3 text-sm">
+          <div className="flex min-w-0 items-start gap-2">
+            <BarChart3 className="mt-0.5 size-4 shrink-0 text-gold" />
+            <div className="min-w-0"><dt className="text-xs text-muted-foreground">Realisasi</dt>
+              <dd className="break-words font-semibold tabular-nums text-gold-light">{rupiah(realisasi)}</dd></div>
+          </div>
+          <div className="flex min-w-0 items-start gap-2">
+            <Flag className="mt-0.5 size-4 shrink-0 text-gold" />
+            <div className="min-w-0"><dt className="text-xs text-muted-foreground">Standard Operasional</dt>
+              <dd className="break-words font-semibold tabular-nums">{standard > 0 ? rupiah(standard) : "Belum diatur"}</dd></div>
+          </div>
+          <div className="flex min-w-0 items-start gap-2">
+            <Target className="mt-0.5 size-4 shrink-0 text-gold" />
+            <div className="min-w-0"><dt className="text-xs text-muted-foreground">{targetLegacy ? "Target lama (perlu ditinjau)" : "Target Bonus"}</dt>
+              <dd className="break-words font-semibold tabular-nums">{bonus > 0 ? rupiah(bonus) : "Belum diatur"}</dd></div>
+          </div>
+          <div className="flex min-w-0 items-start gap-2">
+            <span aria-hidden="true" className="mt-1 size-3 shrink-0 rounded-full" style={{ backgroundColor: warna }} />
+            <div className="min-w-0"><dt className="text-xs text-muted-foreground">Status pencapaian</dt>
+              <dd className="font-semibold leading-snug" style={{ color: warna }}>{labelStatus}</dd></div>
+          </div>
         </dl>
       </div>
+
+      <Dialog open={ubah} onOpenChange={setUbah}>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-[430px] gap-3 rounded-2xl border border-gold/35 bg-navy-deep p-5 text-foreground shadow-2xl sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl text-gold-light">Atur Target Omzet Bulanan</DialogTitle>
+            <DialogDescription className="text-xs leading-relaxed text-muted-foreground">
+              Tiga tahap pencapaian untuk Baturaden 25 Homestay. Nilai realisasi dibaca otomatis.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={simpan} className="mt-1 space-y-3">
+            <div className="rounded-xl border border-gold/20 bg-gold/5 px-4 py-3">
+              <p className="text-xs font-semibold text-gold-light">01 · Realisasi</p>
+              <output className="mt-1 block text-lg font-bold tabular-nums">{rupiah(realisasi)}</output>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                Otomatis dari pembayaran bulan berjalan. Tidak dapat diubah di sini.
+              </p>
+            </div>
+            <label htmlFor="target-standard-operasional" className="block rounded-xl border border-gold/20 bg-background/35 p-3">
+              <span className="block text-xs font-semibold text-gold-light">02 · Standard Operasional</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">Batas omzet minimum dalam satu bulan.</span>
+              <input id="target-standard-operasional" type="number" min="1" step="1" required
+                value={isianStandard} onChange={(event) => setIsianStandard(event.target.value)}
+                placeholder="Masukkan nominal dalam Rp"
+                className="mt-2 h-10 w-full rounded-lg border border-gold/20 bg-background px-3 text-sm tabular-nums text-foreground outline-none focus-visible:border-gold focus-visible:ring-2 focus-visible:ring-gold/30" />
+            </label>
+            <label htmlFor="target-bonus-omzet" className="block rounded-xl border border-gold/20 bg-background/35 p-3">
+              <span className="block text-xs font-semibold text-gold-light">03 · Target Bonus</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">Sasaran omzet bulanan di atas standard operasional.</span>
+              <input id="target-bonus-omzet" type="number" min="1" step="1" required
+                value={isianBonus} onChange={(event) => setIsianBonus(event.target.value)}
+                placeholder="Masukkan nominal dalam Rp"
+                className="mt-2 h-10 w-full rounded-lg border border-gold/20 bg-background px-3 text-sm tabular-nums text-foreground outline-none focus-visible:border-gold focus-visible:ring-2 focus-visible:ring-gold/30" />
+            </label>
+            {targetLegacy && (
+              <p className="text-xs leading-relaxed text-gold-light">
+                Target lama disalin sebagai isian awal. Tinjau nilainya sebelum menyimpan kedua batas.
+              </p>
+            )}
+            {pesan && <p role="alert" className="rounded-lg border border-bahaya/30 bg-bahaya/10 px-3 py-2 text-xs text-bahaya-foreground">{pesan}</p>}
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+              Indikator merah di bawah Standard, hijau mulai Standard, dan biru mulai Bonus.
+              Ini hanya indikator omzet, bukan pembayaran bonus otomatis. Pengaturan tersimpan pada browser ini saja.
+            </p>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <button type="button" onClick={() => setUbah(false)}
+                className="h-10 rounded-lg border border-gold/25 px-4 text-sm font-semibold text-foreground hover:border-gold/60">
+                Batal
+              </button>
+              <button type="submit" className="emas-isi h-10 rounded-lg px-5 text-sm font-bold">
+                Simpan Target
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
