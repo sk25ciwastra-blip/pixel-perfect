@@ -4,7 +4,7 @@ import { Eye, Search, Plus, ArrowDownUp, UserRound, NotebookPen, CalendarDays, U
 import * as Dialog from '@radix-ui/react-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { Button } from '@/components/ui/button';
-import { useTable, useTransaksiOperasional, type Guest } from '@/lib/data-live';
+import { rpc, useTable, useTransaksiOperasional, type Guest } from '@/lib/data-live';
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
@@ -16,6 +16,7 @@ import '@/components/tamu.css';
 import '@/components/detail-tamu.css';
 import { empatDigitWA, kunjunganTamu, urutTamu } from '@/lib/tamu-tampilan';
 import { formatGuestName, formatGuestAddress, formatGuestWhatsAppInput, guestWhatsAppCanonical, isValidGuestWhatsApp } from '@/lib/guest-entry-format';
+import { guestAverageGroupSize, guestHistoryLabels, guestNoteCategories, guestNoteType, guestVisitOnly, guestVisitStatus, type GuestNoteCategory } from '@/lib/guest-detail-derived';
 import { capitalizeLiveText } from '@/lib/live-auto-capitalization';
 
 export const Route = createFileRoute('/tamu')({
@@ -83,8 +84,12 @@ function HalamanTamu() {
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [detailTamu, setDetailTamu] = useState<Guest | null>(null);
+  const history = useTable('guest_profile_history', Boolean(detailTamu), {
+    column: 'guest_id', value: detailTamu?.id ?? '',
+  });
+  const [noteType, setNoteType] = useState<GuestNoteCategory>('umum');
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
-  const [tabDetail, setTabDetail] = useState<'kunjungan' | 'transaksi' | 'booking' | 'catatan' | 'penawaran'>('kunjungan');
+  const [tabDetail, setTabDetail] = useState<'kunjungan' | 'transaksi' | 'booking' | 'catatan' | 'penawaran' | 'perubahan'>('kunjungan');
   const detailTrigger = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     setTabDetail('kunjungan');
@@ -98,23 +103,29 @@ function HalamanTamu() {
   const riwayat = detail ? transaksiTamu(detail.id) : [];
   const terakhir = detail ? kunjunganTamu(transactions.rows, detail.id).map(t => t.started_at).filter((time): time is string => !!time).sort().at(-1) : undefined;
   const catatanTamu = detail ? notes.rows.filter(n => n.guest_id === detail.id).sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id)) : [];
-  const daftarCatatan = catatanTamu.length ? catatanTamu : detail?.notes.trim() ? [{ id: 'legacy', body: detail.notes, author_role: null, author_name: null, created_at: null }] : [];
+  const daftarCatatan = catatanTamu.length ? catatanTamu : detail?.notes.trim() ? [{ id: 'legacy', body: detail.notes, author_role: null, author_name: null, created_at: null, note_type: 'umum' }] : [];
+  const preferensiTerbaru = catatanTamu.find(note => guestNoteType(note) === 'preferensi');
+  const peringatanTerbaru = catatanTamu.find(note => guestNoteType(note) === 'perhatian');
+  const daftarPerubahan = [...history.rows].sort((a, b) =>
+    String(b.changed_at).localeCompare(String(a.changed_at)) || String(b.id).localeCompare(String(a.id)));
   const nomorKamar = (id: string) => rooms.rows.find(r => r.id === id)?.room_number ?? '—';
   const tipeKamar = (id: string) => { const kamar = rooms.rows.find(r => r.id === id); return roomTypes.rows.find(t => t.id === kamar?.room_type_id)?.name ?? '—'; };
   const namaPaket = (id: string | null) => packages.rows.find(p => p.id === id)?.name ?? '—';
   const kunjunganList = detail ? kunjunganTamu(transactions.rows, detail.id).sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id)) : [];
-  const bookingList = riwayat.filter(t => t.status === 'booking');
+  const bookingList = riwayat.filter(t => Boolean(t.scheduled_check_in));
   const barisRiwayat = tabDetail === 'booking' ? bookingList : tabDetail === 'transaksi' ? riwayat : kunjunganList;
-  const totalTransaksi = riwayat.reduce((sum, t) => sum + (t.price_snapshot ?? t.base_price_snapshot ?? 0), 0);
-  const tipeFavorit = terbanyak(riwayat.map(t => tipeKamar(t.room_id)));
-  const paketFavorit = terbanyak(riwayat.map(t => namaPaket(t.package_id)));
-  const tamuUmum = riwayat.length ? Math.round(riwayat.reduce((sum, t) => sum + (t.guest_count ?? 0), 0) / riwayat.length) : 0;
-  const catatanPreferensi = daftarCatatan[0]?.body ?? '—';
+  const totalTransaksi = riwayat.length;
+  const tipeFavorit = terbanyak(guestVisitOnly(riwayat).map(t => tipeKamar(t.room_id)));
+  const paketFavorit = terbanyak(guestVisitOnly(riwayat).map(t => namaPaket(t.package_id)));
+  const tamuUmum = guestAverageGroupSize(riwayat);
+  const catatanTerakhir = daftarCatatan[0]?.body ?? 'Belum ada catatan';
+  const catatanPreferensi = preferensiTerbaru?.body ?? 'Belum dicatat';
+  const statusTamu = guestVisitStatus(riwayat);
   const kunjunganTerakhir = kunjunganList[0];
   const kamarTerakhirLabel = kunjunganTerakhir ? `${nomorKamar(kunjunganTerakhir.room_id)} – ${tipeKamar(kunjunganTerakhir.room_id)}` : '—';
 
   function edit(t?: Guest, hanyaCatatan = false) {
-    setCatatanSaja(hanyaCatatan);
+    setCatatanSaja(hanyaCatatan); setNoteType('umum');
     setEditing(t ?? null); setNama((t?.full_name ?? '').toLocaleUpperCase('id-ID')); setAlamat(t?.address ?? ''); setTelepon(formatGuestWhatsAppInput(t?.phone ?? ''));
     setCatatan(''); setMessage(''); setOpen(true);
   }
@@ -130,13 +141,40 @@ function HalamanTamu() {
     if (!catatanSaja && match) { setMessage(`Nomor sudah tercatat atas nama ${match.full_name}. Gunakan data tamu tersebut.`); return; }
     if (!catatanSaja && (!cleanName || !cleanAddress)) { setMessage('Nama dan alamat tamu wajib diisi.'); return; }
     if (!catatanSaja && !isValidGuestWhatsApp(cleanPhone)) { setMessage('Nomor WhatsApp harus diawali 08 atau +62 dengan jumlah digit yang valid.'); return; }
+    if (editing && !catatanSaja && (history.loading || history.error)) {
+      setMessage('Histori perubahan belum dapat diakses. Perbarui diblokir agar perubahan tidak terjadi tanpa audit.'); return;
+    }
+    if (catatanSaja && !catatan.trim()) { setMessage('Catatan tidak boleh kosong.'); return; }
     if (catatan.trim() && (notes.loading || notes.error)) { setMessage('Riwayat catatan belum dapat diakses. Kosongkan catatan baru untuk menyimpan data tamu saja.'); return; }
     setSaving(true); setMessage('');
     try {
-      const payload = { full_name: cleanName, address: cleanAddress, phone: cleanPhone, ...(!editing ? { notes: catatan.trim() } : catatan.trim() ? { notes: catatan.trim() } : {}) };
-      const result = editing ? await supabase.from('guests').update(catatanSaja ? { notes: catatan.trim() } : payload).eq('id', editing.id).select().single() : await supabase.from('guests').insert(payload).select().single();
-      if (result.error) setMessage(result.error.code === '23505' ? 'Nomor HP sudah tercatat. Gunakan data tamu tersebut.' : result.error.message);
-      else { if (detailTamu && result.data) setDetailTamu(result.data); setOpen(false); setEditing(null); await Promise.all([refresh(), notes.refresh()]); }
+      if (catatanSaja && editing) {
+        const inserted = await rpc('b25_add_guest_categorized_note', {
+          p_guest_id: editing.id, p_body: catatan.trim(), p_note_type: noteType,
+        });
+        if (inserted.error) throw new Error(inserted.error.message);
+        setOpen(false); setEditing(null); setTabDetail('catatan');
+        await notes.refresh({ throwOnError: true });
+        return;
+      }
+      const payload = {
+        full_name: cleanName, address: cleanAddress, phone: cleanPhone,
+        ...(!editing ? { notes: catatan.trim() } : {}),
+      };
+      if (editing && editing.full_name === cleanName && editing.address === cleanAddress && editing.phone === cleanPhone) {
+        setMessage('Tidak ada perubahan profil untuk disimpan.'); return;
+      }
+      // Optimistic lock prevents overwriting a concurrent edit from another
+      // Receptionist/Owner. The database trigger writes old/new values atomically.
+      const result = editing
+        ? await supabase.from('guests').update(payload).eq('id', editing.id)
+            .eq('updated_at', editing.updated_at).select().maybeSingle()
+        : await supabase.from('guests').insert(payload).select().single();
+      if (result.error) { setMessage(result.error.code === '23505' ? 'Nomor HP sudah tercatat. Gunakan data tamu tersebut.' : result.error.message); return; }
+      if (!result.data) { setMessage('Profil sudah berubah di sesi lain. Muat ulang data sebelum mengulangi.'); return; }
+      if (detailTamu) setDetailTamu(result.data);
+      setOpen(false); setEditing(null);
+      await Promise.all([refresh(), notes.refresh(), history.refresh()]);
     } catch { setMessage('Data belum tersimpan. Silakan coba kembali.'); } finally { setSaving(false); }
   }
 
