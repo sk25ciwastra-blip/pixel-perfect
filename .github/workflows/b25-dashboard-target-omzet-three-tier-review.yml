@@ -1,0 +1,31 @@
+name: B25 Dashboard Target Omzet Three-Tier Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/routes/index.tsx'
+      - 'src/lib/target-omzet.ts'
+      - 'scripts/dashboard-target-omzet-three-tier.test.mjs'
+      - 'scripts/dashboard-analytic-fill-contract.test.cjs'
+      - '.github/workflows/b25-dashboard-target-omzet-three-tier-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  target-omzet-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test pure omzet thresholds and three-stage dialog contract
+        run: node --experimental-strip-types scripts/dashboard-target-omzet-three-tier.test.mjs
+      - name: Preserve dashboard analytic layout and source data contracts
+        run: node scripts/dashboard-analytic-fill-contract.test.cjs
