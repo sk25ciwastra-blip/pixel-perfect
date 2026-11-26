@@ -1,0 +1,30 @@
+name: B25 Dashboard Omzet Prepublish Build Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/b25-dashboard-omzet-prepublish-build.yml'
+      - 'src/routes/index.tsx'
+      - 'src/lib/target-omzet.ts'
+      - 'src/components/dashboard-panel.css'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies without lifecycle scripts
+        run: bun install --frozen-lockfile --ignore-scripts
+      - name: Typecheck source, no Cloud access
+        run: bunx tsc --noEmit
+      - name: Build production assets (no publish or deploy)
+        run: bun run build
