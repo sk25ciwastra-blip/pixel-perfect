@@ -28,6 +28,8 @@
 
 > **GERBANG BACKUP 26 NOVEMBER — NO-GO CLOUD:** Backup privat tanggal 25 Nov sudah lolos integritas, tetapi hanya mencakup 45 dari 51 tabel LIVE saat audit; enam tabel baru termasuk `reservation_offers` dan dua tabel `whatsapp_template_*` belum ada di arsip. Supabase Staging memiliki 33 tabel (18 kurang dari LIVE), sehingga **bukan** target restore LIVE. Tes rollback sintetis PR #181 PASS, tetapi **restore penuh dari backup LIVE belum PASS**. Baca [Release Gate Overtime](POIN4_OVERTIME_WHATSAPP_RELEASE_GATE_20261126.md) dan [Checkpoint Utama](CHECKPOINT_UTAMA_20261126.md). **Wajib backup LIVE baru + restore isolasi + izin Owner khusus sebelum SQL Overtime; jangan mengulang tes sintetis yang sudah PASS.**
 
+> **Runner backup baru (26 Nov):** [Panduan Restore Privat PostgreSQL 18](PANDUAN_RESTORE_PRIVAT_PG18_BACKUP_TERBARU_20261126.md) dan [Snapshot 51 Tabel LIVE](B25_LIVE_CATALOG_SNAPSHOT_20261126.json) disiapkan untuk arsip **setelah** 25 Nov. Runner hanya menarget cluster PostgreSQL 18 baru di Windows `127.0.0.1`. Belum ada backup baru/restore penuh PASS. **Jangan upload arsip privat ke GitHub/CI**; SQL Overtime tetap NO-GO. Periksa status PR alat dan hasil CI sebelum menganggap siap pakai.
+
 ## Protokol anti-berputar-putar setelah setiap pekerjaan
 
 Setelah **setiap** keputusan Owner atau PR yang di-merge:
