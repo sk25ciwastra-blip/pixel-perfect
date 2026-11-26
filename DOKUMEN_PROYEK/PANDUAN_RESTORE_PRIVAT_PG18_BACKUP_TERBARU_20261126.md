@@ -57,6 +57,19 @@ Status `LOCAL_RESTORE_PASS_LIMITED_NOT_CLOUD_RECOVERY` berarti **sebagian pemuli
 
 Jika timbul `LOCAL_RESTORE_FAILED_DEPENDENCIES_OR_COMPATIBILITY`, `BACKUP_TABLE_SET_DIFFERS_FROM_CURRENT_LIVE`, checksum mismatch, atau kegagalan shutdown cluster lokal: **STOP**, simpan laporan metadata privat untuk dianalisis, **jangan** mencoba restore pada Cloud LIVE/Staging sebagai jalan pintas.
 
+## Diagnostik ketika RESTORE gagal (hasil nyata 26 November 2026)
+
+Owner telah melakukan pemeriksaan pada ZIP privat `pixel-perfect-homestay-hub_261126.backup.zip`:
+- **INSPECT PASS:** 51/51 tabel, PostgreSQL 18, CRC ZIP PASS.
+- **RESTORE awal BLOCKED:** `LOCAL_RESTORE_FAILED_DEPENDENCIES_OR_COMPATIBILITY`. Ini **bukan** bukti bahwa isi backup rusak.
+- Runner awal PR #183 menghapus log error PostgreSQL dalam folder sementara setelah selesai, jadi penyebabnya belum dapat diidentifikasi dari laporan yang sudah ada.
+- **Perbaikan terpisah dalam PR review:** saat TOC custom dump tidak mempunyai entry `SCHEMA - public`, pertahankan `public` default dari cluster lokal baru; jika `pg_restore` masih gagal, tulis kategori penyebab yang aman `diagnostic_category` dalam JSON. **Tidak ada SQL mentah, nilai data, nomor WA, atau kredensial yang dikeluarkan** dari log.
+- Sampai PR tersebut lulus pengujian, **jangan ulangi restore dengan runner lama atau mencoba menjalankan dump langsung di Cloud/Staging**. Ketika diuji kembali, kirim hanya `status`, `reason_code`, `diagnostic_category`, dan `toc_declares_public_schema`. Jangan kirim backup maupun log mentah.
+
+**Status:** full restore **BELUM PASS**, tidak ada perubahan LIVE/Cloud, release gate Overtime tetap NO-GO.
+
+---
+
 ## Batas otorisasi
 
 - **TIDAK ADA:** backup LIVE baru yang diekspor oleh ChatGPT; tool Lovable yang terhubung hanya bisa melihat database metadata, tidak mempunyai aksi ekspor.
