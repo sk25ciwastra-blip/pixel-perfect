@@ -1,0 +1,39 @@
+name: B25 UI26-02 Action Result Dialog Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/action-result-dialog.tsx'
+      - 'src/routes/pengaturan-rekening-owner.tsx'
+      - 'scripts/ui-26-02-action-result-dialog.test.cjs'
+      - '.github/workflows/b25-ui26-action-result-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/ui-26-02-action-result-dialog.test.cjs
+
+  whole-app-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run build
+      - run: bunx tsc --noEmit
