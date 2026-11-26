@@ -6,6 +6,7 @@ import { usePeran } from '@/lib/peran';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
 import { ROTATION_MS, TRANSITION_MS, urutPengumuman, indeksBerikut, bolehBerputar } from '@/lib/pengumuman-rotasi.mjs';
 import { MAKS_HURUF, rapikanTeks, bolehDisimpan } from '@/lib/pengumuman-batas.mjs';
 
@@ -30,7 +31,7 @@ export function PapanInformasi() {
   const [editId, setEditId] = useState<string | null>(null);
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
+  const [actionResult, setActionResult] = useState<ActionResultState | null>(null);
   const generation = useRef(0);
   const content = useRef<HTMLDivElement>(null);
   const channelId = useId();
@@ -38,7 +39,7 @@ export function PapanInformasi() {
   // Range reads include every stored announcement, beyond the Data API page limit.
   const refresh = useCallback(async () => {
     const requestId = ++generation.current;
-    if (!enabled) { setRows([]); setLoading(false); return; }
+    if (!enabled) { setRows([]); setLoading(false); return null; }
     const all: Pengumuman[] = [];
     try {
       for (let from = 0; ; from += 500) {
@@ -49,10 +50,13 @@ export function PapanInformasi() {
         all.push(...page);
         if (page.length < 500) break;
       }
-      if (requestId !== generation.current) return;
-      setRows(urutPengumuman(all)); setError('');
+      if (requestId !== generation.current) return null;
+      const latest = urutPengumuman(all);
+      setRows(latest); setError('');
+      return latest;
     } catch {
       if (requestId === generation.current) setError('Pengumuman belum dapat dimuat.');
+      return null;
     } finally {
       if (requestId === generation.current) setLoading(false);
     }
@@ -101,28 +105,74 @@ export function PapanInformasi() {
   async function save(event: React.FormEvent) {
     event.preventDefault();
     if (!owner || busy || !bolehDisimpan(body)) return;
-    setBusy(true); setMessage('');
+    setBusy(true); setActionResult(null);
+    const editingId = editId;
+    const bersih = rapikanTeks(body).trim();
+    let writeAcknowledged = false;
     try {
-      const bersih = rapikanTeks(body).trim();
-      const result = editId
-        ? await supabase.from('operational_announcements').update({ body: bersih }).eq('id', editId).select('id').single()
+      const result = editingId
+        ? await supabase.from('operational_announcements').update({ body: bersih }).eq('id', editingId).select('id').single()
         : await supabase.from('operational_announcements').insert({ body: bersih }).select('id').single();
-      if (result.error) throw result.error;
-      setEditId(null); setBody(''); setMessage('Pengumuman tersimpan.');
-      await refresh();
-    } catch { setMessage('Pengumuman tidak dapat disimpan. Coba kembali.'); }
-    finally { setBusy(false); }
+      if (result.error || !result.data?.id) throw new Error('Write not confirmed');
+      writeAcknowledged = true;
+      const latest = await refresh();
+      if (!latest?.some(item => item.id === result.data.id && item.body === bersih)) {
+        setActionResult({
+          kind: 'error',
+          title: 'Periksa kembali pengumuman',
+          description: 'Penyimpanan diterima sistem, tetapi data terbaru belum berhasil diverifikasi. Periksa daftar pengumuman sebelum mengulangi.',
+        });
+        return;
+      }
+      setEditId(null); setBody('');
+      setActionResult({
+        kind: 'success',
+        title: editingId ? 'Pengumuman berhasil diperbarui' : 'Pengumuman berhasil ditambahkan',
+        description: 'Pengumuman Owner telah disimpan dan tampil pada daftar pengumuman terbaru.',
+      });
+    } catch {
+      setActionResult({
+        kind: 'error',
+        title: 'Periksa hasil penyimpanan pengumuman',
+        description: writeAcknowledged
+          ? 'Perubahan mungkin sudah tersimpan, tetapi hasilnya belum dapat diperiksa. Muat ulang daftar sebelum mengulangi.'
+          : 'Hasil penyimpanan belum dapat dipastikan. Periksa daftar pengumuman sebelum mencoba kembali.',
+      });
+    } finally { setBusy(false); }
   }
   async function remove(row: Pengumuman) {
+    // Confirmation BEFORE deletion remains separate from the result popup.
     if (!owner || busy || !window.confirm('Hapus pengumuman ini?')) return;
-    setBusy(true); setMessage('');
+    setBusy(true); setActionResult(null);
+    let writeAcknowledged = false;
     try {
       const result = await supabase.from('operational_announcements').delete().eq('id', row.id).select('id').single();
-      if (result.error) throw result.error;
+      if (result.error || !result.data?.id) throw new Error('Delete not confirmed');
+      writeAcknowledged = true;
+      const latest = await refresh();
+      if (!latest || latest.some(item => item.id === row.id)) {
+        setActionResult({
+          kind: 'error',
+          title: 'Periksa kembali penghapusan',
+          description: 'Permintaan penghapusan diterima sistem, tetapi hasil terbaru belum dapat diverifikasi. Periksa daftar sebelum melakukan tindakan lain.',
+        });
+        return;
+      }
       if (editId === row.id) { setEditId(null); setBody(''); }
-      setMessage('Pengumuman dihapus.'); await refresh();
-    } catch { setMessage('Pengumuman tidak dapat dihapus. Coba kembali.'); }
-    finally { setBusy(false); }
+      setActionResult({
+        kind: 'success',
+        title: 'Pengumuman berhasil dihapus',
+        description: 'Pengumuman telah dihapus dan daftar pengumuman berhasil diperbarui.',
+      });
+    } catch {
+      setActionResult({
+        kind: 'error',
+        title: 'Periksa hasil penghapusan',
+        description: writeAcknowledged
+          ? 'Pengumuman mungkin sudah dihapus, tetapi hasil terbaru belum dapat diperiksa. Muat ulang daftar sebelum mencoba kembali.'
+          : 'Hasil penghapusan belum dapat dipastikan. Periksa daftar pengumuman sebelum mengulangi.',
+      });
+    } finally { setBusy(false); }
   }
 
   return (
@@ -159,7 +209,6 @@ export function PapanInformasi() {
             <p className={`text-[10px] ${body.length >= MAKS_HURUF - 20 ? 'text-gold' : 'text-muted-foreground'}`}>{body.length}/{MAKS_HURUF} karakter{body.length >= MAKS_HURUF ? ' — batas tercapai' : ''}</p>
             <div className="flex gap-2"><Button type="submit" disabled={busy || !bolehDisimpan(body)}><Plus className="size-4" />{busy ? 'Menyimpan…' : editId ? 'Simpan perubahan' : 'Tambah pengumuman'}</Button>
               {editId && <Button type="button" variant="outline" disabled={busy} onClick={() => { setEditId(null); setBody(''); }}>Batal edit</Button>}</div>
-            {message && <p role="status" className="text-xs text-gold">{message}</p>}
           </form>
           <div className="border-t border-gold/15 pt-3">
             <h3 className="mb-2 text-sm font-semibold">Daftar Pengumuman ({rows.length})</h3>
@@ -168,13 +217,14 @@ export function PapanInformasi() {
             <ol className="max-h-64 overflow-y-auto divide-y divide-gold/15">
               {rows.map(row => <li key={row.id} className="flex items-start gap-3 py-3">
                 <div className="min-w-0 flex-1"><p className="whitespace-pre-wrap break-words text-sm">{row.body}</p><p className="mt-1 text-[10px] text-muted-foreground">{waktu(row.created_at)}</p></div>
-                <Button size="icon" variant="ghost" className="size-8 shrink-0 text-gold" disabled={busy} title="Edit pengumuman" aria-label="Edit pengumuman" onClick={() => { setEditId(row.id); setBody(row.body); setMessage(''); }}><Pencil className="size-3.5" /></Button>
+                <Button size="icon" variant="ghost" className="size-8 shrink-0 text-gold" disabled={busy} title="Edit pengumuman" aria-label="Edit pengumuman" onClick={() => { setEditId(row.id); setBody(row.body); setActionResult(null); }}><Pencil className="size-3.5" /></Button>
                 <Button size="icon" variant="ghost" className="size-8 shrink-0 text-destructive" disabled={busy} title="Hapus pengumuman" aria-label="Hapus pengumuman" onClick={() => void remove(row)}><Trash2 className="size-3.5" /></Button>
               </li>)}
             </ol>
           </div>
         </DialogContent>
       </Dialog>}
+      {owner && <ActionResultDialog result={actionResult} onClose={() => setActionResult(null)} />}
     </section>
   );
 }
