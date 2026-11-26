@@ -29,3 +29,8 @@ jobs:
         run: node --experimental-strip-types scripts/dashboard-target-omzet-three-tier.test.mjs
       - name: Preserve dashboard analytic layout and source data contracts
         run: node scripts/dashboard-analytic-fill-contract.test.cjs
+      - uses: oven-sh/setup-bun@v2
+      - name: Parse updated Dashboard TSX and pure target helper (offline module syntax)
+        run: |
+          bun build src/routes/index.tsx --target browser --external "*" --outdir /tmp/b25-dashboard-tsx
+          bun build src/lib/target-omzet.ts --target browser --outdir /tmp/b25-target-helper
