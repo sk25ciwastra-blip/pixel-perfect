@@ -313,3 +313,22 @@ Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih se
 Owner mengirim bukti screenshot **Pengaturan → Rekening Owner** dengan popup **“Rekening berhasil ditambahkan”**. **PASS visual hanya untuk varian hasil sukses tambah rekening**: panel terpusat warna warm cream-gold, overlay gelap, ikon sukses hijau, judul dan teks sesuai tindakan, tombol **Tutup** di bawah, tanpa tombol X. Bukti dicatat pada komentar UAT [PR #191](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/191).
 
 **Belum diverifikasi dari screenshot:** hasil gagal, tindakan ubah/aktifkan/nonaktifkan rekening, tombol Tutup dapat digunakan, persistensi data sesudah reload, izin peran, versi commit build yang dilihat Owner, serta popup Profil Homestay PR #192. Jangan menyebut seluruh UI-26-02 telah UAT PASS hanya berdasarkan satu screenshot ini; status tetap **PARTIAL (kode dua halaman merged; visual sukses tambah rekening PASS)**. Tidak ada data rekening/PII disalin, tidak ada mutasi Cloud, transaksi, tarif, atau publish dalam pembaruan checkpoint.
+
+
+---
+
+### Addendum UI-26-02 tahap 3 — Manajemen Kamar, PR #193 MERGED (26 November 2026 WIB)
+
+**Persetujuan Owner:** Owner secara eksplisit menyetujui merge PR #193 dalam percakapan 26 November 2026. [PR #193](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/193) **MERGED** ke GitHub `main`, squash commit `d75614d19fcd95389acd943fcbf665df4e487b84`.
+
+**Lingkup kode:** `src/routes/pengaturan-manajemen-kamar.tsx` menggunakan komponen `ActionResultDialog` yang sudah dibuat di PR #191 untuk umpan balik hasil **Tambah Kamar, Ubah Kamar, Aktifkan, dan Nonaktifkan**, beserta penolakan validasi/pengaman. `scripts/ui-26-02-room-management-result.test.cjs` dan workflow `.github/workflows/b25-ui26-action-result-review.yml` diperbarui. Tidak ada perubahan nama/query write ke tabel rooms; aturan Owner, nomor/lantai, tipe kamar saat edit, dan pengaman kamar `occupied`, `check_in` atau `booking` aktif tetap dipertahankan. Pesan sukses hanya setelah write diakui dan daftar kamar berhasil di-refresh; kondisi tidak pasti meminta pemeriksaan dahulu.
+
+**Bukti CI:** 17/17 GitHub Actions pada head PR `47c222cf598687c2a4959820d808239dc6a59085` berstatus **SUCCESS**, termasuk source contract UI26-02 (tahap 1–3), whole-app build, TypeScript, review manajemen kamar, dan pengaman paket. **Ini PASS kode/CI, bukan UAT browser.**
+
+**Lovable:** sesudah merge, source terverifikasi sinkron pada `d75614d`, namun proyek masih `needs_attention / out_of_credits`. `is_published=true` bukan bukti versi merge telah dipublikasikan. Tidak ada publish/deploy dari pekerjaan ini.
+
+**Status keseluruhan UI-26-02:** **PARTIAL**, implementasi kode di `main` untuk tiga subhalaman (Rekening Owner, Profil Homestay, Manajemen Kamar). **PASS UAT visual hanya popup sukses Tambah Rekening dari screenshot Owner sebelumnya.** UAT varian gagal, interaksi lain, Profil Homestay dan Manajemen Kamar masih belum dibuktikan. Jangan buat/edit/aktifkan/nonaktifkan kamar nyata, transaksi, atau mengubah pengaturan keuangan demi UAT tanpa persetujuan khusus.
+
+**Batas:** Tidak ada perubahan SQL Cloud, finance, tarif, transaksi, rekening/profil/kamar LIVE, feature flags, role, atau publish. Gate NO-GO SQL Overtime/backup-restore tetap berlaku.
+
+**Pekerjaan berikutnya:** cek popup tiga halaman pada preview/build yang benar saat tersedia; lanjut satu subfitur Pengaturan lain secara bertahap setelah audit handler dan guard, tanpa mengulang PASS.
