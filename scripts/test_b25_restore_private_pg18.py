@@ -68,6 +68,50 @@ class PrivateRestoreGuardTests(unittest.TestCase):
         """
         self.assertEqual(tool.toc_table_names(toc), self.names)
 
+    def test_toc_public_schema_detection_controls_safe_cleanup(self):
+        # Some Lovable dumps omit the public SCHEMA TOC entry. An empty local
+        # PG18 instance already provides public; deleting it causes failures.
+        no_schema = "20; 1259 44 TABLE public reservation_offers postgres\n"
+        with_schema = (
+            "18; 2615 2200 SCHEMA - public pg_database_owner\n"
+            "20; 1259 44 TABLE public reservation_offers postgres\n"
+        )
+        self.assertFalse(tool.toc_declares_public_schema(no_schema))
+        self.assertTrue(tool.toc_declares_public_schema(with_schema))
+        self.assertFalse(tool.toc_declares_public_schema(
+            "18; 2615 2200 SCHEMA - auth postgres\n"
+        ))
+
+    def test_failure_classification_contains_no_raw_sql_or_private_data(self):
+        cases = [
+            ("pg_restore: error: could not execute query: ERROR: schema "
+             "\\"public\\" does not exist", "MISSING_PUBLIC_SCHEMA"),
+            ("pg_restore: error: could not execute query: ERROR: schema "
+             "\\"auth\\" does not exist", "MISSING_SUPABASE_AUTH_DEPENDENCY"),
+            ("pg_restore: error: could not execute query: ERROR: schema "
+             "\\"storage\\" does not exist", "MISSING_SUPABASE_STORAGE_DEPENDENCY"),
+            ("pg_restore: error: could not execute query: ERROR: role "
+             "\\"service_role\\" does not exist", "MISSING_DATABASE_ROLE"),
+            ("pg_restore: error: could not execute query: ERROR: extension "
+             "\\"vector\\" is not available", "MISSING_POSTGRES_EXTENSION"),
+            ("pg_restore: error: could not execute query: ERROR: function "
+             "auth.uid() does not exist", "MISSING_SUPABASE_AUTH_DEPENDENCY"),
+            ("pg_restore: error: could not execute query: ERROR: duplicate key value "
+             "violates unique constraint", "DATA_CONSTRAINT_FAILURE"),
+            ("pg_restore: error: could not execute query: ERROR: mysterious "
+             "exception involving private@example.invalid",
+             "UNCLASSIFIED_POSTGRES_RESTORE_ERROR"),
+        ]
+        log = self.root / "raw-secret-never-upload.txt"
+        for raw, expected in cases:
+            log.write_text(raw + "\nCommand was: INSERT INTO private_table VALUES ('SECRET');")
+            code = tool.classify_private_restore_error(log)
+            self.assertEqual(code, expected)
+            self.assertNotIn("SECRET", code)
+            self.assertNotIn("private@example.invalid", code)
+        log.unlink()
+        self.assertEqual(tool.classify_private_restore_error(log), "ERROR_LOG_UNAVAILABLE")
+
     def test_valid_private_archive_and_sha(self):
         zippath = self.root / "test.backup.zip"
         with zipfile.ZipFile(zippath, "w") as z:
