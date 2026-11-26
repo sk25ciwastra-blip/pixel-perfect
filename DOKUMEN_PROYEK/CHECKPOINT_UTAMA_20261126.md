@@ -534,3 +534,18 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Lovable:** metadata source project sudah tersinkron pada commit merge `36ce46e`, tetapi proyek masih `needs_attention / out_of_credits`. `is_published=true` **tidak membuktikan** bahwa perubahan terbaru sudah tampil di aplikasi yang dipublikasikan. Tidak dilakukan publish/deploy dan tidak ada perubahan data tamu LIVE, SQL Cloud, kamar, transaksi, harga, pembayaran, atau Overtime oleh perbaikan ini.
 
 **UAT berikutnya:** setelah tersedia build yang benar, Owner dapat melihat kolom Alamat dan mengetes format input Tambah/Edit dengan data tamu **asli ketika memang akan disimpan**, tanpa membuat atau menghapus record demo semata demi UAT. Pertahankan status UAT visual **BELUM PASS** sampai ada bukti.
+
+
+---
+
+### Addendum Tabel Tamu Rata Tengah & 14 Nama Kapital — PR #203 (26 November 2026)
+
+**Permintaan Owner:** merapikan layar Daftar Tamu dari screenshot: seluruh isi tabel harus **rata tengah**, font **Alamat** setebal Nama Tamu, dan seluruh nama tamu saat ini yang belum kapital harus diubah menjadi **HURUF KAPITAL SEMUA** di data yang tersimpan, bukan sekadar CSS.
+
+**Kode (GitHub):** [PR #203](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/203) **MERGED** ke `main` (squash commit `030b701bdf16866914cdb593d49f35acc21d4688`). `src/routes/tamu.tsx` menghapus `text-left` dari sel Nama/Alamat dan memusatkan teks; `src/components/tamu.css` menetapkan sel center horizontal/vertical dan font Nama/Alamat sama (`15px`, `700`). Tetap tujuh kolom No. / Nama / Alamat / WhatsApp / Kunjungan / Status / Aksi; tidak mengubah halaman selain tabel tamu, fungsi input pada PR #202, data/history pembayaran, atau schema.
+
+**Bukti CI:** final PR head `0efffa34d3e2021232b3465f87a5874aff62f88b`, **16/16 workflow SUCCESS** termasuk contract UAT source (perataan tabel 8/8, format Tambah/Edit), full-app build dan TypeScript. Source/CI PASS **bukan bukti bahwa versi frontend baru sudah published**.
+
+**Tindakan data LIVE (diberi izin Owner langsung):** terhubung ke database Lovable LIVE Baturaden 25 Homestay, membaca 14 row `public.guests`; **13 nama lama** belum uppercase, satu nama `BISMA` sudah kapital. Update dibatasi **UUID tamu dan nama sebelumnya yang tepat**, disertai verifikasi expected count (13) dan transaction rollback jika mismatch. Hanya kolom `full_name` yang berubah; `address`, `phone`, `notes`, ID, riwayat, dan atribut tamu lain tidak diubah. Final SELECT: **14/14 nama uppercase, 0 non-uppercase**. Backup pemulihan privat `b25_maintenance_private.guest_name_case_backup_20261126` berisi 13 old/new name+id, tanpa akses schema untuk `anon` atau `authenticated` (RLS aktif). Hapus backup hanya berdasarkan keputusan retensi terpisah. Database action sudah berlaku langsung, tidak tergantung deploy frontend.
+
+**Lovable source/publish:** seusai merge, proyek masih `needs_attention/out_of_credits`; saat pengecekan awal source belum menunjukkan merge commit #203, dan `is_published=true` bukan bukti build baru tayang. **Tidak ada publish/deploy**. Setelah sinkronisasi source dan kemampuan publish pulih, diperlukan UAT visual tabel pada versi yang benar. Jangan menyatakan CI PASS sebagai UAT LIVE.
