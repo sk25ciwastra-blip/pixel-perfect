@@ -332,3 +332,22 @@ Owner mengirim bukti screenshot **Pengaturan → Rekening Owner** dengan popup *
 **Batas:** Tidak ada perubahan SQL Cloud, finance, tarif, transaksi, rekening/profil/kamar LIVE, feature flags, role, atau publish. Gate NO-GO SQL Overtime/backup-restore tetap berlaku.
 
 **Pekerjaan berikutnya:** cek popup tiga halaman pada preview/build yang benar saat tersedia; lanjut satu subfitur Pengaturan lain secara bertahap setelah audit handler dan guard, tanpa mengulang PASS.
+
+
+---
+
+### Addendum UI-26-02 tahap 4 — Minimum DP & Komisi, PR #194 MERGED (26 November 2026 WIB)
+
+**Keputusan Owner:** Owner secara eksplisit menyetujui merge PR #194 pada obrolan 26 November 2026. [PR #194](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/194) berhasil **MERGED** (squash) ke `main`, commit `421a6d898f1ad800e5478c6a0d0770393db6476d`.
+
+**Scope:** `src/routes/pengaturan-keuangan.tsx` menggunakan komponen `ActionResultDialog` dari PR #191 untuk tampilan hasil Simpan Konfigurasi **Minimum DP & Komisi**. `scripts/ui-26-02-finance-settings-result.test.cjs` menambah guard kontrak; `.github/workflows/b25-ui26-action-result-review.yml` diperluas. Dua RPC lama tetap `set_finance_settings` disusul `set_finance_commission_config`, tanpa mengubah nilainya, algoritme, urutan, hak akses Owner, komisi, atau tarif.
+
+**Khusus hasil tidak atomik:** jika Minimum DP tersimpan namun Komisi gagal, tampilkan pesan jelas **“Konfigurasi tersimpan sebagian”**, bukan sukses penuh. Jika satu/both pembacaan ulang gagal, popup tidak mengklaim hasil sudah terverifikasi; Owner diminta memeriksa kembali sebelum mengulangi. Sukses hanya jika dua write tanpa error dan refresh kedua sumber tanpa error. Tidak ada retry otomatis, toast ganda, atau pesan backend mentah/PII.
+
+**CI:** pada head `8914f533d5c6b395f177bf07af0de03457689376`, **17/17 workflow SUCCESS**, termasuk source contract UI26-02 tahap 1–4, whole-app build, TypeScript, dan review Owner Settings/finance. Ini **PASS kode/CI**, bukan UAT visual.
+
+**Lovable:** source terverifikasi tersinkron pada `421a6d8` setelah merge, namun status proyek `needs_attention / out_of_credits`. Status `is_published=true` **bukan** bukti versi ini telah dipublish; tidak dilakukan publish/deploy.
+
+**Status UI-26-02:** **PARTIAL** (kode sudah merged di empat halaman: Rekening Owner, Profil Homestay, Manajemen Kamar, Minimum DP & Komisi). Bukti PASS visual sebelumnya hanya untuk **popup sukses Tambah Rekening**; varian error, popup halaman lain, dan kemampuan tombol Tutup pada versi baru belum UAT. Tidak mengubah SQL Cloud, tarif, data minimum DP, komisi LIVE, pembayaran, transaksi, hak akses, ataupun menyalakan fitur baru. Gate backup/restore Overtime tetap **NO-GO**.
+
+**Tindak lanjut:** UAT popup pada build yang tepat secara aman tanpa memodifikasi konfigurasi finance LIVE untuk pengujian; lanjut modul Pengaturan lain secara bertahap dengan audit handler terlebih dahulu.
