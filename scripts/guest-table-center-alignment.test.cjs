@@ -16,8 +16,8 @@ const checks = [
   ['Name display is explicitly centered and bold',
     src.includes('text-center font-semibold"><span className="block truncate text-center" title={t.full_name}') &&
     !src.includes('text-left font-semibold"><span className="block truncate" title={t.full_name}')],
-  ['Address display is explicitly centered and bold',
-    src.includes('text-center font-semibold"><span className="block truncate text-center" title={t.address') &&
+  ['Address display is centered with medium weight',
+    src.includes('text-center font-medium"><span className="block truncate text-center" title={t.address') &&
     !src.includes('text-left"><span className="block truncate" title={t.address')],
   ['Header order is name address WhatsApp visits status actions',
     src.indexOf('>NAMA TAMU</Button>') < src.indexOf('>ALAMAT</th>') &&
@@ -25,8 +25,17 @@ const checks = [
     src.indexOf('>WHATSAPP</th>') < src.indexOf('>KUNJUNGAN<ArrowDownUp')],
   ['All table cells are centered vertically and horizontally in CSS',
     css.includes('.tabel-tamu-premium tbody tr td {\n  text-align: center;\n  vertical-align: middle;\n}')],
-  ['Name and address columns share font size and weight',
-    css.includes('.tabel-tamu-premium tbody tr td:nth-child(2),\n.tabel-tamu-premium tbody tr td:nth-child(3) {\n  font-size: 15px;\n  font-weight: 700;\n  text-align: center;\n}')],
+  ['Name remains the visual anchor at 15px semibold',
+    css.includes('.tabel-tamu-premium tbody tr td:nth-child(2) {\n  font-size: 15px;\n  font-weight: 600;\n}')],
+  ['Address becomes lighter at 14px medium',
+    css.includes('.tabel-tamu-premium tbody tr td:nth-child(3) {\n  font-size: 14px;\n  font-weight: 500;\n}')],
+  ['WhatsApp uses 14px medium and number of visits 15px semibold',
+    css.includes('.tabel-tamu-premium tbody tr td:nth-child(4) {\n  font-size: 14px;\n  font-weight: 500;\n}') &&
+    css.includes('.tabel-tamu-premium tbody tr td:nth-child(5) {\n  font-size: 15px;\n  font-weight: 600;\n}') &&
+    src.includes('px-3 py-3 font-mono text-sm font-medium tabular-nums') &&
+    src.includes('px-4 py-3 font-semibold tabular-nums')],
+  ['Header typography is 13px semibold',
+    css.includes('.tabel-tamu-premium thead tr th,\n.tabel-tamu-premium thead th button {\n  font-size: 13px !important;\n  font-weight: 600;\n}')],
   ['Existing add/edit guest normalization remains unchanged',
     src.includes('formatGuestName(nama)') &&
     src.includes('formatGuestAddress(alamat)') &&
