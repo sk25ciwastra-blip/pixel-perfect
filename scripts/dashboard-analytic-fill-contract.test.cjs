@@ -44,4 +44,4 @@ test('chart modes and monetary data sources are unchanged',
   dashboard.includes('skalaAdaptif(skalaGrafik[modeGrafik]') &&
   dashboard.includes('totalPemasukan={totalPemasukanHariIni}') &&
   dashboard.includes('realisasi={omzetBulanIni}') &&
-  dashboard.includes('window.localStorage.setItem(KUNCI_TARGET, String(nilai))'));
+  dashboard.includes('window.localStorage.setItem(KUNCI_TARGET_TAHAPAN, JSON.stringify(nilai))'));
