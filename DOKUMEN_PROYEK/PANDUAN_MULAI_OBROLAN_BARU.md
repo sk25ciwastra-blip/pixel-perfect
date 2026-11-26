@@ -26,6 +26,8 @@
 - **Addendum §6A di Checkpoint Utama: 12 revisi desain Lovable aktif dari Owner (UI-26-02 s.d. UI-26-13), semuanya BELUM REVISI.** Item `UI-26-01` (popup/tombol Aksi Cepat Penawaran) **DICABUT OWNER** dan bukan pekerjaan tertunda; nomor ID tidak digunakan ulang. Pekerjaan aktif: popup Success/Error, histori Booking, grafik & agenda Dashboard, warna tabel Transaksi, Pengaturan, Bantu Sesi Aktif, Logout, Kartu Reservasi, konfirmasi penghapusan, Check-out Dashboard, dan Form Reservasi. **Baca §6A sebelum mengerjakan desain; jangan menandai selesai dari sketsa.**
 - Pusatkan pekerjaan pada **satu target** setiap kali; hanya perbaiki temuan baru. Tidak ada persetujuan GO-LIVE baru.
 
+> **GERBANG BACKUP 26 NOVEMBER — NO-GO CLOUD:** Backup privat tanggal 25 Nov sudah lolos integritas, tetapi hanya mencakup 45 dari 51 tabel LIVE saat audit; enam tabel baru termasuk `reservation_offers` dan dua tabel `whatsapp_template_*` belum ada di arsip. Supabase Staging memiliki 33 tabel (18 kurang dari LIVE), sehingga **bukan** target restore LIVE. Tes rollback sintetis PR #181 PASS, tetapi **restore penuh dari backup LIVE belum PASS**. Baca [Release Gate Overtime](POIN4_OVERTIME_WHATSAPP_RELEASE_GATE_20261126.md) dan [Checkpoint Utama](CHECKPOINT_UTAMA_20261126.md). **Wajib backup LIVE baru + restore isolasi + izin Owner khusus sebelum SQL Overtime; jangan mengulang tes sintetis yang sudah PASS.**
+
 ## Protokol anti-berputar-putar setelah setiap pekerjaan
 
 Setelah **setiap** keputusan Owner atau PR yang di-merge:

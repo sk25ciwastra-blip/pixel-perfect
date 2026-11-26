@@ -199,6 +199,16 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ---
 
+### **GATE BACKUP TERBARU — NO-GO SQL OVERTIME (26 November 2026)**
+
+**Audit READ-ONLY baru** membandingkan **backup asli ZIP privat 25 Nov** dengan inventaris tabel LIVE terkini. Backup utuh/checksum cocok tetapi hanya berisi **45 tabel `public`**, sementara LIVE saat ini mempunyai **51 tabel**. Enam tabel **tidak ada di backup**: `b25_homestay_profile`, `b25_homestay_profile_audit`, `reservation_offers`, `reservation_offer_events`, `whatsapp_template_versions`, `whatsapp_template_audit`. Nama 45 tabel lama tetap cocok; **belum ada bukti kecocokan isi/ACL/restore**.
+
+Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih sedikit **18 tabel dari LIVE**; **JANGAN** gunakan sebagai tempat uji restore backup LIVE atau mengira skema setara. Bucket backup LIVE yang dapat diinventarisasi hanya menunjukkan ekspor terakhir bertanggal **25 Nov**. PostgreSQL 18/pg_restore belum tersedia di runtime ChatGPT. Runner Windows privat PG18 yang tersedia di Library dipatok ke backup 25 Nov sehingga **tidak boleh dipakai mentah untuk backup baru**.
+
+**Keputusan:** **NO-GO APPLY Cloud SQL Overtime** hingga tersedia **backup LIVE baru** yang mencakup 51 tabel, bukti `pg_restore --list` dan restore dalam PostgreSQL lokal **terisolasi**, pemeriksaan parity RLS/ACL/Auth/Storage, lalu izin Owner khusus SQL. Tes sintetis PR #181 **tetap PASS**, jangan diulang; tidak menggantikan gate LIVE ini. **Tidak ada backup dikirim ke GitHub/CI, dan tidak ada database LIVE maupun Staging yang diubah.** Detail di [Release Gate Overtime](POIN4_OVERTIME_WHATSAPP_RELEASE_GATE_20261126.md#addendum-read-only--backup-25-november-belum-mencakup-skema-live-26-november).
+
+---
+
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
 1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.

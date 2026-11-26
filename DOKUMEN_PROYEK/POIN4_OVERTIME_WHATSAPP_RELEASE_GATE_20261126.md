@@ -33,6 +33,41 @@
 
 **Batas klaim:** hanya PostgreSQL 17 sintetis, **bukan** UAT autentikasi LIVE atau bukti restore backup Cloud. Tidak ada SQL Cloud, pembayaran, atau publish yang dilakukan. Persetujuan Owner terpisah tetap wajib sebelum migrasi LIVE.
 
+## Addendum READ-ONLY — backup 25 November belum mencakup skema LIVE 26 November
+
+**Audit pada 26 November 2026, sekitar 10:45 WIB:**
+
+| Sumber | Temuan | Makna |
+| --- | --- | --- |
+| ZIP backup privat `pixel-perfect-homestay-hub_261125.backup.zip` dalam Library | CRC ZIP dan SHA-256 ZIP / isi `.backup` cocok dengan laporan verifikasi 25 Nov; metadata `CREATE TABLE public.*` berisi tepat **45 nama tabel unik** | **Integritas arsip PASS**, **BUKAN full restore** |
+| Lovable Cloud LIVE via `information_schema.tables` SELECT-only | **51** tabel publik bertipe `BASE TABLE` | Enam tabel LIVE tidak ada dalam dump 25 Nov |
+| Supabase `Baturaden-25-Staging` `bgtztcfbkcrvcipxbfti` via katalog READ-ONLY | **33** tabel publik; dibanding LIVE kurang **18** tabel, termasuk dua tabel template WhatsApp | **Tidak kompatibel sebagai target untuk menggantikan LIVE** atau sebagai bukti pemulihan backup LIVE |
+| Storage metadata LIVE READ-ONLY | Bucket export/backup yang terinventarisasi terakhir berisi objek bertanggal **25 Nov 2026**; tidak ditemukan ekspor berpenanggalan lebih baru di bucket-bucket backup yang cocok namanya | Perlu backup LIVE baru setelah perubahan skema |
+| Lingkungan pemeriksa saat ini | `pg_restore`, `psql`, `initdb`, `pg_ctl`, `postgres` dan Docker tidak ada; instalasi paket via apt tidak berhasil | **Restore penuh arsip LIVE masih BLOCKED di runtime pemeriksa**; jangan mengalihkan ke Cloud staging/LIVE |
+
+**Enam tabel LIVE yang tidak ada dalam backup 25 Nov** (perbandingan **nama persis**, bukan perkiraan):
+- `b25_homestay_profile`
+- `b25_homestay_profile_audit`
+- `reservation_offer_events`
+- `reservation_offers`
+- `whatsapp_template_audit`
+- `whatsapp_template_versions`
+
+**Hasil set:** 45/45 nama tabel dari backup masih terdapat di LIVE; enam nama tambahan terdapat di LIVE tetapi tidak di arsip. Kecocokan nama tidak membuktikan isi, struktur definisi tiap tabel, trigger, ACL, RLS, Auth, Storage file fisik, ataupun kemudahan restore.
+
+**Keputusan Owner gate dari bukti ini:** **NO-GO APPLY SQL CLOUD**. Backup 25 Nov tidak cukup sebagai *satu-satunya* rencana pemulihan seluruh aplikasi terkini. Ambil **backup LIVE baru yang meliputi setidaknya seluruh 51 tabel publik + cakupan Auth/Storage sesuai kemampuan penyedia**, lalu:
+1. simpan melalui lokasi **privat** (jangan unggah ke repo/CI publik/chat atau Supabase Staging);
+2. periksa timestamp, checksum ZIP dan isi dump, `pg_restore --list` kompatibel (arsip 25 Nov format PGDMP 1.16, sebelumnya memerlukan PostgreSQL 18);
+3. jalankan restore ke **PostgreSQL 18 lokal/terisolasi** memakai runner privat, dengan hash/fingerprint **diadaptasi ke backup baru**, bukan memaksa nilai lama;
+4. bandingkan nama/definisi tabel, functions, triggers, policies, RLS, ACL serta Auth/Storage parity dan perbedaan yang sah; jika ada kegagalan, **STOP**;
+5. minta persetujuan Owner **khusus aktivasi SQL Overtime** setelah bukti restore terverifikasi.
+
+Alat Windows privat yang sudah tersedia dalam Library adalah `B25_Restore_20261125_Windows_Isolated_PG18.py` dan **dipatok ke backup 25 Nov**. Jangan pakai langsung untuk backup baru tanpa meninjau hash, inventaris, versi PostgreSQL dan jalur target. Uji sintetis PR #181 tetap PASS, **tetapi tidak mengatasi selisih enam tabel ini**.
+
+**Tidak ada tindakan Cloud yang mengubah data pada audit ini.** Salinan backup sementara di runtime pemeriksa dihapus setelah ekstraksi nama tabel metadata saja. Tidak ada dump, teks berisi data tamu, atau kredensial yang dimasukkan ke GitHub.
+
+---
+
 ## Urutan gate sebelum Cloud (belum dijalankan)
 
 1. Review dan periksa kembali source/DDL/ACL target LIVE pada hari aktivasi. Bandingkan dengan baseline yang diuji, termasuk dependency/kind constraint dan owner/training guard.
