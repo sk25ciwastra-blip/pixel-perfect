@@ -208,7 +208,7 @@ function HalamanTamu() {
               <td className="pemisah-kolom border-b border-border/60 px-3 py-3 text-center font-medium"><span className="block truncate text-center" title={t.address || 'Alamat belum tercatat'}>{t.address?.trim() || '—'}</span></td>
               <td className="pemisah-kolom whitespace-nowrap border-b border-border/60 px-3 py-3 font-mono text-sm font-medium tabular-nums">xxxx{empatDigitWA(t.phone)}</td>
               <td className="pemisah-kolom border-b border-border/60 px-4 py-3 font-semibold tabular-nums">{transactions.loading ? '—' : jumlahKunjungan(t.id)}</td>
-              <td className="pemisah-kolom border-b border-border/60 px-2 py-3"><span className="tamu-status-pill text-xs text-muted-foreground" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span></td>
+              <td className="pemisah-kolom border-b border-border/60 px-2 py-3"><span className="tamu-status-pill text-xs text-muted-foreground" title="Status dihitung dari riwayat Booking dan Check-in/Check-out">{transactions.loading ? 'Memuat…' : transactions.error ? 'Belum dapat dimuat' : guestVisitStatus(transactions.rows.filter(tr => tr.guest_id === t.id))}</span></td>
               <td className="border-b border-border/60 px-2 py-2"><div className="tamu-aksi flex justify-center gap-0">
                 <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Lihat detail ${t.full_name}`} aria-label={`Lihat detail ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setOpen(false); setDetailTamu(t); }}><Eye className="size-[21px]!" /></Button>
                 {!readOnly && <Button size="icon" variant="ghost" className="size-10 text-siap-foreground" title={`WhatsApp ${t.full_name}`} aria-label={`WhatsApp ${t.full_name}`} onClick={() => openWhatsApp(t.phone)}><IkonWhatsApp className="size-[21px]!" /></Button>}
@@ -294,11 +294,11 @@ function HalamanTamu() {
                 <div className="dt-identitas">
                   <h3>{detail.full_name.toUpperCase()} · {empatDigitWA(detail.phone)}</h3>
                   <p className="dt-telepon"><IkonWhatsApp className="size-[19px]" />{detail.phone}</p>
-                  <span className="dt-pill-status" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span>
+                  <span className="dt-pill-status" title="Dihitung dari Booking dan Check-in/Check-out yang tercatat">{transactions.loading ? 'Memuat status…' : transactions.error ? 'Status belum dapat dimuat' : statusTamu}</span>
                 </div>
                 <div className="dt-statistik">
-                  <div className="dt-stat"><span className="dt-stat-ikon"><BedDouble aria-hidden="true" /></span><div><p>Total Kunjungan</p><strong>{transactions.loading ? '…' : `${jumlahKunjungan(detail.id)} Kali`}</strong></div></div>
-                  <div className="dt-stat"><span className="dt-stat-ikon"><FileText aria-hidden="true" /></span><div><p>Total Transaksi</p><strong>{transactions.loading ? '…' : rupiah(totalTransaksi)}</strong></div></div>
+                  <div className="dt-stat"><span className="dt-stat-ikon"><BedDouble aria-hidden="true" /></span><div><p>Total Kunjungan</p><strong>{transactions.loading ? '…' : transactions.error ? '—' : `${jumlahKunjungan(detail.id)} Kali`}</strong></div></div>
+                  <div className="dt-stat"><span className="dt-stat-ikon"><FileText aria-hidden="true" /></span><div><p>Total Transaksi</p><strong>{transactions.loading ? '…' : transactions.error ? '—' : `${totalTransaksi} Transaksi`}</strong></div></div>
                   <div className="dt-stat"><span className="dt-stat-ikon"><CalendarDays aria-hidden="true" /></span><div><p>Kunjungan Terakhir</p><strong>{terakhir ? tanggalPendekWib(terakhir) : '—'}</strong></div></div>
                 </div>
               </div>
@@ -307,18 +307,18 @@ function HalamanTamu() {
                 <dl className="dt-info-grid">
                   <div><dt>Nama Lengkap</dt><dd>{detail.full_name.toUpperCase()}</dd></div>
                   <div><dt>No. HP / WhatsApp</dt><dd><span className="dt-telepon-inline"><IkonWhatsApp className="size-[17px]" />{detail.phone}</span></dd></div>
-                  <div><dt>No. Whatsapp</dt><dd className="dt-tebal">{detail.phone || '—'}</dd></div>
-                  <div><dt>Email</dt><dd>—</dd></div>
+                  <div><dt>Tercatat Sejak</dt><dd>{tanggalPendekWib(detail.created_at)}</dd></div>
+                  <div><dt>Pembaruan Terakhir</dt><dd>{tanggalPendekWib(detail.updated_at)}</dd></div>
                   <div><dt>Alamat</dt><dd>{detail.address || '—'}</dd></div>
-                  <div><dt>Catatan</dt><dd>{catatanPreferensi}</dd></div>
+                  <div><dt>Catatan Terakhir</dt><dd>{catatanTerakhir}</dd></div>
                 </dl>
               </section>
               <section className="dt-bagian">
                 <h3 className="dt-bagian-judul"><Layers aria-hidden="true" />Preferensi &amp; Riwayat Umum</h3>
                 <div className="dt-pref">
-                  <div className="dt-pref-item"><span className="dt-pref-ikon"><BedDouble aria-hidden="true" /></span><div><p>Tipe Favorit</p><strong>{tipeFavorit}</strong></div></div>
-                  <div className="dt-pref-item"><span className="dt-pref-ikon"><Layers aria-hidden="true" /></span><div><p>Paket Favorit</p><strong>{paketFavorit}</strong></div></div>
-                  <div className="dt-pref-item"><span className="dt-pref-ikon"><Users aria-hidden="true" /></span><div><p>Jumlah Tamu Umum</p><strong>{tamuUmum ? `${tamuUmum} Orang` : '—'}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><BedDouble aria-hidden="true" /></span><div><p>Tipe Favorit</p><strong>{transactions.error ? 'Belum dapat dimuat' : tipeFavorit === '—' ? 'Belum ada kunjungan' : tipeFavorit}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><Layers aria-hidden="true" /></span><div><p>Paket Favorit</p><strong>{transactions.error ? 'Belum dapat dimuat' : paketFavorit === '—' ? 'Belum ada kunjungan' : paketFavorit}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><Users aria-hidden="true" /></span><div><p>Rata-rata Jumlah Tamu</p><strong>{tamuUmum ? `${tamuUmum} Orang` : 'Belum ada kunjungan'}</strong></div></div>
                   <div className="dt-pref-item"><span className="dt-pref-ikon"><NotebookPen aria-hidden="true" /></span><div><p>Catatan Preferensi</p><strong>{catatanPreferensi}</strong></div></div>
                 </div>
               </section>
@@ -327,11 +327,21 @@ function HalamanTamu() {
                 <button type="button" role="tab" aria-selected={tabDetail === 'transaksi'} data-aktif={tabDetail === 'transaksi'} className="dt-tab" onClick={() => setTabDetail('transaksi')}><Layers aria-hidden="true" />Riwayat Transaksi</button>
                 <button type="button" role="tab" aria-selected={tabDetail === 'booking'} data-aktif={tabDetail === 'booking'} className="dt-tab" onClick={() => setTabDetail('booking')}><CalendarDays aria-hidden="true" />Riwayat Booking</button>
                 {canReadOffers && <button type="button" role="tab" aria-selected={tabDetail === 'penawaran'} data-aktif={tabDetail === 'penawaran'} className="dt-tab" onClick={() => setTabDetail('penawaran')}><CalendarDays aria-hidden="true" />Riwayat Reservasi</button>}
-                <button type="button" role="tab" aria-selected={tabDetail === 'catatan'} data-aktif={tabDetail === 'catatan'} className="dt-tab" onClick={() => setTabDetail('catatan')}><NotebookPen aria-hidden="true" />Catatan</button>
+                <button type="button" role="tab" aria-selected={tabDetail === 'catatan'} data-aktif={tabDetail === 'catatan'} className="dt-tab" onClick={() => setTabDetail('catatan')}><NotebookPen aria-hidden="true" />Catatan ({daftarCatatan.length})</button>
+                <button type="button" role="tab" aria-selected={tabDetail === 'perubahan'} data-aktif={tabDetail === 'perubahan'} className="dt-tab" onClick={() => setTabDetail('perubahan')}><Clock aria-hidden="true" />Riwayat Perubahan ({history.error ? '—' : daftarPerubahan.length})</button>
               </div>
-              {tabDetail === 'penawaran' && canReadOffers ? <OfferHistory key={detail.id} guest={detail.id} /> : tabDetail === 'catatan' ? <>
+              {tabDetail === 'perubahan' ? <section className="dt-perubahan" aria-label="Riwayat Perubahan Profil">
+                {history.loading ? <p className="dt-kosong">Memuat riwayat perubahan…</p>
+                : history.error ? <p role="alert" className="dt-kosong">Riwayat perubahan belum tersedia. Fitur Perbarui dinonaktifkan sampai audit database diaktifkan.</p>
+                : daftarPerubahan.length ? <ol className="dt-perubahan-list">{daftarPerubahan.map(row => <li key={row.id}>
+                    <div className="dt-perubahan-kepala"><strong>{guestHistoryLabels[row.field_name] ?? row.field_name}</strong><time dateTime={row.changed_at}>{waktuCatatanWib(row.changed_at)}</time></div>
+                    <p><span>Sebelum:</span> {row.old_value || '—'}</p>
+                    <p><span>Sesudah:</span> {row.new_value || '—'}</p>
+                    <small>Diubah oleh: {row.actor_name || 'Sistem'}{row.actor_role ? ` · ${row.actor_role}` : ''}</small>
+                  </li>)}</ol> : <p className="dt-kosong">Belum ada perubahan profil sejak histori diaktifkan.</p>}
+              </section> : tabDetail === 'penawaran' && canReadOffers ? <OfferHistory key={detail.id} guest={detail.id} /> : tabDetail === 'catatan' ? <>
                 {notes.error && <p className="dt-kosong">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
-                {daftarCatatan.length ? <ul className="dt-catatan-list">{daftarCatatan.map(note => <li key={note.id} className="dt-catatan-item"><p>{note.body}</p><p className="dt-catatan-meta">{pembuatCatatan(note.author_role, note.author_name)} · {note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</p></li>)}</ul> : !notes.error && <p className="dt-kosong">Belum ada catatan tamu</p>}
+                {daftarCatatan.length ? <ul className="dt-catatan-list">{daftarCatatan.map(note => <li key={note.id} className="dt-catatan-item"><p><strong>{guestNoteCategories.find(item => item.id === guestNoteType(note))?.title ?? 'Umum'}:</strong> {note.body}</p><p className="dt-catatan-meta">{pembuatCatatan(note.author_role, note.author_name)} · {note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</p></li>)}</ul> : !notes.error && <p className="dt-kosong">Belum ada catatan tamu</p>}
               </> : <>
                 {transactions.error && <p role="alert" className="dt-kosong">Riwayat transaksi belum dapat dimuat.</p>}
                 {barisRiwayat.length ? <div className="dt-tabel-wrap"><table className="dt-tabel">
@@ -353,6 +363,12 @@ function HalamanTamu() {
                 </table></div> : !transactions.loading && !transactions.error && <p className="dt-kosong">{tabDetail === 'booking' ? 'Belum ada riwayat booking' : 'Belum ada riwayat transaksi'}</p>}
               </>}
               <footer className="dt-footer">
+                {!readOnly && <>
+                  <Button type="button" className="dt-tombol" onClick={() => edit(detail, true)}><NotebookPen className="size-4" />Tambah Catatan</Button>
+                  <Button type="button" className="dt-tombol" disabled={saving || history.loading || !!history.error} onClick={() => edit(detail)} title={history.error ? 'Audit belum aktif: Perbarui dinonaktifkan untuk mencegah perubahan tanpa histori' : 'Edit nama, alamat, atau WhatsApp dan simpan histori'}>
+                    <PenLine className="size-4" />Perbarui
+                  </Button>
+                </>}
                 <Button type="button" className="dt-tutup" onClick={tutup}>Tutup</Button>
               </footer>
             </>}
