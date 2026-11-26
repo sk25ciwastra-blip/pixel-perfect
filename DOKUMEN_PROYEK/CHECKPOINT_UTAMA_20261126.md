@@ -232,6 +232,18 @@ Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih se
 
 ---
 
+### UI Dashboard Target Omzet — 3 tingkatan pencapaian (Owner, 26 November 2026)
+
+**Keputusan Owner:** tombol `Atur target` membuka **popup kecil**, bukan form melebar dalam kartu. Isi terdiri dari **(1) Realisasi** omzet dari sistem (baca saja), **(2) Standard Operasional** target minimum bulanan, **(3) Target Bonus** target omzet bulanan yang lebih tinggi. Angka Rp40.000.000 dan Rp70.000.000 adalah **contoh batas** saat diskusi, **bukan target yang otomatis disetel**.
+
+- **Merah:** realisasi di bawah Standard; **Hijau:** mencapai Standard tetapi belum Bonus; **Biru:** mencapai atau melewati Bonus. Warna **satu kesatuan**, bukan gradien tiga warna; kemajuan cincin dihitung terhadap Bonus dan dibatasi 100% secara visual.
+- Dua input target hanya disimpan bila rupiah bulat positif dan **Bonus > Standard**; realisasi tidak bisa diedit dari popup. Dialog memiliki Batal, Simpan Target, pemberitahuan validasi/gagal simpan, dan tidak melakukan pembayaran bonus otomatis.
+- **Batasan persistence saat ini:** fitur target lama sudah memakai `localStorage` **per browser**, belum tersinkron ke akun/LIVE Cloud. Versi baru mempertahankan sifat lokal itu; satu nilai target historis **dipertahankan sebagai referensi untuk ditinjau**, tidak dianggap kedua batas disetujui sampai Owner menyimpan dua target baru. Target yang sudah disetujui disimpan dalam key browser baru, sedangkan key lama **tidak dihapus**.
+- **Sumber realisasi tidak diubah:** tetap dihitung dari baris pembayaran bulan berjalan seperti sebelum revisi UI. Tidak ada perubahan schema, finance calculation, tarif, bonus karyawan, RLS, atau publish.
+- **Status:** perubahan kode dan tes dalam PR review khusus; **belum UAT visual**, belum dinyatakan sudah tampil di LIVE, dan **tidak ada angka default Rp40 juta/Rp70 juta**.
+
+---
+
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
 1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.
