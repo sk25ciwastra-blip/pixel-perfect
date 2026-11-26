@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState, type FormEvent } from 'react';
 import { BedDouble, Pencil, Plus, ShieldAlert, DoorOpen, CheckCircle2, Layers3 } from 'lucide-react';
-import { toast } from 'sonner';
+import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ function ManajemenKamar() {
   const [saving, setSaving] = useState(false);
   const [busyRoom, setBusyRoom] = useState('');
   const [error, setError] = useState('');
+  const [actionResult, setActionResult] = useState<ActionResultState | null>(null);
 
   const allRooms = useMemo(() => [...rooms.rows].sort(urutNomor), [rooms.rows]);
   const activeCount = allRooms.filter(room => room.active).length;
@@ -50,7 +51,13 @@ function ManajemenKamar() {
     );
   }
 
+  function reportError(title: string, description: string) {
+    setError(description);
+    setActionResult({ kind: 'error', title, description });
+  }
+
   function openEditor(room: Room | null) {
+    setActionResult(null);
     setDialog({ room });
     setNomor(room?.room_number ?? '');
     setTipeId(room?.room_type_id ?? types.rows[0]?.id ?? '');
@@ -63,21 +70,24 @@ function ManajemenKamar() {
     if (!owner || !dialog || saving) return;
     const n = nomor.trim();
     if (!n || !tipeId || !types.rows.some(type => type.id === tipeId)) {
-      setError('Nomor kamar dan tipe kamar wajib dipilih.');
+      reportError('Data kamar belum lengkap', 'Nomor kamar dan tipe kamar wajib dipilih.');
       return;
     }
     if (allRooms.some(room => room.room_number.trim().toLowerCase() === n.toLowerCase() && room.id !== dialog.room?.id)) {
-      setError('Nomor kamar sudah digunakan.');
+      reportError('Nomor kamar sudah digunakan', 'Gunakan nomor kamar lain yang belum tercatat.');
       return;
     }
     const floorValue = lantai.trim();
     const floor = floorValue === '' ? null : Number(floorValue);
     if (floor !== null && (!Number.isInteger(floor) || floor < 1)) {
-      setError('Lantai harus berupa bilangan bulat minimal 1.');
+      reportError('Lantai tidak valid', 'Lantai harus berupa bilangan bulat minimal 1.');
       return;
     }
     setSaving(true);
     setError('');
+    setActionResult(null);
+    const editing = dialog.room !== null;
+    let writeAcknowledged = false;
     try {
       // Changing room type for an existing room affects historical prices/transactions:
       // use only the original room type when editing.
@@ -85,11 +95,23 @@ function ManajemenKamar() {
         ? await supabase.from('rooms').update({ room_number: n, lantai: floor }).eq('id', dialog.room.id)
         : await supabase.from('rooms').insert({ room_number: n, room_type_id: tipeId, lantai: floor });
       if (writeError) throw writeError;
+      writeAcknowledged = true;
       await rooms.refresh({ throwOnError: true });
       setDialog(null);
-      toast.success(dialog.room ? 'Data kamar berhasil diperbarui.' : 'Kamar berhasil ditambahkan.');
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Penyimpanan belum berhasil.');
+      setActionResult({
+        kind: 'success',
+        title: editing ? 'Kamar berhasil diperbarui' : 'Kamar berhasil ditambahkan',
+        description: editing
+          ? `Perubahan data kamar ${n} telah disimpan dan daftar kamar berhasil dimuat ulang.`
+          : `Kamar ${n} telah ditambahkan dan daftar kamar berhasil dimuat ulang.`,
+      });
+    } catch {
+      reportError(
+        'Periksa kembali data kamar',
+        writeAcknowledged
+          ? 'Perubahan mungkin sudah disimpan, tetapi daftar kamar belum dapat dimuat ulang. Periksa kembali sebelum menyimpan ulang.'
+          : 'Hasil penyimpanan kamar belum dapat dipastikan. Periksa daftar kamar sebelum mengulangi.',
+      );
     } finally {
       setSaving(false);
     }
@@ -98,22 +120,34 @@ function ManajemenKamar() {
   async function toggleActive(room: Room) {
     if (!owner || busyRoom) return;
     setError('');
+    setActionResult(null);
     if (room.active && (transactions.loading || transactions.error)) {
-      setError('Status transaksi belum dapat diverifikasi. Penonaktifan kamar ditahan demi keamanan.');
+      reportError('Penonaktifan kamar ditahan', 'Status transaksi belum dapat diverifikasi. Penonaktifan kamar ditahan demi keamanan.');
       return;
     }
     if (room.active && digunakan(room)) {
-      setError(`Kamar ${room.room_number} masih dipakai atau memiliki booking aktif dan tidak dapat dinonaktifkan.`);
+      reportError('Kamar masih digunakan', `Kamar ${room.room_number} masih terisi atau memiliki Booking aktif dan tidak dapat dinonaktifkan.`);
       return;
     }
     setBusyRoom(room.id);
+    let writeAcknowledged = false;
     try {
       const { error: writeError } = await supabase.from('rooms').update({ active: !room.active }).eq('id', room.id);
       if (writeError) throw writeError;
+      writeAcknowledged = true;
       await rooms.refresh({ throwOnError: true });
-      toast.success(`Kamar ${room.room_number} berhasil ${room.active ? 'dinonaktifkan' : 'diaktifkan'}.`);
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Perubahan status kamar gagal.');
+      setActionResult({
+        kind: 'success',
+        title: room.active ? 'Kamar berhasil dinonaktifkan' : 'Kamar berhasil diaktifkan',
+        description: `Status kamar ${room.room_number} berhasil diperbarui dan daftar kamar dimuat ulang.`,
+      });
+    } catch {
+      reportError(
+        'Periksa kembali status kamar',
+        writeAcknowledged
+          ? 'Status kamar mungkin sudah berubah, tetapi daftar belum dapat dimuat ulang. Periksa kembali sebelum mengulangi.'
+          : 'Perubahan status kamar belum dapat dipastikan. Periksa kondisi kamar sebelum mengulangi.',
+      );
     } finally {
       setBusyRoom('');
     }
@@ -209,6 +243,7 @@ function ManajemenKamar() {
             <div className="flex justify-end gap-2"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialog(null)}>Batal</Button><Button disabled={saving}>{saving ? 'Menyimpan…' : 'Simpan Kamar'}</Button></div>
           </form>
         </div>}
+        <ActionResultDialog result={actionResult} onClose={() => setActionResult(null)} />
       </SubPengaturan>
     </Kerangka>
   );
