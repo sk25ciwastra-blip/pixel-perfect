@@ -247,6 +247,7 @@
 .db-analytic-panel {
   min-width: 0;
   min-height: 18.5rem;
+  container: db-analytic / inline-size;
 }
 .db-analytic-content {
   min-width: 0;
@@ -281,18 +282,23 @@
 
 /* At phone widths, avoid crowding the legend/targets beside a large ring.
    The panels are allowed to grow naturally instead of clipping values. */
-@media (max-width: 420px) {
-  .db-analytic-panel { min-height: 17rem; }
-  .db-analytic-ring { width: clamp(7rem, 32vw, 8.5rem); }
+/* The app's sidebar can make 3-column cards narrow even on desktop.
+   Query the card itself; don't infer space only from viewport width. */
+@container db-analytic (max-width: 360px) {
   .db-analytic-content {
     flex-direction: column;
     justify-content: center;
     gap: 0.75rem;
   }
+  .db-analytic-ring { width: clamp(7rem, 42cqw, 9.5rem); }
   .db-analytic-content > ul,
   .db-analytic-content > dl {
     flex: 0 1 auto;
     width: 100%;
   }
   .db-analytic-content > ul { font-size: 11px; }
+}
+
+@media (max-width: 420px) {
+  .db-analytic-panel { min-height: 17rem; }
 }
