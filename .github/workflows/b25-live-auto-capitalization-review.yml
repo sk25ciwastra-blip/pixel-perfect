@@ -63,7 +63,7 @@ jobs:
         run: |
           mkdir -p /tmp/b25-auto-playwright
           npm install --prefix /tmp/b25-auto-playwright --no-save --package-lock=false --ignore-scripts playwright@1.56.1
-          /tmp/b25-auto-playwright/node_modules/.bin/playwright install --with-deps chromium
+          /tmp/b25-auto-playwright/node_modules/.bin/playwright install chromium
       - name: Start localhost-only synthetic React harness
         run: |
           bunx vite --config scripts/ui26-browser-vite.config.mjs --host 127.0.0.1 --port 4187 --strictPort > /tmp/b25-auto-cap-vite.log 2>&1 &
