@@ -215,7 +215,7 @@ Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih se
 
 - **File alat baru dalam branch/PR review:** `scripts/b25_restore_private_windows_pg18.py`, dapat menerima nama ZIP/cek SHA baru; hanya restore ke cluster Windows PostgreSQL 18 sementara `127.0.0.1` dan dapat memeriksa TOC/nama tabel dahulu.
 - **Panduan tindakan privat:** [PANDUAN_RESTORE_PRIVAT_PG18_BACKUP_TERBARU_20261126.md](PANDUAN_RESTORE_PRIVAT_PG18_BACKUP_TERBARU_20261126.md), menjelaskan `inspect` sebelum `restore`, hash ZIP independen, pembatasan no-ACL/no-owner, dan larangan memakai Staging/LIVE.
-- **Tes:** hanya tes Python ZIP *synthetic* dan pemeriksaan CI; **jangan klaim full restore** sampai arsip LIVE baru dipulihkan secara privat pada mesin lokal.
+- **Tes kontrak runner:** **9/9 PASS** dari log GitHub Actions [run #45753838684](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/45753838684), termasuk manifest LIVE metadata 51 tabel dan enam tabel baru, parsing TOC, ZIP, checksum, pencegahan path traversal, dan sanitasi environment koneksi. **Tidak ada dump privat yang diproses dalam CI. Ini BUKAN full restore LIVE**; arsip baru tetap harus dipulihkan secara lokal oleh pemegang akses.
 - **Release gate masih:** **NO-GO SQL CLOUD OVERTIME**, backup segar mencakup seluruh skema terkini + uji restore terisolasi + audit role/ACL/Auth/Storage + persetujuan Owner Cloud khusus. Jangan mengulang tes Postgres sintetis PR #181 yang sudah PASS.
 
 ---
