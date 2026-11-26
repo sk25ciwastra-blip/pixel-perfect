@@ -84,22 +84,22 @@ class PrivateRestoreGuardTests(unittest.TestCase):
 
     def test_failure_classification_contains_no_raw_sql_or_private_data(self):
         cases = [
-            ("pg_restore: error: could not execute query: ERROR: schema "
-             "\\"public\\" does not exist", "MISSING_PUBLIC_SCHEMA"),
-            ("pg_restore: error: could not execute query: ERROR: schema "
-             "\\"auth\\" does not exist", "MISSING_SUPABASE_AUTH_DEPENDENCY"),
-            ("pg_restore: error: could not execute query: ERROR: schema "
-             "\\"storage\\" does not exist", "MISSING_SUPABASE_STORAGE_DEPENDENCY"),
-            ("pg_restore: error: could not execute query: ERROR: role "
-             "\\"service_role\\" does not exist", "MISSING_DATABASE_ROLE"),
-            ("pg_restore: error: could not execute query: ERROR: extension "
-             "\\"vector\\" is not available", "MISSING_POSTGRES_EXTENSION"),
-            ("pg_restore: error: could not execute query: ERROR: function "
-             "auth.uid() does not exist", "MISSING_SUPABASE_AUTH_DEPENDENCY"),
-            ("pg_restore: error: could not execute query: ERROR: duplicate key value "
-             "violates unique constraint", "DATA_CONSTRAINT_FAILURE"),
-            ("pg_restore: error: could not execute query: ERROR: mysterious "
-             "exception involving private@example.invalid",
+            ('pg_restore: error: could not execute query: ERROR: schema "public" does not exist',
+             "MISSING_PUBLIC_SCHEMA"),
+            ('pg_restore: error: could not execute query: ERROR: schema "auth" does not exist',
+             "MISSING_SUPABASE_AUTH_DEPENDENCY"),
+            ('pg_restore: error: could not execute query: ERROR: schema "storage" does not exist',
+             "MISSING_SUPABASE_STORAGE_DEPENDENCY"),
+            ('pg_restore: error: could not execute query: ERROR: role "service_role" does not exist',
+             "MISSING_DATABASE_ROLE"),
+            ('pg_restore: error: could not execute query: ERROR: extension "vector" is not available',
+             "MISSING_POSTGRES_EXTENSION"),
+            ('pg_restore: error: could not execute query: ERROR: function auth.uid() does not exist',
+             "MISSING_SUPABASE_AUTH_DEPENDENCY"),
+            ('pg_restore: error: could not execute query: ERROR: duplicate key value '
+             'violates unique constraint', "DATA_CONSTRAINT_FAILURE"),
+            ('pg_restore: error: could not execute query: ERROR: mysterious '
+             'exception involving private@example.invalid',
              "UNCLASSIFIED_POSTGRES_RESTORE_ERROR"),
         ]
         log = self.root / "raw-secret-never-upload.txt"
