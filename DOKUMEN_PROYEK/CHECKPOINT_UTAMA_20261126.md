@@ -419,3 +419,20 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Lovable:** source project tersinkron ke commit merge `910af92`, tetapi status proyek masih `needs_attention / out_of_credits`; `is_published=true` tidak berarti versi ini dipublikasikan. **Tidak dilakukan deploy/publish atau perubahan SQL Cloud**. Gate Overtime tetap NO-GO.
 
 **Status UI-26-02:** **PARTIAL** — enam modul popup code MERGED + komponen browser sintetis PASS, sementara UAT LIVE tetap belum lengkap. Bukti screenshot Owner sebelumnya hanya PASS visual sukses Tambah Rekening dan sukses Minimum DP & Komisi. Tidak mengulang checkpoint PASS tersebut.
+
+
+---
+
+### Addendum UI-26-02 tahap 8 — Minimum DP & Komisi, PR #198 MERGED (26 November 2026 WIB)
+
+**Persetujuan Owner:** Owner menyetujui secara eksplisit merge [PR #198](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/198). PR telah **MERGED** ke GitHub `main` menggunakan squash commit `fce136a5aed1a68f0264f7e8fc2d82b67510c716`.
+
+**Lingkup:** logika umpan balik penyimpanan keuangan non-atomik dipisahkan ke fungsi `resolveFinanceSettingsOutcome` di `src/lib/finance-settings-outcome.ts` agar dapat diuji dengan callback lokal. Rute Owner `src/routes/pengaturan-keuangan.tsx` tetap memakai dua RPC asli `set_finance_settings` lalu `set_finance_commission_config` pada urutan lama, batas validasi, opsi komisi, pembatasan Owner dan satu dialog resmi. Tidak ada perubahan SQL Cloud, rumus, tarif, nilai Minimum DP/komisi, ataupun fungsi pembayaran.
+
+**Bukti QA:** head PR `fffe9af80df10e7e46c0cc35ac3c26341d0017c9` **17/17 GitHub Actions SUCCESS**, termasuk build dan TypeScript. Tes `scripts/ui-26-02-finance-outcome-runtime.test.ts` menjalankan **8/8 skenario sintetis PASS** dengan stub: dua write & reread sukses, input DP tidak valid, RPC pertama gagal, DP diterima/Komisi gagal, hasil parsial+reread gagal, dua write diterima+reread gagal, exception tidak pasti, dan tidak ada retry otomatis. Kontrak source tetap memeriksa urutan kedua RPC serta guard. **Simulasi bukan bukti hasil RPC LIVE** dan tidak perlu membuat transaksi atau mengubah setting keuangan asli untuk UAT.
+
+**Status Lovable:** source tersinkron pada commit merge `fce136a`; proyek masih `needs_attention / out_of_credits`. Nilai `is_published=true` tidak membuktikan bahwa versi tersebut sudah terpublikasi. **Tidak ada publish/deploy** dalam pekerjaan ini.
+
+**Status keseluruhan UI-26-02:** **PARTIAL** — kode popup enam modul sudah merged, Chromium popup sintetis desktop/mobile PASS (PR #197), dan delapan jalur feedback keuangan tersimulasi PASS (PR #198). UAT integrasi di enam modul, persistensi setelah reload, penanganan gagal parsial secara nyata serta identitas build LIVE tetap belum dibuktikan. Bukti screenshot Owner yang sudah PASS visual untuk **sukses Tambah Rekening** dan **sukses Minimum DP & Komisi** tidak diulang.
+
+**Gate tetap:** tidak ada mutasi SQL Cloud, dana/transaksi, nilai keuangan LIVE, kamar, Booking, Pengumuman asli atau Template ACTIVE; aktivasi Overtime tetap NO-GO sampai bukti backup/restore dan persetujuan khusus.
