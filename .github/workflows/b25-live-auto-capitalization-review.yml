@@ -1,0 +1,84 @@
+name: B25 Live Auto Capitalization — Forms Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/live-auto-capitalization.ts'
+      - 'src/routes/__root.tsx'
+      - 'src/routes/tamu.tsx'
+      - 'scripts/live-auto-capitalization.test.ts'
+      - 'scripts/live-auto-capitalization-contract.test.cjs'
+      - 'scripts/live-auto-capitalization-browser-harness.tsx'
+      - 'scripts/live-auto-capitalization-browser.test.mjs'
+      - 'qa/live-auto-capitalization.html'
+      - '.github/workflows/b25-live-auto-capitalization-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pure-and-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: node scripts/live-auto-capitalization-contract.test.cjs
+      - run: bun scripts/live-auto-capitalization.test.ts
+      - run: node scripts/guest-entry-ui-contract.test.cjs
+      - run: bun scripts/guest-entry-format.test.ts
+
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run build
+      - run: bunx tsc --noEmit
+
+  chromium-synthetic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Install separate Chromium tooling
+        run: |
+          mkdir -p /tmp/b25-auto-playwright
+          npm install --prefix /tmp/b25-auto-playwright --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          /tmp/b25-auto-playwright/node_modules/.bin/playwright install chromium
+      - name: Start localhost-only synthetic React harness
+        run: |
+          bunx vite --config scripts/ui26-browser-vite.config.mjs --host 127.0.0.1 --port 4187 --strictPort > /tmp/b25-auto-cap-vite.log 2>&1 &
+      - name: Verify real typing and paste on desktop and mobile
+        env:
+          B25_PLAYWRIGHT_MODULE: /tmp/b25-auto-playwright/node_modules/playwright/index.mjs
+          B25_AUTO_CAP_ORIGIN: http://127.0.0.1:4187
+        run: node scripts/live-auto-capitalization-browser.test.mjs
+      - name: Upload browser screenshots and Vite log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b25-live-auto-capitalization-synthetic
+          path: |
+            test-results/live-auto-capitalization/
+            /tmp/b25-auto-cap-vite.log
+          if-no-files-found: warn
+          retention-days: 7
