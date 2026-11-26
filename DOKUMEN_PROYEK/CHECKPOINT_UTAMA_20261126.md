@@ -491,3 +491,26 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Status UI-26-02 tetap PARTIAL:** kode popup enam modul MERGED; komponen Chromium sintetis, finance readback dan profil, dan Rekening Owner readback sintetis PASS. UAT visual Owner sebelumnya hanya sukses Tambah Rekening dan sukses Minimum DP & Komisi, bukan bukti seluruh jalur gagal/mismatch, persistensi LIVE, atau versi aplikasi published. Jangan mengubah rekening, profil, keuangan, kamar, booking, pengumuman, template, SQL Cloud, atau transaksi hanya untuk UAT.
 
 **Pekerjaan berikutnya:** pilih modul selanjutnya untuk audit hasil baca ulang dan guard yang benar-benar belum PASS, tanpa mengulang tes sukses yang telah dicatat. Status Gate Overtime SQL tetap NO-GO.
+
+
+---
+
+### Addendum LIVE UAT NO9 — Reset Empat Tamu Demo dan Dua Closing FINAL (26 November 2026)
+
+**Persetujuan Owner:** Owner meminta menghapus keempat tamu demo **beserta transaksi/riwayatnya**, lalu memberi persetujuan eksplisit untuk mereset **dua sesi kas FINAL 23 November 2026**, termasuk closing/setoran/pengeluaran, **dengan syarat semua isi terbukti simulasi**. Operasi dilakukan pada database Lovable Cloud **LIVE Baturaden 25 Homestay**, **bukan** proyek Supabase Staging yang berbeda.
+
+**Target tamu berdasarkan nama + empat digit WA (identitas lengkap tidak ditulis ulang di dokumen):**
+- Lato (0310): sebelumnya terhapus permanen dari tabel operasional bersama dua penawaran (DRAFT/SENT) dan event penawaran terkait; tanpa transaksi.
+- UAT NO9 BOOKING 20261123 (9001): transaksi `BTRDTRX-000032` check_out.
+- UAT NO9 CANCEL 20261123 (9003): transaksi `BTRDTRX-000034` cancelled.
+- UAT NO9 WALKIN 20261123 (9002): transaksi `BTRDTRX-000033` check_out.
+
+**Preflight nyata:** ketiga transaksi punya total **5 pembayaran Rp188.000**, **1 refund Rp1.000** sumber `OWNER_FUNDS`, catatan tamu, ID idempotency, booking event dan riwayat HK (2 jobs, 4 history, 2 checklist). Kedua sesi kas `FINAL` tanggal 2026-11-23 berisi persis kelima pembayaran itu (tanpa pembayaran transaksi lain), dua pengeluaran kategori `DEMO WORK` masing-masing Rp10.000 dengan catatan simulasi/tanpa uang nyata, satu setoran Rp10.000 bertanda `UAT NO9 SIMULASI`, tiga alokasi closing, serta dua audit hitung fisik yang alasan closing-nya juga eksplisit simulasi tanpa uang nyata. **Koreksi:** angka Rp238.000 yang sempat dikatakan dalam percakapan adalah salah penjumlahan; data pembayaran terverifikasi **Rp188.000**.
+
+**Pengaman dan backup:** sebelum menghapus transaksi/closing, dibuat backup pemulihan **37 row / 17 tabel yang berisi data** di tabel privat `b25_maintenance_private.demo_reset_backup_20261126` (tidak ada akses schema untuk `anon` atau `authenticated`, RLS tabel aktif). Ini backup privat untuk pemulihan, **bukan data operasional aplikasi**; jangan menghapus tanpa keputusan pemeliharaan tersendiri. Semua pemilihan baris dibatasi UUID target, dihitung dan diperiksa sebelum pemrosesan.
+
+**Eksekusi reset LIVE:** Satu blok SQL atomik berisi pemeriksaan identitas UAT, jumlah pembayaran, pengeluaran, setoran, refund, closing dan dependencies; penghapusan hanya baris target dalam 25 tabel relasi yang diperiksa (termasuk tabel tanpa baris). Trigger pembatas mutasi pembayaran transaksi tertutup, audit closing append-only, dan sesi kas FINAL **dinonaktifkan hanya di dalam transaksi reset**, kemudian **diaktifkan kembali sebelum commit**. Bila salah satu pengaman/jumlah tidak cocok, seluruh transaksi rollback; percobaan yang gagal sebelumnya sudah rollback tanpa penghapusan parsial. **Tidak ada perubahan permanen pada definisi trigger, fungsi, RLS atau aturan bisnis aplikasi.** Penghapusan tidak menyentuh status/daftar kamar, harga, komisi, rekening Owner, maupun data tamu lain.
+
+**Bukti setelah reset dari query LIVE:** **0/4 profil tamu target tersisa; 0/3 transaksi target; 0 pembayaran/refund target; 0/2 sesi kas FINAL target; 0 setoran, pengeluaran, audit closing, alokasi sesi, guest notes, idempotency, booking events serta riwayat HK target.** Ketiga trigger khusus terverifikasi `tgenabled='O'` (aktif). Backup privat tetap **37 row / 17 tabel**, akses `anon` dan `authenticated` ke schema = false. Total database operasional sesudah reset: **9 tamu lainnya, 0 transaksi, 0 pembayaran, 0 sesi kas**. Angka ini bukan jaminan seluruh data lain adalah data asli; hanya empat tamu yang disebut Owner yang diproses.
+
+**Status:** **DONE — data demo yang diminta telah dibersihkan dan diverifikasi di tabel operasional LIVE**. Ini reset data UAT, bukan pengujian popup UI-26-02 dan **bukan** izin publish Lovable/merge PR/aktivasi SQL Overtime. Owner dapat menyegarkan halaman Daftar Tamu dan mulai menginput tamu asli. Sesi kas operasional baru perlu dibuka sesuai prosedur ketika mulai menerima pembayaran. Backup privat perlu keputusan retensi/penghapusan terpisah setelah verifikasi operasional.
