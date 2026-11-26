@@ -453,3 +453,22 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Lovable:** source project terverifikasi sinkron dengan merge `d78d24b`, namun status masih `needs_attention / out_of_credits`. `is_published=true` tidak membuktikan commit terbaru tersedia di aplikasi publik. **Tidak ada publish/deploy oleh pekerjaan ini.**
 
 **Status UI-26-02 tetap PARTIAL:** enam modul popup berada di `main`; uji komponen Chromium sintetis dan logika finance PASS. Bukti screenshot Owner yang sudah PASS visual hanya sukses Tambah Rekening serta sukses Minimum DP & Komisi. UAT integrasi ke LIVE, validasi data setelah reload dengan sumber nyata, versi publish, dan seluruh jalur gagal/parsial belum diselesaikan. Jangan mengulang PASS, membuat transaksi, memodifikasi DP/Komisi real, template, pengumuman atau SQL Cloud hanya untuk uji. Gate Overtime masih NO-GO.
+
+
+---
+
+### Addendum UI-26-02 tahap 10 — Profil Homestay PR #200 MERGED (26 November 2026 WIB)
+
+**Keputusan Owner:** Owner secara eksplisit menyetujui merge PR #200 dalam percakapan (“ok boleh”). [PR #200](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/200) telah **MERGED** ke `main` dengan squash commit `d9c584f833a96920774228ef8abab853893b2e6b`.
+
+**Tujuan dan lingkup:** memperkuat popup hasil **Pengaturan → Profil Homestay**. Sebelumnya respons `b25_save_homestay_profile` dan `b25_read_homestay_profile` berhasil sudah cukup untuk memunculkan popup sukses meskipun isinya belum dibandingkan. Kini helper pure `src/lib/homestay-profile-readback.ts` membandingkan **business_name, address, phone, whatsapp** dengan nilai yang dikirim Owner. Bila pembacaan ulang berhasil tetapi nilai berbeda, formulir mengikuti data terakhir yang dibaca, sementara popup **Periksa kembali perubahan profil** muncul; sukses hanya bila keempat nilai cocok. Tidak mencetak kontak/data sensitif di log.
+
+**Backend & akses:** satu write RPC `b25_save_homestay_profile` serta dua pemanggilan read RPC `b25_read_homestay_profile` (saat load dan sesudah save) tetap; hanya Owner di luar Training dapat menyimpan. Validasi form, batas input, komponen ActionResultDialog, fungsi lain, SQL Cloud, dan data profil LIVE tidak diubah. Tidak ada retry otomatis.
+
+**Bukti CI:** head PR `39e831296c2956698f57dcd61e7e334576457f87` menyelesaikan **16/16 GitHub Actions SUCCESS** tanpa failure/pending, termasuk **12 source guards Profil Homestay, 10/10 tes perbandingan readback sintetis, full-app build dan TypeScript**. Kegagalan awal regex tes di branch sudah diperbaiki sebelum CI akhir PASS. Bukti ini bukan UAT persistensi profil LIVE.
+
+**Lovable:** source telah tersinkron ke commit `d9c584f`, tetapi proyek masih `needs_attention / out_of_credits`. `is_published=true` tidak membuktikan build baru sudah dipublikasikan. **Tidak ada publish/deploy**.
+
+**Status UI-26-02:** **PARTIAL**, enam modul popup kode MERGED; Chromium sintetis dan kontrak/readback untuk keuangan + profil PASS. Bukti visual Owner sebelumnya hanya popup sukses Tambah Rekening dan Minimum DP & Komisi. UAT integrasi halaman Profil Homestay serta hasil readback dengan data nyata, jalur gagal, identitas build/publish LIVE tetap belum terverifikasi. Jangan mengulang tes PASS, mengubah data asli, membuat transaksi/Booking, atau menyalakan Overtime untuk sekadar UAT.
+
+**Langkah selanjutnya:** audit guard readback pada `Pengaturan → Rekening Owner` untuk tambah/ubah/aktif/nonaktif menggunakan data sintetis, tanpa mengubah rekening nyata. Merge/deploy perubahan lanjutan harus melalui gate tersendiri.
