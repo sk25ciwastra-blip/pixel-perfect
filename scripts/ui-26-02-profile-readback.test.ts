@@ -25,9 +25,14 @@ check('missing profile row', null, false);
 check('undefined readback', undefined, false);
 check('missing field', { ...requested, whatsapp: undefined }, false);
 check('unverified whitespace differences', { ...requested, business_name: ' Homestay Demo QA' }, false);
-check('optional contacts are blank in both request and readback',
-  { ...requested, phone: '', whatsapp: '' },
-  matchesHomestayProfileReadback({ ...requested, phone: '', whatsapp: '' }, { ...requested, phone: '', whatsapp: '' }),
+assert.equal(
+  matchesHomestayProfileReadback(
+    { ...requested, phone: '', whatsapp: '' },
+    { ...requested, phone: '', whatsapp: '' },
+  ),
+  true,
+  'optional blank contacts must match when both sides are blank',
 );
-assert.equal(matchesHomestayProfileReadback({ ...requested, phone: '', whatsapp: '' }, { ...requested, phone: '', whatsapp: '' }), true);
+passed++;
+console.log('PASS optional blank contacts must match');
 console.log(`PASS ${passed}/${passed} Profile Homestay readback scenarios (synthetic only)`);
