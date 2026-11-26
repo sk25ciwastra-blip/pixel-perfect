@@ -43,10 +43,12 @@ const checks = [
     page.includes('const cleanName = formatGuestName(nama)')],
   ['Duplicate checking resolves +62 and 08 to the same number',
     page.includes('guestWhatsAppCanonical(t.phone) === guestWhatsAppCanonical(cleanPhone)')],
-  ['Create/edit keep existing Supabase flow and note-only protection',
-    page.includes("supabase.from('guests').update(catatanSaja ? { notes: catatan.trim() } : payload)") &&
+  ['Create/edit retain Supabase safety and use server-verified categorized notes',
+    page.includes("supabase.from('guests').update(payload)") &&
+    page.includes(".eq('updated_at', editing.updated_at).select().maybeSingle()") &&
     page.includes("supabase.from('guests').insert(payload)") &&
-    page.includes('if (saving || readOnly) return')],
+    page.includes("rpc('b25_add_guest_categorized_note'") &&
+    page.includes("if (saving || readOnly) return")],
   ['No change to global WhatsApp normalization / delivery',
     !helper.includes("from '@/lib/whatsapp'") &&
     page.includes('openWhatsApp(t.phone)') &&

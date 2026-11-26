@@ -294,3 +294,78 @@
   .dt-identitas { border-right: 0; padding-right: 0; }
   .dt-pref-item + .dt-pref-item { border-left: 0; padding-left: 0; }
 }
+
+
+/* Phone numbers in Detail Tamu are actual WhatsApp actions. */
+button.dt-telepon,
+button.dt-telepon-inline {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+button.dt-telepon:not(:disabled):hover,
+button.dt-telepon-inline:not(:disabled):hover { text-decoration: underline; text-underline-offset: 3px; }
+button.dt-telepon:disabled,
+button.dt-telepon-inline:disabled { cursor: default; }
+button.dt-telepon:focus-visible,
+button.dt-telepon-inline:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 3px; }
+
+/* UI-26 guest profile change history: matches the existing warm cream / gold dialog. */
+.dt-perubahan {
+  margin: 0 20px 13px;
+  border: 1px solid var(--premium-line);
+  border-radius: 13px;
+  max-height: 310px;
+  overflow-y: auto;
+  background: var(--premium-paper);
+}
+.dt-perubahan-list {
+  list-style: none;
+  padding: 9px 12px;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.dt-perubahan-list li {
+  border: 1px solid var(--premium-line);
+  border-radius: 12px;
+  padding: 10px 13px;
+  background: color-mix(in oklab, var(--premium-paper) 80%, var(--premium-highlight));
+  color: var(--premium-ink);
+}
+.dt-perubahan-kepala {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 6px;
+}
+.dt-perubahan-kepala strong { font-weight: 700; font-size: 14px; }
+.dt-perubahan-kepala time, .dt-perubahan-list small {
+  color: var(--premium-muted);
+  font-size: 12px;
+}
+.dt-perubahan-list p {
+  margin: 5px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.dt-perubahan-list p span {
+  display: inline-block;
+  min-width: 64px;
+  font-weight: 600;
+}
+.dt-tombol:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+@media (max-width: 640px) {
+  .dt-perubahan { margin-inline: 12px; }
+  .dt-perubahan-list { padding: 7px; }
+}

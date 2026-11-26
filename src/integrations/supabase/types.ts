@@ -917,6 +917,7 @@ export type Database = {
           guest_id: string
           id: string
           legacy: boolean
+          note_type: string
         }
         Insert: {
           author_id?: string | null
@@ -927,6 +928,7 @@ export type Database = {
           guest_id: string
           id?: string
           legacy?: boolean
+          note_type?: string
         }
         Update: {
           author_id?: string | null
@@ -937,6 +939,7 @@ export type Database = {
           guest_id?: string
           id?: string
           legacy?: boolean
+          note_type?: string
         }
         Relationships: [
           {
@@ -948,9 +951,54 @@ export type Database = {
           },
         ]
       }
+      guest_profile_history: {
+        Row: {
+          id: string
+          guest_id: string
+          field_name: string
+          old_value: string | null
+          new_value: string | null
+          changed_at: string
+          changed_by: string | null
+          actor_role: string | null
+          actor_name: string | null
+        }
+        Insert: {
+          id?: string
+          guest_id: string
+          field_name: string
+          old_value?: string | null
+          new_value?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          actor_role?: string | null
+          actor_name?: string | null
+        }
+        Update: {
+          id?: string
+          guest_id?: string
+          field_name?: string
+          old_value?: string | null
+          new_value?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          actor_role?: string | null
+          actor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_profile_history_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guests: {
         Row: {
           address: string
+          email: string | null
           created_at: string
           full_name: string
           id: string
@@ -960,6 +1008,7 @@ export type Database = {
         }
         Insert: {
           address: string
+          email?: string | null
           created_at?: string
           full_name: string
           id?: string
@@ -969,6 +1018,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          email?: string | null
           created_at?: string
           full_name?: string
           id?: string

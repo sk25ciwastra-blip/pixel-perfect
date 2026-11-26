@@ -53,7 +53,8 @@ export function useTable<T extends string>(
 
     const baca = (filterArsip: boolean) => {
       let query = supabase.from(table as keyof Tabel).select('*');
-      if (table !== 'finance_settings') query = query.order('created_at', { ascending: true });
+      if (table === 'guest_profile_history') query = query.order('changed_at', { ascending: true });
+      else if (table !== 'finance_settings') query = query.order('created_at', { ascending: true });
       if (scopeColumn && scopeValue) query = query.eq(scopeColumn, scopeValue);
       if (filterArsip) query = query.is('demo_archived_at', null);
       return query;
