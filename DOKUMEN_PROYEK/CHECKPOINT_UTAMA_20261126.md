@@ -402,3 +402,20 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Batas mutasi:** Tidak ada SQL Cloud, data Pengumuman nyata, pembayaran, transaksi, tarif, konfigurasi keuangan, Template ACTIVE, atau aktivasi Overtime. Gate backup/restore tetap **NO-GO**.
 
 **Lanjutan:** setelah preview/build yang benar dapat diuji, lakukan UAT visual dan klik tombol Tutup tanpa memutasi data LIVE semata untuk pengujian. Jangan mengulang bukti PASS yang sudah ada.
+
+
+---
+
+### Addendum UI-26-02 tahap 7 — Browser Sintetis, PR #197 MERGED (26 November 2026 WIB)
+
+**Persetujuan Owner:** Owner menyetujui merge PR #197 secara eksplisit dalam percakapan. [PR #197](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/197) telah **MERGED** (squash) ke GitHub `main` pada commit `910af9266031483227f1a39282858afc2d66506a`.
+
+**Apa yang ditambahkan:** fasilitas UAT browser **sintetis** untuk komponen produksi `ActionResultDialog`. Halaman HTML QA, harness React dengan hasil dummy, server Vite lokal, skrip Chromium, workflow GitHub Actions, dan dokumentasi gate, seluruhnya **tanpa mengubah komponen popup operasional atau enam halaman aplikasi**. Pengujian tidak memakai autentikasi, SDK Cloud, pembayaran, transaksi, ataupun data nyata.
+
+**Bukti pengujian:** head PR `19074713d8e5a52f8443c2d74636ad121b444c17` memiliki **15/15 workflow SUCCESS**, termasuk workflow `B25 UI26-02 Synthetic Browser UAT` run `45779087499`, job `139769866409`. Log Chromium menegaskan **PASS desktop 1280×800** dan **PASS mobile 375×812** untuk pembukaan dialog sukses/gagal, judul dan deskripsi, ikon hijau/merah, warm cream, satu tombol **Tutup**, penutupan lewat klik Tutup/Escape, dan batas lebar viewport. Browser memblokir permintaan nonlokal. Screenshot sintetis disimpan dalam artifact GitHub Actions `b25-ui26-synthetic-browser-evidence` ID `15097108049` (retensi tujuh hari).
+
+**Makna PASS:** bukti **interaksi komponen di browser sintetis**, bukan UAT integrasi keenam halaman ataupun penyimpanan data pada akun Owner. Kasus gagal/parsial di RPC, persistensi sesudah reload, status publikasi dan identitas build LIVE **belum terverifikasi**. Jangan membuat transaksi, mengubah komisi/DP, menghapus pengumuman, atau mengaktifkan template hanya untuk menguji popup.
+
+**Lovable:** source project tersinkron ke commit merge `910af92`, tetapi status proyek masih `needs_attention / out_of_credits`; `is_published=true` tidak berarti versi ini dipublikasikan. **Tidak dilakukan deploy/publish atau perubahan SQL Cloud**. Gate Overtime tetap NO-GO.
+
+**Status UI-26-02:** **PARTIAL** — enam modul popup code MERGED + komponen browser sintetis PASS, sementara UAT LIVE tetap belum lengkap. Bukti screenshot Owner sebelumnya hanya PASS visual sukses Tambah Rekening dan sukses Minimum DP & Komisi. Tidak mengulang checkpoint PASS tersebut.
