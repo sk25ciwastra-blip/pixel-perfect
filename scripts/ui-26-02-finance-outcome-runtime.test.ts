@@ -9,6 +9,7 @@ async function scenario(
   name: string,
   result: FinanceSaveActionResult | Error,
   readStatus: 'ok' | 'finance-fail' | 'commission-fail' = 'ok',
+  verification: 'match' | 'mismatch' | 'error' = 'match',
 ) {
   const calls: string[] = [];
   const outcome = await resolveFinanceSettingsOutcome({
@@ -27,6 +28,11 @@ async function scenario(
       if (readStatus === 'commission-fail') throw new Error('synthetic read failure, commission');
       return [{ rate: 8 }];
     },
+    verifyPersisted: async () => {
+      calls.push('verify-values');
+      if (verification === 'error') throw new Error('synthetic readback unavailable');
+      return verification === 'match';
+    },
     successLabel: 'Minimum DP dan komisi berhasil disimpan',
   });
   console.log('TEST', name, outcome.title);
@@ -35,7 +41,7 @@ async function scenario(
 }
 
 const success = await scenario('both writes confirmed, both rereads succeed', { error: null });
-assert.deepEqual(success.calls, ['write-action', 'read-finance', 'read-commission']);
+assert.deepEqual(success.calls, ['write-action', 'read-finance', 'read-commission', 'verify-values']);
 assert.equal(success.outcome.kind, 'success');
 assert.equal(success.outcome.title, 'Minimum DP dan komisi berhasil disimpan');
 
@@ -82,6 +88,17 @@ assert.deepEqual(successButReadFailure.calls, ['write-action', 'read-finance', '
 assert.equal(successButReadFailure.outcome.kind, 'error');
 assert.equal(successButReadFailure.outcome.title, 'Periksa kembali konfigurasi');
 
+const mismatch = await scenario('fresh read succeeds but saved values do not match', { error: null }, 'ok', 'mismatch');
+assert.deepEqual(mismatch.calls, ['write-action', 'read-finance', 'read-commission', 'verify-values']);
+assert.equal(mismatch.outcome.kind, 'error');
+assert.equal(mismatch.outcome.title, 'Periksa kembali konfigurasi');
+assert.match(mismatch.outcome.description, /belum cocok/);
+
+const unavailable = await scenario('independent verification read fails', { error: null }, 'ok', 'error');
+assert.deepEqual(unavailable.calls, ['write-action', 'read-finance', 'read-commission', 'verify-values']);
+assert.equal(unavailable.outcome.kind, 'error');
+assert.equal(unavailable.outcome.title, 'Hasil penyimpanan belum dapat dipastikan');
+
 const writeUncertain = await scenario('RPC unexpectedly throws without confirmation', new Error('network failure'));
 assert.deepEqual(writeUncertain.calls, ['write-action']);
 assert.equal(writeUncertain.outcome.kind, 'error');
@@ -99,6 +116,7 @@ const noRetry = await resolveFinanceSettingsOutcome({
   },
   refreshFinance: async () => { calls.push('refresh-dp'); },
   refreshCommission: async () => { calls.push('refresh-commission'); },
+  verifyPersisted: async () => { calls.push('unexpected-verify'); return true; },
   successLabel: 'Tidak boleh tampil',
 });
 assert.deepEqual(calls, ['dp', 'commission', 'refresh-dp', 'refresh-commission']);
