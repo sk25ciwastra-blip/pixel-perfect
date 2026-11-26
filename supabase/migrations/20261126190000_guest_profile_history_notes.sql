@@ -7,10 +7,13 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS b25_guest_internal;
 REVOKE ALL ON SCHEMA b25_guest_internal FROM PUBLIC, anon, authenticated;
 
+-- Email shown in Detail Tamu becomes a real optional profile field.
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS email text;
+
 CREATE TABLE IF NOT EXISTS public.guest_profile_history (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   guest_id uuid NOT NULL REFERENCES public.guests(id) ON DELETE CASCADE,
-  field_name text NOT NULL CHECK (field_name IN ('full_name','address','phone')),
+  field_name text NOT NULL CHECK (field_name IN ('full_name','address','phone','email')),
   old_value text,
   new_value text,
   changed_at timestamptz NOT NULL DEFAULT clock_timestamp(),
@@ -72,6 +75,11 @@ BEGIN
       (guest_id,field_name,old_value,new_value,changed_by,actor_role,actor_name)
     VALUES (NEW.id,'phone',OLD.phone,NEW.phone,actor,actor_role_label,actor_display);
   END IF;
+  IF OLD.email IS DISTINCT FROM NEW.email THEN
+    INSERT INTO public.guest_profile_history
+      (guest_id,field_name,old_value,new_value,changed_by,actor_role,actor_name)
+    VALUES (NEW.id,'email',OLD.email,NEW.email,actor,actor_role_label,actor_display);
+  END IF;
   RETURN NEW;
 END;
 $b25$;
@@ -79,7 +87,7 @@ REVOKE ALL ON FUNCTION b25_guest_internal.capture_profile_history() FROM PUBLIC,
 
 DROP TRIGGER IF EXISTS b25_guest_profile_history_on_update ON public.guests;
 CREATE TRIGGER b25_guest_profile_history_on_update
-  AFTER UPDATE OF full_name, address, phone ON public.guests
+  AFTER UPDATE OF full_name, address, phone, email ON public.guests
   FOR EACH ROW EXECUTE FUNCTION b25_guest_internal.capture_profile_history();
 
 -- Existing notes are "umum" unless explicitly categorized after migration.
