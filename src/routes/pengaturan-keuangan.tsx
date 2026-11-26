@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Settings2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
+import { resolveFinanceSettingsOutcome, type FinanceSaveActionResult } from '@/lib/finance-settings-outcome';
 import { Kerangka } from '@/components/kerangka';
 import { rpc, useTable } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
@@ -41,65 +42,22 @@ function HalamanPengaturanKeuangan() {
   }, [commissionConfigs.rows, financeSettings.rows]);
 
   async function run(
-    action: () => Promise<{ error?: { message: string } | null; partial?: boolean; validationError?: string }>,
+    action: () => Promise<FinanceSaveActionResult>,
     successLabel: string,
   ) {
     if (!isOwner || busy) return;
     setBusy(true);
     setActionResult(null);
     try {
-      // The two existing RPC calls are deliberately not treated as atomic.
-      // We must not claim full success if only the first (minimum DP) was accepted.
-      const result = await action();
-      if (result.error) {
-        if (result.partial) {
-          const reread = await Promise.allSettled([
-            financeSettings.refresh({ throwOnError: true }),
-            commissionConfigs.refresh({ throwOnError: true }),
-          ]);
-          const readFailed = reread.some(item => item.status === 'rejected');
-          setActionResult({
-            kind: 'error',
-            title: 'Konfigurasi tersimpan sebagian',
-            description: readFailed
-              ? 'Minimum DP sudah diterima sistem, tetapi pembaruan komisi bermasalah dan data terbaru belum dapat diperiksa. Periksa kedua pengaturan sebelum menyimpan ulang.'
-              : 'Minimum DP berhasil disimpan, tetapi komisi belum berhasil diperbarui. Periksa kedua pengaturan sebelum mengulangi penyimpanan.',
-          });
-        } else {
-          setActionResult({
-            kind: 'error',
-            title: result.validationError ? 'Nilai pengaturan belum valid' : 'Konfigurasi belum dapat disimpan',
-            description: result.validationError ??
-              'Sistem belum dapat mengonfirmasi penyimpanan Minimum DP. Periksa pengaturan yang berlaku sebelum mencoba kembali.',
-          });
-        }
-        return;
-      }
-
-      // A backend acknowledgement alone cannot prove what is currently readable.
-      const reread = await Promise.allSettled([
-        financeSettings.refresh({ throwOnError: true }),
-        commissionConfigs.refresh({ throwOnError: true }),
-      ]);
-      if (reread.some(item => item.status === 'rejected')) {
-        setActionResult({
-          kind: 'error',
-          title: 'Periksa kembali konfigurasi',
-          description: 'Kedua penyimpanan diterima sistem, tetapi hasil terbaru belum dapat dibaca sepenuhnya. Periksa Minimum DP dan komisi sebelum menyimpan ulang.',
-        });
-        return;
-      }
-      setActionResult({
-        kind: 'success',
-        title: successLabel,
-        description: 'Pengaturan Minimum DP dan komisi telah disimpan, dan data terbaru berhasil dimuat ulang.',
+      // The real RPC sequence and validation remain in the unchanged save callback.
+      // Resolve only its feedback, then re-read both sources exactly once.
+      const result = await resolveFinanceSettingsOutcome({
+        action,
+        refreshFinance: () => financeSettings.refresh({ throwOnError: true }),
+        refreshCommission: () => commissionConfigs.refresh({ throwOnError: true }),
+        successLabel,
       });
-    } catch {
-      setActionResult({
-        kind: 'error',
-        title: 'Hasil penyimpanan belum dapat dipastikan',
-        description: 'Terjadi gangguan saat memproses konfigurasi. Sebagian perubahan mungkin sudah tersimpan. Periksa Minimum DP dan komisi sebelum mencoba kembali.',
-      });
+      setActionResult(result);
     } finally {
       setBusy(false);
     }
