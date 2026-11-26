@@ -436,3 +436,20 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Status keseluruhan UI-26-02:** **PARTIAL** — kode popup enam modul sudah merged, Chromium popup sintetis desktop/mobile PASS (PR #197), dan delapan jalur feedback keuangan tersimulasi PASS (PR #198). UAT integrasi di enam modul, persistensi setelah reload, penanganan gagal parsial secara nyata serta identitas build LIVE tetap belum dibuktikan. Bukti screenshot Owner yang sudah PASS visual untuk **sukses Tambah Rekening** dan **sukses Minimum DP & Komisi** tidak diulang.
 
 **Gate tetap:** tidak ada mutasi SQL Cloud, dana/transaksi, nilai keuangan LIVE, kamar, Booking, Pengumuman asli atau Template ACTIVE; aktivasi Overtime tetap NO-GO sampai bukti backup/restore dan persetujuan khusus.
+
+
+---
+
+### Addendum UI-26-02 tahap 9 — Persistensi Minimum DP & Komisi, PR #199 MERGED (26 November 2026 WIB)
+
+**Persetujuan Owner:** Owner menyetujui merge [PR #199](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/199) secara eksplisit (“ok gasss”). PR **MERGED** ke GitHub `main` melalui squash commit `d78d24bd13e95635176fadf47a1f5673ee7e66ed`.
+
+**Temuan:** hasil sukses RPC dan refresh saja belum membuktikan nilai Minimum DP serta Komisi yang terbaca identik dengan konfigurasi yang diminta Owner. PR #199 menambahkan verifikasi baca ulang nilai sebelum popup hasil sukses penuh.
+
+**Lingkup perubahan:** `src/lib/finance-settings-readback.ts` berisi pembanding pure mode dan nominal Minimum DP serta konfigurasi Komisi mode OFF/PERCENTAGE/PER_ROOM. `src/lib/finance-settings-outcome.ts` meminta `verifyPersisted` yang cocok setelah dua write diakui dan refresh berhasil sebelum menampilkan success. `src/routes/pengaturan-keuangan.tsx` melakukan query SELECT read-only untuk membandingkan nilai terakhir yang terbaca dengan snapshot formulir saat Simpan. Jika berbeda atau tidak terverifikasi, popup meminta pemeriksaan, bukan mengklaim sukses. **RPC penulisan `set_finance_settings` lalu `set_finance_commission_config`, role Owner, validasi, angka, dan aturan tarif/komisi tidak diubah**. Tidak ada retry otomatis.
+
+**Bukti CI:** head PR `8fcb563641c61b5134d339676f79dbebd849a05f` memiliki **17/17 workflow SUCCESS** tanpa failure/pending, termasuk build dan TypeScript, **10/10 simulasi runtime** logika hasil serta **12/12 simulasi pembanding** nilai persisten. Bukti ini bersifat **pengujian sintetis**, bukan UAT penyimpanan database LIVE.
+
+**Lovable:** source project terverifikasi sinkron dengan merge `d78d24b`, namun status masih `needs_attention / out_of_credits`. `is_published=true` tidak membuktikan commit terbaru tersedia di aplikasi publik. **Tidak ada publish/deploy oleh pekerjaan ini.**
+
+**Status UI-26-02 tetap PARTIAL:** enam modul popup berada di `main`; uji komponen Chromium sintetis dan logika finance PASS. Bukti screenshot Owner yang sudah PASS visual hanya sukses Tambah Rekening serta sukses Minimum DP & Komisi. UAT integrasi ke LIVE, validasi data setelah reload dengan sumber nyata, versi publish, dan seluruh jalur gagal/parsial belum diselesaikan. Jangan mengulang PASS, membuat transaksi, memodifikasi DP/Komisi real, template, pengumuman atau SQL Cloud hanya untuk uji. Gate Overtime masih NO-GO.
