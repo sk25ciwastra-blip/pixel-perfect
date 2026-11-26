@@ -472,3 +472,22 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Status UI-26-02:** **PARTIAL**, enam modul popup kode MERGED; Chromium sintetis dan kontrak/readback untuk keuangan + profil PASS. Bukti visual Owner sebelumnya hanya popup sukses Tambah Rekening dan Minimum DP & Komisi. UAT integrasi halaman Profil Homestay serta hasil readback dengan data nyata, jalur gagal, identitas build/publish LIVE tetap belum terverifikasi. Jangan mengulang tes PASS, mengubah data asli, membuat transaksi/Booking, atau menyalakan Overtime untuk sekadar UAT.
 
 **Langkah selanjutnya:** audit guard readback pada `Pengaturan → Rekening Owner` untuk tambah/ubah/aktif/nonaktif menggunakan data sintetis, tanpa mengubah rekening nyata. Merge/deploy perubahan lanjutan harus melalui gate tersendiri.
+
+
+---
+
+### Addendum UI-26-02 tahap 11 — Rekening Owner PR #201 MERGED (26 November 2026 WIB)
+
+**Persetujuan Owner:** Owner menyetujui secara eksplisit merge [PR #201](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/201) dalam percakapan (“boleh”). PR **MERGED** (squash) ke GitHub `main` dengan commit `bac5f497acaabf32ccc016fa0c1c5ba8b20052b3`.
+
+**Tujuan/lingkup:** pengamanan popup sukses **Pengaturan → Rekening Owner** untuk Tambah/Ubah/Aktifkan/Nonaktifkan. Sebelumnya RPC `upsert_finance_bank_account` yang sukses dan `banks.refresh()` saja dianggap cukup tanpa membandingkan nilai yang tersimpan. Definisi fungsi dalam `supabase/migrations/20261015000000_finance_foundation.sql` mengembalikan UUID. Sekarang halaman `src/routes/pengaturan-rekening-owner.tsx` melakukan SELECT read-only `finance_bank_accounts` berdasarkan ID balikan RPC, lalu helper pure `src/lib/owner-bank-readback.ts` memastikan **id, bank_name, account_name, account_number, logo_key, active** cocok dengan tindakan Owner. Jika ID, status atau data tidak cocok / tak terbaca, popup **tidak mengklaim sukses**; pengguna diminta memeriksa sebelum mengulangi. Form tidak direset sebelum hasil terverifikasi; tidak ada retry otomatis maupun detail rekening dalam pesan popup.
+
+**Aturan tetap:** satu nama RPC lama dipanggil di masing-masing jalur save/toggle; Owner-only di luar Training, validasi nomor rekening 5–30 digit, nama bank/pemilik, dan kontrol busy tidak diubah. Tidak ada SQL/migrasi, perbaikan komisi, transaksi, pembayaran, perubahan rekening sungguhan ataupun publish.
+
+**Bukti CI:** head PR `5b48fcb2580ed69e7ca8c7a2451a79328b1a569e` memiliki **17/17 GitHub Actions SUCCESS**, termasuk **15 source guards popup**, **14/14 kasus verifikasi rekening sintetis**, full-app build dan TypeScript. Bukti ini **PASS source/simulasi**, bukan verifikasi mutasi rekening pada LIVE.
+
+**Lovable:** source sinkron pada merge commit `bac5f49` saat diperiksa; proyek tetap `needs_attention / out_of_credits`. `is_published=true` tidak berarti commit terbaru sudah dipublikasikan. **Tidak ada deploy/publish** selama pekerjaan ini.
+
+**Status UI-26-02 tetap PARTIAL:** kode popup enam modul MERGED; komponen Chromium sintetis, finance readback dan profil, dan Rekening Owner readback sintetis PASS. UAT visual Owner sebelumnya hanya sukses Tambah Rekening dan sukses Minimum DP & Komisi, bukan bukti seluruh jalur gagal/mismatch, persistensi LIVE, atau versi aplikasi published. Jangan mengubah rekening, profil, keuangan, kamar, booking, pengumuman, template, SQL Cloud, atau transaksi hanya untuk UAT.
+
+**Pekerjaan berikutnya:** pilih modul selanjutnya untuk audit hasil baca ulang dan guard yang benar-benar belum PASS, tanpa mengulang tes sukses yang telah dicatat. Status Gate Overtime SQL tetap NO-GO.
