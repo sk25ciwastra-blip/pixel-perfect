@@ -28,7 +28,7 @@ const viewports = [
 
 try {
   for (const viewport of viewports) {
-    const context = await browser.newContext({ viewport, locale: 'id-ID' });
+    const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, locale: 'id-ID' });
     const page = await context.newPage();
     const pageErrors = [];
     page.on('pageerror', error => pageErrors.push(error.message));
