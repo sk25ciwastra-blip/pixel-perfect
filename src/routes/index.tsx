@@ -1346,7 +1346,7 @@ function TargetOmzet({ realisasi, standard, bonus, targetLegacy, onUbah }: {
       </div>
 
       <Dialog open={ubah} onOpenChange={setUbah}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-[430px] gap-3 rounded-2xl border border-gold/35 bg-navy-deep p-5 text-foreground shadow-2xl sm:p-6">
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-2rem)] max-w-[430px] gap-3 overflow-y-auto rounded-2xl border border-gold/35 bg-navy-deep p-5 text-foreground shadow-2xl sm:p-6">
           <DialogHeader>
             <DialogTitle className="font-serif text-xl text-gold-light">Atur Target Omzet Bulanan</DialogTitle>
             <DialogDescription className="text-xs leading-relaxed text-muted-foreground">
