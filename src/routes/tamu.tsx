@@ -166,9 +166,9 @@ function HalamanTamu() {
             <tbody>{hasil.map((t, index) => <tr key={t.id} className="h-14 transition-colors hover:bg-gold/[0.04]">
               <td className="border-b border-border/60 px-2 py-3 text-sm tabular-nums text-muted-foreground">{index + 1}</td>
               <td className="pemisah-kolom border-b border-border/60 px-4 py-3 text-center font-semibold"><span className="block truncate text-center" title={t.full_name}>{t.full_name}</span></td>
-              <td className="pemisah-kolom border-b border-border/60 px-3 py-3 text-center font-semibold"><span className="block truncate text-center" title={t.address || 'Alamat belum tercatat'}>{t.address?.trim() || '—'}</span></td>
-              <td className="pemisah-kolom whitespace-nowrap border-b border-border/60 px-3 py-3 font-mono text-base tabular-nums">xxxx{empatDigitWA(t.phone)}</td>
-              <td className="pemisah-kolom border-b border-border/60 px-4 py-3 tabular-nums">{transactions.loading ? '—' : jumlahKunjungan(t.id)}</td>
+              <td className="pemisah-kolom border-b border-border/60 px-3 py-3 text-center font-medium"><span className="block truncate text-center" title={t.address || 'Alamat belum tercatat'}>{t.address?.trim() || '—'}</span></td>
+              <td className="pemisah-kolom whitespace-nowrap border-b border-border/60 px-3 py-3 font-mono text-sm font-medium tabular-nums">xxxx{empatDigitWA(t.phone)}</td>
+              <td className="pemisah-kolom border-b border-border/60 px-4 py-3 font-semibold tabular-nums">{transactions.loading ? '—' : jumlahKunjungan(t.id)}</td>
               <td className="pemisah-kolom border-b border-border/60 px-2 py-3"><span className="tamu-status-pill text-xs text-muted-foreground" title="Status Active/Blocked belum tersedia pada data tamu">Belum tersedia</span></td>
               <td className="border-b border-border/60 px-2 py-2"><div className="tamu-aksi flex justify-center gap-0">
                 <Button size="icon" variant="ghost" className="size-10 text-gold-light" title={`Lihat detail ${t.full_name}`} aria-label={`Lihat detail ${t.full_name}`} onClick={event => { detailTrigger.current = event.currentTarget; setOpen(false); setDetailTamu(t); }}><Eye className="size-[21px]!" /></Button>
