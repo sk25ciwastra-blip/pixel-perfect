@@ -351,3 +351,14 @@ Owner mengirim bukti screenshot **Pengaturan → Rekening Owner** dengan popup *
 **Status UI-26-02:** **PARTIAL** (kode sudah merged di empat halaman: Rekening Owner, Profil Homestay, Manajemen Kamar, Minimum DP & Komisi). Bukti PASS visual sebelumnya hanya untuk **popup sukses Tambah Rekening**; varian error, popup halaman lain, dan kemampuan tombol Tutup pada versi baru belum UAT. Tidak mengubah SQL Cloud, tarif, data minimum DP, komisi LIVE, pembayaran, transaksi, hak akses, ataupun menyalakan fitur baru. Gate backup/restore Overtime tetap **NO-GO**.
 
 **Tindak lanjut:** UAT popup pada build yang tepat secara aman tanpa memodifikasi konfigurasi finance LIVE untuk pengujian; lanjut modul Pengaturan lain secara bertahap dengan audit handler terlebih dahulu.
+
+
+---
+
+### Addendum UAT Visual Minimum DP & Komisi — 26 Nov 2026 14:34 WIB
+
+Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pesan **“Minimum DP dan komisi berhasil disimpan”** (popup hijau). **PASS visual varian sukses**: panel cream-gold terpusat dengan overlay gelap, ikon centang hijau, judul dan deskripsi sesuai fungsi, tombol **Tutup** di bawah, tanpa tombol X. Bukti UAT juga tercatat pada komentar [PR #194](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/194).
+
+**Batas bukti:** screenshot tidak membuktikan persistensi nilai pada reload, kondisi parsial DP berhasil/Komisi gagal, pesan error, tombol Tutup diklik, atau versi build/publish. Jangan mengubah pengaturan keuangan LIVE untuk mensimulasikan kegagalan. **UI-26-02 tetap PARTIAL**: kode empat halaman sudah MERGED; yang UAT visual PASS adalah popup sukses Tambah Rekening dan popup sukses Minimum DP & Komisi. Tidak ada perubahan SQL, finance, transaksi, data LIVE atau publish dalam pencatatan ini.
+
+**Selanjutnya:** audit lalu perluas dialog ke satu halaman Pengaturan lain, menjaga aturan backend/empat template WA resmi dan tanpa aktivasi migrasi Overtime.
