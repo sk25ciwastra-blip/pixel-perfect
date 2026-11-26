@@ -1,0 +1,78 @@
+name: B25 Guest Detail — Profile History and Functional Content
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/routes/tamu.tsx'
+      - 'src/lib/guest-detail-derived.ts'
+      - 'src/lib/data-live.ts'
+      - 'src/components/detail-tamu.css'
+      - 'src/integrations/supabase/types.ts'
+      - 'supabase/migrations/20261126190000_guest_profile_history_notes.sql'
+      - 'scripts/guest-detail-derived.test.ts'
+      - 'scripts/guest-detail-profile-history-contract.test.cjs'
+      - 'scripts/guest-detail-sql-fixture.sql'
+      - 'scripts/guest-detail-sql-audit.test.sql'
+      - '.github/workflows/b25-guest-detail-audit-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-pure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: oven-sh/setup-bun@v2
+      - run: node scripts/guest-detail-profile-history-contract.test.cjs
+      - run: bun scripts/guest-detail-derived.test.ts
+      - run: node scripts/guest-entry-ui-contract.test.cjs
+      - run: bun scripts/guest-entry-format.test.ts
+
+  isolated-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Launch disposable PostgreSQL 16 (no Cloud credentials)
+        run: |
+          docker run --rm -d --name b25-guest-history-postgres \
+            -e POSTGRES_PASSWORD=synthetic-only \
+            postgres:16
+          for i in $(seq 1 40); do
+            if docker exec b25-guest-history-postgres pg_isready -U postgres >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          docker logs b25-guest-history-postgres
+          exit 1
+      - name: Apply synthetic fixtures
+        run: docker exec -i b25-guest-history-postgres psql -U postgres -v ON_ERROR_STOP=1 < scripts/guest-detail-sql-fixture.sql
+      - name: Apply the proposed migration only to disposable database
+        run: docker exec -i b25-guest-history-postgres psql -U postgres -v ON_ERROR_STOP=1 < supabase/migrations/20261126190000_guest_profile_history_notes.sql
+      - name: Assert real trigger old/new, notes and unauthorized write rejection
+        run: docker exec -i b25-guest-history-postgres psql -U postgres -v ON_ERROR_STOP=1 < scripts/guest-detail-sql-audit.test.sql
+      - name: Destroy disposable database
+        if: always()
+        run: docker rm -f b25-guest-history-postgres || true
+
+  build-typescript:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run build
+      - run: bunx tsc --noEmit
