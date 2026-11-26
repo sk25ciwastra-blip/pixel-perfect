@@ -302,3 +302,26 @@
 @media (max-width: 420px) {
   .db-analytic-panel { min-height: 17rem; }
 }
+
+/* Dashboard Status Kamar: full-height empty state with fixed bottom legend. */
+.db-room-status-panel {
+  /* Keep the room-status panel useful even when no transactions are listed. */
+  min-height: 26rem;
+}
+
+.db-room-status-empty {
+  /* In the existing flex-column panel this stretches between warnings/header
+     and the unchanged bottom status indicator chips. */
+  flex: 1 1 auto;
+  min-height: 13rem;
+}
+
+@media (max-width: 640px) {
+  .db-room-status-panel {
+    min-height: 22rem;
+  }
+
+  .db-room-status-empty {
+    min-height: 11rem;
+  }
+}
