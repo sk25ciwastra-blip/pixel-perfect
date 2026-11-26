@@ -762,7 +762,7 @@ function Ringkasan() {
                   </div>
                 </div>
               ) : (
-                <div className="mx-4 mb-4 max-h-[400px] min-w-0 overflow-auto rounded-lg tabel-krem shadow-lg">
+                <div className="db-room-status-table mx-4 mb-3 min-h-0 min-w-0 flex-1 overflow-auto rounded-lg tabel-krem shadow-lg" aria-label="Daftar kamar terisi dan booking hari ini">
                   <table className="pemisah-kolom w-full min-w-[720px] table-fixed text-center text-xs font-semibold [&_th]:text-center [&_td]:text-center xl:min-w-0">
                     <colgroup>
                       <col className="w-[44px]" />
