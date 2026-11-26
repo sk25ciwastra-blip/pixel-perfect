@@ -2,6 +2,7 @@
 -- Gate: reviewed migration; DO NOT apply to Lovable LIVE without Owner's
 -- explicit SQL Cloud authorization and schema/restore rehearsal.
 -- New audit applies to future profile updates; no backfilling guessed values.
+-- Preserve audit integrity: removing a guest with history is RESTRICTED.
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS b25_guest_internal;
@@ -12,7 +13,7 @@ ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS email text;
 
 CREATE TABLE IF NOT EXISTS public.guest_profile_history (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  guest_id uuid NOT NULL REFERENCES public.guests(id) ON DELETE CASCADE,
+  guest_id uuid NOT NULL REFERENCES public.guests(id) ON DELETE RESTRICT,
   field_name text NOT NULL CHECK (field_name IN ('full_name','address','phone','email')),
   old_value text,
   new_value text,
