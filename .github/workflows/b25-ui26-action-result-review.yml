@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/components/action-result-dialog.tsx'
       - 'src/routes/pengaturan-rekening-owner.tsx'
+      - 'src/lib/owner-bank-readback.ts'
       - 'src/routes/pengaturan-profil-homestay.tsx'
       - 'src/lib/homestay-profile-readback.ts'
       - 'src/routes/pengaturan-manajemen-kamar.tsx'
@@ -15,6 +16,7 @@ on:
       - 'src/routes/pengaturan-template-whatsapp.tsx'
       - 'src/components/papan-informasi.tsx'
       - 'scripts/ui-26-02-action-result-dialog.test.cjs'
+      - 'scripts/ui-26-02-bank-readback.test.ts'
       - 'scripts/ui-26-02-profile-result.test.cjs'
       - 'scripts/ui-26-02-profile-readback.test.ts'
       - 'scripts/ui-26-02-room-management-result.test.cjs'
@@ -41,6 +43,8 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/ui-26-02-action-result-dialog.test.cjs
+      - uses: oven-sh/setup-bun@v2
+      - run: bun scripts/ui-26-02-bank-readback.test.ts
       - run: node scripts/ui-26-02-profile-result.test.cjs
       - uses: oven-sh/setup-bun@v2
       - run: bun scripts/ui-26-02-profile-readback.test.ts

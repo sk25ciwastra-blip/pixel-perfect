@@ -2,6 +2,8 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState, type FormEvent } from 'react';
 import { Landmark, ShieldCheck, Pencil, Power } from 'lucide-react';
 import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
+import { matchesOwnerBankReadback, type OwnerBankReadback } from '@/lib/owner-bank-readback';
+import { supabase } from '@/integrations/supabase/client';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
@@ -26,6 +28,16 @@ function RekeningOwner() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [actionResult, setActionResult] = useState<ActionResultState | null>(null);
+
+  async function verifiedBankRow(expected: OwnerBankReadback): Promise<boolean> {
+    // Use a read-only lookup by the UUID returned from the existing RPC.
+    // Successful list refresh alone does not establish that values persisted.
+    if (!expected.id) return false;
+    const { data, error: readError } = await supabase.from('finance_bank_accounts')
+      .select('id, bank_name, account_name, account_number, logo_key, active')
+      .eq('id', expected.id).maybeSingle();
+    return !readError && matchesOwnerBankReadback(expected, data);
+  }
 
   function edit(bank: Bank) {
     setSelected(bank);
@@ -58,7 +70,7 @@ function RekeningOwner() {
     const editing = selected !== null;
     let writeConfirmed = false;
     try {
-      const { error: writeError } = await rpc('upsert_finance_bank_account', {
+      const { data: writtenId, error: writeError } = await rpc('upsert_finance_bank_account', {
         _id: selected?.id ?? null, _bank_name: name, _account_name: holder,
         _account_number: number, _logo_key: selected?.logo_key ?? '',
         _active: selected?.active ?? true,
@@ -66,6 +78,16 @@ function RekeningOwner() {
       if (writeError) throw new Error(writeError.message);
       writeConfirmed = true;
       await banks.refresh({ throwOnError: true });
+      const id = typeof writtenId === 'string' ? writtenId : '';
+      const verified = (!selected || id === selected.id) && await verifiedBankRow({
+        id,
+        bank_name: name,
+        account_name: holder,
+        account_number: number,
+        logo_key: (selected?.logo_key ?? '').trim(),
+        active: selected?.active ?? true,
+      });
+      if (!verified) throw new Error('Saved bank values not verified');
       reset();
       setActionResult({
         kind: 'success',
@@ -76,7 +98,7 @@ function RekeningOwner() {
       });
     } catch {
       const detail = writeConfirmed
-        ? 'Perubahan mungkin sudah tersimpan, tetapi daftar rekening belum dapat diperbarui. Periksa data sebelum mengulangi.'
+        ? 'Perubahan mungkin sudah tersimpan, tetapi nilai rekening belum cocok atau tidak dapat diverifikasi saat dibaca ulang. Periksa daftar rekening sebelum mengulangi.'
         : 'Penyimpanan rekening belum berhasil dikonfirmasi. Periksa data dan akses sebelum mencoba kembali.';
       setError(detail);
       setActionResult({
@@ -94,13 +116,22 @@ function RekeningOwner() {
     setError('');
     let writeConfirmed = false;
     try {
-      const { error: writeError } = await rpc('upsert_finance_bank_account', {
+      const { data: writtenId, error: writeError } = await rpc('upsert_finance_bank_account', {
         _id: bank.id, _bank_name: bank.bank_name, _account_name: bank.account_name,
         _account_number: bank.account_number, _logo_key: bank.logo_key, _active: !bank.active,
       });
       if (writeError) throw new Error(writeError.message);
       writeConfirmed = true;
       await banks.refresh({ throwOnError: true });
+      const verified = writtenId === bank.id && await verifiedBankRow({
+        id: bank.id,
+        bank_name: bank.bank_name.trim(),
+        account_name: bank.account_name.trim(),
+        account_number: bank.account_number.trim(),
+        logo_key: bank.logo_key.trim(),
+        active: !bank.active,
+      });
+      if (!verified) throw new Error('Saved bank status not verified');
       if (selected?.id === bank.id) reset();
       setActionResult({
         kind: 'success',
@@ -111,7 +142,7 @@ function RekeningOwner() {
       });
     } catch {
       const detail = writeConfirmed
-        ? 'Status rekening mungkin sudah berubah, tetapi daftar belum dapat dimuat ulang. Periksa kembali sebelum mengulangi.'
+        ? 'Status rekening mungkin sudah berubah, tetapi nilai atau status aktif belum cocok atau tidak dapat diverifikasi. Periksa daftar sebelum mengulangi.'
         : 'Perubahan status rekening belum berhasil dikonfirmasi. Periksa data sebelum mencoba kembali.';
       setError(detail);
       setActionResult({
