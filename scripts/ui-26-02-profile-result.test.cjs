@@ -21,7 +21,7 @@ const checks = [
     source.includes("siap && posisiKode === 'owner' && !training.is_training") &&
     source.includes('if (!owner || !profil || loading || saving) return;')],
   ['Retains original write and read RPCs, one write only',
-    (source.match(/rpc\('b25_save_homestay_profile'/g) || []).length === 1 &&
+    (source.split("rpc('b25_save_homestay_profile'").length - 1) === 1 &&
     (source.match(/rpc\('b25_read_homestay_profile'/g) || []).length === 2],
   ['Rejects invalid name, address, or contact before RPC',
     source.includes('cleanName.length < 3') &&
