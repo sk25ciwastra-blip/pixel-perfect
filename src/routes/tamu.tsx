@@ -174,8 +174,9 @@ function HalamanTamu() {
       if (!result.data) { setMessage('Profil sudah berubah di sesi lain. Muat ulang data sebelum mengulangi.'); return; }
       if (detailTamu) setDetailTamu(result.data);
       setOpen(false); setEditing(null);
+      if (editing) setTabDetail('perubahan');
       await Promise.all([refresh(), notes.refresh(), history.refresh()]);
-    } catch { setMessage('Data belum tersimpan. Silakan coba kembali.'); } finally { setSaving(false); }
+    } catch { setMessage('Perubahan belum dapat dikonfirmasi. Periksa akses dan kesiapan modul histori, lalu muat ulang sebelum mencoba lagi.'); } finally { setSaving(false); }
   }
 
   return (
@@ -259,7 +260,7 @@ function HalamanTamu() {
               <div className="ct-jenis">
                 <p id="ct-jenis-label">Jenis Catatan</p>
                 <div className="ct-jenis-pills" role="group" aria-labelledby="ct-jenis-label">
-                  {([['umum', 'Umum', PenLine], ['preferensi', 'Preferensi', Star], ['perhatian', 'Perhatian', TriangleAlert], ['lainnya', 'Lainnya', Pin]] as const).map(([kode, label, Ikon]) => <button key={kode} type="button" disabled data-aktif={kode === 'umum'} className="ct-pill" title="Pilihan jenis catatan menunggu persetujuan penambahan data"><Ikon aria-hidden="true" />{label}{kode === 'umum' && <Check aria-hidden="true" />}</button>)}
+                  {([['umum', 'Umum', PenLine], ['preferensi', 'Preferensi', Star], ['perhatian', 'Perhatian', TriangleAlert], ['lainnya', 'Lainnya', Pin]] as const).map(([kode, label, Ikon]) => <button key={kode} type="button" data-aktif={noteType === kode} aria-pressed={noteType === kode} className="ct-pill" onClick={() => setNoteType(kode)}><Ikon aria-hidden="true" />{label}{noteType === kode && <Check aria-hidden="true" />}</button>)}
                 </div>
               </div>
               <section className="ct-riwayat">
@@ -267,7 +268,7 @@ function HalamanTamu() {
                 {notes.loading ? <p className="ct-kosong">Memuat riwayat catatan…</p> : daftarCatatan.length ? <ul>{daftarCatatan.map(note => <li key={note.id}>
                   <NotebookPen className="ct-ikon-catatan" aria-hidden="true" />
                   <div className="ct-kartu-isi">
-                    <p className="ct-isi-catatan">{note.body}</p>
+                    <p className="ct-isi-catatan"><strong>{guestNoteCategories.find(item => item.id === guestNoteType(note))?.title ?? 'Umum'}:</strong> {note.body}</p>
                     <p className="ct-meta"><Clock aria-hidden="true" />{note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'} · {pembuatCatatan(note.author_role, note.author_name)}</p>
                   </div>
                 </li>)}</ul> : <p className="ct-kosong">Belum ada catatan tamu.</p>}
@@ -283,7 +284,8 @@ function HalamanTamu() {
                   <label className="block min-w-0 text-base" htmlFor="tamu-whatsapp"><span className="font-medium text-gold-light">Nomor HP/WhatsApp</span><input id="tamu-whatsapp" required type="tel" inputMode="tel" autoComplete="tel" value={telepon} onChange={e => setTelepon(formatGuestWhatsAppInput(e.target.value))} onBlur={() => setTelepon(formatGuestWhatsAppInput(telepon))} placeholder="08... atau +62..." className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                   <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-alamat"><span className="font-medium text-gold-light">Alamat</span><input id="tamu-alamat" required autoCapitalize="words" autoComplete="street-address" value={alamat} onChange={e => setAlamat(capitalizeLiveText(e.target.value, 'words'))} onBlur={() => setAlamat(formatGuestAddress(alamat))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                 </div>}
-                <label className="block text-base"><span className="font-medium text-gold-light">{editing ? 'Tambah Catatan' : 'Catatan'}</span><textarea required={catatanSaja} autoFocus={catatanSaja} value={catatan} onChange={e => setCatatan(e.target.value)} className="mt-2 min-h-28 w-full rounded-lg border border-input bg-navy-deep/50 px-3 py-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                {!editing && <label className="block text-base"><span className="font-medium text-gold-light">Catatan Awal (Opsional)</span><textarea maxLength={500} value={catatan} onChange={e => setCatatan(e.target.value)} className="mt-2 min-h-28 w-full rounded-lg border border-input bg-navy-deep/50 px-3 py-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>}
+                {editing && <p className="text-sm text-gold-light">Perubahan nama, alamat, dan nomor WhatsApp tercatat otomatis dalam Riwayat Perubahan. Untuk menambah catatan gunakan tombol Tambah Catatan pada Detail Tamu.</p>}
                 {notes.error && <p className="text-sm text-muted-foreground">Riwayat catatan belum tersedia. Data lama tetap dipertahankan.</p>}
                 {message && <p role="alert" className="text-base text-destructive">{message}</p>}
               </div>
@@ -311,6 +313,7 @@ function HalamanTamu() {
                   <div><dt>Pembaruan Terakhir</dt><dd>{tanggalPendekWib(detail.updated_at)}</dd></div>
                   <div><dt>Alamat</dt><dd>{detail.address || '—'}</dd></div>
                   <div><dt>Catatan Terakhir</dt><dd>{catatanTerakhir}</dd></div>
+                  <div><dt>Catatan Perhatian</dt><dd>{peringatanTerbaru?.body ?? 'Belum dicatat'}</dd></div>
                 </dl>
               </section>
               <section className="dt-bagian">
