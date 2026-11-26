@@ -15,6 +15,8 @@ Backup privat `pixel-perfect-homestay-hub_261125.backup.zip` dari 25 November be
 - Workflow GitHub hanya mengetes keamanan parser/metadata pada ZIP sintetis palsu. **Tidak ada backup sensitif dikirim ke GitHub, CI, atau repo.**
 - Runner **hanya untuk Windows** dengan PostgreSQL 18 tools terpercaya (`pg_restore.exe`, `initdb.exe`, `pg_ctl.exe`, `createdb.exe`, `psql.exe`). Jalur koneksi, database dan port target Cloud **tidak dapat diisi dari CLI**: fungsi restore selalu memakai cluster/temp database lokal baru dan SCRAM.
 
+**Status pengujian pengaman:** **9/9 unit test PASS** pada [GitHub Actions run #45753838684](https://github.com/sk25ciwastra-blip/pixel-perfect/actions/runs/45753838684) untuk ZIP **sintetis** dan metadata LIVE 51 tabel. Pengujian ini **tidak** menjalankan PostgreSQL 18 restore nyata dan tidak membuktikan kompatibilitas backup baru yang belum ada. Skrip tetap dalam PR review hingga di-merge sesuai izin Owner.
+
 ## Gerbang sebelum memulai — ekspor baru harus tersedia
 
 **Ekspor terbaru saat audit masih 25 Nov.** Owner perlu mendapatkan **file ZIP asli ekspor LIVE setelah skema 51 tabel** lewat Lovable Cloud di akun sendiri, lalu menyimpannya **di luar direktori GitHub**, misalnya folder privat lokal yang terenkripsi. Jangan unggah backup ke ChatGPT, GitHub, Google Drive publik, staging, atau CI. Backup baru mungkin membutuhkan PostgreSQL tooling lebih mutakhir jika formatnya berubah; script ini secara sengaja memerlukan versi 18 dan akan STOP bila tidak kompatibel.
