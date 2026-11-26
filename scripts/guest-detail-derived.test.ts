@@ -19,7 +19,8 @@ function check(name:string, actual:unknown, expected:unknown) {
 check('new guest status comes from records',guestVisitStatus([]),'Belum ada kunjungan');
 check('cancelled alone does not imply visit',guestVisitStatus(rows.slice(0,1)),'Belum ada kunjungan');
 check('pending booking status real',guestVisitStatus(rows.slice(0,2)),'Ada booking');
-check('completed visit status real',guestVisitStatus(rows.slice(0,3)),'Pernah menginap');
+check('completed visit status real when no pending booking',guestVisitStatus(rows.filter(row=>row.status==='check_out')),'Pernah menginap');
+check('pending booking takes precedence over prior completed visit',guestVisitStatus(rows.slice(0,3)),'Ada booking');
 check('active check-in status higher priority',guestVisitStatus(rows),'Sedang menginap');
 check('favorites ignore cancellations and future bookings',guestVisitOnly(rows).map(x=>x.room_id),['C','C']);
 check('average group size based only on actual visits',guestAverageGroupSize(rows),3);
