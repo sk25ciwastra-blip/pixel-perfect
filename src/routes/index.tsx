@@ -467,6 +467,7 @@ function Ringkasan() {
     };
   }, [bookingHariIni, housekeepingChecklists.error, housekeepingChecklists.rows, kamarAktif, kamarTerisi, sekarang, overtimePerluTindakan]);
 
+  const adaKondisiKamarLain = indikator.persiapan > 0 || (indikator.perluTindakan ?? 0) > 0;
   const indikatorStatus = [
     { label: "Terisi", warna: "var(--v0-success)", nilai: indikator.terisi, judul: "Kamar yang sedang terisi" },
     { label: "Booking", warna: "var(--v0-info)", nilai: indikator.booking, judul: "Booking hari ini yang belum Check-in" },
@@ -712,13 +713,13 @@ function Ringkasan() {
           </div>
           {/* Tabel kamar (kiri) + Transaksi terbaru (kanan) */}
           <div className="mt-5 grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,1.95fr)_minmax(320px,1fr)]">
-            <section className="panel-mewah db-panel-operasional flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar">
+            <section className="panel-mewah db-panel-operasional db-room-status-panel flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar">
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-4">
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="ikon-bulat size-10 shrink-0 text-gold"><BedDouble className="size-5" strokeWidth={1.6} /></span>
                   <div>
                     <h2 id="judul-status-kamar" className="font-serif text-lg font-semibold">Status Kamar <span className="text-gold-light">(Real-time)</span></h2>
-                    <p className="text-xs text-muted-foreground">Kamar Terisi dan Booking Hari ini</p>
+                    <p className="text-xs text-muted-foreground">Pantauan kamar terisi dan booking hari ini</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -742,10 +743,18 @@ function Ringkasan() {
                 </button>
               )}
               {statusKamarBaris.length === 0 ? (
-                <div className="mx-5 mb-5 grid place-items-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-6 py-7 text-center sm:mx-6">
-                  <BedDouble className="size-8 text-gold/60" strokeWidth={1.4} />
-                  <p className="mt-3 font-serif text-lg">Tidak ada kamar terisi atau Booking hari ini</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Kamar dan Booking akan muncul di sini secara realtime.</p>
+                <div className="db-room-status-empty mx-4 mb-3 flex min-w-0 flex-1 items-center justify-center rounded-xl border border-dashed border-gold/25 bg-navy-deep/50 px-4 py-8 text-center sm:mx-5 sm:px-6">
+                  <div className="flex max-w-xl flex-col items-center justify-center">
+                    <BedDouble className="size-8 shrink-0 text-gold/60" strokeWidth={1.4} aria-hidden="true" />
+                    <h3 className="mt-3 font-serif text-lg font-semibold leading-snug">
+                      {adaKondisiKamarLain ? "Tidak ada kamar terisi atau booking hari ini" : "Belum ada kamar yang perlu dipantau saat ini"}
+                    </h3>
+                    <p className="mt-2 max-w-lg text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                      {adaKondisiKamarLain
+                        ? "Kamar dalam persiapan atau yang perlu tindakan tetap dapat dipantau melalui indikator status di bawah."
+                        : "Status kamar terisi, booking, persiapan, terlambat, perlu tindakan, dan overtime akan muncul di sini secara real-time."}
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="mx-4 mb-4 max-h-[400px] min-w-0 overflow-auto rounded-lg tabel-krem shadow-lg">

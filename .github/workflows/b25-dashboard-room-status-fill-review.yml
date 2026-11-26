@@ -1,0 +1,28 @@
+name: B25 Dashboard Room Status Empty Fill Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/routes/index.tsx'
+      - 'src/components/dashboard-panel.css'
+      - 'scripts/dashboard-room-status-empty-contract.test.cjs'
+      - '.github/workflows/b25-dashboard-room-status-fill-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-room-status-layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check room empty-state and operational handler contracts
+        run: node scripts/dashboard-room-status-empty-contract.test.cjs

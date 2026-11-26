@@ -119,6 +119,18 @@ Nama lintas tim: **B25 — Global Action Result Dialog**; nama komponen kode yan
 
 ---
 
+### Tambahan UI-26-06 — Dashboard Status Kamar (26 November 2026)
+
+Berdasarkan screenshot Owner: saat daftar kamar terisi/booking kosong, kotak empty state terlalu pendek sementara ruang bawah panel masih luas. Owner menghendaki kotak memanjang hingga mendekati enam indikator bawah, dengan teks yang sesuai dan tanpa Agenda.
+
+- Pemeriksaan **source GitHub main** menemukan **tidak ada lagi komponen/teks Agenda dalam src/**; jangan membuat penghapusan palsu atau memodifikasi fungsi lain.
+- Pekerjaan layout dalam cabang review: `src/routes/index.tsx` + `src/components/dashboard-panel.css` memperbesar empty state menjadi `flex-1` dengan tinggi minimum responsif, dan memusatkan ikon, judul, deskripsi sebagai satu blok. Footer enam indikator serta popup overtime, tombol WhatsApp/Check-out dan status real-time **tidak diubah**.
+- Naskah saat semua status kosong: **"Belum ada kamar yang perlu dipantau saat ini"** dengan keterangan enam status real-time. Bila ada kamar `dirty/cleaning` atau `needs_action` namun tidak ada stay/booking, pesan berubah menjadi **"Tidak ada kamar terisi atau booking hari ini"** agar tidak salah mengatakan tidak ada kamar untuk dipantau.
+- Tes kontrak offline baru melindungi empty-state, indikator, link, dan handlers. **Belum UAT visual/publish**; status UI-26-06 belum dianggap selesai sepenuhnya sampai screenshot versi benar terverifikasi. Penghapusan Agenda tidak perlu dilakukan ulang karena tidak ada di source.
+- Tidak ada perubahan SQL Cloud, transaksi, tarif, room operational rules, akses role, atau publish Lovable.
+
+---
+
 ### Catatan audit Pengaturan → Template WhatsApp (26 November 2026)
 
 - Review **READ-ONLY** pada LIVE membuktikan empat template resmi mempunyai versi `ACTIVE v1`: Penawaran Reservasi, Konfirmasi Booking, Pengingat Booking 30 Menit, dan Pengingat Waktu Habis. Keempatnya **tidak dihapus** karena jalur Reservasi, PDF konfirmasi dan pengingat manual memakainya.
