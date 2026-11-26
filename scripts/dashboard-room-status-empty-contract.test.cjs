@@ -19,7 +19,7 @@ check("Room status panel remains in Dashboard", Boolean(room));
 check("Room panel is flex-column with dedicated class", view.includes(
   'db-room-status-panel flex min-w-0 flex-col overflow-hidden" aria-labelledby="judul-status-kamar"'
 ));
-check("No Agenda section in current dashboard source", !/Agenda|agenda/.test(view));
+check("No Agenda-labeled section in Status Kamar source (not browser UAT)", !/agenda/i.test(room));
 check("Empty state only renders when no room or booking row", room.includes("statusKamarBaris.length === 0 ? ("));
 check("Empty state stretches in flex column", room.includes(
   'db-room-status-empty mx-4 mb-3 flex min-w-0 flex-1 items-center justify-center'
@@ -52,6 +52,13 @@ check("Transient alerts and overtime actions remain", room.includes("dashboardMe
   && room.includes("bookingPeringatan.length > 0 &&")
   && room.includes("overtimePerluTindakan.length > 0 &&")
 );
+check("Populated room table grows toward the bottom indicators", room.includes(
+  'db-room-status-table mx-4 mb-3 min-w-0 flex-1 overflow-auto'
+) && !room.includes('max-h-[400px]'));
+check("Long room lists remain scrollable in their own viewport",
+  css.includes('.db-room-status-table {') &&
+  css.includes('max-height: min(70dvh, 42rem);') &&
+  css.includes('overscroll-behavior: contain;'));
 check("Empty state fills remainder before bottom chips", css.includes(
   ".db-room-status-empty {"
 ) && css.includes("flex: 1 1 auto;") && css.includes("min-height: 13rem;"));
