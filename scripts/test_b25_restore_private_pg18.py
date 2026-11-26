@@ -28,6 +28,18 @@ class PrivateRestoreGuardTests(unittest.TestCase):
             "captured_date_wib": "2026-11-26",
         }), encoding="utf-8")
 
+    def test_real_live_metadata_manifest_tracks_51_tables_and_six_new_names(self):
+        path = SCRIPT.parent.parent / "DOKUMEN_PROYEK" / "B25_LIVE_CATALOG_SNAPSHOT_20261126.json"
+        manifest = tool.read_manifest(path)
+        self.assertEqual(len(manifest["names"]), 51)
+        self.assertEqual(manifest["counts"]["public_tables"], 51)
+        self.assertEqual(manifest["counts"]["public_rls_tables"], 51)
+        self.assertTrue({
+            "b25_homestay_profile", "b25_homestay_profile_audit",
+            "reservation_offers", "reservation_offer_events",
+            "whatsapp_template_versions", "whatsapp_template_audit",
+        }.issubset(set(manifest["names"])))
+
     def test_manifest_rejects_wrong_table_count(self):
         manifest = tool.read_manifest(self.manifest)
         self.assertEqual(manifest["names"], self.names)
