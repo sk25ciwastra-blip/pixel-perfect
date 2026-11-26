@@ -274,3 +274,17 @@ Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih se
 - **Acuan final adalah perubahan yang benar-benar terbukti:** keputusan Owner ≠ PR MERGED ≠ Lovable source sync ≠ build preview ≠ publish LIVE ≠ UAT nyata.
 
 **Checkpoint selesai hanya setelah file ini dan panduan ada di GitHub `main`.** Jangan mengeklaimnya selesai ketika masih sebatas branch atau PR draft.
+
+---
+
+### Addendum UAT Status Kamar dan UI-26-02 — 26 November 2026 (Owner)
+
+**UI-26-06 (Dashboard → Status Kamar):** Owner mengirim screenshot pukul 13:44 WIB yang memperlihatkan empty-state memanjang sampai footer, tanpa elemen Agenda, dengan enam indikator status terlihat dan panel Transaksi Terbaru tetap rapi. **PASS UAT visual hanya untuk kondisi daftar kosong.** PR #186 memperbaiki empty-state; [PR #190](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/190), merge `bc9e086f1c745d1702533c9d782b0135423402c0`, melanjutkan pengisian tinggi untuk daftar *berisi*. **Belum UAT visual ketika ada kamar terisi/Booking;** jangan membuat pembayaran atau transaksi baru untuk simulasi.
+
+**UI-26-02 (popup Berhasil/Gagal):** Owner menyetujui merge tahap pertama pada obrolan 26 November. [PR #191](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/191) telah **MERGED** ke `main` pada commit `23d700b2afea9d78c4056d4811c6c35ca900d8fb`. Komponen reusable `src/components/action-result-dialog.tsx` dengan hasil hijau/merah, tema warm cream-gold, tombol **Tutup** tanpa X, terintegrasi **hanya** dengan aksi tambah/ubah/aktif/nonaktif pada Pengaturan → Rekening Owner. RPC, otorisasi Owner, bank account data, dan backend tidak diubah. Guard hanya melaporkan sukses sesudah penulisan RPC dan pembacaan ulang daftar berhasil; hasil meragukan tidak dinyatakan sukses.
+
+**Bukti pengujian:** workflow GitHub Actions `B25 UI26-02 Action Result Dialog Review` dan `B25 Owner Settings Separate Finance and Payments` pada head PR #191 selesai **SUCCESS**, mencakup tes source, build, dan TypeScript. Ini **BUKAN UAT visual**.
+
+**Lovable:** source setelah merge terverifikasi tersinkron ke `23d700b`, tetapi proyek masih `needs_attention / out_of_credits`. Status `is_published=true` tidak membuktikan kode baru sudah tersedia di LIVE; **tidak ada deploy/publish oleh pekerjaan ini**. **UI-26-02 status PARTIAL — code merged / UAT visual belum PASS; penerapan ke fitur lain tetap bertahap.** Popup hasil Check-in/Booking/Reservasi dan konfirmasi hapus/refund tidak diubah.
+
+**Gate tetap berlaku:** NO-GO SQL Cloud Overtime karena backup/restore, tidak ada perubahan tarif, transaksi, data rekening LIVE, feature flags, role, atau aktivasi template tanpa persetujuan spesifik. 
