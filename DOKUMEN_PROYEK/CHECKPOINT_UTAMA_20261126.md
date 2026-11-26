@@ -220,6 +220,19 @@ Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih se
 
 ---
 
+### Backup LIVE 26 November — INSPECT PASS, RESTORE awal BLOCKED (checkpoint Owner)
+
+Owner mengunduh file privat `pixel-perfect-homestay-hub_261126.backup.zip` (26 Nov 2026, sekitar 11:53 WIB, ±1,04 MB) ke Windows lokal. File tersebut **tidak** diunggah ke GitHub/ChatGPT. Dengan runner PR #183 dan manifest LIVE 51 tabel:
+
+- **INSPECT PASS:** `INSPECT_PASS_TOC_AND_TABLE_NAMES_ONLY`, `expected_public_tables=51`, `toc_public_tables=51`, `toc_public_tables_match_manifest=True`, `postgres_toolchain=18.x`, `zip_integrity=PASS`. Ini membuktikan kecocokan nama tabel, bukan pemulihan data.
+- **RESTORE pertama BLOCKED/FAIL:** `LOCAL_RESTORE_FAILED_DEPENDENCIES_OR_COMPATIBILITY`; tidak ada `public_table_name_parity` atau `catalog_counts_match_live_snapshot`, sehingga **pemulihan data lokal belum PASS**. Jangan ubah status gate SQL Overtime menjadi GO.
+- **Celah diagnostik runner PR #183:** `pg_restore` mencatat error hanya pada folder sementara dan membersihkannya ketika gagal; kode alasan terlalu umum. Terdapat kemungkinan lain bahwa runner menghapus `public` di cluster lokal baru padahal custom dump tidak selalu menyertakan entry `CREATE SCHEMA public`. **Ini hipotesis implementasi, belum penyebab terkonfirmasi.**
+- **Perbaikan di PR diagnosa terpisah (BELUM MERGED):** pertahankan skema `public` default jika TOC tidak mendeklarasikannya, dan laporkan `diagnostic_category` dari error PostgreSQL **tanpa menyalin SQL mentah/data/kredensial**. Uji sintetis/CI wajib PASS sebelum menyuruh Owner menjalankan ulang.
+- **Aturan keamanan:** alat hanya boleh memakai ZIP privat di mesin Owner, cluster PostgreSQL 18 baru `127.0.0.1`, tanpa akses LIVE/Staging, tanpa unggah dump/log. Jika restore gagal lagi, laporkan hanya `status`, `reason_code`, `diagnostic_category` serta `toc_declares_public_schema`.
+- **Cloud SQL Overtime tetap NO-GO** sampai restore terbukti dan izin Owner spesifik. Tidak ada mutasi Cloud, data transaksi, atau publish pada inspeksi ini.
+
+---
+
 ## 7. Pekerjaan berikutnya (tanpa mengulang PASS)
 
 1. **Checkpoint utama dan panduan obrolan sudah masuk `main` melalui PR #173; lanjutkan pemeliharaan addendum §6A (12 revisi desain Lovable aktif; item UI-26-01 dicabut Owner) dan jangan menyebutnya sudah selesai sebelum ada bukti implementasi/UAT.**, jadikan satu pintu pembukaan obrolan baru; ubah status hanya berdasarkan bukti yang ada.
