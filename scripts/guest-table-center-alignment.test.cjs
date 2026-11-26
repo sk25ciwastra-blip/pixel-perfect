@@ -5,12 +5,14 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const src = fs.readFileSync(path.join(root, 'src/routes/tamu.tsx'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'src/components/tamu.css'), 'utf8');
+const guestTableStart = src.indexOf('<table className="w-full min-w-[1050px]');
+const guestTable = guestTableStart === -1 ? '' : src.slice(guestTableStart, src.indexOf('</table>', guestTableStart) + '</table>'.length);
 
 const checks = [
   ['Table continues to use seven columns and center alignment',
     src.includes('min-w-[1050px]') &&
     src.includes('table-fixed border-separate border-spacing-0 text-center') &&
-    (src.match(/<col className=/g) || []).length === 7],
+    (guestTable.match(/<col className=/g) || []).length === 7],
   ['Name display is explicitly centered and bold',
     src.includes('text-center font-semibold"><span className="block truncate text-center" title={t.full_name}') &&
     !src.includes('text-left font-semibold"><span className="block truncate" title={t.full_name}')],
