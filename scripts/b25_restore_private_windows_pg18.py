@@ -35,6 +35,11 @@ BINARIES = ("pg_restore.exe", "initdb.exe", "pg_ctl.exe", "createdb.exe", "psql.
 MAX_BACKUP_BYTES = 512 * 1024 * 1024
 TABLE_RE = re.compile(r"^\s*\d+;\s+\d+\s+\d+\s+TABLE\s+public\s+([a-zA-Z_][a-zA-Z0-9_]*)\s", re.M)
 NAME_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+# A custom dump may NOT contain CREATE SCHEMA public. In that case,
+# preserve the default public schema of the brand-new local database.
+PUBLIC_SCHEMA_TOC_RE = re.compile(
+    r"^\s*\d+;\s+\d+\s+\d+\s+SCHEMA\s+-\s+public(?:\s|$)", re.M
+)
 
 CATALOG_SQL = {
     "public_tables": "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p')",
@@ -51,7 +56,60 @@ WHERE n.nspname='public' AND t.relkind IN ('r','p')"""
 
 
 class RestoreGateError(Exception):
-    pass
+    def __init__(self, code: str, diagnostic_category: str | None = None):
+        super().__init__(code)
+        self.diagnostic_category = diagnostic_category
+
+
+def classify_private_restore_error(log: Path) -> str:
+    """Classify pg_restore errors without ever exposing SQL, row values or PII.
+
+    Raw stderr exists ONLY in the runner's automatically deleted temp folder.
+    Diagnostic categories are constant strings safe to share with the Owner.
+    """
+    try:
+        tail = log.read_bytes()[-256 * 1024:].decode("utf-8", "replace")
+    except OSError:
+        return "ERROR_LOG_UNAVAILABLE"
+    errors = [
+        line.casefold() for line in tail.splitlines()
+        if re.search(r"(?i)(?:pg_restore:\s*error:|\berror:|\bfatal:)", line)
+        and "aborting because of errors" not in line.casefold()
+    ]
+    if not errors:
+        return "NO_POSTGRES_ERROR_LINE_FOUND"
+    combined = "\n".join(errors)
+    if 'schema "public" does not exist' in combined:
+        return "MISSING_PUBLIC_SCHEMA"
+    if 'schema "auth" does not exist' in combined or "function auth." in combined:
+        return "MISSING_SUPABASE_AUTH_DEPENDENCY"
+    if 'schema "storage" does not exist' in combined or "function storage." in combined:
+        return "MISSING_SUPABASE_STORAGE_DEPENDENCY"
+    if 'schema "extensions" does not exist' in combined:
+        return "MISSING_SUPABASE_EXTENSIONS_SCHEMA"
+    if 'role "' in combined and 'does not exist' in combined:
+        return "MISSING_DATABASE_ROLE"
+    if 'extension "' in combined and ('not available' in combined or 'does not exist' in combined):
+        return "MISSING_POSTGRES_EXTENSION"
+    if "permission denied" in combined or "must be owner of" in combined:
+        return "PERMISSIONS_OR_ROLE_RESTRICTION"
+    if "could not open extension control file" in combined:
+        return "MISSING_POSTGRES_EXTENSION"
+    if "function " in combined and "does not exist" in combined:
+        return "MISSING_EXTERNAL_FUNCTION"
+    if "relation " in combined and "does not exist" in combined:
+        return "MISSING_EXTERNAL_RELATION"
+    if "schema " in combined and "does not exist" in combined:
+        return "MISSING_OTHER_SCHEMA"
+    if "violates foreign key constraint" in combined or "duplicate key value" in combined:
+        return "DATA_CONSTRAINT_FAILURE"
+    if "invalid input syntax" in combined or "extra data after last expected column" in combined:
+        return "DATA_FORMAT_FAILURE"
+    if "syntax error" in combined:
+        return "SQL_SYNTAX_INCOMPATIBILITY"
+    if "already exists" in combined:
+        return "OBJECT_ALREADY_EXISTS"
+    return "UNCLASSIFIED_POSTGRES_RESTORE_ERROR"
 
 
 def sha256_file(path: Path) -> str:
@@ -159,6 +217,10 @@ def toc_table_names(toc: str) -> list[str]:
     return sorted(set(TABLE_RE.findall(toc)))
 
 
+def toc_declares_public_schema(toc: str) -> bool:
+    return bool(PUBLIC_SCHEMA_TOC_RE.search(toc))
+
+
 def inspect_toc(bins: dict[str, str], env: dict[str, str], archive: Path,
                 expected_names: list[str], tmp: Path) -> dict:
     out = tmp / "private-toc.txt"
@@ -175,6 +237,7 @@ def inspect_toc(bins: dict[str, str], env: dict[str, str], archive: Path,
     return {
         "toc_public_tables": len(names),
         "toc_public_tables_match_manifest": True,
+        "toc_declares_public_schema": toc_declares_public_schema(toc),
         "toc_entries": sum(bool(l.strip()) and not l.lstrip().startswith(";") for l in toc.splitlines()),
     }
 
@@ -187,6 +250,7 @@ def random_local_port() -> int:
 
 def restore_to_new_local_cluster(
     bins: dict[str, str], env: dict[str, str], archive: Path, tmp: Path, manifest: dict,
+    toc_has_public_schema: bool,
 ) -> dict:
     password = secrets.token_urlsafe(32)
     pwfile = tmp / "pw.txt"
@@ -226,17 +290,23 @@ def restore_to_new_local_cluster(
         if run_tool([bins["createdb.exe"], *conn, "b25_temporary_restore_only"],
                     local_env, 50, runtime_log) != 0:
             raise RestoreGateError("LOCAL_CREATE_DB_FAILED")
-        # Destructive SQL is strictly confined to the brand-new local database.
-        # No configurable host, database name, or Cloud connection is accepted.
-        command = [bins["psql.exe"], *conn, "-d", "b25_temporary_restore_only",
-                   "-X", "-v", "ON_ERROR_STOP=1", "-c", "DROP SCHEMA public CASCADE"]
-        if run_tool(command, local_env, 45, runtime_log) != 0:
-            raise RestoreGateError("LOCAL_EMPTY_PUBLIC_SCHEMA_CLEANUP_FAILED")
+        # A fresh PG18 database normally has an empty public schema. Drop it
+        # ONLY if the dump explicitly contains CREATE SCHEMA public; otherwise
+        # dropping it would cause the restore's first CREATE TABLE to fail.
+        # All commands are confined to this brand-new 127.0.0.1-only cluster.
+        if toc_has_public_schema:
+            command = [bins["psql.exe"], *conn, "-d", "b25_temporary_restore_only",
+                       "-X", "-v", "ON_ERROR_STOP=1", "-c", "DROP SCHEMA public CASCADE"]
+            if run_tool(command, local_env, 45, runtime_log) != 0:
+                raise RestoreGateError("LOCAL_EMPTY_PUBLIC_SCHEMA_CLEANUP_FAILED")
         restoring = [bins["pg_restore.exe"], *conn, "--dbname=b25_temporary_restore_only",
                      "--no-owner", "--no-acl", "--single-transaction",
                      "--exit-on-error", str(archive)]
         if run_tool(restoring, local_env, 600, runtime_log) != 0:
-            raise RestoreGateError("LOCAL_RESTORE_FAILED_DEPENDENCIES_OR_COMPATIBILITY")
+            raise RestoreGateError(
+                "LOCAL_RESTORE_FAILED_DEPENDENCIES_OR_COMPATIBILITY",
+                diagnostic_category=classify_private_restore_error(runtime_log),
+            )
 
         def sql_value(sql: str) -> str:
             return tool_output([bins["psql.exe"], *conn, "-d", "b25_temporary_restore_only",
@@ -313,13 +383,18 @@ def main() -> int:
             report["postgres_toolchain"] = "18.x"
             report.update(inspect_toc(bins, env, archive, manifest["names"], tmp))
             if a.mode == "restore":
-                report.update(restore_to_new_local_cluster(bins, env, archive, tmp, manifest))
+                report.update(restore_to_new_local_cluster(
+                    bins, env, archive, tmp, manifest,
+                    toc_has_public_schema=bool(report["toc_declares_public_schema"]),
+                ))
                 report["status"] = "LOCAL_RESTORE_PASS_LIMITED_NOT_CLOUD_RECOVERY"
             else:
                 report["status"] = "INSPECT_PASS_TOC_AND_TABLE_NAMES_ONLY"
     except (RestoreGateError, OSError, ValueError, json.JSONDecodeError, zipfile.BadZipFile, subprocess.SubprocessError) as err:
         report["status"] = "BLOCKED_OR_FAILED"
         report["reason_code"] = str(err) if isinstance(err, RestoreGateError) else type(err).__name__
+        if isinstance(err, RestoreGateError) and err.diagnostic_category:
+            report["diagnostic_category"] = err.diagnostic_category
     finally:
         report["finished_utc"] = dt.datetime.now(dt.timezone.utc).isoformat()
         report_path.parent.mkdir(parents=True, exist_ok=True)
