@@ -21,6 +21,7 @@ export const guestHistoryLabels: Record<string,string> = {
   full_name: 'Nama lengkap',
   address: 'Alamat',
   phone: 'Nomor WhatsApp',
+  email: 'Email',
 };
 export function guestVisitStatus(rows: GuestVisitRecord[]): string {
   if (rows.some(row => row.status === 'check_in')) return 'Sedang menginap';
