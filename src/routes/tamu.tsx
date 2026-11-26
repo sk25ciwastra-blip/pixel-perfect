@@ -309,7 +309,7 @@ function HalamanTamu() {
                 <div className="dt-statistik">
                   <div className="dt-stat"><span className="dt-stat-ikon"><BedDouble aria-hidden="true" /></span><div><p>Total Kunjungan</p><strong>{transactions.loading ? '…' : transactions.error ? '—' : `${jumlahKunjungan(detail.id)} Kali`}</strong></div></div>
                   <div className="dt-stat"><span className="dt-stat-ikon"><FileText aria-hidden="true" /></span><div><p>Total Transaksi</p><strong>{transactions.loading ? '…' : transactions.error ? '—' : `${totalTransaksi} Transaksi`}</strong></div></div>
-                  <div className="dt-stat"><span className="dt-stat-ikon"><CalendarDays aria-hidden="true" /></span><div><p>Kunjungan Terakhir</p><strong>{terakhir ? tanggalPendekWib(terakhir) : '—'}</strong></div></div>
+                  <div className="dt-stat"><span className="dt-stat-ikon"><CalendarDays aria-hidden="true" /></span><div><p>Kunjungan Terakhir</p><strong>{transactions.loading ? '…' : transactions.error ? 'Belum dapat dimuat' : terakhir ? tanggalPendekWib(terakhir) : 'Belum ada kunjungan'}</strong></div></div>
                 </div>
               </div>
               <section className="dt-bagian">
@@ -321,8 +321,8 @@ function HalamanTamu() {
                   <div><dt>Pembaruan Terakhir</dt><dd>{tanggalPendekWib(detail.updated_at)}</dd></div>
                   <div><dt>Email</dt><dd>{detail.email ? <a href={`mailto:${detail.email}`} className="underline underline-offset-2">{detail.email}</a> : 'Belum dicatat'}</dd></div>
                   <div><dt>Alamat</dt><dd>{detail.address || '—'}</dd></div>
-                  <div><dt>Catatan Terakhir</dt><dd>{catatanTerakhir}</dd></div>
-                  <div><dt>Catatan Perhatian</dt><dd>{peringatanTerbaru?.body ?? 'Belum dicatat'}</dd></div>
+                  <div><dt>Catatan Terakhir</dt><dd>{notes.error ? 'Belum dapat dimuat' : catatanTerakhir}</dd></div>
+                  <div><dt>Catatan Perhatian</dt><dd>{notes.error ? 'Belum dapat dimuat' : peringatanTerbaru?.body ?? 'Belum dicatat'}</dd></div>
                 </dl>
               </section>
               <section className="dt-bagian">
@@ -331,7 +331,7 @@ function HalamanTamu() {
                   <div className="dt-pref-item"><span className="dt-pref-ikon"><BedDouble aria-hidden="true" /></span><div><p>Tipe Favorit</p><strong>{transactions.error ? 'Belum dapat dimuat' : tipeFavorit === '—' ? 'Belum ada kunjungan' : tipeFavorit}</strong></div></div>
                   <div className="dt-pref-item"><span className="dt-pref-ikon"><Layers aria-hidden="true" /></span><div><p>Paket Favorit</p><strong>{transactions.error ? 'Belum dapat dimuat' : paketFavorit === '—' ? 'Belum ada kunjungan' : paketFavorit}</strong></div></div>
                   <div className="dt-pref-item"><span className="dt-pref-ikon"><Users aria-hidden="true" /></span><div><p>Rata-rata Jumlah Tamu</p><strong>{tamuUmum ? `${tamuUmum} Orang` : 'Belum ada kunjungan'}</strong></div></div>
-                  <div className="dt-pref-item"><span className="dt-pref-ikon"><NotebookPen aria-hidden="true" /></span><div><p>Catatan Preferensi</p><strong>{catatanPreferensi}</strong></div></div>
+                  <div className="dt-pref-item"><span className="dt-pref-ikon"><NotebookPen aria-hidden="true" /></span><div><p>Catatan Preferensi</p><strong>{notes.error ? 'Belum dapat dimuat' : catatanPreferensi}</strong></div></div>
                 </div>
               </section>
               <div className="dt-tab-bar" role="tablist" aria-label="Riwayat tamu">
@@ -367,7 +367,7 @@ function HalamanTamu() {
                     <td>{tipeKamar(tr.room_id)}</td>
                     <td>{namaPaket(tr.package_id)}</td>
                     <td>{tr.started_at ? jamWib(tr.started_at) : '—'}</td>
-                    <td>{tr.checked_out_at ?? tr.ends_at ? jamWib((tr.checked_out_at ?? tr.ends_at) as string) : '—'}</td>
+                    <td>{tr.checked_out_at ? jamWib(tr.checked_out_at) : '—'}</td>
                     <td>{rupiah(tr.price_snapshot ?? tr.base_price_snapshot ?? 0)}</td>
                     <td><span className="dt-status" data-state={tr.status}>{tr.status === 'check_out' && <CircleCheck aria-hidden="true" />}{statusTransaksi[tr.status] ?? tr.status}</span></td>
                     <td><button type="button" className="dt-struk" aria-label={`Detail transaksi ${tr.transaction_number}`} onClick={() => setDetailTransactionId(tr.id)}><ReceiptText aria-hidden="true" /></button></td>
