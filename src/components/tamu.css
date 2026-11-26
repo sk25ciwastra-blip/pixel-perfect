@@ -42,3 +42,15 @@
 .tamu-aksi { gap: 6px !important; }
 .tamu-aksi button { height: 32px !important; width: 36px !important; border-radius: 10px; }
 .tamu-aksi button svg { width: 18px !important; height: 18px !important; }
+
+/* UI tabel Tamu: semua nilai tepat di tengah kepala kolom; Nama dan Alamat senada. */
+.tabel-tamu-premium tbody tr td {
+  text-align: center;
+  vertical-align: middle;
+}
+.tabel-tamu-premium tbody tr td:nth-child(2),
+.tabel-tamu-premium tbody tr td:nth-child(3) {
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}

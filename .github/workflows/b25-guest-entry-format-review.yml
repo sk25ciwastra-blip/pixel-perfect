@@ -9,6 +9,7 @@ on:
       - 'src/lib/guest-entry-format.ts'
       - 'scripts/guest-entry-format.test.ts'
       - 'scripts/guest-entry-ui-contract.test.cjs'
+      - 'scripts/guest-table-center-alignment.test.cjs'
       - '.github/workflows/b25-guest-entry-format-review.yml'
   workflow_dispatch:
 
@@ -28,6 +29,7 @@ jobs:
           node-version: '22'
       - uses: oven-sh/setup-bun@v2
       - run: node scripts/guest-entry-ui-contract.test.cjs
+      - run: node scripts/guest-table-center-alignment.test.cjs
       - run: bun scripts/guest-entry-format.test.ts
 
   whole-app-build:
