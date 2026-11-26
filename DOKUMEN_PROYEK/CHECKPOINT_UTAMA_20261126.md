@@ -362,3 +362,22 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Batas bukti:** screenshot tidak membuktikan persistensi nilai pada reload, kondisi parsial DP berhasil/Komisi gagal, pesan error, tombol Tutup diklik, atau versi build/publish. Jangan mengubah pengaturan keuangan LIVE untuk mensimulasikan kegagalan. **UI-26-02 tetap PARTIAL**: kode empat halaman sudah MERGED; yang UAT visual PASS adalah popup sukses Tambah Rekening dan popup sukses Minimum DP & Komisi. Tidak ada perubahan SQL, finance, transaksi, data LIVE atau publish dalam pencatatan ini.
 
 **Selanjutnya:** audit lalu perluas dialog ke satu halaman Pengaturan lain, menjaga aturan backend/empat template WA resmi dan tanpa aktivasi migrasi Overtime.
+
+
+---
+
+### Addendum UI-26-02 tahap 5 — Template WhatsApp, PR #195 MERGED (26 November 2026 WIB)
+
+**Persetujuan Owner:** Owner menyetujui secara eksplisit merge [PR #195](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/195) pada percakapan 26 November 2026. PR **MERGED** ke GitHub `main` memakai squash commit `6d5ca78161dfe6942261ad3fbde51e6ec45a1613`.
+
+**Lingkup perubahan kode:** `src/routes/pengaturan-template-whatsapp.tsx` memakai `ActionResultDialog` resmi untuk umpan balik penyimpanan Template WhatsApp; kontrak `scripts/ui-26-02-whatsapp-template-result.test.cjs` dan workflow `B25 UI26-02 Action Result Dialog Review` ditambahkan cakupannya. Toast berhasil/gagal lama di halaman tersebut diganti dengan dialog terpusat; komponen popup reusable dari PR #191 tidak berubah.
+
+**Aturan tetap:** Empat tab resmi `Konfirmasi Reservasi`, `Pengingat Booking`, `Pengingat Waktu Habis`, `Pemberitahuan Overtime` tidak berubah. Kategori `PEMBERITAHUAN_OVERTIME` tetap **MENUNGGU BACKEND** bila capability RPC menolak. Tidak ada perubahan teks template, versi ACTIVE, validator, RPC, audit, aturan status reservasi sebelum pembayaran, pengiriman WhatsApp otomatis, ataupun charge overtime. Hasil **sukses** baru setelah RPC save diakui **dan** daftar versi berhasil dimuat ulang. Bila readback gagal atau hasil belum pasti, popup tidak mengklaim versi sudah terverifikasi dan meminta Owner memeriksa status sebelum mencoba ulang.
+
+**Bukti CI:** head PR `eb4e12e3acbe60bca9c9487a83843cb05f72bbfc` memiliki **17/17 workflow SUCCESS**, termasuk `B25 UI26-02 Action Result Dialog Review` (kontrak tahap 1–5, build, TypeScript) dan `B25 WhatsApp Template Core Focused Gate`. **PASS kode/CI bukan UAT visual.**
+
+**Lovable:** source tersinkron pada commit merge `6d5ca78`, tetapi proyek masih `needs_attention / out_of_credits`. `is_published=true` tidak membuktikan versi baru sudah tersedia pada situs LIVE. **Tidak ada publish/deploy oleh pekerjaan ini.**
+
+**Status UI-26-02:** **PARTIAL** (implementasi kode di `main` untuk lima subfitur: Rekening Owner, Profil Homestay, Manajemen Kamar, Minimum DP & Komisi, Template WhatsApp). Bukti PASS visual yang telah disampaikan Owner hanyalah popup sukses **Tambah Rekening** dan popup sukses **Minimum DP & Komisi**; varian gagal/hasil parsial dan popup tiga subfitur lain belum UAT visual. Tidak ada perubahan SQL Cloud, data template atau pengaturan LIVE, finance, transaksi, tarif, hak akses, atau publish.
+
+**Gate berikutnya:** Verifikasi popup lima subfitur pada build yang dapat dibuktikan tanpa memutasi template/finance/kamar LIVE hanya demi UAT. Pertahankan NO-GO migrasi Overtime hingga approval dan bukti backup/restore cukup.
