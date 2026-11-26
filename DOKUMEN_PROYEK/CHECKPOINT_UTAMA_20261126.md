@@ -304,3 +304,12 @@ Supabase **Staging** terhubung saat audit hanya mempunyai **33 tabel**, lebih se
 - **Batas mutasi:** tidak ada SQL Cloud, keuangan, tarif, data profil asli, ataupun migrasi/feature flags. Gate backup/restore dan keputusan NO-GO SQL Overtime tetap.
 
 **Tindak lanjut:** setelah preview dapat dibangun, verifikasi modal kedua halaman (sukses/gagal/close/role) secara aman; kemudian pilih satu subfitur Pengaturan lain untuk penerapan bertahap setelah meninjau handler, tanpa mengulang tes PASS.
+
+
+---
+
+### Addendum UAT Visual Popup Rekening Owner — 26 Nov 2026 14:06 WIB
+
+Owner mengirim bukti screenshot **Pengaturan → Rekening Owner** dengan popup **“Rekening berhasil ditambahkan”**. **PASS visual hanya untuk varian hasil sukses tambah rekening**: panel terpusat warna warm cream-gold, overlay gelap, ikon sukses hijau, judul dan teks sesuai tindakan, tombol **Tutup** di bawah, tanpa tombol X. Bukti dicatat pada komentar UAT [PR #191](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/191).
+
+**Belum diverifikasi dari screenshot:** hasil gagal, tindakan ubah/aktifkan/nonaktifkan rekening, tombol Tutup dapat digunakan, persistensi data sesudah reload, izin peran, versi commit build yang dilihat Owner, serta popup Profil Homestay PR #192. Jangan menyebut seluruh UI-26-02 telah UAT PASS hanya berdasarkan satu screenshot ini; status tetap **PARTIAL (kode dua halaman merged; visual sukses tambah rekening PASS)**. Tidak ada data rekening/PII disalin, tidak ada mutasi Cloud, transaksi, tarif, atau publish dalam pembaruan checkpoint.
