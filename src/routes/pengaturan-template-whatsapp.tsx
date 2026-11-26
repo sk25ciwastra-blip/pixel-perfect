@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
@@ -55,6 +55,7 @@ function PengaturanTemplateWhatsApp() {
   const [loading, setLoading] = useState(false);
   const [backendReady, setBackendReady] = useState(false);
   const [error, setError] = useState('');
+  const [actionResult, setActionResult] = useState<ActionResultState | null>(null);
   const readGeneration = useRef(0);
 
   async function reload(selectedKind: WhatsAppTemplateKind) {
@@ -107,20 +108,43 @@ function PengaturanTemplateWhatsApp() {
 
   async function save() {
     if (!owner || !backendReady || busy || unchanged || validation.length) return;
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setActionResult(null);
+    // Keep the exact kind/title tied to the submit action even if UI state changes.
+    const savingKind = kind;
+    const savingTitle = selectedTemplate.title;
+    let writeAcknowledged = false;
     try {
-      const reminderKind = kind === 'PENGINGAT_BOOKING_30_MENIT' || kind === 'PENGINGAT_WAKTU_HABIS' || kind === 'PEMBERITAHUAN_OVERTIME';
+      const reminderKind = savingKind === 'PENGINGAT_BOOKING_30_MENIT' || savingKind === 'PENGINGAT_WAKTU_HABIS' || savingKind === 'PEMBERITAHUAN_OVERTIME';
       const { error: saveError } = await rpc(
         reminderKind ? 'owner_save_whatsapp_reminder_template' : 'owner_save_whatsapp_template',
-        { _kind: kind, _body: body },
+        { _kind: savingKind, _body: body },
       );
       if (saveError) throw saveError;
-      const refreshed = await reload(kind);
-      if (refreshed) toast.success(`Template ${selectedTemplate.title} berhasil disimpan sebagai versi aktif.`);
-      else toast.warning('Template berhasil disimpan, tetapi daftar versi belum dapat dimuat ulang. Periksa kembali sebelum digunakan.');
+      writeAcknowledged = true;
+      const refreshed = await reload(savingKind);
+      if (refreshed) {
+        setActionResult({
+          kind: 'success',
+          title: `Template ${savingTitle} berhasil disimpan`,
+          description: 'Versi aktif berhasil disimpan melalui sistem dan daftar versi terbaru berhasil dimuat ulang. Pengiriman WhatsApp tetap dilakukan secara manual.',
+        });
+      } else {
+        setActionResult({
+          kind: 'error',
+          title: `Periksa status Template ${savingTitle}`,
+          description: 'Penyimpanan sudah diterima sistem, tetapi daftar versi aktif belum berhasil diperiksa. Muat ulang dan verifikasi versi sebelum menggunakan atau menyimpan lagi.',
+        });
+      }
     } catch {
-      setError('Template belum dapat disimpan. Periksa akses Owner dan status migrasi, lalu muat ulang sebelum mencoba.');
-      toast.error('Penyimpanan template gagal');
+      const detail = writeAcknowledged
+        ? 'Penyimpanan sudah diterima sistem, tetapi hasil terbaru belum dapat diperiksa. Muat ulang dan periksa versi sebelum mencoba lagi.'
+        : 'Hasil penyimpanan belum dapat dipastikan. Periksa izin Owner, status backend, dan versi aktif sebelum mencoba kembali.';
+      setError(detail);
+      setActionResult({
+        kind: 'error',
+        title: `Periksa penyimpanan Template ${savingTitle}`,
+        description: detail,
+      });
     } finally { setBusy(false); }
   }
 
@@ -198,6 +222,7 @@ function PengaturanTemplateWhatsApp() {
               </ul>}
           </section>
         </div>}
+      <ActionResultDialog result={actionResult} onClose={() => setActionResult(null)} />
     </SubPengaturan>
   </Kerangka>;
 }
