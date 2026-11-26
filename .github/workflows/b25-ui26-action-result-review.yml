@@ -6,7 +6,9 @@ on:
     paths:
       - 'src/components/action-result-dialog.tsx'
       - 'src/routes/pengaturan-rekening-owner.tsx'
+      - 'src/routes/pengaturan-profil-homestay.tsx'
       - 'scripts/ui-26-02-action-result-dialog.test.cjs'
+      - 'scripts/ui-26-02-profile-result.test.cjs'
       - '.github/workflows/b25-ui26-action-result-review.yml'
   workflow_dispatch:
 
@@ -25,6 +27,7 @@ jobs:
         with:
           node-version: '22'
       - run: node scripts/ui-26-02-action-result-dialog.test.cjs
+      - run: node scripts/ui-26-02-profile-result.test.cjs
 
   whole-app-build:
     runs-on: ubuntu-24.04

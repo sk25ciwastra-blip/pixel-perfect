@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Building2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,7 @@ function HalamanProfilHomestay() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
+  const [actionResult, setActionResult] = useState<ActionResultState | null>(null);
 
   useEffect(() => {
     if (!siap || !owner) return;
@@ -64,7 +64,7 @@ function HalamanProfilHomestay() {
     if (!owner || !profil || loading || saving) return;
     setSaving(true);
     setError('');
-    setNotice('');
+    setActionResult(null);
     const cleanName = name.trim();
     const cleanAddress = address.trim();
     const cleanPhone = phone.trim();
@@ -72,10 +72,13 @@ function HalamanProfilHomestay() {
     const validContact = (value: string) => value === '' || /^[+]?[0-9 ()-]{6,30}$/.test(value);
     if (cleanName.length < 3 || cleanName.length > 100 || cleanAddress.length > 500
       || !validContact(cleanPhone) || !validContact(cleanWhatsapp)) {
-      setError('Periksa nama (3–100 karakter), alamat (maksimal 500), dan nomor kontak.');
+      const detail = 'Periksa nama (3–100 karakter), alamat (maksimal 500), dan nomor kontak.';
+      setError(detail);
+      setActionResult({ kind: 'error', title: 'Data profil perlu diperbaiki', description: detail });
       setSaving(false);
       return;
     }
+    let writeAcknowledged = false;
     try {
       const result = await rpc('b25_save_homestay_profile', {
         _business_name: cleanName,
@@ -84,13 +87,18 @@ function HalamanProfilHomestay() {
         _whatsapp: cleanWhatsapp,
       });
       if (result.error) {
-        setError(result.error.message);
+        const detail = 'Sistem belum menerima perubahan profil. Periksa data dan izin akses, lalu periksa kembali sebelum mencoba menyimpan.';
+        setError(detail);
+        setActionResult({ kind: 'error', title: 'Profil belum dapat disimpan', description: detail });
         return;
       }
+      writeAcknowledged = true;
       const latest = await rpc('b25_read_homestay_profile');
       const row = Array.isArray(latest.data) ? latest.data[0] as Profil | undefined : undefined;
       if (latest.error || !row) {
-        setError('Penyimpanan diproses, tetapi pembacaan ulang gagal. Periksa kembali sebelum mengulangi.');
+        const detail = 'Perubahan mungkin sudah tersimpan, tetapi profil terbaru belum dapat dibaca. Periksa kembali data sebelum mencoba menyimpan ulang.';
+        setError(detail);
+        setActionResult({ kind: 'error', title: 'Periksa kembali perubahan profil', description: detail });
         return;
       }
       setProfil(row);
@@ -98,10 +106,21 @@ function HalamanProfilHomestay() {
       setAddress(row.address);
       setPhone(row.phone);
       setWhatsapp(row.whatsapp);
-      setNotice('Profil Homestay berhasil disimpan.');
-      toast.success('Profil Homestay berhasil disimpan.');
+      setActionResult({
+        kind: 'success',
+        title: 'Profil Homestay berhasil disimpan',
+        description: 'Perubahan nama usaha, alamat, dan kontak resmi telah disimpan dan data terbaru berhasil dimuat.',
+      });
     } catch {
-      setError('Hasil penyimpanan belum dapat dipastikan. Periksa kembali sebelum mengulangi.');
+      const detail = writeAcknowledged
+        ? 'Perubahan mungkin sudah tersimpan, tetapi profil terbaru tidak berhasil diperiksa. Periksa data sebelum mengulangi.'
+        : 'Hasil penyimpanan belum dapat dipastikan. Periksa kembali data profil sebelum mengulangi.';
+      setError(detail);
+      setActionResult({
+        kind: 'error',
+        title: 'Periksa kembali perubahan profil',
+        description: detail,
+      });
     } finally {
       setSaving(false);
     }
@@ -123,7 +142,6 @@ function HalamanProfilHomestay() {
           </div>
           {loading && <p role="status" className="text-sm">Memuat profil…</p>}
           {error && <p role="alert" className="mb-4 rounded-lg border border-destructive/40 p-3 text-sm text-destructive">{error}</p>}
-          {notice && <p role="status" className="mb-4 rounded-lg border border-gold/40 p-3 text-sm">{notice}</p>}
           <form onSubmit={(event) => void save(event)} className="space-y-4">
             <label className="block text-sm">Nama Homestay<input className={field} value={name} onChange={e => setName(e.target.value)} maxLength={100} required disabled={!profil || saving} /></label>
             <label className="block text-sm">Alamat<input className={field} value={address} onChange={e => setAddress(e.target.value)} maxLength={500} disabled={!profil || saving} /></label>
@@ -133,6 +151,7 @@ function HalamanProfilHomestay() {
             <Button type="submit" disabled={!profil || saving || loading}>{saving ? 'Menyimpan…' : 'Simpan Profil'}</Button>
           </form>
         </section>
+        <ActionResultDialog result={actionResult} onClose={() => setActionResult(null)} />
       </SubPengaturan>
     </Kerangka>
   );
