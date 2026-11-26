@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, type FormEvent } from 'react';
 import { Landmark, ShieldCheck, Pencil, Power } from 'lucide-react';
-import { toast } from 'sonner';
+import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
 import { Kerangka } from '@/components/kerangka';
 import { SubPengaturan } from '@/components/pengaturan-sub';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ function RekeningOwner() {
   const [accountNumber, setAccountNumber] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [actionResult, setActionResult] = useState<ActionResultState | null>(null);
 
   function edit(bank: Bank) {
     setSelected(bank);
@@ -47,11 +48,15 @@ function RekeningOwner() {
     const holder = accountName.trim();
     const number = accountNumber.replace(/\s/g, '');
     if (!name || !holder || !/^[0-9]{5,30}$/.test(number)) {
-      setError('Periksa nama bank, nama pemilik rekening, dan nomor rekening (5–30 digit).');
+      const detail = 'Periksa nama bank, nama pemilik rekening, dan nomor rekening (5–30 digit).';
+      setError(detail);
+      setActionResult({ kind: 'error', title: 'Rekening belum dapat disimpan', description: detail });
       return;
     }
     setBusy(true);
     setError('');
+    const editing = selected !== null;
+    let writeConfirmed = false;
     try {
       const { error: writeError } = await rpc('upsert_finance_bank_account', {
         _id: selected?.id ?? null, _bank_name: name, _account_name: holder,
@@ -59,11 +64,26 @@ function RekeningOwner() {
         _active: selected?.active ?? true,
       });
       if (writeError) throw new Error(writeError.message);
+      writeConfirmed = true;
       await banks.refresh({ throwOnError: true });
       reset();
-      toast.success(selected ? 'Rekening berhasil diperbarui.' : 'Rekening berhasil ditambahkan.');
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Penyimpanan belum dapat dipastikan.');
+      setActionResult({
+        kind: 'success',
+        title: editing ? 'Rekening berhasil diperbarui' : 'Rekening berhasil ditambahkan',
+        description: editing
+          ? 'Perubahan rekening telah disimpan dan daftar rekening berhasil diperbarui.'
+          : 'Rekening Owner telah disimpan dan muncul dalam daftar rekening.',
+      });
+    } catch {
+      const detail = writeConfirmed
+        ? 'Perubahan mungkin sudah tersimpan, tetapi daftar rekening belum dapat diperbarui. Periksa data sebelum mengulangi.'
+        : 'Penyimpanan rekening belum berhasil dikonfirmasi. Periksa data dan akses sebelum mencoba kembali.';
+      setError(detail);
+      setActionResult({
+        kind: 'error',
+        title: writeConfirmed ? 'Periksa kembali data rekening' : 'Rekening gagal disimpan',
+        description: detail,
+      });
     } finally {
       setBusy(false);
     }
@@ -72,17 +92,33 @@ function RekeningOwner() {
     if (!owner || busy || banks.loading || !!banks.error) return;
     setBusy(true);
     setError('');
+    let writeConfirmed = false;
     try {
       const { error: writeError } = await rpc('upsert_finance_bank_account', {
         _id: bank.id, _bank_name: bank.bank_name, _account_name: bank.account_name,
         _account_number: bank.account_number, _logo_key: bank.logo_key, _active: !bank.active,
       });
       if (writeError) throw new Error(writeError.message);
+      writeConfirmed = true;
       await banks.refresh({ throwOnError: true });
       if (selected?.id === bank.id) reset();
-      toast.success(bank.active ? 'Rekening dinonaktifkan.' : 'Rekening diaktifkan.');
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Perubahan status rekening gagal.');
+      setActionResult({
+        kind: 'success',
+        title: bank.active ? 'Rekening berhasil dinonaktifkan' : 'Rekening berhasil diaktifkan',
+        description: bank.active
+          ? 'Status rekening telah diperbarui menjadi nonaktif.'
+          : 'Status rekening telah diperbarui menjadi aktif.',
+      });
+    } catch {
+      const detail = writeConfirmed
+        ? 'Status rekening mungkin sudah berubah, tetapi daftar belum dapat dimuat ulang. Periksa kembali sebelum mengulangi.'
+        : 'Perubahan status rekening belum berhasil dikonfirmasi. Periksa data sebelum mencoba kembali.';
+      setError(detail);
+      setActionResult({
+        kind: 'error',
+        title: writeConfirmed ? 'Periksa kembali status rekening' : 'Perubahan status rekening gagal',
+        description: detail,
+      });
     } finally {
       setBusy(false);
     }
@@ -142,6 +178,7 @@ function RekeningOwner() {
             </div>
           </section>
         </div>
+        <ActionResultDialog result={actionResult} onClose={() => setActionResult(null)} />
       </SubPengaturan>
     </Kerangka>
   );
