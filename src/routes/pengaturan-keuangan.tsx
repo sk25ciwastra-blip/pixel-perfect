@@ -5,6 +5,8 @@ import { Settings2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ActionResultDialog, type ActionResultState } from '@/components/action-result-dialog';
 import { resolveFinanceSettingsOutcome, type FinanceSaveActionResult } from '@/lib/finance-settings-outcome';
+import { matchesPersistedFinanceSettings, type RequestedFinanceSettings } from '@/lib/finance-settings-readback';
+import { supabase } from '@/integrations/supabase/client';
 import { Kerangka } from '@/components/kerangka';
 import { rpc, useTable } from '@/lib/data-live';
 import { usePeran } from '@/lib/peran';
@@ -44,6 +46,7 @@ function HalamanPengaturanKeuangan() {
   async function run(
     action: () => Promise<FinanceSaveActionResult>,
     successLabel: string,
+    requested: RequestedFinanceSettings,
   ) {
     if (!isOwner || busy) return;
     setBusy(true);
@@ -56,6 +59,25 @@ function HalamanPengaturanKeuangan() {
         refreshFinance: () => financeSettings.refresh({ throwOnError: true }),
         refreshCommission: () => commissionConfigs.refresh({ throwOnError: true }),
         successLabel,
+        verifyPersisted: async () => {
+          // Independent read-only checks: a successful refresh does not prove that
+          // the stored values match the exact configuration the Owner submitted.
+          const [financeRead, commissionRead] = await Promise.all([
+            supabase.from('finance_settings')
+              .select('minimum_dp_mode, minimum_dp_value').limit(1),
+            supabase.from('finance_commission_configs')
+              .select('mode, rate, per_room_amount')
+              .order('effective_from', { ascending: false }).limit(1),
+          ]);
+          if (financeRead.error || commissionRead.error) {
+            throw new Error('Finance readback could not be confirmed');
+          }
+          return matchesPersistedFinanceSettings(
+            requested,
+            financeRead.data?.[0],
+            commissionRead.data?.[0],
+          );
+        },
       });
       setActionResult(result);
     } finally {
@@ -113,7 +135,13 @@ function HalamanPengaturanKeuangan() {
               if (first.error) return { error: first.error };
               const second = await rpc('set_finance_commission_config', { _mode: commissionMode, _rate: angka(commissionRate), _per_room_amount: angka(perRoomAmount) });
               return { error: second.error, partial: Boolean(second.error) };
-            }, 'Minimum DP dan komisi berhasil disimpan')}>
+            }, 'Minimum DP dan komisi berhasil disimpan', {
+              minimumDpMode,
+              minimumDpValue: Number(minimumDpValue),
+              commissionMode,
+              commissionRate: angka(commissionRate),
+              perRoomAmount: angka(perRoomAmount),
+            })}>
               {busy ? 'Menyimpan…' : 'Simpan Konfigurasi'}
             </Button>
           </div>

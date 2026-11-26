@@ -10,6 +10,7 @@ on:
       - 'src/routes/pengaturan-manajemen-kamar.tsx'
       - 'src/routes/pengaturan-keuangan.tsx'
       - 'src/lib/finance-settings-outcome.ts'
+      - 'src/lib/finance-settings-readback.ts'
       - 'src/routes/pengaturan-template-whatsapp.tsx'
       - 'src/components/papan-informasi.tsx'
       - 'scripts/ui-26-02-action-result-dialog.test.cjs'
@@ -17,6 +18,7 @@ on:
       - 'scripts/ui-26-02-room-management-result.test.cjs'
       - 'scripts/ui-26-02-finance-settings-result.test.cjs'
       - 'scripts/ui-26-02-finance-outcome-runtime.test.ts'
+      - 'scripts/ui-26-02-finance-readback.test.ts'
       - 'scripts/ui-26-02-whatsapp-template-result.test.cjs'
       - 'scripts/ui-26-02-announcement-result.test.cjs'
       - '.github/workflows/b25-ui26-action-result-review.yml'
@@ -42,6 +44,7 @@ jobs:
       - run: node scripts/ui-26-02-finance-settings-result.test.cjs
       - uses: oven-sh/setup-bun@v2
       - run: bun scripts/ui-26-02-finance-outcome-runtime.test.ts
+      - run: bun scripts/ui-26-02-finance-readback.test.ts
       - run: node scripts/ui-26-02-whatsapp-template-result.test.cjs
       - run: node scripts/ui-26-02-announcement-result.test.cjs
 

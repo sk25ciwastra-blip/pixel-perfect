@@ -7,6 +7,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'src/routes/pengaturan-keuangan.tsx'), 'utf8');
 const outcome = fs.readFileSync(path.join(root, 'src/lib/finance-settings-outcome.ts'), 'utf8');
+const readback = fs.readFileSync(path.join(root, 'src/lib/finance-settings-readback.ts'), 'utf8');
 const dialog = fs.readFileSync(path.join(root, 'src/components/action-result-dialog.tsx'), 'utf8');
 
 const checks = [
@@ -63,6 +64,28 @@ const checks = [
     !outcome.includes('failure.message') &&
     !outcome.includes('while (') &&
     outcome.includes('Periksa Minimum DP dan komisi sebelum mencoba kembali.')],
+  ['Owner values are independently checked after refresh before success',
+    source.includes('verifyPersisted: async () => {') &&
+    source.includes("supabase.from('finance_settings')") &&
+    source.includes("supabase.from('finance_commission_configs')") &&
+    source.includes('matchesPersistedFinanceSettings(') &&
+    outcome.includes('const persistedMatches = await options.verifyPersisted();') &&
+    outcome.indexOf("const persistedMatches = await options.verifyPersisted()") <
+      outcome.indexOf("kind: 'success'")],
+  ['Mismatch and missing rows do not claim success',
+    outcome.includes("if (!persistedMatches) {") &&
+    outcome.includes('belum cocok dengan nilai yang disimpan') &&
+    readback.includes('if (!storedFinance || !storedCommission) return false;')],
+  ['All three commission modes compare only their active fields',
+    readback.includes("case 'OFF':") &&
+    readback.includes("case 'PERCENTAGE':") &&
+    readback.includes("case 'PER_ROOM':") &&
+    readback.includes('sameNumber(requested.commissionRate, storedCommission.rate)') &&
+    readback.includes('sameNumber(requested.perRoomAmount, storedCommission.per_room_amount)')],
+  ['Readback is read-only and the two write RPCs retain their original sequence',
+    !readback.includes('supabase') &&
+    (source.match(/rpc\('set_finance_settings'/g) || []).length === 1 &&
+    (source.match(/rpc\('set_finance_commission_config'/g) || []).length === 1],
 ];
 for (const [name, ok] of checks) {
   assert.ok(ok, name);
