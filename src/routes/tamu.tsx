@@ -159,7 +159,9 @@ function HalamanTamu() {
         });
         if (inserted.error) throw new Error(inserted.error.message);
         setOpen(false); setEditing(null); setTabDetail('catatan');
-        await notes.refresh({ throwOnError: true });
+        // A successful insert is authoritative. A later read failure must
+        // never imply that the note was not saved (or invite duplicate retry).
+        await notes.refresh();
         return;
       }
       const payload = {
