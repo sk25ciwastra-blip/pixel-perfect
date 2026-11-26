@@ -549,3 +549,16 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Tindakan data LIVE (diberi izin Owner langsung):** terhubung ke database Lovable LIVE Baturaden 25 Homestay, membaca 14 row `public.guests`; **13 nama lama** belum uppercase, satu nama `BISMA` sudah kapital. Update dibatasi **UUID tamu dan nama sebelumnya yang tepat**, disertai verifikasi expected count (13) dan transaction rollback jika mismatch. Hanya kolom `full_name` yang berubah; `address`, `phone`, `notes`, ID, riwayat, dan atribut tamu lain tidak diubah. Final SELECT: **14/14 nama uppercase, 0 non-uppercase**. Backup pemulihan privat `b25_maintenance_private.guest_name_case_backup_20261126` berisi 13 old/new name+id, tanpa akses schema untuk `anon` atau `authenticated` (RLS aktif). Hapus backup hanya berdasarkan keputusan retensi terpisah. Database action sudah berlaku langsung, tidak tergantung deploy frontend.
 
 **Lovable source/publish:** seusai merge, proyek masih `needs_attention/out_of_credits`; saat pengecekan awal source belum menunjukkan merge commit #203, dan `is_published=true` bukan bukti build baru tayang. **Tidak ada publish/deploy**. Setelah sinkronisasi source dan kemampuan publish pulih, diperlukan UAT visual tabel pada versi yang benar. Jangan menyatakan CI PASS sebagai UAT LIVE.
+
+
+---
+
+### Addendum Daftar Tamu — Tipografi Seimbang PR #204 MERGED (26 Nov 2026)
+
+**Arahan Owner:** dari screenshot terkini Owner menyetujui perubahan kecil tipografi Daftar Tamu. ChatGPT diminta mengimplementasikan langsung di GitHub tanpa meminta Owner menyalin kode. **[PR #204](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/204) MERGED** ke `main`, squash commit `a9b1cbf414502cf12f7f7cedf5f4dd3940fc99b9`.
+
+**Hasil frontend:** hanya hierarki tipografi utama pada `src/routes/tamu.tsx` dan `src/components/tamu.css`: **Nama Tamu 15px/600**, **Alamat 14px/500**, **WhatsApp 14px/500**, **Kunjungan 15px/600**, **header tabel 13px/600**. Semua isi tetap centered secara horizontal/vertikal, dengan tujuh kolom, ukuran tabel, jarak antarbaris, warna hitam–emas–warm white, dan tombol aksi tetap. Normalisasi nama/alamat/WhatsApp pada Tambah/Edit dari PR #202 serta uppercase data LIVE dari checkpoint sebelumnya tidak diulang dan tidak diubah.
+
+**QA:** tes kontrak `scripts/guest-table-center-alignment.test.cjs` dan `scripts/guest-entry-ui-contract.test.cjs` disesuaikan dengan hierarki visual baru. Workflow khusus `B25 Guest Entry Format and Address Column Review` **PASS** pada head `280f4e1d8633cc9f413681007415d02309ec1ef1`, termasuk tes formatter, full-app build dan TypeScript. Saat keputusan merge tercatat **15/16 workflow GitHub SUCCESS, 0 failed**, dengan **1 workflow unrelated `B25 No7 housekeeping RPC least privilege` masih in_progress di setup `apt-get update -qq`**; **jangan klaim 16/16** sampai selesai. Owner tidak diminta mengulang tes yang sudah PASS.
+
+**Lovable:** source project tersinkron ke merge commit `a9b1cbf` tetapi proyek tetap `needs_attention / out_of_credits`. `is_published=true` bukan bukti revisi baru telah diterapkan ke versi situs yang dipublikasikan; **tidak dilakukan publish**. Dibutuhkan bukti UAT visual versi yang benar untuk menutup gate tampilan. **Tidak ada perubahan SQL Cloud, data tamu LIVE, sesi kas, transaksi, tarif, harga, atau Hak Akses** akibat PR ini.
