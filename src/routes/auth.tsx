@@ -7,6 +7,7 @@ import { meta } from '@/lib/meta';
 // Panorama unggahan sebelumnya dipilih kembali oleh Owner; lokasi belum terverifikasi.
 import panorama from '@/assets/panorama-kota-malam.png.asset.json';
 import logoBaturaden from '@/assets/logo-baturaden-25.png.asset.json';
+import { FooterCopyright } from '@/components/footer-copyright';
 
 export const Route = createFileRoute('/auth')({ head: () => meta('Masuk', 'Masuk ke Baturaden 25 Homestay.'), component: Auth });
 
@@ -110,6 +111,7 @@ function Auth() {
           </div>
         </div>
       </div>
+      <FooterCopyright className="relative" />
     </main>
   );
 }
