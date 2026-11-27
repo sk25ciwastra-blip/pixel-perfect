@@ -1,0 +1,50 @@
+name: B25 Calendar RLS Security — Authorized Staff Only
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/20261127143000_operational_calendar_staff_rls.sql'
+      - 'supabase/rollback/20261127143000_operational_calendar_staff_rls_rollback.sql'
+      - 'scripts/operational-calendar-rls-fixture.sql'
+      - 'scripts/operational-calendar-rls-seed.sql'
+      - 'scripts/operational-calendar-rls.test.sql'
+      - '.github/workflows/b25-operational-calendar-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-postgres:
+    name: Calendar RLS & Booking Day Mode — PostgreSQL 16
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Start disposable Postgres (no LIVE connections or secrets)
+        run: |
+          docker run -d --rm --name b25-calendar-rls-pg -e POSTGRES_PASSWORD=only-for-synthetic-tests postgres:16
+          for i in $(seq 1 35); do
+            if docker exec b25-calendar-rls-pg pg_isready -U postgres >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          docker logs b25-calendar-rls-pg
+          exit 1
+      - name: Create synthetic auth identities & role functions
+        run: docker exec -i b25-calendar-rls-pg psql -U postgres -v ON_ERROR_STOP=1 < scripts/operational-calendar-rls-fixture.sql
+      - name: Apply original calendar foundation and event-type schema
+        run: |
+          docker exec -i b25-calendar-rls-pg psql -U postgres -v ON_ERROR_STOP=1 < supabase/migrations/20261006000011_operational_calendar.sql
+          docker exec -i b25-calendar-rls-pg psql -U postgres -v ON_ERROR_STOP=1 < supabase/migrations/20261006000012_calendar_event_types.sql
+      - name: Seed fictional holiday, leave and Owner override with private backup
+        run: docker exec -i b25-calendar-rls-pg psql -U postgres -v ON_ERROR_STOP=1 < scripts/operational-calendar-rls-seed.sql
+      - name: Apply intended production RLS change ONLY to disposable Postgres
+        run: docker exec -i b25-calendar-rls-pg psql -U postgres -v ON_ERROR_STOP=1 < supabase/migrations/20261127143000_operational_calendar_staff_rls.sql
+      - name: Test unauthorized login, Owner/Receptionist/Supervisor, day modes and unchanged rows
+        run: docker exec -i b25-calendar-rls-pg psql -U postgres -v ON_ERROR_STOP=1 < scripts/operational-calendar-rls.test.sql
+      - name: Destroy disposable Postgres
+        if: always()
+        run: docker rm -f b25-calendar-rls-pg || true
