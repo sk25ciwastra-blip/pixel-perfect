@@ -42,9 +42,11 @@ const checks=[
   ['Total transactions show count rather than rupiah',
     detail.includes('const totalTransaksi = riwayat.length') &&
     detail.includes('Transaksi`}</strong>')],
-  ['Booking history remains after conversion and checkout uses actual timestamp',
+  ['Booking history remains after conversion and times respect the active tab',
     detail.includes('riwayat.filter(t => Boolean(t.scheduled_check_in))') &&
-    detail.includes("tr.checked_out_at ? jamWib(tr.checked_out_at) : '—'") &&
+    detail.includes('guestHistoryDate(tipeRiwayat, tr)') &&
+    detail.includes('guestHistoryInAt(tipeRiwayat, tr)') &&
+    detail.includes('guestHistoryOutAt(tipeRiwayat, tr)') &&
     !detail.includes('tr.checked_out_at ?? tr.ends_at')],
   ['Genuine Email field editable and mailto works',
     detail.includes('type="email"') && detail.includes('detail.email ? <a href=') &&
