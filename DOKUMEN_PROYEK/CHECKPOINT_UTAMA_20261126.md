@@ -630,3 +630,25 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Lovable:** kode source telah terkonfirmasi sinkron pada commit merge `476b561`. Editor masih `needs_attention / out_of_credits` dan `is_published=true` tidak membuktikan rilis `#207` sudah di-deploy ke situs LIVE; UAT visual terbaru masih perlu diverifikasi ketika versi terpublikasi yang benar tersedia. **UAT pembaruan alamat dan audit YUDI tetap PASS; jangan diulang.**
 
 **Pekerjaan berikut setelah #207:** UAT fungsi **Tambah Catatan** (Umum/Preferensi/Perhatian) dengan catatan operasional nyata bila ada; kemudian UAT perubahan nomor WA/email yang memang dibutuhkan, dan periksa akses role/riwayat transaksi pada data riil. Jangan menciptakan catatan fiktif atau transaksi hanya untuk pengujian.
+
+
+---
+
+### Addendum 27 Nov 2026 — UAT Tambah Catatan & PR #208
+
+**Instruksi Owner:** Owner menyatakan UAT perubahan alamat+histiromi sudah berhasil, setelah PR #207 meminta `lanjut` untuk pekerjaan berikut: **UAT Tambah Catatan** kategori Umum/Preferensi/Perhatian/Lainnya, tidak mengulang tes yang PASS dan tanpa membuat catatan demo.
+
+**Temuan dan perbaikan source:** [PR #208](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/208) **MERGED** dengan squash commit `93d6b9606741179eab731dd747d7f58452d96dc2`. Memperbaiki `src/routes/tamu.tsx` agar:
+- tombol `Simpan Catatan` **disabled** saat nilai kosong/hanya spasi, riwayat masih loading, read error, atau penyimpanan sedang berjalan;
+- kondisi read-error dibedakan dari kondisi benar-benar tidak ada catatan pada popup dan tab Detail Tamu;
+- pesan gagal menyimpan catatan berbeda dari pesan gagal edit profil (tidak mengklaim sukses jika RPC error);
+- setelah `b25_add_guest_categorized_note` benar-benar sukses, popup ditutup dan Detail Tamu menampilkan konfirmasi terkait tamu tersebut, kembali ke tab Catatan, memuat ulang riwayat; bila refresh gagal sesudah INSERT sukses, UI tidak mengundang INSERT duplikat;
+- keempat kategori, atribusi aktor server-side, batas 500 karakter, form validasi, role guard, warna cream–emas, dan fungsi lain tetap. Style konfirmasi halus ada pada `src/components/detail-tamu.css`.
+
+**Bukti database LIVE read-only (27 November 2026):** saat verifikasi `public.guest_notes` memiliki **0 baris** (belum ada catatan riil); kolom `note_type` tersedia, default `umum`, RLS aktif. RPC `b25_add_guest_categorized_note` hanya EXECUTE oleh `authenticated`, bukan `anon`; fungsi memeriksa `can_frontdesk(auth.uid())` dan menyimpan author/timestamp server-side. Seluruh pemeriksaan dilakukan dengan SELECT, **tanpa INSERT/UPDATE/DELETE catatan ataupun perubahan tamu/keuangan LIVE**.
+
+**QA:** file `scripts/guest-note-readiness-contract.test.cjs` menambah 11 source checks dan diintegrasikan ke workflow Guest Detail. Head PR `4cb02ffcf734c16f70cea6a6ff932c4b41f10ecb` mencapai **18/18 GitHub Actions workflow SUCCESS**, 0 gagal/pending, termasuk sumber/formatter, PostgreSQL 16 sintetis untuk RPC/RLS, build, TypeScript, dan regresi modul lain. Kode Lovable tersinkron ke merge commit `93d6b96`. Proyek Lovable masih `needs_attention/out_of_credits`; `is_published=true` tidak membuktikan **versi #208** sudah deployed.
+
+**Status gate:** **PASS kode + SQL/policy read-only + PostgreSQL sintetis**. **UAT LIVE tombol Simpan Catatan menggunakan catatan operasional riil belum PASS** karena tidak ada catatan riil yang boleh dibuat tanpa kebutuhan. Saat petugas/Owner benar-benar perlu mencatat preferensi/perhatian, lakukan satu catatan sah melalui UI dan verifikasi read-only: satu row baru dengan tipe benar, `author_id/role/name`, `created_at`, tab Catatan dan ringkasan Preferensi/Perhatian; tidak perlu mengulang UAT perubahan alamat. Jangan membuat catatan demo maupun transaksi baru hanya untuk UAT.
+
+**Prioritas berikutnya:** lanjut UAT fungsi Catatan pada data riil saat ada penggunaan; lalu audit perubahan WhatsApp/Email, hak akses role, dan tab histori transaksi hanya berdasarkan data benar.
