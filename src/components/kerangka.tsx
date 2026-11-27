@@ -13,6 +13,7 @@ import gedungSate from "@/assets/gedung-sate-malam.jpg";
 import logoBaturaden from "@/assets/logo-baturaden-25.png.asset.json";
 import { konteksHeader } from "@/lib/konteks-header";
 import { PengumumanSidebar } from "@/components/pengumuman-sidebar";
+import { FooterCopyright } from "@/components/footer-copyright";
 
 type Menu = { ke: string; label: string; ikon: LucideIcon; ownerSaja?: boolean };
 
@@ -116,7 +117,7 @@ export function Kerangka({
   const teksKonteks = konteksHeader[lokasi.path];
 
   return (
-    <div className={`min-h-screen bg-background text-foreground`}>
+    <div className={`flex min-h-screen flex-col bg-background text-foreground`}>
       {/* Sidebar desktop */}
       <aside
         className="fixed inset-y-0 left-0 z-30 hidden w-[228px] flex-col overflow-hidden border-r border-gold/15 text-foreground lg:flex"
@@ -152,7 +153,7 @@ export function Kerangka({
         <MenuProfil ringkas />
       </header>
 
-      <main className={`relative pb-28 lg:ml-[228px] lg:pb-12 ${penuh ? "" : "px-4 pt-6 lg:px-10 lg:pt-0"}`}>
+      <main className={`relative flex-1 pb-28 lg:ml-[228px] lg:pb-12 ${penuh ? "" : "px-4 pt-6 lg:px-10 lg:pt-0"}`}>
         {penuh ? children : (
         <>
           <div className="relative z-20 hidden items-center justify-end gap-4 pt-5 lg:flex">
@@ -181,6 +182,8 @@ export function Kerangka({
         </>
         )}
       </main>
+
+      <FooterCopyright className="pb-24 lg:ml-[228px] lg:pb-0" />
 
       {/* Navigasi bawah HP */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-gold/20 bg-navy-deep/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_30px_-12px_oklch(0_0_0/0.9)] backdrop-blur lg:hidden">
