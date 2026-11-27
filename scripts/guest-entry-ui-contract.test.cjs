@@ -25,13 +25,13 @@ const checks = [
     css.includes('.tabel-tamu-premium tbody tr td:nth-child(4) {\n  font-size: 14px;\n  font-weight: 500;\n}') &&
     css.includes('.tabel-tamu-premium tbody tr td:nth-child(5) {\n  font-size: 15px;\n  font-weight: 600;\n}')],
   ['Guest name uppercases during typing and trims on blur',
-    page.includes("onChange={e => setNama(e.target.value.toLocaleUpperCase('id-ID'))}") &&
+    page.includes("setNama(e.target.value.toLocaleUpperCase('id-ID')); markGuestFieldEdited('full_name')") &&
     page.includes('onBlur={() => setNama(formatGuestName(nama))}')],
   ['Address is properly capitalized on blur and before write',
     page.includes('onBlur={() => setAlamat(formatGuestAddress(alamat))}') &&
     page.includes('const cleanAddress = formatGuestAddress(alamat)')],
   ['Phone paste and typing are normalized in the same change event',
-    page.includes('onChange={e => setTelepon(formatGuestWhatsAppInput(e.target.value))}') &&
+    page.includes("setTelepon(formatGuestWhatsAppInput(e.target.value)); markGuestFieldEdited('phone')") &&
     page.includes('type="tel" inputMode="tel"') &&
     page.includes('onBlur={() => setTelepon(formatGuestWhatsAppInput(telepon))}')],
   ['Phone format is validated before write and stored exactly as normalized',
@@ -44,7 +44,8 @@ const checks = [
   ['Duplicate checking resolves +62 and 08 to the same number',
     page.includes('guestWhatsAppCanonical(t.phone) === guestWhatsAppCanonical(cleanPhone)')],
   ['Create/edit retain Supabase safety and use server-verified categorized notes',
-    page.includes("supabase.from('guests').update(payload)") &&
+    page.includes("supabase.from('guests').update(updatePatch)") &&
+    page.includes('changedGuestProfileFields(editing, normalizedProfile, editedFields)') &&
     page.includes(".eq('updated_at', editing.updated_at).select().maybeSingle()") &&
     page.includes("supabase.from('guests').insert(payload)") &&
     page.includes("rpc('b25_add_guest_categorized_note'") &&
