@@ -78,9 +78,11 @@ export function DetailTransaksi({
   onDeleted,
   mode = 'full',
 }: DetailTransaksiProps) {
+  const { posisiKode } = usePeran();
   const transactions = useTable('transactions', true, { column: 'id', value: transactionId });
   const restricted = mode === 'housekeeping';
-  const viewOnly = mode === 'read-only';
+  // Inspector remains read-only even if another page forgets the mode prop.
+  const viewOnly = mode === 'read-only' || posisiKode === 'inspector';
   const transaction = transactions.rows.find(item => item.id === transactionId);
   const payments = useTable('payments', !restricted, { column: 'transaction_id', value: transactionId });
   const guests = useTable('guests', !restricted && !!transaction?.guest_id, { column: 'id', value: transaction?.guest_id ?? '' });
@@ -89,7 +91,6 @@ export function DetailTransaksi({
   const packages = useTable('packages');
   const employees = useTable('employees', !restricted);
   const housekeepingHistory = useTable('housekeeping_history', restricted);
-  const { posisiKode } = usePeran();
   const konfirmasi = usePaymentConfirmation();
   const notes = useTable('guest_notes', !restricted && !!transaction?.guest_id, { column: 'guest_id', value: transaction?.guest_id ?? '' });
   const logs = useTable('activity_logs', !restricted, { column: 'entity_id', value: transactionId });
