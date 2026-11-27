@@ -6,12 +6,15 @@ on:
     paths:
       - 'src/routes/tamu.tsx'
       - 'src/lib/guest-detail-derived.ts'
+      - 'src/lib/guest-profile-edit.ts'
       - 'src/lib/guest-history-view.ts'
       - 'src/lib/data-live.ts'
       - 'src/components/detail-tamu.css'
       - 'src/integrations/supabase/types.ts'
       - 'supabase/migrations/20261126190000_guest_profile_history_notes.sql'
       - 'scripts/guest-detail-derived.test.ts'
+      - 'scripts/guest-contact-profile-edit.test.ts'
+      - 'scripts/guest-contact-audit.test.sql'
       - 'scripts/guest-history-view.test.ts'
       - 'scripts/guest-detail-profile-history-contract.test.cjs'
       - 'scripts/guest-note-readiness-contract.test.cjs'
@@ -38,6 +41,7 @@ jobs:
       - run: node scripts/guest-detail-profile-history-contract.test.cjs
       - run: node scripts/guest-note-readiness-contract.test.cjs
       - run: bun scripts/guest-detail-derived.test.ts
+      - run: bun scripts/guest-contact-profile-edit.test.ts
       - run: bun scripts/guest-history-view.test.ts
       - run: node scripts/guest-entry-ui-contract.test.cjs
       - run: bun scripts/guest-entry-format.test.ts
@@ -66,6 +70,8 @@ jobs:
         run: docker exec -i b25-guest-history-postgres psql -U postgres -v ON_ERROR_STOP=1 < supabase/migrations/20261126190000_guest_profile_history_notes.sql
       - name: Assert real trigger old/new, notes and unauthorized write rejection
         run: docker exec -i b25-guest-history-postgres psql -U postgres -v ON_ERROR_STOP=1 < scripts/guest-detail-sql-audit.test.sql
+      - name: Verify isolated contact field changes and audit history
+        run: docker exec -i b25-guest-history-postgres psql -U postgres -v ON_ERROR_STOP=1 < scripts/guest-contact-audit.test.sql
       - name: Destroy disposable database
         if: always()
         run: docker rm -f b25-guest-history-postgres || true
