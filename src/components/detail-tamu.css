@@ -369,3 +369,19 @@ button.dt-telepon-inline:focus-visible { outline: 2px solid var(--gold-dark); ou
   .dt-perubahan { margin-inline: 12px; }
   .dt-perubahan-list { padding: 7px; }
 }
+
+/* Confirmation after saving a real categorized note; scoped to guest detail. */
+.dt-note-success {
+  margin: 10px 20px 4px;
+  padding: 9px 13px;
+  border: 1px solid var(--premium-line);
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--premium-paper) 85%, var(--gold-krem));
+  color: var(--premium-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .dt-note-success { margin-inline: 12px; }
+}

@@ -90,6 +90,7 @@ function HalamanTamu() {
     column: 'guest_id', value: detailTamu?.id ?? '',
   });
   const [noteType, setNoteType] = useState<GuestNoteCategory>('umum');
+  const [noteSavedGuestId, setNoteSavedGuestId] = useState<string | null>(null);
   const [detailTransactionId, setDetailTransactionId] = useState<string | null>(null);
   const [tabDetail, setTabDetail] = useState<'kunjungan' | 'transaksi' | 'booking' | 'catatan' | 'penawaran' | 'perubahan'>('kunjungan');
   const detailTrigger = useRef<HTMLButtonElement | null>(null);
@@ -128,11 +129,11 @@ function HalamanTamu() {
   const kamarTerakhirLabel = kunjunganTerakhir ? `${nomorKamar(kunjunganTerakhir.room_id)} – ${tipeKamar(kunjunganTerakhir.room_id)}` : '—';
 
   function edit(t?: Guest, hanyaCatatan = false) {
-    setCatatanSaja(hanyaCatatan); setNoteType('umum');
+    setCatatanSaja(hanyaCatatan); setNoteType('umum'); setNoteSavedGuestId(null);
     setEditing(t ?? null); setNama((t?.full_name ?? '').toLocaleUpperCase('id-ID')); setAlamat(t?.address ?? ''); setTelepon(formatGuestWhatsAppInput(t?.phone ?? '')); setEmail(t?.email ?? '');
     setCatatan(''); setMessage(''); setOpen(true);
   }
-  function tutup() { setDetailTamu(null); setOpen(false); setEditing(null); setMessage(''); }
+  function tutup() { setDetailTamu(null); setOpen(false); setEditing(null); setMessage(''); setNoteSavedGuestId(null); }
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (saving || readOnly) return;
@@ -152,7 +153,9 @@ function HalamanTamu() {
       setMessage('Histori perubahan belum dapat diakses. Perbarui diblokir agar perubahan tidak terjadi tanpa audit.'); return;
     }
     if (catatanSaja && !catatan.trim()) { setMessage('Catatan tidak boleh kosong.'); return; }
-    if (catatan.trim() && (notes.loading || notes.error)) { setMessage('Riwayat catatan belum dapat diakses. Kosongkan catatan baru untuk menyimpan data tamu saja.'); return; }
+    if (catatanSaja && notes.loading) { setMessage('Riwayat catatan sedang dimuat. Simpan setelah pemuatan selesai.'); return; }
+    if (catatanSaja && notes.error) { setMessage('Riwayat catatan belum dapat dibaca. Catatan tidak dikirim agar tidak terjadi duplikasi.'); return; }
+    if (!catatanSaja && catatan.trim() && (notes.loading || notes.error)) { setMessage('Riwayat catatan belum dapat diakses. Kosongkan catatan baru untuk menyimpan data tamu saja.'); return; }
     setSaving(true); setMessage('');
     try {
       if (catatanSaja && editing) {
@@ -160,6 +163,7 @@ function HalamanTamu() {
           p_guest_id: editing.id, p_body: catatan.trim(), p_note_type: noteType,
         });
         if (inserted.error) throw new Error(inserted.error.message);
+        setNoteSavedGuestId(editing.id);
         setOpen(false); setEditing(null); setTabDetail('catatan');
         // A successful insert is authoritative. A later read failure must
         // never imply that the note was not saved (or invite duplicate retry).
@@ -185,7 +189,11 @@ function HalamanTamu() {
       setOpen(false); setEditing(null);
       if (editing) setTabDetail('perubahan');
       await Promise.all([refresh(), notes.refresh(), history.refresh()]);
-    } catch { setMessage('Perubahan belum dapat dikonfirmasi. Periksa akses dan kesiapan modul histori, lalu muat ulang sebelum mencoba lagi.'); } finally { setSaving(false); }
+    } catch {
+      setMessage(catatanSaja
+        ? 'Catatan belum tersimpan. Periksa hak akses atau koneksi, lalu coba lagi jika belum tercatat di riwayat.'
+        : 'Perubahan belum dapat dikonfirmasi. Periksa akses dan kesiapan modul histori, lalu muat ulang sebelum mencoba lagi.');
+    } finally { setSaving(false); }
   }
 
   return (
@@ -263,7 +271,8 @@ function HalamanTamu() {
                   <textarea id="catatan-tamu-baru" required autoFocus maxLength={500} value={catatan} onChange={e => setCatatan(e.target.value)} placeholder="Tulis catatan di sini..." />
                   <span className="ct-hitung" aria-live="polite">{catatan.length} / 500</span>
                 </div>
-                {notes.error && <p className="ct-peringatan">Riwayat catatan belum tersedia. Data lama tetap dipertahankan.</p>}
+                {notes.loading && <p role="status" className="ct-peringatan">Memuat riwayat catatan sebelum menyimpan…</p>}
+                {notes.error && <p role="alert" className="ct-peringatan">Riwayat catatan belum dapat dibaca. Penyimpanan ditunda untuk mencegah catatan ganda.</p>}
                 {message && <p role="alert" className="ct-peringatan">{message}</p>}
               </div>
               <div className="ct-jenis">
@@ -274,7 +283,9 @@ function HalamanTamu() {
               </div>
               <section className="ct-riwayat">
                 <h3><Clock aria-hidden="true" />Riwayat Catatan</h3>
-                {notes.loading ? <p className="ct-kosong">Memuat riwayat catatan…</p> : daftarCatatan.length ? <ul>{daftarCatatan.map(note => <li key={note.id}>
+                {notes.loading ? <p role="status" className="ct-kosong">Memuat riwayat catatan…</p>
+                  : notes.error ? <p role="alert" className="ct-kosong">Riwayat catatan belum dapat dimuat. Coba buka kembali Detail Tamu.</p>
+                  : daftarCatatan.length ? <ul>{daftarCatatan.map(note => <li key={note.id}>
                   <NotebookPen className="ct-ikon-catatan" aria-hidden="true" />
                   <div className="ct-kartu-isi">
                     <p className="ct-isi-catatan"><strong>{guestNoteCategories.find(item => item.id === guestNoteType(note))?.title ?? 'Umum'}:</strong> {note.body}</p>
@@ -284,7 +295,7 @@ function HalamanTamu() {
               </section>
               <footer className="ct-footer">
                 <Button type="button" variant="outline" className="ct-batal" disabled={saving} onClick={() => { setOpen(false); setEditing(null); }}>Batal</Button>
-                <Button type="submit" className="ct-simpan" disabled={saving}><Save />{saving ? 'Menyimpan…' : 'Simpan Catatan'}</Button>
+                <Button type="submit" className="ct-simpan" disabled={saving || notes.loading || Boolean(notes.error) || !catatan.trim()}><Save />{saving ? 'Menyimpan…' : 'Simpan Catatan'}</Button>
               </footer>
             </form> : open && !readOnly ? <form onSubmit={save}>
               <div className="space-y-5 p-5 sm:p-7">
@@ -336,6 +347,7 @@ function HalamanTamu() {
                   <div className="dt-pref-item"><span className="dt-pref-ikon"><NotebookPen aria-hidden="true" /></span><div><p>Catatan Preferensi</p><strong>{notes.error ? 'Belum dapat dimuat' : catatanPreferensi}</strong></div></div>
                 </div>
               </section>
+              {noteSavedGuestId === detail.id && <p role="status" className="dt-note-success">Catatan berhasil disimpan dan ditambahkan ke riwayat tamu.</p>}
               <div className="dt-tab-bar" role="tablist" aria-label="Riwayat tamu">
                 <button type="button" role="tab" aria-selected={tabDetail === 'kunjungan'} data-aktif={tabDetail === 'kunjungan'} className="dt-tab" onClick={() => setTabDetail('kunjungan')}><Clock aria-hidden="true" />Riwayat Kunjungan ({kunjunganList.length})</button>
                 <button type="button" role="tab" aria-selected={tabDetail === 'transaksi'} data-aktif={tabDetail === 'transaksi'} className="dt-tab" onClick={() => setTabDetail('transaksi')}><Layers aria-hidden="true" />Riwayat Transaksi</button>
@@ -354,8 +366,9 @@ function HalamanTamu() {
                     <small>Diubah oleh: {row.actor_name || 'Sistem'}{row.actor_role ? ` · ${row.actor_role}` : ''}</small>
                   </li>)}</ol> : <p className="dt-kosong">Belum ada perubahan profil sejak histori diaktifkan.</p>}
               </section> : tabDetail === 'penawaran' && canReadOffers ? <OfferHistory key={detail.id} guest={detail.id} /> : tabDetail === 'catatan' ? <>
-                {notes.error && <p className="dt-kosong">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
-                {daftarCatatan.length ? <ul className="dt-catatan-list">{daftarCatatan.map(note => <li key={note.id} className="dt-catatan-item"><p><strong>{guestNoteCategories.find(item => item.id === guestNoteType(note))?.title ?? 'Umum'}:</strong> {note.body}</p><p className="dt-catatan-meta">{pembuatCatatan(note.author_role, note.author_name)} · {note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</p></li>)}</ul> : !notes.error && <p className="dt-kosong">Belum ada catatan tamu</p>}
+                {notes.loading && <p role="status" className="dt-kosong">Memuat riwayat catatan…</p>}
+                {notes.error && <p role="alert" className="dt-kosong">Riwayat catatan belum dapat dimuat. Coba buka kembali Detail Tamu.</p>}
+                {!notes.loading && !notes.error && daftarCatatan.length ? <ul className="dt-catatan-list">{daftarCatatan.map(note => <li key={note.id} className="dt-catatan-item"><p><strong>{guestNoteCategories.find(item => item.id === guestNoteType(note))?.title ?? 'Umum'}:</strong> {note.body}</p><p className="dt-catatan-meta">{pembuatCatatan(note.author_role, note.author_name)} · {note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</p></li>)}</ul> : !notes.loading && !notes.error && <p className="dt-kosong">Belum ada catatan tamu</p>}
               </> : <>
                 {transactions.loading && <p role="status" className="dt-kosong">Memuat {tipeRiwayat === 'booking' ? 'riwayat booking' : tipeRiwayat === 'transaksi' ? 'riwayat transaksi' : 'riwayat kunjungan'}…</p>}
                 {transactions.error && <p role="alert" className="dt-kosong">{guestHistoryLoadError(tipeRiwayat)}</p>}

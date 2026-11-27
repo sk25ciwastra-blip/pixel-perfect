@@ -14,6 +14,7 @@ on:
       - 'scripts/guest-detail-derived.test.ts'
       - 'scripts/guest-history-view.test.ts'
       - 'scripts/guest-detail-profile-history-contract.test.cjs'
+      - 'scripts/guest-note-readiness-contract.test.cjs'
       - 'scripts/guest-detail-sql-fixture.sql'
       - 'scripts/guest-detail-sql-audit.test.sql'
       - '.github/workflows/b25-guest-detail-audit-review.yml'
@@ -35,6 +36,7 @@ jobs:
           node-version: '22'
       - uses: oven-sh/setup-bun@v2
       - run: node scripts/guest-detail-profile-history-contract.test.cjs
+      - run: node scripts/guest-note-readiness-contract.test.cjs
       - run: bun scripts/guest-detail-derived.test.ts
       - run: bun scripts/guest-history-view.test.ts
       - run: node scripts/guest-entry-ui-contract.test.cjs
