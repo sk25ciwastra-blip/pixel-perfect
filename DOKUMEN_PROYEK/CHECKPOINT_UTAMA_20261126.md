@@ -611,3 +611,22 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **Publikasi:** permintaan `deploy_project` telah diajukan pada Lovable, hasil awal `status=pending`, deployment ID `8da26278-ee2e-4aa1-94d5-3cf89515dbfa`, intended URL `https://pixel-perfect-homestay-hub.lovable.app`. Status `is_published=true` sudah tercatat SEBELUM permintaan ini; **TIDAK membuktikan build baru selesai atau tampil ke Owner**. Lovable editor masih `needs_attention/out_of_credits`, dan tidak tersedia aksi untuk memeriksa status deployment ID. Tidak ada UAT browser LIVE yang terkonfirmasi. JANGAN klaim tombol Perbarui sudah lolos UAT LIVE sampai versi publish benar terverifikasi dengan role Owner/Receptionist menggunakan perubahan data yang memang dibutuhkan (bukan record finansial demo).
 
 **Batas histori:** perubahan nama/alamat/WA/email akan tercatat **mulai sejak trigger audit aktif**. Tidak mengarang audit lama dari data yang sebelumnya tidak direkam. Modul Booking/Checkout/Refund/Pembayaran/Komisi/Closing tidak diubah pada aktivasi ini.
+
+
+---
+
+### Addendum 27 Nov 2026 — Perbaikan Tab Riwayat Detail Tamu PR #207
+
+**Arah Owner:** setelah screenshot UAT LIVE perubahan alamat YUDI (WA akhir 3120) membuktikan histori `Bandung → Jl. Tengah` lengkap dengan waktu/petugas, Owner mengatakan pengujian tersebut **berhasil** dan meminta **langsung lanjut ke pekerjaan berikutnya**, tanpa mengulang UAT yang sudah PASS.
+
+**Temuan dan perbaikan berikutnya:** [PR #207](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/207) **MERGED** ke `main` dengan squash commit `476b561d70546a7afb0b9b89f35904bd331b4063`. Dalam `src/routes/tamu.tsx` fallback lama pada tab **Riwayat Kunjungan** salah menulis "Belum ada riwayat transaksi"; kini tiap tab Kunjungan/Transaksi/Booking memiliki pesan kosong, loading, dan error yang benar. Kolom tanggal dan waktu pada tiga tab kini menggunakan semantik yang berbeda:
+- **Kunjungan:** judul `Tgl Kunjungan`, waktu **aktual** check-in/checkout; bila tidak ada waktu aktual, tampil `—` dan tidak memakai timestamp penciptaan transaksi untuk menyamar sebagai kunjungan.
+- **Transaksi:** judul `Tgl Transaksi` dari `created_at`; check-in/checkout hanya timestamp aktual.
+- **Booking:** judul `Jadwal Check-in` dari `scheduled_check_in`; jam rencana CI/CO dari `scheduled_check_in`/`scheduled_check_out`. Ini berlaku juga jika Booking telah berubah status menjadi Check-in atau Selesai.
+- Kondisi sedang memuat data kini menampilkan teks `Memuat riwayat ...` sesuai tab dan tidak menampilkan baris tersisa saat loading/error.
+
+**QA:** `src/lib/guest-history-view.ts` helper pure, `scripts/guest-history-view.test.ts` skenario sintetis, source contract history dan GitHub Actions khusus Guest Detail diperluas. Commit PR head `4d2a125867ef24be4e900cccb3148851dfb2baf4` mencapai **18/18 workflow GitHub Actions SUCCESS**, 0 gagal/pending, termasuk source-pure, PostgreSQL disposable, build dan TypeScript, dan regresi fitur lain. **Tidak ada SQL/migrasi Cloud, INSERT/UPDATE/DELETE LIVE, tindakan finansial, atau data demo baru**.
+
+**Lovable:** kode source telah terkonfirmasi sinkron pada commit merge `476b561`. Editor masih `needs_attention / out_of_credits` dan `is_published=true` tidak membuktikan rilis `#207` sudah di-deploy ke situs LIVE; UAT visual terbaru masih perlu diverifikasi ketika versi terpublikasi yang benar tersedia. **UAT pembaruan alamat dan audit YUDI tetap PASS; jangan diulang.**
+
+**Pekerjaan berikut setelah #207:** UAT fungsi **Tambah Catatan** (Umum/Preferensi/Perhatian) dengan catatan operasional nyata bila ada; kemudian UAT perubahan nomor WA/email yang memang dibutuhkan, dan periksa akses role/riwayat transaksi pada data riil. Jangan menciptakan catatan fiktif atau transaksi hanya untuk pengujian.
