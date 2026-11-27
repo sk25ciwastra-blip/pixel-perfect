@@ -28,7 +28,7 @@ const checks = [
   ['Address uses live word capitalizing and preserves whitespace',
     logic.includes("if (mode === 'words')") &&
     !logic.includes("value.trim()") &&
-    guest.includes("onChange={e => setAlamat(capitalizeLiveText(e.target.value, 'words'))}") &&
+    guest.includes("setAlamat(capitalizeLiveText(e.target.value, 'words')); markGuestFieldEdited('address')") &&
     guest.includes('onBlur={() => setAlamat(formatGuestAddress(alamat))}')],
   ['Guest name and WhatsApp remain under their approved own formatters',
     guest.includes("setNama(e.target.value.toLocaleUpperCase('id-ID'))") &&
