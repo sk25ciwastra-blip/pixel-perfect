@@ -703,3 +703,10 @@ Owner mengirim screenshot hasil **Pengaturan → Minimum DP & Komisi** dengan pe
 **GitHub:** [PR #211](https://github.com/sk25ciwastra-blip/pixel-perfect/pull/211) **MERGED** ke `main`, squash `cafd419745ef8c44cf1d9bbc0a4783e70d4d5f8f`. `15/15 GitHub Actions SUCCESS`, 0 failed/pending pada head `d1b912d65136c889a4ce0a5fe85502324fd603da`, termasuk workflow keamanan PostgreSQL 16 disposable yang menguji akun baru tidak berwenang, Owner/Receptionist/Supervisor, libur nasional, cuti bersama dan Owner override tanpa koneksi Cloud. Rollback darurat `supabase/rollback/20261127143000_operational_calendar_staff_rls_rollback.sql` **tidak dieksekusi** dan **membuka kembali temuan keamanan bila dijalankan**; butuh izin Owner khusus jika suatu saat diperlukan.
 
 **Lovable:** source sudah sinkron ke merge `cafd419`. Editor tetap `needs_attention/out_of_credits`, tetapi **SQL RLS LIVE sudah aktif tanpa perlu publish frontend**. Tidak tersedia tindakan langsung dari konektor untuk memicu Lovable Security Findings scan; Owner dapat klik `Jalankan pemeriksaan` untuk menyegarkan UI temuan. **Jangan mengklaim status warning di Lovable hilang sebelum scan ulang**, meskipun query keamanan langsung ke database telah PASS. Tidak mengulang pekerjaan UAT Detail Tamu yang sebelumnya PASS.
+
+
+---
+
+### Konfirmasi Owner — Lovable Security Finding Hilang (27 Nov 2026)
+
+Owner melaporkan setelah menekan pemindaian ulang Lovable: peringatan `Whoever signs up can read every record in operational_calendar` **sudah hilang dari halaman Findings**. Ini adalah **laporan keberhasilan scan UI dari Owner** (bukan hasil akses langsung model ke UI Lovable), melengkapi bukti verifikasi LIVE RLS serta 15/15 GitHub CI PASS pada PR #211. **Security finding ini CLOSED sebagai pekerjaan; jangan ulang atau buka SQL kalender tanpa temuan baru.** Prioritas setelah ini: UAT akses role Detail Tamu/Detail Transaksi pada browser aplikasi yang terpublikasi (PR #210); issue #188 UAT visual Target Omzet tiga tahap masih open; penyimpanan catatan tamu riil dan edit WhatsApp/email menunggu kebutuhan operasional asli, bukan data demo.
