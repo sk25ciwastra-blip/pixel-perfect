@@ -8,6 +8,7 @@ import { rpc, useTable, useTransaksiOperasional, type Guest } from '@/lib/data-l
 import { supabase } from '@/integrations/supabase/client';
 import { meta } from '@/lib/meta';
 import { usePeran } from '@/lib/peran';
+import { guestDetailPermissions } from '@/lib/guest-detail-access';
 import { OfferHistory } from '@/components/reservation-offer-queue';
 import { canPreviewBookingQuote } from '@/lib/booking-quote';
 import { openWhatsApp } from '@/lib/whatsapp';
@@ -66,8 +67,9 @@ function IkonWhatsApp({ className = "size-5" }: { className?: string }) {
 
 function HalamanTamu() {
   const { posisiKode, masuk } = usePeran();
-  const canReadOffers = canPreviewBookingQuote('booking', posisiKode, masuk);
-  const readOnly = posisiKode === 'inspector';
+  const access = guestDetailPermissions(posisiKode, masuk);
+  const canReadOffers = access.canView && canPreviewBookingQuote('booking', posisiKode, masuk);
+  const readOnly = !access.canWrite;
   const { rows, loading, error, refresh } = useTable('guests');
   const transactions = useTransaksiOperasional();
   const notes = useTable('guest_notes');
@@ -132,6 +134,7 @@ function HalamanTamu() {
   const kamarTerakhirLabel = kunjunganTerakhir ? `${nomorKamar(kunjunganTerakhir.room_id)} – ${tipeKamar(kunjunganTerakhir.room_id)}` : '—';
 
   function edit(t?: Guest, hanyaCatatan = false) {
+    if (!access.canWrite) return;
     setCatatanSaja(hanyaCatatan); setNoteType('umum'); setNoteSavedGuestId(null); setEditedFields({...untouchedGuestEdit});
     setEditing(t ?? null); setNama((t?.full_name ?? '').toLocaleUpperCase('id-ID')); setAlamat(t?.address ?? ''); setTelepon(formatGuestWhatsAppInput(t?.phone ?? '')); setEmail(t?.email ?? '');
     setCatatan(''); setMessage(''); setOpen(true);
@@ -139,7 +142,7 @@ function HalamanTamu() {
   function tutup() { setDetailTamu(null); setOpen(false); setEditing(null); setMessage(''); setNoteSavedGuestId(null); }
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (saving || readOnly) return;
+    if (saving || !access.canWrite) return;
     const cleanName = formatGuestName(nama);
     const cleanAddress = formatGuestAddress(alamat);
     const cleanPhone = formatGuestWhatsAppInput(telepon);
@@ -413,7 +416,7 @@ function HalamanTamu() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-      {detailTransactionId && <DetailTransaksi transactionId={detailTransactionId} mode={posisiKode === 'housekeeping' ? 'housekeeping' : 'full'} onClose={() => setDetailTransactionId(null)} />}
+      {detailTransactionId && access.canView && <DetailTransaksi transactionId={detailTransactionId} mode={access.transactionMode} onClose={() => setDetailTransactionId(null)} />}
     </Kerangka>
   );
 }
