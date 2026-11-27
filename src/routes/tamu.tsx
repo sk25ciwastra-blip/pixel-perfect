@@ -17,6 +17,7 @@ import '@/components/detail-tamu.css';
 import { empatDigitWA, kunjunganTamu, urutTamu } from '@/lib/tamu-tampilan';
 import { formatGuestName, formatGuestAddress, formatGuestWhatsAppInput, guestWhatsAppCanonical, isValidGuestWhatsApp } from '@/lib/guest-entry-format';
 import { guestAverageGroupSize, guestHistoryLabels, guestNoteCategories, guestNoteType, guestVisitOnly, guestVisitStatus, type GuestNoteCategory } from '@/lib/guest-detail-derived';
+import { guestHistoryDate, guestHistoryDateHeading, guestHistoryEmptyText, guestHistoryInAt, guestHistoryInHeading, guestHistoryLoadError, guestHistoryOutAt, guestHistoryOutHeading, type GuestHistoryTab } from '@/lib/guest-history-view';
 import { capitalizeLiveText } from '@/lib/live-auto-capitalization';
 
 export const Route = createFileRoute('/tamu')({
@@ -115,6 +116,7 @@ function HalamanTamu() {
   const kunjunganList = detail ? kunjunganTamu(transactions.rows, detail.id).sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id)) : [];
   const bookingList = riwayat.filter(t => Boolean(t.scheduled_check_in));
   const barisRiwayat = tabDetail === 'booking' ? bookingList : tabDetail === 'transaksi' ? riwayat : kunjunganList;
+  const tipeRiwayat: GuestHistoryTab = tabDetail === 'booking' || tabDetail === 'transaksi' ? tabDetail : 'kunjungan';
   const totalTransaksi = riwayat.length;
   const tipeFavorit = terbanyak(guestVisitOnly(riwayat).map(t => tipeKamar(t.room_id)));
   const paketFavorit = terbanyak(guestVisitOnly(riwayat).map(t => namaPaket(t.package_id)));
@@ -355,24 +357,25 @@ function HalamanTamu() {
                 {notes.error && <p className="dt-kosong">Riwayat catatan belum dapat dimuat; catatan terakhir tetap ditampilkan.</p>}
                 {daftarCatatan.length ? <ul className="dt-catatan-list">{daftarCatatan.map(note => <li key={note.id} className="dt-catatan-item"><p><strong>{guestNoteCategories.find(item => item.id === guestNoteType(note))?.title ?? 'Umum'}:</strong> {note.body}</p><p className="dt-catatan-meta">{pembuatCatatan(note.author_role, note.author_name)} · {note.created_at ? waktuCatatanWib(note.created_at) : 'Waktu tidak diketahui'}</p></li>)}</ul> : !notes.error && <p className="dt-kosong">Belum ada catatan tamu</p>}
               </> : <>
-                {transactions.error && <p role="alert" className="dt-kosong">Riwayat transaksi belum dapat dimuat.</p>}
-                {barisRiwayat.length ? <div className="dt-tabel-wrap"><table className="dt-tabel">
+                {transactions.loading && <p role="status" className="dt-kosong">Memuat {tipeRiwayat === 'booking' ? 'riwayat booking' : tipeRiwayat === 'transaksi' ? 'riwayat transaksi' : 'riwayat kunjungan'}…</p>}
+                {transactions.error && <p role="alert" className="dt-kosong">{guestHistoryLoadError(tipeRiwayat)}</p>}
+                {!transactions.loading && !transactions.error && barisRiwayat.length ? <div className="dt-tabel-wrap"><table className="dt-tabel">
                   <colgroup><col className="w-[3%]" /><col className="w-[10%]" /><col className="w-[15%]" /><col className="w-[6%]" /><col className="w-[9%]" /><col className="w-[10%]" /><col className="w-[7%]" /><col className="w-[7%]" /><col className="w-[11%]" /><col className="w-[17%]" /><col className="w-[5%]" /></colgroup>
-                  <thead><tr><th>No.</th><th>Tgl Kunjungan</th><th>No. Transaksi</th><th>Kamar</th><th>Tipe</th><th>Paket</th><th>Check-in</th><th>Check-out</th><th>Total</th><th>Status</th><th aria-label="Struk" /></tr></thead>
+                  <thead><tr><th>No.</th><th>{guestHistoryDateHeading(tipeRiwayat)}</th><th>No. Transaksi</th><th>Kamar</th><th>Tipe</th><th>Paket</th><th>{guestHistoryInHeading(tipeRiwayat)}</th><th>{guestHistoryOutHeading(tipeRiwayat)}</th><th>Total</th><th>Status</th><th aria-label="Detail transaksi" /></tr></thead>
                   <tbody>{barisRiwayat.map((tr, index) => <tr key={tr.id}>
                     <td className="dt-nomor">{index + 1}</td>
-                    <td>{tanggalPendekWib(tr.started_at ?? tr.created_at)}</td>
+                    <td>{guestHistoryDate(tipeRiwayat, tr) ? tanggalPendekWib(guestHistoryDate(tipeRiwayat, tr) as string) : '—'}</td>
                     <td className="dt-mono">{tr.transaction_number}</td>
                     <td><span className="dt-kamar-pill">{nomorKamar(tr.room_id)}</span></td>
                     <td>{tipeKamar(tr.room_id)}</td>
                     <td>{namaPaket(tr.package_id)}</td>
-                    <td>{tr.started_at ? jamWib(tr.started_at) : '—'}</td>
-                    <td>{tr.checked_out_at ? jamWib(tr.checked_out_at) : '—'}</td>
+                    <td>{guestHistoryInAt(tipeRiwayat, tr) ? jamWib(guestHistoryInAt(tipeRiwayat, tr) as string) : '—'}</td>
+                    <td>{guestHistoryOutAt(tipeRiwayat, tr) ? jamWib(guestHistoryOutAt(tipeRiwayat, tr) as string) : '—'}</td>
                     <td>{rupiah(tr.price_snapshot ?? tr.base_price_snapshot ?? 0)}</td>
                     <td><span className="dt-status" data-state={tr.status}>{tr.status === 'check_out' && <CircleCheck aria-hidden="true" />}{statusTransaksi[tr.status] ?? tr.status}</span></td>
                     <td><button type="button" className="dt-struk" aria-label={`Detail transaksi ${tr.transaction_number}`} onClick={() => setDetailTransactionId(tr.id)}><ReceiptText aria-hidden="true" /></button></td>
                   </tr>)}</tbody>
-                </table></div> : !transactions.loading && !transactions.error && <p className="dt-kosong">{tabDetail === 'booking' ? 'Belum ada riwayat booking' : 'Belum ada riwayat transaksi'}</p>}
+                </table></div> : !transactions.loading && !transactions.error && <p className="dt-kosong">{guestHistoryEmptyText(tipeRiwayat)}</p>}
               </>}
               <footer className="dt-footer">
                 {!readOnly && <>
