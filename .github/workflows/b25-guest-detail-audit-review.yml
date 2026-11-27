@@ -6,11 +6,13 @@ on:
     paths:
       - 'src/routes/tamu.tsx'
       - 'src/lib/guest-detail-derived.ts'
+      - 'src/lib/guest-history-view.ts'
       - 'src/lib/data-live.ts'
       - 'src/components/detail-tamu.css'
       - 'src/integrations/supabase/types.ts'
       - 'supabase/migrations/20261126190000_guest_profile_history_notes.sql'
       - 'scripts/guest-detail-derived.test.ts'
+      - 'scripts/guest-history-view.test.ts'
       - 'scripts/guest-detail-profile-history-contract.test.cjs'
       - 'scripts/guest-detail-sql-fixture.sql'
       - 'scripts/guest-detail-sql-audit.test.sql'
@@ -34,6 +36,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: node scripts/guest-detail-profile-history-contract.test.cjs
       - run: bun scripts/guest-detail-derived.test.ts
+      - run: bun scripts/guest-history-view.test.ts
       - run: node scripts/guest-entry-ui-contract.test.cjs
       - run: bun scripts/guest-entry-format.test.ts
 
