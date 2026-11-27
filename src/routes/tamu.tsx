@@ -16,6 +16,7 @@ import '@/components/tamu.css';
 import '@/components/detail-tamu.css';
 import { empatDigitWA, kunjunganTamu, urutTamu } from '@/lib/tamu-tampilan';
 import { formatGuestName, formatGuestAddress, formatGuestWhatsAppInput, guestWhatsAppCanonical, isValidGuestWhatsApp } from '@/lib/guest-entry-format';
+import { changedGuestProfileFields, untouchedGuestEdit, type GuestEditField, type GuestEditTouched } from '@/lib/guest-profile-edit';
 import { guestAverageGroupSize, guestHistoryLabels, guestNoteCategories, guestNoteType, guestVisitOnly, guestVisitStatus, type GuestNoteCategory } from '@/lib/guest-detail-derived';
 import { guestHistoryDate, guestHistoryDateHeading, guestHistoryEmptyText, guestHistoryInAt, guestHistoryInHeading, guestHistoryLoadError, guestHistoryOutAt, guestHistoryOutHeading, type GuestHistoryTab } from '@/lib/guest-history-view';
 import { capitalizeLiveText } from '@/lib/live-auto-capitalization';
@@ -82,6 +83,8 @@ function HalamanTamu() {
   const [alamat, setAlamat] = useState('');
   const [telepon, setTelepon] = useState('');
   const [email, setEmail] = useState('');
+  const [editedFields, setEditedFields] = useState<GuestEditTouched>({...untouchedGuestEdit});
+  const markGuestFieldEdited = (field: GuestEditField) => setEditedFields(prev => ({...prev, [field]: true}));
   const [catatan, setCatatan] = useState('');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -129,7 +132,7 @@ function HalamanTamu() {
   const kamarTerakhirLabel = kunjunganTerakhir ? `${nomorKamar(kunjunganTerakhir.room_id)} – ${tipeKamar(kunjunganTerakhir.room_id)}` : '—';
 
   function edit(t?: Guest, hanyaCatatan = false) {
-    setCatatanSaja(hanyaCatatan); setNoteType('umum'); setNoteSavedGuestId(null);
+    setCatatanSaja(hanyaCatatan); setNoteType('umum'); setNoteSavedGuestId(null); setEditedFields({...untouchedGuestEdit});
     setEditing(t ?? null); setNama((t?.full_name ?? '').toLocaleUpperCase('id-ID')); setAlamat(t?.address ?? ''); setTelepon(formatGuestWhatsAppInput(t?.phone ?? '')); setEmail(t?.email ?? '');
     setCatatan(''); setMessage(''); setOpen(true);
   }
@@ -170,17 +173,24 @@ function HalamanTamu() {
         await notes.refresh();
         return;
       }
-      const payload = {
+      const normalizedProfile = {
         full_name: cleanName, address: cleanAddress, phone: cleanPhone, email: cleanEmail || null,
-        ...(!editing ? { notes: catatan.trim() } : {}),
       };
-      if (editing && editing.full_name === cleanName && editing.address === cleanAddress && editing.phone === cleanPhone && (editing.email ?? '') === cleanEmail) {
+      const payload = { ...normalizedProfile, ...(!editing ? { notes: catatan.trim() } : {}) };
+      // Only explicitly edited fields may be sent during a profile update.
+      // Otherwise, opening an existing record (e.g. 62... or a legacy
+      // mixed-case address) and changing Email could rewrite unrelated
+      // information and create a misleading audit entry.
+      const updatePatch = editing
+        ? changedGuestProfileFields(editing, normalizedProfile, editedFields)
+        : {};
+      if (editing && Object.keys(updatePatch).length === 0) {
         setMessage('Tidak ada perubahan profil untuk disimpan.'); return;
       }
       // Optimistic lock prevents overwriting a concurrent edit from another
       // Receptionist/Owner. The database trigger writes old/new values atomically.
       const result = editing
-        ? await supabase.from('guests').update(payload).eq('id', editing.id)
+        ? await supabase.from('guests').update(updatePatch).eq('id', editing.id)
             .eq('updated_at', editing.updated_at).select().maybeSingle()
         : await supabase.from('guests').insert(payload).select().single();
       if (result.error) { setMessage(result.error.code === '23505' ? 'Nomor HP sudah tercatat. Gunakan data tamu tersebut.' : result.error.message); return; }
@@ -300,13 +310,13 @@ function HalamanTamu() {
             </form> : open && !readOnly ? <form onSubmit={save}>
               <div className="space-y-5 p-5 sm:p-7">
                 {!catatanSaja && <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="block min-w-0 text-base" htmlFor="tamu-nama"><span className="font-medium text-gold-light">Nama lengkap</span><input id="tamu-nama" required autoComplete="name" value={nama} onChange={e => setNama(e.target.value.toLocaleUpperCase('id-ID'))} onBlur={() => setNama(formatGuestName(nama))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
-                  <label className="block min-w-0 text-base" htmlFor="tamu-whatsapp"><span className="font-medium text-gold-light">Nomor HP/WhatsApp</span><input id="tamu-whatsapp" required type="tel" inputMode="tel" autoComplete="tel" value={telepon} onChange={e => setTelepon(formatGuestWhatsAppInput(e.target.value))} onBlur={() => setTelepon(formatGuestWhatsAppInput(telepon))} placeholder="08... atau +62..." className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
-                  <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-email"><span className="font-medium text-gold-light">Email (opsional)</span><input id="tamu-email" type="email" autoCapitalize="none" autoComplete="email" maxLength={254} value={email} onChange={e => setEmail(e.target.value)} placeholder="nama@email.com" className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
-                  <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-alamat"><span className="font-medium text-gold-light">Alamat</span><input id="tamu-alamat" required autoCapitalize="words" autoComplete="street-address" value={alamat} onChange={e => setAlamat(capitalizeLiveText(e.target.value, 'words'))} onBlur={() => setAlamat(formatGuestAddress(alamat))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                  <label className="block min-w-0 text-base" htmlFor="tamu-nama"><span className="font-medium text-gold-light">Nama lengkap</span><input id="tamu-nama" required autoComplete="name" value={nama} onChange={e => { setNama(e.target.value.toLocaleUpperCase('id-ID')); markGuestFieldEdited('full_name'); }} onBlur={() => setNama(formatGuestName(nama))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                  <label className="block min-w-0 text-base" htmlFor="tamu-whatsapp"><span className="font-medium text-gold-light">Nomor HP/WhatsApp</span><input id="tamu-whatsapp" required type="tel" inputMode="tel" autoComplete="tel" value={telepon} onChange={e => { setTelepon(formatGuestWhatsAppInput(e.target.value)); markGuestFieldEdited('phone'); }} onBlur={() => setTelepon(formatGuestWhatsAppInput(telepon))} placeholder="08... atau +62..." className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                  <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-email"><span className="font-medium text-gold-light">Email (opsional)</span><input id="tamu-email" type="email" autoCapitalize="none" autoComplete="email" maxLength={254} value={email} onChange={e => { setEmail(e.target.value); markGuestFieldEdited('email'); }} placeholder="nama@email.com" className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
+                  <label className="block min-w-0 text-base sm:col-span-2" htmlFor="tamu-alamat"><span className="font-medium text-gold-light">Alamat</span><input id="tamu-alamat" required autoCapitalize="words" autoComplete="street-address" value={alamat} onChange={e => { setAlamat(capitalizeLiveText(e.target.value, 'words')); markGuestFieldEdited('address'); }} onBlur={() => setAlamat(formatGuestAddress(alamat))} className="mt-2 h-12 w-full rounded-lg border border-input bg-navy-deep/50 px-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>
                 </div>}
                 {!editing && <label className="block text-base"><span className="font-medium text-gold-light">Catatan Awal (Opsional)</span><textarea maxLength={500} value={catatan} onChange={e => setCatatan(e.target.value)} className="mt-2 min-h-28 w-full rounded-lg border border-input bg-navy-deep/50 px-3 py-3 text-base outline-none focus-visible:ring-1 focus-visible:ring-gold/50" /></label>}
-                {editing && <p className="text-sm text-gold-light">Perubahan nama, alamat, dan nomor WhatsApp tercatat otomatis dalam Riwayat Perubahan. Untuk menambah catatan gunakan tombol Tambah Catatan pada Detail Tamu.</p>}
+                {editing && <p className="text-sm text-gold-light">Perubahan nama, alamat, nomor WhatsApp, dan email dicatat otomatis beserta waktu serta petugas dalam Riwayat Perubahan. Untuk menambah catatan gunakan tombol Tambah Catatan pada Detail Tamu.</p>}
                 {notes.error && <p className="text-sm text-muted-foreground">Riwayat catatan belum tersedia. Data lama tetap dipertahankan.</p>}
                 {message && <p role="alert" className="text-base text-destructive">{message}</p>}
               </div>
