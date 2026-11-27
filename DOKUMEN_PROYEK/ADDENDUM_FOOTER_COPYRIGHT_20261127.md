@@ -24,3 +24,19 @@ Owner meminta implementasi segera footer Copyright Baturaden 25 Homestay mengiku
 3. Domain & PWA tetap sesuai rencana terpisah untuk 28 November 2026; tidak disentuh pada PR ini.
 
 **Jangan mengulang pekerjaan/footer atau menandai LIVE PASS hanya dari CI dan sinkronisasi source.**
+
+## Revisi final Owner — satu baris (27 November 2026)
+
+Owner meninjau screenshot nyata Dashboard dan menghapus judul brand kedua dari footer. Teks final yang disetujui: `© 2026, Baturaden 25 Homestay. All Rights Reserved.`, dengan tahun yang berubah otomatis.
+
+- **PR #214:** https://github.com/sk25ciwastra-blip/pixel-perfect/pull/214 — **MERGED**.
+- **Merge SHA:** `e825cdea08d7edd318b107b7114b5380b97426c0`.
+- **File:** hanya `src/components/footer-copyright.tsx`.
+- **Desain:** tanpa heading terpisah; satu baris Copyright, sans-serif body standar aplikasi, ukuran 12px, weight 400, tracking normal, warna muted, padding vertikal 12px. Di HP teks boleh wrap saat layar sempit tanpa overflow.
+- **CI PR:** 16 SUCCESS, 1 SKIPPED, 0 FAIL.
+- **Source GitHub main:** telah diverifikasi berisi versi satu baris.
+- **Lovable sinkronisasi:** cek lanjut sesudah merge; jangan klaim sudah sampai Lovable atau published sebelum SHA cocok.
+- **UAT visual final / publish:** belum ditandai PASS berdasarkan build atau merge.
+- **Batas:** tidak mengubah login, router, sidebar, header, navigasi, data tamu, SQL, finance, PWA, DNS, atau backend.
+
+Catatan: screenshot Owner sebelum revisi memastikan footer lama pernah terlihat di Dashboard; tidak otomatis membuktikan tampilan final sesudah revisi.
