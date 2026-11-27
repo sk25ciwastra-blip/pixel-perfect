@@ -23,7 +23,7 @@ type DetailTransaksiProps = {
   transactionId: string;
   onClose: () => void;
   onDeleted?: () => void;
-  mode?: 'full' | 'housekeeping';
+  mode?: 'full' | 'housekeeping' | 'read-only';
 };
 
 function kodePaket(name: string | undefined) {
@@ -78,8 +78,11 @@ export function DetailTransaksi({
   onDeleted,
   mode = 'full',
 }: DetailTransaksiProps) {
+  const { posisiKode } = usePeran();
   const transactions = useTable('transactions', true, { column: 'id', value: transactionId });
   const restricted = mode === 'housekeeping';
+  // Inspector remains read-only even if another page forgets the mode prop.
+  const viewOnly = mode === 'read-only' || posisiKode === 'inspector';
   const transaction = transactions.rows.find(item => item.id === transactionId);
   const payments = useTable('payments', !restricted, { column: 'transaction_id', value: transactionId });
   const guests = useTable('guests', !restricted && !!transaction?.guest_id, { column: 'id', value: transaction?.guest_id ?? '' });
@@ -88,7 +91,6 @@ export function DetailTransaksi({
   const packages = useTable('packages');
   const employees = useTable('employees', !restricted);
   const housekeepingHistory = useTable('housekeeping_history', restricted);
-  const { posisiKode } = usePeran();
   const konfirmasi = usePaymentConfirmation();
   const notes = useTable('guest_notes', !restricted && !!transaction?.guest_id, { column: 'guest_id', value: transaction?.guest_id ?? '' });
   const logs = useTable('activity_logs', !restricted, { column: 'entity_id', value: transactionId });
@@ -169,7 +171,7 @@ export function DetailTransaksi({
 
 
   const catatan = [...notes.rows].sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
-  const bolehHubungi = bolehHubungiTamu(posisiKode, guest?.phone);
+  const bolehHubungi = !viewOnly && bolehHubungiTamu(posisiKode, guest?.phone);
   const namaPegawai = (uid: string | null | undefined) => employees.rows.find(item => item.user_id === uid)?.name;
   const viaBooking = !!transaction.scheduled_check_in;
   const logCheckout = logs.rows.find(item => item.action === 'check_out');
@@ -278,21 +280,23 @@ export function DetailTransaksi({
         <footer className="dtx-pied">
           <p><strong>Terakhir diubah :</strong> {jejakWib(transaction.updated_at)}</p>
           <div className="dtx-aksi">
-            <div className="dtx-pdf">
-              <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital<ChevronDown className="dtx-panah" /></button>
-              {bukaPdf && <div className="dtx-pdf-menu"><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} ringkas /></div>}
-            </div>
-            <span className="dtx-cetak">
-              {featureFlags.receipt58mm
-                ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk" />
-                : <button type="button" disabled title="Cetak struk pembayaran resmi belum diaktifkan. Owner dapat mencoba printer dengan tombol Tes Printer 58 mm."><Printer />Cetak Struk</button>}
-              {posisiKode === 'owner' && <ReceiptPrinterTestButton />}
-            </span>
+            {!viewOnly && <>
+              <div className="dtx-pdf">
+                <button type="button" className="dtx-tombol" aria-expanded={bukaPdf} onClick={() => setBukaPdf(v => !v)}><Download />Bukti Digital<ChevronDown className="dtx-panah" /></button>
+                {bukaPdf && <div className="dtx-pdf-menu"><AksiPdfStruk hook={konfirmasi} transactionId={transaction.id} ringkas /></div>}
+              </div>
+              <span className="dtx-cetak">
+                {featureFlags.receipt58mm
+                  ? <ReceiptTransactionButton transactionNumber={transaction.transaction_number} label="Cetak Struk" />
+                  : <button type="button" disabled title="Cetak struk pembayaran resmi belum diaktifkan. Owner dapat mencoba printer dengan tombol Tes Printer 58 mm."><Printer />Cetak Struk</button>}
+                {posisiKode === 'owner' && <ReceiptPrinterTestButton />}
+              </span>
+            </>}
             {transaction.demo_archived_at && <span className="text-xs font-semibold">Arsip DEMO</span>}
-            {onDeleted && !transaction.demo_archived_at && <TombolHapusDemo kind="transaction" id={transaction.id} code={transaction.transaction_number}
+            {!viewOnly && onDeleted && !transaction.demo_archived_at && <TombolHapusDemo kind="transaction" id={transaction.id} code={transaction.transaction_number}
               name={guest?.full_name ?? 'Tamu'} amount={transaction.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(total)}
               onDeleted={onDeleted} />}
-            {onDeleted && !transaction.demo_archived_at && <TombolHapusDemo kind="archive" id={transaction.id} code={transaction.transaction_number}
+            {!viewOnly && onDeleted && !transaction.demo_archived_at && <TombolHapusDemo kind="archive" id={transaction.id} code={transaction.transaction_number}
               name={guest?.full_name ?? 'Tamu'} amount={transaction.price_snapshot === null ? 'Nominal belum tercatat' : rupiah(total)}
               onDeleted={onDeleted} />}
             <button type="button" className="dtx-tutup" onClick={onClose}>Tutup</button>

@@ -49,7 +49,7 @@ const checks = [
     page.includes(".eq('updated_at', editing.updated_at).select().maybeSingle()") &&
     page.includes("supabase.from('guests').insert(payload)") &&
     page.includes("rpc('b25_add_guest_categorized_note'") &&
-    page.includes("if (saving || readOnly) return")],
+    page.includes("if (saving || !access.canWrite) return")],
   ['No change to global WhatsApp normalization / delivery',
     !helper.includes("from '@/lib/whatsapp'") &&
     page.includes('openWhatsApp(t.phone)') &&

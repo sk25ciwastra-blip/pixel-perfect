@@ -22,7 +22,7 @@ const checks = [
     detail.includes('{catatan.length} / 500')],
   ['Submit cannot be triggered by blank text, loading, unreadable history or duplicate click',
     detail.includes('disabled={saving || notes.loading || Boolean(notes.error) || !catatan.trim()}') &&
-    detail.includes('if (saving || readOnly) return')],
+    detail.includes('if (saving || !access.canWrite) return')],
   ['Submitting a note checks readiness before any RPC call',
     detail.includes("if (catatanSaja && notes.loading)") &&
     detail.includes("if (catatanSaja && notes.error)") &&
