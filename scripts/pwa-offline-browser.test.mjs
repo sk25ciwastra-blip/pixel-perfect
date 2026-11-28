@@ -78,7 +78,7 @@ try {
     // Only intercept NON-LOCAL traffic: routing localhost requests via
     // route.continue() can bypass Chromium's simulated offline condition.
     // No application source, remote script, auth, or Cloud URL is loaded here.
-    await page.route(/^https?:\\/\\/(?!127\\.0\\.0\\.1:\\d+\\/).+/, (route) => {
+    await page.route(/^https?:\/\/(?!127\.0\.0\.1:\d+\/).+/, (route) => {
       pageErrors.push("Unexpected external request: " + route.request().url());
       return route.abort();
     });
