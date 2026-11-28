@@ -9,6 +9,8 @@ on:
       - 'src/lib/pwa.ts'
       - 'src/routes/__root.tsx'
       - 'scripts/pwa-foundation.test.cjs'
+      - 'scripts/pwa-deployment-smoke.mjs'
+      - 'scripts/pwa-deployment-smoke.test.mjs'
       - 'scripts/generate-pwa-icons.py'
       - '.github/workflows/b25-pwa-foundation-review.yml'
   workflow_dispatch:
@@ -28,6 +30,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Validate official icons, manifest, secure offline policy
         run: node --test scripts/pwa-foundation.test.cjs
+      - name: Verify public PWA URLs in isolated HTTP fixture (no Cloud)
+        run: node --test scripts/pwa-deployment-smoke.test.mjs
       - name: Production build
         run: bun run build
       - name: Typecheck
