@@ -11,6 +11,7 @@ import { readFile, mkdir } from "node:fs/promises";
 const playwrightModule = process.env.B25_PLAYWRIGHT_MODULE || "playwright";
 const { chromium } = await import(playwrightModule);
 const marker = "SYNTHETIC-PRIVATE-ONLY-NEVER-CACHE";
+let interruptSyntheticNetwork = false;
 const publicFiles = {
   "/sw.js": ["public/sw.js", "text/javascript"],
   "/offline.html": ["public/offline.html", "text/html; charset=utf-8"],
@@ -25,6 +26,13 @@ function createLocalServer() {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     res.setHeader("Cache-Control", "no-store");
 
+    // Drop the test-only route's connection when simulating a network cut.
+    // Chromium treats some loopback traffic specially; a real failed fetch
+    // makes the navigation fallback observable without ever touching Cloud.
+    if (url.pathname === "/synthetic-private" && interruptSyntheticNetwork) {
+      req.socket.destroy();
+      return;
+    }
     // Synthetic-only route that stands in for a sensitive operational page.
     if (req.method === "GET" && ["/", "/synthetic-private"].includes(url.pathname)) {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
@@ -116,16 +124,19 @@ try {
 
       // Chromium's real network goes offline. Navigation must work using only
       // the cached public notice, NOT previously visited sensitive fixture.
+      interruptSyntheticNetwork = true;
       await context.setOffline(true);
       await page.goto(origin + "/synthetic-private?offline=1", { waitUntil: "domcontentloaded" });
+      const heading = await page.locator("h1").allInnerTexts();
       assert.equal(await page.getByRole("heading", { name: "Koneksi internet terputus" }).count(), 1,
-        "Offline navigation must show public notice");
+        "Offline navigation must show public notice, got " + JSON.stringify(heading));
       assert.equal(await page.getByText("Tidak ada transaksi yang disimpan secara offline.").count(), 1);
       assert.equal(await page.getByText(marker).count(), 0,
         "Previously visited synthetic private page must never be served from PWA cache");
       await page.screenshot({ path: `test-results/pwa-browser/${name}-offline.png` });
 
       await context.setOffline(false);
+      interruptSyntheticNetwork = false;
       await page.getByRole("button", { name: "Coba Lagi" }).click();
       await page.waitForLoadState("domcontentloaded");
       assert.equal(await page.getByRole("heading", { name: marker }).count(), 1,
