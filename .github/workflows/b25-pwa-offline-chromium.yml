@@ -1,0 +1,42 @@
+name: B25 PWA Offline Chromium (synthetic only)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/sw.js'
+      - 'public/offline.html'
+      - 'public/manifest.webmanifest'
+      - 'public/pwa/**'
+      - 'scripts/pwa-offline-browser.test.mjs'
+      - '.github/workflows/b25-pwa-offline-chromium.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chromium-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated Chromium for PWA offline testing
+        run: |
+          mkdir -p /tmp/b25-pwa-playwright
+          npm install --prefix /tmp/b25-pwa-playwright --no-save --package-lock=false --ignore-scripts playwright@1.56.1
+          /tmp/b25-pwa-playwright/node_modules/.bin/playwright install --with-deps chromium
+      - name: Test actual service worker in isolated desktop/mobile Chromium
+        env:
+          B25_PLAYWRIGHT_MODULE: /tmp/b25-pwa-playwright/node_modules/playwright/index.mjs
+        run: node scripts/pwa-offline-browser.test.mjs
+      - name: Upload offline screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b25-pwa-synthetic-offline-screenshots
+          path: test-results/pwa-browser/
+          if-no-files-found: warn
+          retention-days: 7
