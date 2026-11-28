@@ -75,12 +75,17 @@ try {
     const pageErrors = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
 
-    // The entire suite must stay offline from ALL external websites/Cloud.
-    await page.route("**/*", (route) => {
-      const target = route.request().url();
-      if (target.startsWith(origin + "/")) return route.continue();
-      pageErrors.push("Unexpected external request: " + target);
+    // Only intercept NON-LOCAL traffic: routing localhost requests via
+    // route.continue() can bypass Chromium's simulated offline condition.
+    // No application source, remote script, auth, or Cloud URL is loaded here.
+    await page.route(/^https?:\\/\\/(?!127\\.0\\.0\\.1:\\d+\\/).+/, (route) => {
+      pageErrors.push("Unexpected external request: " + route.request().url());
       return route.abort();
+    });
+    page.on("request", (request) => {
+      if (!request.url().startsWith(origin + "/")) {
+        pageErrors.push("Unexpected non-local request: " + request.url());
+      }
     });
 
     try {
@@ -112,7 +117,7 @@ try {
       // Chromium's real network goes offline. Navigation must work using only
       // the cached public notice, NOT previously visited sensitive fixture.
       await context.setOffline(true);
-      await page.goto(origin + "/synthetic-private", { waitUntil: "domcontentloaded" });
+      await page.goto(origin + "/synthetic-private?offline=1", { waitUntil: "domcontentloaded" });
       assert.equal(await page.getByRole("heading", { name: "Koneksi internet terputus" }).count(), 1,
         "Offline navigation must show public notice");
       assert.equal(await page.getByText("Tidak ada transaksi yang disimpan secara offline.").count(), 1);
