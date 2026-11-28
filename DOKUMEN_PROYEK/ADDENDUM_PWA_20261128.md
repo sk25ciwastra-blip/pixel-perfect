@@ -44,3 +44,16 @@ Owner memberi instruksi "ok lanjut" setelah fondasi PWA PR #215 selesai. Dipilih
 - Metadata proyek Lovable saat pemeriksaan masih `needs_attention/out_of_credits`.
 - Tidak ada deploy/publish, perubahan domain/DNS, database, transaksi, RLS, feature flags, atau data UAT.
 - **Belum PASS:** real served URLs, installability Android/Edge/Chrome, service worker di browser dan offline recovery, standalone, akses role. Jangan menandai completed/live tanpa bukti baru.
+
+## Verifikasi perilaku offline Chromium — 28 November 2026
+
+Owner berkata "ok lanjut" setelah PWA read-only smoke PR #216. Target berikutnya adalah bukti **service worker berfungsi saat navigasi gagal secara nyata**, tanpa browser Lovable, domain, atau data LIVE.
+
+- **PR #217:** https://github.com/sk25ciwastra-blip/pixel-perfect/pull/217 — **MERGED**.
+- **Merge SHA:** `71c6b3dbeabc1a9567985c18814e963dd4d3b3be`.
+- **Source:** `scripts/pwa-offline-browser.test.mjs`; `.github/workflows/b25-pwa-offline-chromium.yml`. Tidak mengubah `public/sw.js`, renderer, UI, database, atau aturan bisnis.
+- **CI final head:** 16 SUCCESS, 0 FAILED. Workflow `chromium-offline` menggunakan Chromium browser sungguhan, dengan dua viewport (1280x800 dan 375x812).
+- **Bukti Chromium:** `PASS desktop` dan `PASS mobile` untuk registrasi service worker, halaman online dummy, cache hanya `/offline.html`, kegagalan jaringan navigasi nyata dengan socket lokal diputus, fallback offline, tidak memunculkan konten dummy privat sebelumnya, `Coba Lagi` berhasil setelah koneksi pulih, tidak ada akses Cloud.
+- **Penting:** uji awal gagal karena simulasi offline loopback belum benar-benar memutus jalur request; runner diperbaiki agar koneksi fixture terputus secara eksplisit. Dua run gagal sebelumnya adalah masalah harness; tes final pada head PR #217 PASS. Jangan mengklaim uji browser LIVE/instalasi produksi dari hasil sintetis ini.
+- **Output:** screenshot desktop/mobile offline disimpan di artifact GitHub Actions dari workflow PR (retensi 7 hari).
+- **Tetap PENDING:** Lovable `out_of_credits`, real HTTPS published assets/manifest/service worker, installability Chrome/Edge/Android, autentikasi/role dalam PWA, domain resmi, uji instalasi akhir. Tidak ada publish/deploy, Cloud SQL, mutasi data tamu/booking/transaksi, DNS atau feature flags.
