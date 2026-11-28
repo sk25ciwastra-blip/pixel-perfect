@@ -1,0 +1,34 @@
+name: B25 PWA Foundation Review
+on:
+  pull_request:
+    paths:
+      - 'public/pwa/**'
+      - 'public/manifest.webmanifest'
+      - 'public/sw.js'
+      - 'public/offline.html'
+      - 'src/lib/pwa.ts'
+      - 'src/routes/__root.tsx'
+      - 'scripts/pwa-foundation.test.cjs'
+      - 'scripts/generate-pwa-icons.py'
+      - '.github/workflows/b25-pwa-foundation-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pwa-foundation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - name: Validate official icons, manifest, secure offline policy
+        run: node --test scripts/pwa-foundation.test.cjs
+      - name: Production build
+        run: bun run build
+      - name: Typecheck
+        run: bunx tsc --noEmit
