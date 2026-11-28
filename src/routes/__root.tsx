@@ -19,6 +19,7 @@ import { PeranProvider } from "../lib/peran";
 import { Opening } from "../components/opening";
 import { installLiveAutoCapitalization } from "../lib/live-auto-capitalization";
 import { Toaster } from "../components/ui/sonner";
+import { registerOfflineSafePwa } from "../lib/pwa";
 
 function NotFoundComponent() {
   return (
@@ -91,6 +92,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Aplikasi manajemen operasional Baturaden 25 Homestay.",
       },
       { name: "author", content: "Baturaden 25 Homestay" },
+      { name: "theme-color", content: "#08090A" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { property: "og:title", content: "Baturaden 25 Homestay" },
       {
         property: "og:description",
@@ -116,6 +120,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/pwa/icon-192.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -144,6 +150,7 @@ function RootComponent() {
   // Covers all operational screens and Radix portals, including raw <input>
   // controls not rendered through the shared Input component.
   useEffect(() => installLiveAutoCapitalization(document), []);
+  useEffect(() => registerOfflineSafePwa(), []);
 
   return (
     <QueryClientProvider client={queryClient}>
